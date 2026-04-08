@@ -1,0 +1,26 @@
+{
+  "name": "PHANTOM — Field Intelligence System",
+  "short_name": "PHANTOM",
+  "description": "Mobile-first data center technician field tool. Failure memory engine, fiber reference, CLI commands, GPU fault codes, PDU diagrams, Ghost Echo pattern matching, and AI voice assistant.",
+  "start_url": "/nexus01/dct-ios.html",
+  "scope": "/nexus01/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#04070b",
+  "theme_color": "#020408",
+  "categories": ["utilities", "productivity"],
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='80' fill='%23020408'/%3E%3Cdefs%3E%3ClinearGradient id='g' x1='40%25' y1='0%25' x2='60%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%239b59ff' stop-opacity='0.9'/%3E%3Cstop offset='60%25' stop-color='%239b59ff' stop-opacity='0.5'/%3E%3Cstop offset='100%25' stop-color='%237b3fff' stop-opacity='0.3'/%3E%3C/linearGradient%3E%3CradialGradient id='n' cx='50%25' cy='50%25' r='50%25'%3E%3Cstop offset='0%25' stop-color='%235cf2ff' stop-opacity='1'/%3E%3Cstop offset='100%25' stop-color='%235cf2ff' stop-opacity='0'/%3E%3C/radialGradient%3E%3C/defs%3E%3Cg transform='translate(256,256) scale(5.5)'%3E%3Cpath d='M0-22 C-7-22 -12-16 -12-8 C-12 0 -9 6 -5 12 C-3 16 -1 20 0 20 C1 20 3 16 5 12 C9 6 12 0 12-8 C12-16 7-22 0-22 Z' fill='none' stroke='url(%23g)' stroke-width='1.2' opacity='0.8'/%3E%3Cpath d='M0-22 C-7-22 -12-16 -12-8 C-12 0 -9 6 -5 12 C-3 16 -1 20 0 20 C1 20 3 16 5 12 C9 6 12 0 12-8 C12-16 7-22 0-22 Z' fill='url(%23g)' opacity='0.15'/%3E%3Cline x1='0' y1='-16' x2='0' y2='14' stroke='%235cf2ff' stroke-width='0.7' opacity='0.5' stroke-dasharray='2,3'/%3E%3Cline x1='-5' y1='-14' x2='5' y2='-14' stroke='%235cf2ff' stroke-width='0.6' opacity='0.4'/%3E%3Ccircle cx='0' cy='-15' r='2.5' fill='url(%23n)' opacity='0.9'/%3E%3Ccircle cx='0' cy='-15' r='1.2' fill='%235cf2ff'/%3E%3Ccircle cx='0' cy='-15' r='4' fill='none' stroke='%235cf2ff' stroke-width='0.5' opacity='0.3'/%3E%3C/g%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='30' fill='%23020408'/%3E%3Cdefs%3E%3ClinearGradient id='g' x1='40%25' y1='0%25' x2='60%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%239b59ff' stop-opacity='0.9'/%3E%3Cstop offset='60%25' stop-color='%239b59ff' stop-opacity='0.5'/%3E%3Cstop offset='100%25' stop-color='%237b3fff' stop-opacity='0.3'/%3E%3C/linearGradient%3E%3CradialGradient id='n' cx='50%25' cy='50%25' r='50%25'%3E%3Cstop offset='0%25' stop-color='%235cf2ff' stop-opacity='1'/%3E%3Cstop offset='100%25' stop-color='%235cf2ff' stop-opacity='0'/%3E%3C/radialGradient%3E%3C/defs%3E%3Cg transform='translate(96,96) scale(2)'%3E%3Cpath d='M0-22 C-7-22 -12-16 -12-8 C-12 0 -9 6 -5 12 C-3 16 -1 20 0 20 C1 20 3 16 5 12 C9 6 12 0 12-8 C12-16 7-22 0-22 Z' fill='none' stroke='url(%23g)' stroke-width='1.2' opacity='0.8'/%3E%3Cpath d='M0-22 C-7-22 -12-16 -12-8 C-12 0 -9 6 -5 12 C-3 16 -1 20 0 20 C1 20 3 16 5 12 C9 6 12 0 12-8 C12-16 7-22 0-22 Z' fill='url(%23g)' opacity='0.15'/%3E%3Cline x1='0' y1='-16' x2='0' y2='14' stroke='%235cf2ff' stroke-width='0.7' opacity='0.5' stroke-dasharray='2,3'/%3E%3Ccircle cx='0' cy='-15' r='2.5' fill='url(%23n)' opacity='0.9'/%3E%3Ccircle cx='0' cy='-15' r='1.2' fill='%235cf2ff'/%3E%3C/g%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

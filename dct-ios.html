@@ -8,6 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="PHANTOM">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#020408">
+<link rel="manifest" href="manifest.json">
 <meta name="description" content="PHANTOM — Field Intelligence System. A mobile-first PWA for data center technicians. Failure memory engine, fiber reference, CLI commands, GPU fault codes, PDU diagrams, Ghost Echo pattern matching, and AI voice assistant.">
 <!-- Open Graph -->
 <meta property="og:title" content="PHANTOM — Field Intelligence System">
@@ -914,7 +915,6 @@ body {
   border: 1px solid var(--cyan-border-lo);
   border-radius:8px; padding:11px 12px; position:relative; overflow:hidden;
   box-shadow: var(--surf-inset), 0 4px 12px rgba(0,0,0,0.3);
-}
 }
 .dom-cell::after {
   content:''; position:absolute; top:0; left:0; right:0; height:1px;
@@ -2769,6 +2769,7 @@ code { font-family:var(--mono); font-size:10px; color:var(--cyan2); background:r
         <div class="app-loc">CoreWeave · AUS-01</div>
       </div>
       <div class="header-right">
+        <button onclick="exportAllData()" style="background:none;border:1px solid rgba(155,89,255,0.25);color:var(--violet);font-family:var(--mono);font-size:8px;letter-spacing:1px;padding:4px 8px;border-radius:3px;cursor:pointer;-webkit-appearance:none;min-height:28px;transition:border-color 0.15s,color 0.15s" aria-label="Export all data">BACKUP</button>
         <div class="hdr-pill"><div class="hdr-dot"></div>ONLINE</div>
       </div>
     </div>
@@ -4773,6 +4774,7 @@ code { font-family:var(--mono); font-size:10px; color:var(--cyan2); background:r
         <div class="ge-section" style="display:flex;justify-content:space-between;align-items:center">
           <span>Recent Ghosts</span>
           <div>
+            <button class="ge-clear-btn pt-btn pt-btn-ghost" onclick="exportGhostEcho()" style="color:var(--cyan);border-color:rgba(92,242,255,0.25)">↗ Export</button>
             <button class="ge-clear-btn pt-btn pt-btn-warning" onclick="geClearRack()">Clear Rack</button>
             <button class="ge-clear-btn destructive pt-btn pt-btn-destructive" onclick="geClearAll()">Clear All</button>
           </div>
@@ -5462,6 +5464,7 @@ function showOpsTab(tab) {
         <div class="sop-btn-group">
           <button class="sop-add-btn pt-btn pt-btn-secondary" onclick="openSopSheet()">+ ADD</button>
           <button class="sop-import-btn pt-btn pt-btn-secondary" onclick="sopImportTrigger()">⬆ IMPORT</button>
+          <button class="pt-btn pt-btn-ghost" onclick="exportSOPs()" style="font-size:9px;letter-spacing:2px;padding:10px 14px">↗ EXPORT</button>
         </div>
       </div>
       <div id="sop-list-inner"></div>
@@ -8707,6 +8710,95 @@ initCosmicButtons();
 
 const _cosmicObserver = new MutationObserver(() => { initCosmicButtons(); });
 _cosmicObserver.observe(document.body, { childList: true, subtree: true, attributes: true });
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━
+// DATA EXPORT — SOP + Ghost Echo + Full Backup
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+function exportSOPs() {
+  const sops = loadSOPs();
+  if (!sops.length) { alert('No SOPs to export.'); return; }
+  downloadJSON(sops, 'phantom-sops');
+}
+
+function exportGhostEcho() {
+  const dbName = 'GhostEchoDB';
+  const storeName = 'incidents';
+  const req = indexedDB.open(dbName);
+  req.onsuccess = function(e) {
+    const db = e.target.result;
+    if (!db.objectStoreNames.contains(storeName)) { alert('No Ghost Echo data found.'); return; }
+    const tx = db.transaction(storeName, 'readonly');
+    const store = tx.objectStore(storeName);
+    const getAll = store.getAll();
+    getAll.onsuccess = function() {
+      const data = getAll.result;
+      if (!data.length) { alert('No Ghost Echo entries to export.'); return; }
+      downloadJSON(data, 'phantom-ghost-echo');
+    };
+    getAll.onerror = function() { alert('Error reading Ghost Echo data.'); };
+  };
+  req.onerror = function() { alert('Could not open Ghost Echo database.'); };
+}
+
+function exportAllData() {
+  const sops = loadSOPs();
+  const racks = JSON.parse(localStorage.getItem('dct_racks_v1') || '[]');
+  const burndown = JSON.parse(localStorage.getItem('dct_burndown_v1') || '[]');
+
+  const dbName = 'GhostEchoDB';
+  const storeName = 'incidents';
+  const req = indexedDB.open(dbName);
+
+  function buildBundle(ghosts) {
+    return {
+      exported: new Date().toISOString(),
+      app: 'PHANTOM — Field Intelligence System',
+      version: 'POC',
+      sops: sops,
+      ghostEcho: ghosts,
+      rackMaps: racks,
+      burndown: burndown
+    };
+  }
+
+  req.onsuccess = function(e) {
+    const db = e.target.result;
+    if (!db.objectStoreNames.contains(storeName)) {
+      downloadJSON(buildBundle([]), 'phantom-full-backup');
+      return;
+    }
+    const tx = db.transaction(storeName, 'readonly');
+    const getAll = tx.objectStore(storeName).getAll();
+    getAll.onsuccess = function() { downloadJSON(buildBundle(getAll.result || []), 'phantom-full-backup'); };
+    getAll.onerror = function() { downloadJSON(buildBundle([]), 'phantom-full-backup'); };
+  };
+  req.onerror = function() { downloadJSON(buildBundle([]), 'phantom-full-backup'); };
+}
+
+function downloadJSON(data, prefix) {
+  const dateStr = new Date().toISOString().split('T')[0];
+  const json = JSON.stringify(data, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const file = new File([blob], prefix + '-' + dateStr + '.json', { type: 'application/json' });
+
+  // iOS Safari: try native share sheet first
+  if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+    navigator.share({ files: [file], title: prefix + ' export' }).catch(function() {
+      triggerDownload(URL.createObjectURL(blob), file.name);
+    });
+  } else {
+    triggerDownload(URL.createObjectURL(blob), file.name);
+  }
+}
+
+function triggerDownload(url, filename) {
+  var a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  setTimeout(function() { URL.revokeObjectURL(url); }, 5000);
+}
 </script>
 </body>
 </html>
