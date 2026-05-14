@@ -1,25 +1,18 @@
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // PHANTOM — Service Worker
-// v1.4.2 (UX architecture cleanup — Batches 1-4)
+// v1.5.0 (Reference dashboard — globe, ghost wave, glass cards, rack ISO)
 //
 // CACHE VERSION BUMP RATIONALE:
-//   Batch 3 introduced new globals (stripeView_setRack, stripeRack_logNote,
-//   _stripeViewContext, actionStripe_renderRackToolbar) referenced inside
-//   dynamically-rendered onclick strings on Rack Detail. iOS PWA users
-//   still cached on v1.4.1 would hit "function not defined" errors when
-//   drilling into a rack. The cache version MUST bump so the SW evicts the
-//   stale HTML and forces re-fetch of v1.4.2.
+//   v1.5.0 adds Canvas 2D globe (boot screen), Ghost Echo plasma wave banner,
+//   glass card CSS system, and rack ISO viewer to dct-ios.html. PWA users
+//   cached on v1.4.2 must evict and re-fetch to see any of these additions.
 //
 //   Cross-origin requests (e.g. the Cloudflare Worker proxy to Anthropic
 //   API at phantom-api.wfj6t2fk7w.workers.dev) BYPASS the cache entirely.
 //   Only same-origin assets are cached.
-//
-// CAVEAT TO USER (John): if your previously-deployed sw.js has custom logic
-// (e.g. specific URL routing, background sync, push notifications), this
-// fresh draft will CLOBBER it. Diff against your existing sw.js before push.
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-const CACHE_VERSION = 'phantom-v1.4.2';
+const CACHE_VERSION = 'phantom-v1.5.0';
 
 // Assets to precache on install. Keep this minimal — single-file PWA means
 // most of PHANTOM is in dct-ios.html itself.
