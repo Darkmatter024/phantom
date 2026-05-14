@@ -94,8 +94,8 @@
   --glow-violet: 0 0 16px rgba(155,89,255,0.45),  0 0 4px rgba(155,89,255,0.25);
 
   /* ── component radius tokens ── */
-  --card-radius:  0;
-  --badge-radius: 0;
+  --card-radius:  2px;
+  --badge-radius: 2px;
   --btn-radius:   6px;
 
   /* P1.3 FIX: System font stacks — zero network, full offline. iOS-optimized.
@@ -136,9 +136,9 @@
   /* ── v6 vocabulary additions (Fabric 2026) ── */
   --cyan-bright:   #9af6ff;        /* active-state cyan, brighter than --cyan */
   --violet-bright: #b478ff;        /* active-state violet, brighter than --violet */
-  --blur-chrome:   var(--blur-chrome); /* persistent chrome: header, tab-nav */
-  --blur-sheet:    blur(16px);                /* floating sheets, search bars */
-  --hero-blur:     var(--hero-blur);  /* hero glass surfaces */
+  --blur-chrome:   blur(20px);   /* persistent chrome: header, tab-nav */
+  --blur-sheet:    blur(16px);   /* floating sheets, search bars */
+  --hero-blur:     blur(28px);   /* hero glass surfaces — overlays, topbars */
   --soft-blur:     blur(12px);                 /* secondary glass surfaces */
 
   /* ── z-index scale ── */
@@ -8215,6 +8215,13 @@ textarea.hud-input {
   .hwm-inner          { max-width: 720px; }
   .btp-inner          { max-width: 560px; }
   .intake-sheet-inner { max-width: 660px; }
+  /* ── Intermediate type scale — iPad / small laptop ── */
+  :root {
+    --fs-body:    13px;
+    --fs-caption: 11.5px;
+    --fs-subhead: 15px;
+    --fs-head:    17px;
+  }
 }
 
 /* ── 1024px: Laptop / standard desktop ── */
@@ -8737,6 +8744,68 @@ textarea.hud-input {
   background: rgba(92, 242, 255, 0.22);
   transform: scale(0.98);
 }
+
+/* ━━━ DYNAMIC RENDER UTILITIES ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * CSS classes for JS innerHTML components so they consume design
+ * tokens instead of hardcoded rgba() strings. Use these in render
+ * functions instead of inline style="" attributes.
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+/* Dynamic card variants — top-bordered surface panels */
+.dyn-card {
+  width: 100%; box-sizing: border-box;
+  border-radius: 14px 14px 0 0;
+  padding: 20px 18px 18px;
+  box-shadow: 0 -20px 60px rgba(0,0,0,0.6);
+  animation: slideUp 0.22s ease-out;
+  max-height: 80vh;
+  display: flex; flex-direction: column;
+}
+.dyn-card-cyan   { background: var(--hud-surface-0); border: 1px solid var(--cyan-border-lo);       border-top: 2px solid var(--cyan); }
+.dyn-card-gold   { background: var(--hud-surface-0); border: 1px solid rgba(255,214,10,0.22);        border-top: 2px solid var(--gold); }
+.dyn-card-red    { background: var(--hud-surface-0); border: 1px solid rgba(255,69,58,0.22);         border-top: 2px solid var(--red); }
+.dyn-card-violet { background: var(--hud-surface-0); border: 1px solid var(--violet-border);         border-top: 2px solid var(--violet); }
+.dyn-card-green  { background: var(--hud-surface-0); border: 1px solid rgba(48,209,88,0.22);         border-top: 2px solid var(--green); }
+
+/* Dynamic row items — used in ops-content / manifest renders */
+.dyn-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(180,194,208,0.07);
+  font-family: var(--mono); font-size: var(--fs-body);
+  color: var(--white);
+}
+.dyn-row:last-child { border-bottom: none; }
+.dyn-row-ok     { border-left: 3px solid var(--green);  background: rgba(48,209,88,0.04); }
+.dyn-row-warn   { border-left: 3px solid var(--gold);   background: rgba(255,214,10,0.04); }
+.dyn-row-crit   { border-left: 3px solid var(--red);    background: rgba(255,69,58,0.04); }
+.dyn-row-info   { border-left: 3px solid var(--cyan);   background: var(--cyan-dim); }
+
+/* Dynamic status badges */
+.dyn-badge {
+  display: inline-flex; align-items: center;
+  font-family: var(--mono); font-size: var(--fs-micro);
+  letter-spacing: 1.4px; font-weight: 700;
+  padding: 3px 8px; border: 1px solid; text-transform: uppercase;
+  border-radius: var(--badge-radius); white-space: nowrap; flex-shrink: 0;
+}
+.dyn-badge-ok     { color: var(--green);  border-color: rgba(48,209,88,0.45);   background: rgba(48,209,88,0.06); }
+.dyn-badge-warn   { color: var(--gold);   border-color: rgba(255,214,10,0.45);  background: rgba(255,214,10,0.06); }
+.dyn-badge-crit   { color: var(--red);    border-color: rgba(255,69,58,0.45);   background: rgba(255,69,58,0.06); }
+.dyn-badge-info   { color: var(--cyan);   border-color: var(--cyan-border);     background: var(--cyan-dim); }
+.dyn-badge-violet { color: var(--violet); border-color: var(--violet-border);   background: var(--violet-dim); }
+.dyn-badge-slate  { color: var(--slate-readable); border-color: rgba(180,194,208,0.20); background: rgba(20,30,40,0.4); }
+
+/* Dynamic section eyebrow */
+.dyn-eyebrow {
+  font-family: var(--mono); font-size: var(--fs-micro);
+  letter-spacing: var(--hud-track-ui); font-weight: 700;
+  text-transform: uppercase; margin-bottom: 8px;
+}
+.dyn-eyebrow-cyan   { color: var(--cyan); }
+.dyn-eyebrow-violet { color: var(--violet); }
+.dyn-eyebrow-gold   { color: var(--gold); }
+.dyn-eyebrow-slate  { color: var(--hud-slate-1); }
 
 </style>
 <script>
@@ -27267,18 +27336,24 @@ function vaAskAgain() {
   } catch(e) {}
 }
 
-// ━━━ BACKGROUND NODE MESH ━━━
+// ━━━ BACKGROUND NODE MESH v2 — dual-color glow ━━━
+// Cyan (65%) + Violet (35%) nodes. Per-node sinusoidal pulse.
+// shadowBlur glow on nodes only — edges stay flat for GPU budget.
+// Pauses on visibilitychange to protect iPad battery.
 (function() {
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const canvas = document.getElementById('bgCanvas');
   if (!canvas) return;
 
   const ctx = canvas.getContext('2d');
-  let W, H, nodes, raf;
-  const NODE_COUNT = 24;
-  const MAX_DIST    = 140;
-  const NODE_COLOR  = 'rgba(92,242,255,';
-  const SPEED       = 0.14;
+  let W, H, nodes, raf, tick = 0;
+  const NODE_COUNT = 48;
+  const MAX_DIST   = 160;
+  const SPEED      = 0.12;
+
+  // Brand palette — cyan: #5cf2ff  violet: #9b59ff
+  const C_CYAN   = { r: 92,  g: 242, b: 255 };
+  const C_VIOLET = { r: 155, g: 89,  b: 255 };
 
   function resize() {
     W = canvas.width  = window.innerWidth;
@@ -27286,51 +27361,67 @@ function vaAskAgain() {
   }
 
   function initNodes() {
-    nodes = Array.from({ length: NODE_COUNT }, () => ({
-      x:  Math.random() * W,
-      y:  Math.random() * H,
-      vx: (Math.random() - 0.5) * SPEED,
-      vy: (Math.random() - 0.5) * SPEED,
-      r:  Math.random() * 1.2 + 0.4,
-    }));
+    nodes = Array.from({ length: NODE_COUNT }, () => {
+      const c = Math.random() < 0.65 ? C_CYAN : C_VIOLET;
+      return {
+        x:     Math.random() * W,
+        y:     Math.random() * H,
+        vx:    (Math.random() - 0.5) * SPEED,
+        vy:    (Math.random() - 0.5) * SPEED,
+        r:     Math.random() * 1.4 + 0.5,
+        phase: Math.random() * Math.PI * 2,
+        c,
+      };
+    });
   }
 
   function draw() {
+    tick++;
     ctx.clearRect(0, 0, W, H);
 
-    // Move nodes
+    // Move nodes — bounce at viewport edges
     nodes.forEach(n => {
       n.x += n.vx; n.y += n.vy;
       if (n.x < 0 || n.x > W) n.vx *= -1;
       if (n.y < 0 || n.y > H) n.vy *= -1;
     });
 
-    // Draw edges
+    // Draw edges — no shadow, flat alpha fade by distance
+    ctx.shadowBlur = 0;
     for (let i = 0; i < nodes.length; i++) {
       for (let j = i + 1; j < nodes.length; j++) {
-        const dx = nodes[i].x - nodes[j].x;
-        const dy = nodes[i].y - nodes[j].y;
+        const dx   = nodes[i].x - nodes[j].x;
+        const dy   = nodes[i].y - nodes[j].y;
         const dist = Math.sqrt(dx * dx + dy * dy);
         if (dist < MAX_DIST) {
-          const alpha = (1 - dist / MAX_DIST) * 0.09;
+          const alpha = (1 - dist / MAX_DIST) * 0.11;
+          const c     = nodes[i].c;
           ctx.beginPath();
           ctx.moveTo(nodes[i].x, nodes[i].y);
           ctx.lineTo(nodes[j].x, nodes[j].y);
-          ctx.strokeStyle = NODE_COLOR + alpha + ')';
-          ctx.lineWidth = 0.6;
+          ctx.strokeStyle = `rgba(${c.r},${c.g},${c.b},${alpha.toFixed(3)})`;
+          ctx.lineWidth   = 0.55;
           ctx.stroke();
         }
       }
     }
 
-    // Draw nodes
+    // Draw nodes — sinusoidal pulse drives glow intensity and fill alpha
     nodes.forEach(n => {
+      const pulse  = 0.5 + 0.5 * Math.sin(tick * 0.011 + n.phase);
+      const fAlpha = (0.18 + 0.16 * pulse).toFixed(3);
+      const glow   = n.r * 5 + pulse * 5;
+      const { r, g, b } = n.c;
+
+      ctx.shadowColor = `rgba(${r},${g},${b},0.55)`;
+      ctx.shadowBlur  = glow;
       ctx.beginPath();
       ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
-      ctx.fillStyle = NODE_COLOR + '0.18)';
+      ctx.fillStyle = `rgba(${r},${g},${b},${fAlpha})`;
       ctx.fill();
     });
 
+    ctx.shadowBlur = 0; // reset — prevent bleed onto other canvas draws
     raf = requestAnimationFrame(draw);
   }
 
