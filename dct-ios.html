@@ -8807,6 +8807,88 @@ textarea.hud-input {
 .dyn-eyebrow-gold   { color: var(--gold); }
 .dyn-eyebrow-slate  { color: var(--hud-slate-1); }
 
+/* ━━━ GLASS CARD SYSTEM — Reference Dashboard ━━━ */
+/* Glow tier tokens (inline since :root block is above) */
+.glass-card {
+  background: rgba(8,14,22,0.65);
+  backdrop-filter: blur(12px) saturate(1.4);
+  -webkit-backdrop-filter: blur(12px) saturate(1.4);
+  border: 1px solid rgba(92,242,255,0.15);
+  border-radius: var(--card-radius);
+  box-shadow: 0 0 20px rgba(92,242,255,0.18), 0 0 6px rgba(92,242,255,0.10), var(--surf-inset);
+}
+.glass-card-active {
+  border-color: rgba(92,242,255,0.35);
+  box-shadow: 0 0 20px rgba(92,242,255,0.30), 0 0 6px rgba(92,242,255,0.15), 0 0 0 1px rgba(92,242,255,0.12), var(--surf-inset);
+}
+.glass-card-violet {
+  background: rgba(8,14,22,0.65);
+  backdrop-filter: blur(12px) saturate(1.4);
+  -webkit-backdrop-filter: blur(12px) saturate(1.4);
+  border: 1px solid rgba(155,89,255,0.22);
+  border-radius: var(--card-radius);
+  box-shadow: 0 0 20px rgba(155,89,255,0.22), 0 0 6px rgba(155,89,255,0.12), var(--surf-inset);
+}
+.glass-card-violet-active {
+  border-color: rgba(155,89,255,0.42);
+  box-shadow: 0 0 40px rgba(155,89,255,0.20), 0 0 12px rgba(155,89,255,0.12), 0 0 0 1px rgba(155,89,255,0.15), var(--surf-inset);
+}
+
+/* KPI metric display used in dashboard cards */
+.kpi-value {
+  font-family: var(--mono);
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: var(--cyan);
+  text-shadow: 0 0 8px rgba(92,242,255,0.70);
+  line-height: 1;
+}
+.kpi-value-violet {
+  font-family: var(--mono);
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: var(--violet);
+  text-shadow: 0 0 8px rgba(155,89,255,0.60);
+  line-height: 1;
+}
+.kpi-label {
+  font-family: var(--mono);
+  font-size: var(--fs-micro);
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: var(--slate-readable);
+  margin-top: 4px;
+}
+.kpi-unit {
+  font-family: var(--mono);
+  font-size: var(--fs-caption);
+  color: var(--slate-readable);
+  margin-left: 3px;
+  font-weight: 400;
+}
+
+/* Ghost Echo plasma wave canvas banner */
+#ghostWave {
+  display: block;
+  width: 100%;
+  height: 72px;
+  pointer-events: none;
+  border-radius: 0;
+  overflow: hidden;
+}
+
+/* Rack ISO canvas */
+#rackIso {
+  display: block;
+  width: 100%;
+  height: 220px;
+  background: transparent;
+  pointer-events: none;
+  border-radius: var(--card-radius);
+}
+
 </style>
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
@@ -9186,6 +9268,7 @@ function phantom_ghostUpdateReady() {
     <span class="cosmic-label">ENTER PHANTOM</span>
   </button>
 </div>
+    <canvas id="ghostWave" height="72"></canvas>
     <div class="boot-topologies" id="bootTopologies">
       <div class="boot-topologies-title">Active Data Topologies</div>
       <div class="boot-topologies-grid">
@@ -11465,6 +11548,7 @@ function phantom_ghostUpdateReady() {
           </div>
         </div>
 
+        <canvas id="rackIso"></canvas>
         <div id="rm-elevation-area"></div>
 
         <div id="rm-empty" class="rm-empty" style="display:none; padding:24px 20px">
@@ -27437,6 +27521,76 @@ function vaAskAgain() {
   window.addEventListener('resize', () => { resize(); initNodes(); });
 })();
 
+// ━━━ GHOST ECHO PLASMA WAVE ━━━
+// Flowing violet / cyan / magenta sinusoidal wave banner.
+// 4 layered wave paths with per-layer gradient fade-in/out.
+// shadowBlur glow per stroke. Pauses on visibilitychange.
+(function() {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const canvas = document.getElementById('ghostWave');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  let t = 0, raf;
+
+  // Wave layers — [amplitude, x-frequency, phase-offset, stroke-alpha, r,g,b]
+  const LAYERS = [
+    { amp: 20, freq: 0.017, ph: 0,             alpha: 0.55, r: 155, g: 89,  b: 255 }, // violet core
+    { amp: 13, freq: 0.026, ph: Math.PI / 2.8, alpha: 0.38, r: 155, g: 89,  b: 255 }, // violet echo
+    { amp: 24, freq: 0.011, ph: Math.PI * 0.7, alpha: 0.28, r: 92,  g: 242, b: 255 }, // cyan undertow
+    { amp:  9, freq: 0.034, ph: Math.PI * 1.3, alpha: 0.20, r: 255, g:  0,  b: 110 }, // magenta accent
+  ];
+
+  function resize() {
+    const dpr  = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width  = rect.width  * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  function draw() {
+    t += 0.013;
+    const dpr = window.devicePixelRatio || 1;
+    const w   = canvas.width  / dpr;
+    const h   = canvas.height / dpr;
+    ctx.clearRect(0, 0, w, h);
+    const midY = h * 0.5;
+
+    LAYERS.forEach(lv => {
+      const grad = ctx.createLinearGradient(0, 0, w, 0);
+      const a    = lv.alpha;
+      grad.addColorStop(0,    `rgba(${lv.r},${lv.g},${lv.b},0)`);
+      grad.addColorStop(0.15, `rgba(${lv.r},${lv.g},${lv.b},${a})`);
+      grad.addColorStop(0.50, `rgba(${lv.r},${lv.g},${lv.b},${Math.min(a * 1.35, 0.9).toFixed(2)})`);
+      grad.addColorStop(0.85, `rgba(${lv.r},${lv.g},${lv.b},${a})`);
+      grad.addColorStop(1,    `rgba(${lv.r},${lv.g},${lv.b},0)`);
+
+      ctx.beginPath();
+      for (let x = 0; x <= w; x++) {
+        const y = midY + Math.sin(x * lv.freq + t + lv.ph) * lv.amp;
+        x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      ctx.strokeStyle  = grad;
+      ctx.lineWidth    = 1.6;
+      ctx.shadowColor  = `rgba(${lv.r},${lv.g},${lv.b},0.55)`;
+      ctx.shadowBlur   = 10;
+      ctx.stroke();
+    });
+
+    ctx.shadowBlur = 0;
+    raf = requestAnimationFrame(draw);
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) cancelAnimationFrame(raf);
+    else { raf = requestAnimationFrame(draw); }
+  });
+
+  // Delay init until layout settles so getBoundingClientRect is accurate
+  requestAnimationFrame(() => { resize(); draw(); });
+  window.addEventListener('resize', resize);
+})();
+
 // ━━━ BOOT DRIFT STARS (v11) ━━━
 // Calm ambient layer behind boot content. Slow linear drift, small dots,
 // low opacity, per-star twinkle. Stops cleanly when boot collapses.
@@ -34418,6 +34572,169 @@ var ScanDispatch = (function() {
     _closeRetag: _closeRetag,
     _deleteEntry: _deleteEntry
   };
+})();
+
+// ━━━ RACK ISO VIEWER ━━━
+// Canvas 2D isometric projection of up to 6 racks.
+// Offline-safe — no Three.js. Uses loadRacks() if available,
+// falls back to placeholder labels. Active rack highlighted violet.
+// Exposed as window.renderRackIso(highlightId) for external calls.
+// Patches renderRackMap to auto-update the ISO view.
+(function() {
+  function renderRackIso(highlightId) {
+    var canvas = document.getElementById('rackIso');
+    if (!canvas) return;
+
+    var dpr = window.devicePixelRatio || 1;
+    var W   = canvas.offsetWidth  || window.innerWidth;
+    var H   = canvas.offsetHeight || 220;
+    canvas.width  = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    var ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+
+    // Rack data — fall back to 5 placeholder racks
+    var racks = [];
+    try {
+      if (typeof loadRacks === 'function') racks = loadRacks().slice(0, 6);
+    } catch(e) {}
+    if (!racks.length) {
+      racks = ['R01','R02','R03','R04','R05'].map(function(id) {
+        return { id: id, name: id, slots: [] };
+      });
+    }
+
+    // Use first rack as default highlight if none specified
+    if (!highlightId && racks.length) highlightId = racks[0].id;
+
+    // Isometric tile dimensions
+    var TW  = Math.min(44, Math.floor((W - 48) / Math.max(racks.length, 1)));
+    var TH  = Math.round(TW * 0.45);
+    var RH  = Math.round(H * 0.62);
+    var N   = racks.length;
+    var totalW = N * TW + TH;
+    var ox  = Math.round((W - totalW) / 2 + TH * 0.5);
+    var oy  = Math.round(H * 0.80);
+
+    racks.forEach(function(rack, i) {
+      var active = rack.id === highlightId;
+      var ec  = active ? '#9b59ff' : '#5cf2ff';
+      var fa  = active ? 0.18 : 0.07;  // fill alpha — front face
+      var ra  = active ? 0.12 : 0.05;  // fill alpha — right face
+      var ta  = active ? 0.25 : 0.10;  // fill alpha — top face
+      var lw  = active ? 1.3  : 0.65;
+      var glow = active ? 14 : 0;
+
+      var x0 = ox + i * TW;
+      var y0 = oy;
+
+      // ── Front face ──
+      ctx.beginPath();
+      ctx.moveTo(x0,        y0);
+      ctx.lineTo(x0,        y0 - RH);
+      ctx.lineTo(x0 + TW,   y0 - RH);
+      ctx.lineTo(x0 + TW,   y0);
+      ctx.closePath();
+      ctx.fillStyle   = active ? 'rgba(155,89,255,' + fa + ')' : 'rgba(92,242,255,' + fa + ')';
+      ctx.strokeStyle = ec;
+      ctx.lineWidth   = lw;
+      ctx.shadowColor = active ? 'rgba(155,89,255,0.65)' : 'transparent';
+      ctx.shadowBlur  = glow;
+      ctx.fill();
+      ctx.stroke();
+
+      // ── Right face ──
+      ctx.beginPath();
+      ctx.moveTo(x0 + TW,             y0);
+      ctx.lineTo(x0 + TW,             y0 - RH);
+      ctx.lineTo(x0 + TW + TH * 0.6,  y0 - RH - TH * 0.5);
+      ctx.lineTo(x0 + TW + TH * 0.6,  y0       - TH * 0.5);
+      ctx.closePath();
+      ctx.fillStyle   = active ? 'rgba(155,89,255,' + ra + ')' : 'rgba(92,242,255,' + ra + ')';
+      ctx.strokeStyle = ec;
+      ctx.lineWidth   = lw;
+      ctx.shadowBlur  = glow * 0.6;
+      ctx.fill();
+      ctx.stroke();
+
+      // ── Top face ──
+      ctx.beginPath();
+      ctx.moveTo(x0,                  y0 - RH);
+      ctx.lineTo(x0 + TW,             y0 - RH);
+      ctx.lineTo(x0 + TW + TH * 0.6,  y0 - RH - TH * 0.5);
+      ctx.lineTo(x0       + TH * 0.6,  y0 - RH - TH * 0.5);
+      ctx.closePath();
+      ctx.fillStyle   = active ? 'rgba(155,89,255,' + ta + ')' : 'rgba(92,242,255,' + ta + ')';
+      ctx.strokeStyle = ec;
+      ctx.lineWidth   = lw;
+      ctx.shadowBlur  = 0;
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.shadowBlur = 0;
+
+      // ── U-slot strips on front face ──
+      var slotH = 5, slotGap = 3, maxSlots = 6;
+      for (var u = 0; u < maxSlots; u++) {
+        var sy = y0 - 10 - u * (slotH + slotGap);
+        if (sy < y0 - RH + 6) break;
+        var isGpu = u < 4;
+        ctx.beginPath();
+        ctx.rect(x0 + 3, sy, TW - 6, slotH);
+        if (isGpu) {
+          ctx.fillStyle = active
+            ? 'rgba(155,89,255,0.55)'
+            : 'rgba(92,242,255,0.28)';
+        } else {
+          ctx.fillStyle = 'rgba(255,255,255,0.08)';
+        }
+        ctx.fill();
+      }
+
+      // ── Rack ID label ──
+      ctx.font      = 'bold 8px var(--mono, monospace)';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = active ? '#9b59ff' : 'rgba(92,242,255,0.50)';
+      ctx.fillText(rack.id, x0 + TW / 2, y0 + 12);
+    });
+
+    // ── LEGEND ──
+    ctx.font      = '8px var(--mono, monospace)';
+    ctx.textAlign = 'left';
+    var dots = [
+      { c: '#9b59ff', label: 'ACTIVE' },
+      { c: '#5cf2ff', label: 'IDLE'   },
+    ];
+    dots.forEach(function(d, idx) {
+      var lx = 12 + idx * 68, ly = H - 10;
+      ctx.beginPath();
+      ctx.arc(lx, ly - 3, 4, 0, Math.PI * 2);
+      ctx.fillStyle = d.c;
+      ctx.fill();
+      ctx.fillStyle = 'rgba(180,200,220,0.50)';
+      ctx.fillText(d.label, lx + 8, ly);
+    });
+  }
+
+  window.renderRackIso = renderRackIso;
+
+  // Patch renderRackMap to keep ISO view in sync
+  if (typeof window.renderRackMap === 'function') {
+    var _origRRM = window.renderRackMap;
+    window.renderRackMap = function() {
+      var ret = _origRRM.apply(this, arguments);
+      requestAnimationFrame(function() {
+        renderRackIso(typeof window.currentRackId !== 'undefined' ? window.currentRackId : null);
+      });
+      return ret;
+    };
+  }
+
+  // Initial render after layout settles
+  window.addEventListener('DOMContentLoaded', function() {
+    requestAnimationFrame(function() { renderRackIso(null); });
+  });
 })();
 
 </script>
