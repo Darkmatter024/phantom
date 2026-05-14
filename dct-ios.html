@@ -332,6 +332,13 @@ body {
   position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.7;
 }
 
+/* Globe canvas — boot screen background */
+#globeCanvas {
+  position: absolute; inset: 0; z-index: 0;
+  width: 100%; height: 100%;
+  pointer-events: none; opacity: 0.58;
+}
+
 /* ━━━ BOOT ━━━ */
 #boot {
   position: fixed; inset: 0; z-index: var(--z-boot);
@@ -9247,6 +9254,7 @@ function phantom_ghostUpdateReady() {
 
 <!-- ━━━ BOOT ━━━ -->
 <div id="boot">
+  <canvas id="globeCanvas"></canvas>
   <canvas id="bootCanvas" style="position:absolute;inset:0;pointer-events:none;z-index:1"></canvas>
   <div class="boot-content">
     <div class="boot-eyebrow">CoreWeave · AUS-01 · v1.4.2</div>
@@ -27589,6 +27597,207 @@ function vaAskAgain() {
   // Delay init until layout settles so getBoundingClientRect is accurate
   requestAnimationFrame(() => { resize(); draw(); });
   window.addEventListener('resize', resize);
+})();
+
+// ━━━ GLOBE CANVAS ━━━
+// Canvas 2D sphere with lat/lon wireframe, 18 DC site nodes, and
+// atmospheric glow ring. Slow Y-axis rotation (~0.10°/frame).
+// Offline-safe (no Three.js). Pauses on visibilitychange.
+// Honors prefers-reduced-motion.
+(function() {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  var canvas = document.getElementById('globeCanvas');
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var W, H, R, cx, cy, raf;
+  var rot = 0;
+
+  // Data-centre node sites [lat°, lon°, label]
+  var SITES = [
+    [ 30.3, -97.7, 'AUS'], [ 32.8, -96.8, 'DFW'], [ 37.3,-122.0, 'SJC'],
+    [ 47.6,-122.3, 'SEA'], [ 40.7, -74.0, 'NYC'], [ 25.8, -80.2, 'MIA'],
+    [ 51.5,  -0.1, 'LHR'], [ 50.1,   8.7, 'FRA'], [ 48.9,   2.4, 'CDG'],
+    [  1.4, 103.8, 'SGP'], [ 35.7, 139.7, 'TYO'], [ 37.5, 127.0, 'ICN'],
+    [-33.9, 151.2, 'SYD'], [ 19.4, -99.1, 'MEX'], [-23.5, -46.6, 'GRU'],
+    [ 55.8,  37.6, 'SVO'], [ 22.3, 114.2, 'HKG'], [ 13.1,  80.3, 'MAA'],
+  ];
+
+  // Edges connecting nearby sites
+  var EDGES = [
+    [0,1],[1,2],[2,3],[0,4],[4,5],
+    [6,7],[7,8],[6,8],
+    [9,10],[10,11],[11,12],
+    [2,9],[4,6],[7,16],[10,17],[9,17],
+    [13,14],[0,13],[3,9],
+  ];
+
+  function resize() {
+    var dpr = window.devicePixelRatio || 1;
+    W = canvas.width  = window.innerWidth  * dpr;
+    H = canvas.height = window.innerHeight * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    var Wc = W / dpr, Hc = H / dpr;
+    R  = Math.min(Wc, Hc) * 0.40;
+    cx = Wc * 0.5;
+    cy = Hc * 0.46;
+  }
+
+  function project(latDeg, lonDeg) {
+    var lat = latDeg * Math.PI / 180;
+    var lon = lonDeg * Math.PI / 180 + rot;
+    var x3 = Math.cos(lat) * Math.sin(lon);
+    var y3 = -Math.sin(lat);
+    var z3 = Math.cos(lat) * Math.cos(lon);
+    return { sx: cx + x3 * R, sy: cy + y3 * R, z: z3 };
+  }
+
+  function draw() {
+    rot += 0.0016;
+    var dpr = window.devicePixelRatio || 1;
+    var Wc = W / dpr, Hc = H / dpr;
+    ctx.clearRect(0, 0, Wc, Hc);
+
+    // ── Atmosphere glow rings (outside sphere) ──
+    var glowLayers = [
+      { r: R + 30, alpha: 0.040, lw: 12 },
+      { r: R + 18, alpha: 0.060, lw: 7  },
+      { r: R +  8, alpha: 0.090, lw: 4  },
+      { r: R +  2, alpha: 0.130, lw: 2  },
+    ];
+    glowLayers.forEach(function(g) {
+      ctx.beginPath();
+      ctx.arc(cx, cy, g.r, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(92,242,255,' + g.alpha + ')';
+      ctx.lineWidth   = g.lw;
+      ctx.stroke();
+    });
+
+    // ── Sphere fill — radial gradient ──
+    var grad = ctx.createRadialGradient(cx - R * 0.22, cy - R * 0.22, R * 0.04, cx, cy, R);
+    grad.addColorStop(0,   'rgba(20,36,56,0.94)');
+    grad.addColorStop(0.5, 'rgba(9,18,30,0.97)');
+    grad.addColorStop(1,   'rgba(4,8,16,0.99)');
+    ctx.beginPath();
+    ctx.arc(cx, cy, R, 0, Math.PI * 2);
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // ── Clip subsequent draws to sphere ──
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx, cy, R - 0.5, 0, Math.PI * 2);
+    ctx.clip();
+
+    // ── Latitude parallels ──
+    var latitudes = [-60,-30,0,30,60];
+    latitudes.forEach(function(latD) {
+      var lat = latD * Math.PI / 180;
+      var cosLat = Math.cos(lat);
+      ctx.beginPath();
+      var started = false;
+      for (var lonD = -180; lonD <= 180; lonD += 2) {
+        var lon = lonD * Math.PI / 180 + rot;
+        var z3  = cosLat * Math.cos(lon);
+        if (z3 >= 0) {
+          var sx = cx + cosLat * Math.sin(lon) * R;
+          var sy = cy + (-Math.sin(lat)) * R;
+          started ? ctx.lineTo(sx, sy) : ctx.moveTo(sx, sy);
+          started = true;
+        } else { started = false; }
+      }
+      ctx.strokeStyle = 'rgba(92,242,255,0.085)';
+      ctx.lineWidth   = 0.5;
+      ctx.stroke();
+    });
+
+    // ── Longitude meridians ──
+    for (var lonStep = 0; lonStep < 360; lonStep += 30) {
+      var lonBase = lonStep * Math.PI / 180 + rot;
+      ctx.beginPath();
+      var mStarted = false;
+      for (var latStep = -88; latStep <= 88; latStep += 2) {
+        var latR  = latStep * Math.PI / 180;
+        var cosL  = Math.cos(latR);
+        var z3m   = cosL * Math.cos(lonBase);
+        if (z3m >= 0) {
+          var msx = cx + cosL * Math.sin(lonBase) * R;
+          var msy = cy + (-Math.sin(latR)) * R;
+          mStarted ? ctx.lineTo(msx, msy) : ctx.moveTo(msx, msy);
+          mStarted = true;
+        } else { mStarted = false; }
+      }
+      ctx.strokeStyle = 'rgba(92,242,255,0.085)';
+      ctx.lineWidth   = 0.5;
+      ctx.stroke();
+    }
+
+    // ── Site-to-site edges ──
+    EDGES.forEach(function(pair) {
+      var a = pair[0], b = pair[1];
+      var pa = project(SITES[a][0], SITES[a][1]);
+      var pb = project(SITES[b][0], SITES[b][1]);
+      var minZ = Math.min(pa.z, pb.z);
+      if (minZ < -0.15) return;
+      var alpha = Math.max(0, minZ * 0.32 + 0.06);
+      ctx.beginPath();
+      ctx.moveTo(pa.sx, pa.sy);
+      ctx.lineTo(pb.sx, pb.sy);
+      ctx.strokeStyle = 'rgba(92,242,255,' + alpha.toFixed(2) + ')';
+      ctx.lineWidth   = 0.75;
+      ctx.stroke();
+    });
+
+    // ── Site nodes ──
+    SITES.forEach(function(site) {
+      var p = project(site[0], site[1]);
+      if (p.z < 0) return;
+      var a = p.z * 0.80 + 0.18;
+
+      // Outer ring
+      ctx.beginPath();
+      ctx.arc(p.sx, p.sy, 4.5, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(92,242,255,' + (a * 0.55).toFixed(2) + ')';
+      ctx.lineWidth   = 0.8;
+      ctx.stroke();
+
+      // Core
+      ctx.beginPath();
+      ctx.arc(p.sx, p.sy, 2.2, 0, Math.PI * 2);
+      ctx.fillStyle   = 'rgba(92,242,255,' + a.toFixed(2) + ')';
+      ctx.shadowColor = 'rgba(92,242,255,0.85)';
+      ctx.shadowBlur  = 7;
+      ctx.fill();
+      ctx.shadowBlur  = 0;
+
+      // Label on front-facing nodes
+      if (p.z > 0.35) {
+        ctx.font      = '600 8px var(--mono, monospace)';
+        ctx.fillStyle = 'rgba(92,242,255,' + (a * 0.70).toFixed(2) + ')';
+        ctx.textAlign = 'left';
+        ctx.fillText(site[2], p.sx + 6, p.sy + 3);
+      }
+    });
+
+    ctx.restore();
+
+    // ── Sphere edge ring ──
+    ctx.beginPath();
+    ctx.arc(cx, cy, R, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(92,242,255,0.20)';
+    ctx.lineWidth   = 1.0;
+    ctx.stroke();
+
+    raf = requestAnimationFrame(draw);
+  }
+
+  document.addEventListener('visibilitychange', function() {
+    if (document.hidden) cancelAnimationFrame(raf);
+    else raf = requestAnimationFrame(draw);
+  });
+
+  resize();
+  draw();
+  window.addEventListener('resize', function() { resize(); });
 })();
 
 // ━━━ BOOT DRIFT STARS (v11) ━━━
