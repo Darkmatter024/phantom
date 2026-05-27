@@ -1,25 +1,23 @@
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // PHANTOM — Service Worker
-// v1.6.27 (Hardening — explicit scheme guard; activate-evict cache cleanup)
+// v1.6.28 (Step 1.5 — lz-string persistence for Master parser)
 //
 // CACHE VERSION BUMP RATIONALE:
-//   v1.6.27 forces eviction of any pre-v1.6.26 sw.js still cached on field
-//   devices. Real-user diagnostics surfaced two issues attributed to OLD
-//   service workers that had never received the v1.5.0 architecture:
-//     1. Stale caches accumulating (no activate-handler eviction)
-//     2. chrome-extension:// fetches hitting cache.put() and throwing
-//   Fix 1 was already in place from v1.5.0 (activate handler below).
-//   Fix 2 is hardened here with an explicit scheme guard on fetch — even
-//   though the cross-origin check already filters chrome-extension URLs
-//   in practice, the explicit protocol check is doctrinally clearer and
-//   defensively layered.
+//   v1.6.28 vendors lz-string v1.5.0 at vendor/lz-string.min.js and adds
+//   PHANTOM_MASTER_STORE persistence on top of v1.6.26's Master parser.
+//   The new vendor file must be precached so the warm-store hydration
+//   on cold boot works offline. PWA users on prior CACHE_VERSION must
+//   evict to pick up the new code and the vendor file.
+//
+//   v1.6.27 carried over: explicit http(s) scheme guard at the top of
+//   the fetch handler; activate-handler cache eviction from v1.5.0.
 //
 //   Cross-origin requests (e.g. the Cloudflare Worker proxy to Anthropic
 //   API at phantom-api.wfj6t2fk7w.workers.dev) BYPASS the cache entirely.
 //   Only same-origin assets are cached.
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-const CACHE_VERSION = 'phantom-v1.6.27';
+const CACHE_VERSION = 'phantom-v1.6.28';
 
 // Assets to precache on install. Keep this minimal — single-file PWA means
 // most of PHANTOM is in dct-ios.html itself.
@@ -28,7 +26,8 @@ const PRECACHE_URLS = [
   'dct-ios.html',
   'version.json',
   'vendor/zxing.min.js',
-  'vendor/xlsx.full.min.js'
+  'vendor/xlsx.full.min.js',
+  'vendor/lz-string.min.js'
 ];
 
 // ── INSTALL ───────────────────────────────────────────────────────────

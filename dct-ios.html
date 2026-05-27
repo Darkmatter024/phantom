@@ -9712,7 +9712,7 @@ body[data-net="offline"] .va-btn::after {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.6.27';
+const PHANTOM_APP_VERSION = 'phantom-v1.6.28';
 // Poll interval for reg.update() while app is in foreground. 10 min.
 const PHANTOM_UPDATE_POLL_MS = 10 * 60 * 1000;
 
@@ -13142,6 +13142,8 @@ if (typeof window !== 'undefined') {
 <script src="./vendor/zxing.min.js"></script>
 <!-- 📋 Master parser: vendored SheetJS for CoreWeave xlsx ingest, same-origin, offline-safe -->
 <script src="./vendor/xlsx.full.min.js"></script>
+<!-- 🗜 Master persistence: vendored lz-string v1.5.0 for compressed-localStorage Site snapshot -->
+<script src="./vendor/lz-string.min.js"></script>
 
 <script>
 // ━━━ HAPTIC ━━━
@@ -23677,6 +23679,75 @@ function _phantom_master_findSheet(wb, name) {
   return null;
 }
 
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// PHANTOM_MASTER_STORE — lz-string-compressed localStorage persistence
+// for the Master parser result. Step 1.5 (v1.6.28).
+//
+// Wraps three methods over a single key 'phantom_master_v1'. The _v1 suffix
+// is the schema version — future schema changes use 'phantom_master_v2' etc.
+// Persisted payload contains schemaVersion, savedAt, sourceFileHash,
+// siteCode, racksByCab. Per Step 1.5 scope: hosts and cables are NOT
+// persisted; restored window._lastPhantomMaster carries racksByCab only.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+var PHANTOM_MASTER_STORE = {
+  KEY: 'phantom_master_v1',
+  save: function(parseResult) {
+    try {
+      if (!parseResult || !parseResult.racksByCab) return false;
+      var payload = {
+        schemaVersion: 1,
+        savedAt: new Date().toISOString(),
+        sourceFileHash: (parseResult.stats && parseResult.stats.sourceFileHash) || null,
+        siteCode: parseResult.siteCode || null,
+        racksByCab: parseResult.racksByCab
+      };
+      var compressed = LZString.compressToUTF16(JSON.stringify(payload));
+      localStorage.setItem(this.KEY, compressed);
+      console.log('PHANTOM_MASTER_STORE saved:', compressed.length, 'UTF-16 chars (~' + Math.round(compressed.length * 2 / 1024) + ' KB)');
+      return true;
+    } catch (e) {
+      var isQuota = e && (
+        e.name === 'QuotaExceededError' ||
+        e.name === 'NS_ERROR_DOM_QUOTA_REACHED' ||
+        e.code === 22 || e.code === 1014 ||
+        /quota/i.test(e.message || '')
+      );
+      if (isQuota) {
+        console.warn('PHANTOM: Master too large for offline storage on this device; in-memory parse retained for this session.');
+        return false;
+      }
+      console.warn('PHANTOM_MASTER_STORE save failed:', e);
+      return false;
+    }
+  },
+  load: function() {
+    try {
+      var raw = localStorage.getItem(this.KEY);
+      if (raw === null) return null;
+      var json = LZString.decompressFromUTF16(raw);
+      if (!json) {
+        console.warn('PHANTOM_MASTER_STORE: decompression returned empty, ignoring stored payload');
+        return null;
+      }
+      var payload = JSON.parse(json);
+      if (!payload || payload.schemaVersion !== 1) {
+        console.warn('PHANTOM_MASTER_STORE: schema mismatch (expected 1, got ' + (payload && payload.schemaVersion) + '), ignoring');
+        return null;
+      }
+      return payload;
+    } catch (e) {
+      console.warn('PHANTOM_MASTER_STORE load failed:', e);
+      return null;
+    }
+  },
+  clear: function() {
+    try { localStorage.removeItem(this.KEY); } catch (e) {}
+  }
+};
+
+// Hidden console helper for John's test workflow. Not wired to any UI.
+window.phantom_clearMaster = function() { return PHANTOM_MASTER_STORE.clear(); };
+
 async function phantom_parseMaster(arrayBuffer, options) {
   options = options || {};
   var chunkSize = options.chunkSize || 5000;
@@ -23893,6 +23964,17 @@ async function phantom_parseMaster(arrayBuffer, options) {
     };
 
     _phantomMasterCache.set(hashHex, site);
+
+    // v1.6.28: persist to lz-string-compressed localStorage so the next
+    // app cold-start can hydrate window._lastPhantomMaster without
+    // requiring the operator to re-pick the Master file. Wrapped in
+    // try/catch so a save failure cannot break the parse return.
+    try {
+      PHANTOM_MASTER_STORE.save(site);
+    } catch (e) {
+      console.warn('PHANTOM_MASTER_STORE save failed:', e);
+    }
+
     return site;
   } finally {
     _phantom_master_busy = false;
@@ -39606,6 +39688,25 @@ function goCompass() {
 // Boot-time state hydration — safe before DOMContentLoaded since this
 // only touches localStorage, not DOM. Render is deferred until goCompass().
 compass_loadState();
+
+// v1.6.28: Master parser warm-store hydration. If a persisted Master
+// snapshot exists, decompress and stash on window._lastPhantomMaster
+// so Step 2's Site Reference surface (TBD) can read from a warm store
+// with no file-picker round trip. Step 1.5 scope: racksByCab only;
+// hosts/cables are not persisted (schemaVersion 1).
+(function _phantom_master_bootRestore() {
+  try {
+    if (typeof PHANTOM_MASTER_STORE === 'undefined' || typeof LZString === 'undefined') return;
+    var loaded = PHANTOM_MASTER_STORE.load();
+    if (!loaded) return;
+    window._lastPhantomMaster = Object.assign({}, loaded, { restoredFromStorage: true });
+    console.log('PHANTOM: Master restored from localStorage',
+                '· siteCode=' + loaded.siteCode,
+                '· saved=' + loaded.savedAt);
+  } catch (e) {
+    console.warn('PHANTOM master boot restore failed:', e);
+  }
+})();
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // INTAKE — Phase 3 Gate 13

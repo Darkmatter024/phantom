@@ -1,6 +1,6 @@
 {
-  "version": "phantom-v1.6.27",
+  "version": "phantom-v1.6.28",
   "released": "2026-05-27",
-  "prevVersion": "phantom-v1.6.26",
-  "notes": "sw.js hardening. Adds explicit http(s) scheme guard to the fetch handler — kills 'Request scheme chrome-extension is unsupported' Cache API errors from browser extensions. Cache-bump forces PWA eviction so any device still running a pre-v1.6.26 sw.js (without the activate-handler cleanup that lands cache eviction) finally upgrades. The activate handler was already present from v1.5.0; no duplicate added."
+  "prevVersion": "phantom-v1.6.27",
+  "notes": "Step 1.5 — lz-string persistence for Master parser. Vendors lz-string v1.5.0 (vendor/lz-string.min.js, ~5 KB). Adds PHANTOM_MASTER_STORE wrapper (save/load/clear) over key 'phantom_master_v1' with QuotaExceededError guard. After phantom_parseMaster returns, the result is JSON-stringified and lz-string compressToUTF16-encoded into localStorage. On cold boot, the warm-store hydration IIFE decompresses and stashes window._lastPhantomMaster so Step 2's Site Reference surface (TBD) can render without a file-picker round trip. Step 1.5 scope persists racksByCab + metadata only — hosts/cables remain in-memory; schema v2 will reconsider. EDP parser, BOM parser, deploy_* code, Ghost Echo: untouched."
 }
