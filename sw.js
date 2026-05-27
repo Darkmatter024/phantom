@@ -1,24 +1,29 @@
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // PHANTOM — Service Worker
-// v1.5.0 (Reference dashboard — globe, ghost wave, glass cards, rack ISO)
+// v1.6.26 (Master parser — additive ingest for CoreWeave Master xlsx)
 //
 // CACHE VERSION BUMP RATIONALE:
-//   v1.5.0 adds Canvas 2D globe (boot screen), Ghost Echo plasma wave banner,
-//   glass card CSS system, and rack ISO viewer to dct-ios.html. PWA users
-//   cached on v1.4.2 must evict and re-fetch to see any of these additions.
+//   v1.6.26 adds phantom_parseMaster() for the CoreWeave Master xlsx format
+//   (9-sheet workbook). Vendors SheetJS at vendor/xlsx.full.min.js — must be
+//   precached so the parser works offline on iPad after first online visit.
+//   PWA users on prior CACHE_VERSION must evict to pick up the new code,
+//   the vendor file, and version.json.
 //
 //   Cross-origin requests (e.g. the Cloudflare Worker proxy to Anthropic
 //   API at phantom-api.wfj6t2fk7w.workers.dev) BYPASS the cache entirely.
 //   Only same-origin assets are cached.
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-const CACHE_VERSION = 'phantom-v1.5.0';
+const CACHE_VERSION = 'phantom-v1.6.26';
 
 // Assets to precache on install. Keep this minimal — single-file PWA means
 // most of PHANTOM is in dct-ios.html itself.
 const PRECACHE_URLS = [
   './',
-  'dct-ios.html'
+  'dct-ios.html',
+  'version.json',
+  'vendor/zxing.min.js',
+  'vendor/xlsx.full.min.js'
 ];
 
 // ── INSTALL ───────────────────────────────────────────────────────────
