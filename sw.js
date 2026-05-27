@@ -1,20 +1,25 @@
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // PHANTOM — Service Worker
-// v1.6.26 (Master parser — additive ingest for CoreWeave Master xlsx)
+// v1.6.27 (Hardening — explicit scheme guard; activate-evict cache cleanup)
 //
 // CACHE VERSION BUMP RATIONALE:
-//   v1.6.26 adds phantom_parseMaster() for the CoreWeave Master xlsx format
-//   (9-sheet workbook). Vendors SheetJS at vendor/xlsx.full.min.js — must be
-//   precached so the parser works offline on iPad after first online visit.
-//   PWA users on prior CACHE_VERSION must evict to pick up the new code,
-//   the vendor file, and version.json.
+//   v1.6.27 forces eviction of any pre-v1.6.26 sw.js still cached on field
+//   devices. Real-user diagnostics surfaced two issues attributed to OLD
+//   service workers that had never received the v1.5.0 architecture:
+//     1. Stale caches accumulating (no activate-handler eviction)
+//     2. chrome-extension:// fetches hitting cache.put() and throwing
+//   Fix 1 was already in place from v1.5.0 (activate handler below).
+//   Fix 2 is hardened here with an explicit scheme guard on fetch — even
+//   though the cross-origin check already filters chrome-extension URLs
+//   in practice, the explicit protocol check is doctrinally clearer and
+//   defensively layered.
 //
 //   Cross-origin requests (e.g. the Cloudflare Worker proxy to Anthropic
 //   API at phantom-api.wfj6t2fk7w.workers.dev) BYPASS the cache entirely.
 //   Only same-origin assets are cached.
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-const CACHE_VERSION = 'phantom-v1.6.26';
+const CACHE_VERSION = 'phantom-v1.6.27';
 
 // Assets to precache on install. Keep this minimal — single-file PWA means
 // most of PHANTOM is in dct-ios.html itself.
@@ -55,6 +60,14 @@ self.addEventListener('activate', (event) => {
 // cache entirely so live API calls always hit the network.
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
+
+  // v1.6.27: Only handle http(s) requests. Skip chrome-extension://, data:,
+  // blob:, file:, and any other scheme the Cache API rejects. Cache.put on
+  // these schemes throws TypeError("Request scheme '...' is unsupported"),
+  // which floods the console for users with extensions installed.
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+    return;  // browser handles non-http(s) natively
+  }
 
   // Cross-origin bypass — Anthropic API proxy, fonts CDN, etc.
   if (url.origin !== self.location.origin) {

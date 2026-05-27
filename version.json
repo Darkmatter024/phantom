@@ -1,6 +1,6 @@
 {
-  "version": "phantom-v1.6.26",
+  "version": "phantom-v1.6.27",
   "released": "2026-05-27",
-  "prevVersion": "phantom-v1.6.22",
-  "notes": "Master parser (additive). phantom_parseMaster() reads CoreWeave Master xlsx (9 sheets); Step 1 parses WIP, CUTSHEET, SITE-HOSTS. SHA-256 in-memory revision detection. SheetJS 0.20.x vendored to /vendor/. Existing EDP parser and BOM ingest untouched. Skipped v1.6.23-v1.6.25 to align with planning AI handoff (was last bumped at v1.6.22)."
+  "prevVersion": "phantom-v1.6.26",
+  "notes": "sw.js hardening. Adds explicit http(s) scheme guard to the fetch handler — kills 'Request scheme chrome-extension is unsupported' Cache API errors from browser extensions. Cache-bump forces PWA eviction so any device still running a pre-v1.6.26 sw.js (without the activate-handler cleanup that lands cache eviction) finally upgrades. The activate handler was already present from v1.5.0; no duplicate added."
 }
