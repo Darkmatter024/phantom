@@ -260,7 +260,7 @@ footer{margin:60px 0 0;padding:22px 0 0;border-top:1px solid rgba(92,242,255,0.1
 
 <header class="hero">
   <span class="wordmark">PHANTOM</span>
-  <div class="subtitle">Architecture Reference · v1.6.47 · 42,121 lines</div>
+  <div class="subtitle">Architecture Reference · v1.6.48 · 41,636 lines</div>
   <a class="dl-cta" href="phantom-architecture.html" download="phantom-architecture.html" title="Save a local copy of this page">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>
     Download HTML
@@ -325,7 +325,7 @@ footer{margin:60px 0 0;padding:22px 0 0;border-top:1px solid rgba(92,242,255,0.1
 <div class="panel">
   <div class="panel-h"><span class="name">Shape</span><span class="tag">Single-file PWA</span></div>
   <dl>
-    <dt>HTML</dt><dd><code>dct-ios.html</code> — 42,121 lines, ~2.2 MB. CSS, JS, SVG, fonts all inline.</dd>
+    <dt>HTML</dt><dd><code>dct-ios.html</code> — 41,636 lines, ~2.1 MB. CSS, JS, SVG, fonts all inline.</dd>
     <dt>Service Worker</dt><dd><code>sw.js</code> — 134 lines. Cache-version eviction model.</dd>
     <dt>Sentinel</dt><dd><code>version.json</code> — Polled by the in-app Ghost Update pill at <code>phantom_versionFileBackstop</code>.</dd>
     <dt>Vendor</dt><dd><code>vendor/zxing.min.js</code>, <code>vendor/xlsx.full.min.js</code>, <code>vendor/lz-string.min.js</code></dd>
@@ -371,7 +371,7 @@ footer{margin:60px 0 0;padding:22px 0 0;border-top:1px solid rgba(92,242,255,0.1
   <rect class="nbox" x="240" y="120" width="170" height="80" rx="10"/>
   <text class="ntitle" x="325" y="150" text-anchor="middle">Service Worker</text>
   <text class="nsub" x="325" y="170" text-anchor="middle">cache-first</text>
-  <text class="nsub" x="325" y="184" text-anchor="middle">phantom-v1.6.47</text>
+  <text class="nsub" x="325" y="184" text-anchor="middle">phantom-v1.6.48</text>
   <!-- Decision -->
   <text class="nlbl" x="325" y="76" text-anchor="middle">SAME-ORIGIN?</text>
   <!-- Same-origin branch -->
@@ -746,6 +746,21 @@ The visible nav labels were collapsed to the 4-Verb vocabulary, but the underlyi
 <h2><span class="num">§5</span> Function Inventory</h2>
 <p class="lede">~210 functions, grouped by source-file banner (<code>// ━━━ DOMAIN ━━━</code>), alphabetical within each group. Trivial helpers (<code>escHtml</code>, <code>$</code>, <code>safeParse</code>, <code>row</code>, <code>genId</code>, <code>pad</code>, <code>hl</code>, <code>pf</code>, etc.) are intentionally skipped. Names in <span class="mono" style="color:var(--cyan)">mono cyan</span>. Click a function in source and use the line-number cross-reference in the extraction report for context.</p>
 
+<div class="callout">
+<strong>v1.6.48 Delta — Phase 2 De-Bloat</strong>
+Net <strong>−485 lines</strong>. Removed entries (no longer in source):
+<code>bootRenderTopologies</code>,
+<code>bootTopoOpen</code> and its auto-render IIFE (the <code>BOOT TOPOLOGIES</code> banner is gone),
+<code>OPS_TABS.site</code> delegate,
+<code>deploy_formatDate</code> (callers fold into <code>formatDate</code>),
+the cosmic-button subsystem (<code>CosmicButton</code> class, <code>initCosmicButtons</code>, <code>_cosmicObserver</code>).
+Renamed: <code>phantom_testParseMaster</code> → <code>master_loadFromPicker</code> (load-bearing, not a test harness).
+Bug fix: <code>showPage('ops',…)</code> → <code>showPage('sop',…)</code> in two omni-search handlers.
+Still present as thin delegators over <code>escHtml</code>: <code>_bp_escape</code>, <code>_bomIngest_esc</code>, <code>_bomLookup_esc</code>.
+KNOW &rarr; CLI subtabs reduced from 8 to 5: removed Arista EOS, Cisco NX-OS, Mellanox (out of rack-and-stack scope); retained <code>cs-ib</code> (new default), <code>cs-oob</code>, <code>cs-console</code>, <code>cs-cert</code>, <code>cs-parser</code>.
+Section line-number markers below are <em>approximate</em> after the delete pass — each banner shifted ~150–500 lines upward; grep by banner text rather than line number.
+</div>
+
 <div class="fn-group">
 <h3>Service Worker / Ghost Update</h3>
 <div class="group-line">dct-ios.html — line 10167 banner</div>
@@ -797,8 +812,6 @@ The visible nav labels were collapsed to the 4-Verb vocabulary, but the underlyi
   <div class="fn-name fn-line">_session_clear</div><div class="fn-line fn-purpose">Wipes the session-state key.</div>
   <div class="fn-name fn-line">_session_read</div><div class="fn-line fn-purpose">Reads + parses the session-state JSON.</div>
   <div class="fn-name fn-line">_session_save</div><div class="fn-line fn-purpose">Persists the active page / opsTab to <code>phantom_session_state_v1</code>.</div>
-  <div class="fn-name fn-line">bootRenderTopologies</div><div class="fn-line fn-purpose">Paints 3 topology tiles (rack / network / site) into the boot screen.</div>
-  <div class="fn-name fn-line">bootTopoOpen</div><div class="fn-line fn-purpose">Tapping a topology tile expands the inline panel.</div>
   <div class="fn-name fn-line">hideStabGroup</div><div class="fn-line fn-purpose">Hides all subtab panes in a given stab group.</div>
   <div class="fn-name fn-line">initSubtab</div><div class="fn-line fn-purpose">Picks default visible subtab pane for a group on first render.</div>
   <div class="fn-name fn-line">launch</div><div class="fn-line fn-purpose">Tear down boot overlay → swap to app shell → set initial page.</div>
@@ -1473,7 +1486,7 @@ The visible nav labels were collapsed to the 4-Verb vocabulary, but the underlyi
 
 <div class="callout">
 <strong>Note on Master File persistence</strong>
-The cabinet/host map loaded under MASTER &rarr; FILE is NOT persisted in <code>localStorage</code> in v1.6.47. It lives in-memory as <code>PHANTOM_MASTER_STORE</code> (lz-string compressed). The SW v1.6.29 commit header references an older v1.6.28 bug where this variable showed up <code>undefined</code> despite valid <code>&lt;script&gt;</code> tags. Persistence of the master file appears to be handled out-of-band (likely a separate import flow).
+The cabinet/host map loaded under MASTER &rarr; FILE is NOT persisted in <code>localStorage</code> in v1.6.48. It lives in-memory as <code>PHANTOM_MASTER_STORE</code> (lz-string compressed). The SW v1.6.29 commit header references an older v1.6.28 bug where this variable showed up <code>undefined</code> despite valid <code>&lt;script&gt;</code> tags. Persistence of the master file appears to be handled out-of-band (likely a separate import flow).
 </div>
 </section>
 
@@ -1585,7 +1598,7 @@ The cabinet/host map loaded under MASTER &rarr; FILE is NOT persisted in <code>l
 </section>
 
 <footer>
-  PHANTOM v1.6.47 · Architecture Reference · Generated from <code>dct-ios.html</code> (42,121 lines) on 2026-05-28
+  PHANTOM v1.6.48 · Architecture Reference · Generated from <code>dct-ios.html</code> (41,636 lines) on 2026-05-28
 </footer>
 
 </main>
