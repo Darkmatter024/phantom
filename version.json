@@ -1,6 +1,6 @@
 {
-  "version": "phantom-v1.6.43",
+  "version": "phantom-v1.6.44",
   "released": "2026-05-28",
-  "prevVersion": "phantom-v1.6.42",
-  "notes": "Boot-screen redesign (part 2). Replaced the rectangular 'ENTER PHANTOM' button with a centered cosmic ENTER circle (rotating conic glow via --border-angle, tick ring, gradient ring, dark disc, power glyph, 'ENTER' wordmark + 'System Ready / Tap to enter' caption), positioned directly below the status checklist. Removed the 'Active Data Topologies' cards (bootTopologies) — those were shortcuts to views still reachable via KNOW->Optic->Verify and BUILD->Rack Map, so nothing is stranded. ENTER circle wired to the same launch() (tap + Enter/Space keydown). All new CSS scoped under #boot; row icons, glow panels, pitch-black bg, and Audiowide wordmark from v1.6.41/42 retained. Builds on v1.6.42."
+  "prevVersion": "phantom-v1.6.43",
+  "notes": "Brighter boot drift stars. Per-star baseAlpha bumped from 0.45-0.95 to 0.65-1.0, and the three star color channels (rare violet, cyan accent, mostly white) bumped from 0.50/0.55 to 0.80/0.85 alpha. Size, drift speed, twinkle range, count (50), and prefers-reduced-motion opt-out all retained, so the field remains the same calm ambient layer behind boot — just more visible on bright daylight iPad screens in the cold aisle. No change to the v1.6.43 ENTER circle, no change to the app-wide #bgCanvas fiber mesh."
 }

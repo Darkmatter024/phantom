@@ -10149,7 +10149,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.6.43';
+const PHANTOM_APP_VERSION = 'phantom-v1.6.44';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -35726,9 +35726,9 @@ function vaAskAgain() {
   function makeStar(seedX, seedY) {
     const r = Math.random();
     let color;
-    if (r > 0.97)      color = 'rgba(155,89,255,0.55)';   // rare violet
-    else if (r > 0.78) color = 'rgba(92,242,255,0.55)';   // cyan accent
-    else               color = 'rgba(220,230,245,0.50)';  // mostly white
+    if (r > 0.97)      color = 'rgba(155,89,255,0.85)';   // rare violet
+    else if (r > 0.78) color = 'rgba(92,242,255,0.85)';   // cyan accent
+    else               color = 'rgba(220,230,245,0.80)';  // mostly white
     return {
       x: (typeof seedX === 'number') ? seedX : rand(0, W),
       y: (typeof seedY === 'number') ? seedY : rand(0, H),
@@ -35738,7 +35738,7 @@ function vaAskAgain() {
       color: color,
       twinkleOffset: rand(0, Math.PI * 2),
       twinkleSpeed: rand(0.0006, 0.0014),
-      baseAlpha: rand(0.45, 0.95)
+      baseAlpha: rand(0.65, 1.0)
     };
   }
 
