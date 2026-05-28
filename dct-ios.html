@@ -10041,13 +10041,60 @@ body.has-resume-banner #boot {
     width: 100%;
     max-width: 480px;
   }
+
+  /* v1.6.32: Defeat the pre-existing 768/1024/1400 adaptive desktop
+     layouts INSIDE our 480px column. Those rules were authored when
+     #app was viewport-wide; they stack 96–136px of horizontal
+     padding on top of the v1.6.31 clamp and convert KNOW/CLI/POWER
+     sub-sections to multi-column grids that demand ≥420px per
+     column. Inside a 480px column they crush content to a thin
+     central strip and produce one-word-per-line wrap on desktop.
+
+     The work order's hypothesis (align-items:center shrink-fit) is
+     not the cause — #app has no align-items override and cross-axis
+     default stretch is honored. The real culprit is rule-stacking
+     from the existing 1024+/1400+ media queries. These overrides
+     restore the mobile-base padding inside our 480px column so the
+     content renders normally on desktop. Specificity (1,1,0 via the
+     `#app` prefix) outranks the bare `.page` / `.app-header` /
+     `.fiber-sub.stab-active` selectors in the 768/1024/1400 blocks
+     (which have specificity 0,1,0 or 0,2,0), so these rules win at
+     every viewport ≥600px regardless of source order. */
+
+  /* Restore mobile-base padding on the per-tab page content. Mirrors
+     the base .page rule at dct-ios.html line ~1144 so all five tabs
+     (NOW, BUILD, SCAN, KNOW, MASTER) fill the 480px column with the
+     same comfortable 14px gutters the phone uses. */
+  #app .page {
+    padding: 14px calc(var(--safe-right) + 14px)
+             calc(var(--tabnav-h) + 140px)
+             calc(var(--safe-left) + 14px);
+  }
+
+  /* Restore mobile-base app-header padding — the 1024+ rule
+     replaces these with flat 40px which then visibly mis-aligns
+     against the 14px content padding above. */
+  #app .app-header {
+    padding-left: calc(var(--safe-left) + 16px);
+    padding-right: calc(var(--safe-right) + 16px);
+  }
+
+  /* Disable the 1024+ multi-column grids on KNOW / CLI / POWER
+     sub-sections — they need ≥420px per column and can't lay out
+     inside our 480px container. Single-column block flow restores
+     legibility. */
+  #app .fiber-sub.stab-active,
+  #app .cli-sub.stab-active,
+  #app .pwr-sub.stab-active {
+    display: block;
+  }
 }
 
 </style>
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.6.31';
+const PHANTOM_APP_VERSION = 'phantom-v1.6.32';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
