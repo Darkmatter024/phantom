@@ -10123,12 +10123,33 @@ body.has-resume-banner #boot {
     linear-gradient(160deg, rgba(92,242,255,0.28), rgba(155,89,255,0.22) 55%, rgba(255,0,150,0.15)) border-box;
   box-shadow: 0 8px 24px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.035);
 }
+/* ENTER circle (v1.6.43) — centered cosmic ring below the checklist */
+#boot .enter-wrap { display:flex; flex-direction:column; align-items:center; gap:14px; margin-top:6px; }
+#boot .enter-circle { position:relative; width:150px; height:150px; display:grid; place-items:center; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+#boot .enter-halo { position:absolute; inset:-4px; border-radius:50%; z-index:0;
+  background:conic-gradient(from var(--border-angle), transparent 0%, var(--violet) 8%, #c026d3 13%, transparent 22%, transparent 50%, var(--cyan) 56%, #7eb8ff 62%, transparent 70%);
+  animation:cosmic-rotate 2.6s linear infinite; filter:blur(7px); opacity:.95;
+  -webkit-mask:radial-gradient(closest-side, transparent 62%, #000 66%); mask:radial-gradient(closest-side, transparent 62%, #000 66%); }
+#boot .enter-ticks { position:absolute; inset:8px; border-radius:50%; z-index:0;
+  background:repeating-conic-gradient(rgba(150,200,255,0.20) 0deg .8deg, transparent .8deg 9deg);
+  -webkit-mask:radial-gradient(closest-side, transparent 82%, #000 84%, #000 92%, transparent 94%); mask:radial-gradient(closest-side, transparent 82%, #000 84%, #000 92%, transparent 94%); }
+#boot .enter-ring { position:absolute; inset:7px; border-radius:50%; z-index:1; border:1.5px solid transparent;
+  background:linear-gradient(#000,#000) padding-box, linear-gradient(120deg, var(--cyan), var(--violet) 55%, var(--magenta)) border-box; box-shadow:0 0 14px rgba(92,242,255,0.25); }
+#boot .enter-disc { position:absolute; inset:13px; border-radius:50%; z-index:2;
+  background:radial-gradient(circle at 50% 34%, rgba(22,18,44,0.92), rgba(4,6,12,0.97));
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; box-shadow:inset 0 0 26px rgba(92,242,255,0.12); transition:transform .1s ease; }
+#boot .enter-circle:active .enter-disc { transform:scale(.96); }
+#boot .enter-circle:active .enter-halo { filter:blur(2px); animation-duration:.7s; }
+#boot .enter-glyph { width:30px; height:30px; filter:drop-shadow(0 0 8px rgba(92,242,255,0.7)); }
+#boot .enter-glyph path { stroke:url(#biGrad); stroke-width:2; fill:none; stroke-linecap:round; stroke-linejoin:round; }
+#boot .enter-etxt { font-family:var(--brand); font-weight:400; letter-spacing:.16em; font-size:14px; color:#eaf6ff; text-shadow:0 0 14px rgba(120,200,255,0.55); }
+#boot .enter-cap { font-family:var(--mono); font-size:10px; letter-spacing:.28em; text-transform:uppercase; color:#6f84a0; }
 
 </style>
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.6.42';
+const PHANTOM_APP_VERSION = 'phantom-v1.6.43';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -10614,67 +10635,17 @@ if (typeof window !== 'undefined') {
       <div class="boot-item"><svg class="bi-icon" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2"/><rect x="9" y="9" width="6" height="6" rx="1"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M19 9h3M19 14h3M2 9h3M2 14h3"/></svg><div class="boot-dot dot-ok"></div><span>Hardware fault patterns</span><span class="boot-badge boot-badge-ok">LOADED</span></div>
       <div class="boot-item active"><svg class="bi-icon" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7v12l2.4-1.9L11.8 21 14 19.1 16.4 21 19 18.9V9a7 7 0 0 0-7-7Z"/><circle cx="9.3" cy="10.5" r=".9"/><circle cx="14.7" cy="10.5" r=".9"/></svg><div class="boot-dot dot-sync"></div><span>Ghost Echo · Phantom</span><span class="boot-badge boot-badge-active">ACTIVE</span></div>
     </div>
-    <div class="cosmic-wrap boot-cosmic">
-  <canvas class="cosmic-canvas"></canvas>
-  <div class="cosmic-border-glow"></div>
-  <button class="cosmic-btn" onclick="launch()">
-    <span class="cosmic-label">ENTER PHANTOM</span>
-  </button>
-</div>
-    <div class="boot-topologies" id="bootTopologies">
-      <div class="boot-topologies-title">Active Data Topologies</div>
-      <div class="boot-topologies-grid">
-        <div class="boot-topo empty" data-topo="optics" onclick="bootTopoOpen('optics')">
-          <div class="boot-topo-icon">
-            <svg viewBox="0 0 56 56" fill="none">
-              <defs><linearGradient id="bootTopoG1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#00f0ff"/><stop offset="100%" stop-color="#ff007f"/></linearGradient></defs>
-              <rect x="14" y="10" width="22" height="28" rx="2" stroke="url(#bootTopoG1)" stroke-width="1.8" fill="none"/>
-              <rect x="22" y="18" width="22" height="28" rx="2" stroke="url(#bootTopoG1)" stroke-width="1.8" fill="rgba(18,22,40,0.6)"/>
-              <line x1="26" y1="26" x2="40" y2="26" stroke="url(#bootTopoG1)" stroke-width="1.5" stroke-linecap="round"/>
-              <line x1="26" y1="32" x2="36" y2="32" stroke="url(#bootTopoG1)" stroke-width="1.5" stroke-linecap="round"/>
-              <polyline points="26,38 30,34 33,40 38,32 40,38" stroke="url(#bootTopoG1)" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </div>
-          <div class="boot-topo-label">Optic<br>Ledgers</div>
-          <div class="boot-topo-count" data-count>NO DATA</div>
-        </div>
-        <div class="boot-topo empty" data-topo="racks" onclick="bootTopoOpen('racks')">
-          <div class="boot-topo-icon">
-            <svg viewBox="0 0 56 56" fill="none">
-              <defs><linearGradient id="bootTopoG2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#00f0ff"/><stop offset="100%" stop-color="#ff007f"/></linearGradient></defs>
-              <rect x="16" y="8" width="24" height="40" rx="2" stroke="url(#bootTopoG2)" stroke-width="1.8" fill="none"/>
-              <rect x="20" y="13" width="16" height="6" rx="1" stroke="url(#bootTopoG2)" stroke-width="1.3" fill="none"/>
-              <rect x="20" y="22" width="16" height="6" rx="1" stroke="url(#bootTopoG2)" stroke-width="1.3" fill="none"/>
-              <rect x="20" y="31" width="16" height="6" rx="1" stroke="url(#bootTopoG2)" stroke-width="1.3" fill="none"/>
-              <circle cx="33" cy="16" r="1" fill="#00f0ff"/>
-              <circle cx="33" cy="25" r="1" fill="#00f0ff"/>
-              <circle cx="33" cy="34" r="1" fill="#00f0ff"/>
-            </svg>
-          </div>
-          <div class="boot-topo-label">Rack<br>Elevations</div>
-          <div class="boot-topo-count" data-count>NO DATA</div>
-        </div>
-        <div class="boot-topo empty" data-topo="network" onclick="bootTopoOpen('network')">
-          <div class="boot-topo-icon">
-            <svg viewBox="0 0 56 56" fill="none">
-              <defs><linearGradient id="bootTopoG3" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#00f0ff"/><stop offset="100%" stop-color="#ff007f"/></linearGradient></defs>
-              <circle cx="28" cy="10" r="3" stroke="url(#bootTopoG3)" stroke-width="1.8" fill="rgba(18,22,40,0.6)"/>
-              <line x1="28" y1="13" x2="28" y2="22" stroke="url(#bootTopoG3)" stroke-width="1.5"/>
-              <line x1="28" y1="22" x2="14" y2="32" stroke="url(#bootTopoG3)" stroke-width="1.5"/>
-              <line x1="28" y1="22" x2="28" y2="32" stroke="url(#bootTopoG3)" stroke-width="1.5"/>
-              <line x1="28" y1="22" x2="42" y2="32" stroke="url(#bootTopoG3)" stroke-width="1.5"/>
-              <circle cx="14" cy="36" r="3" stroke="url(#bootTopoG3)" stroke-width="1.8" fill="rgba(18,22,40,0.6)"/>
-              <circle cx="28" cy="36" r="3" stroke="url(#bootTopoG3)" stroke-width="1.8" fill="rgba(18,22,40,0.6)"/>
-              <circle cx="42" cy="36" r="3" stroke="url(#bootTopoG3)" stroke-width="1.8" fill="rgba(18,22,40,0.6)"/>
-              <line x1="14" y1="42" x2="14" y2="46" stroke="url(#bootTopoG3)" stroke-width="1.3"/>
-              <line x1="28" y1="42" x2="28" y2="46" stroke="url(#bootTopoG3)" stroke-width="1.3"/>
-              <line x1="42" y1="42" x2="42" y2="46" stroke="url(#bootTopoG3)" stroke-width="1.3"/>
-            </svg>
-          </div>
-          <div class="boot-topo-label">Network<br>Validation</div>
-          <div class="boot-topo-count" data-count>NO DATA</div>
+    <div class="enter-wrap">
+      <div class="enter-circle" role="button" tabindex="0" aria-label="Enter PHANTOM" onclick="launch()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();launch();}">
+        <div class="enter-halo"></div>
+        <div class="enter-ticks"></div>
+        <div class="enter-ring"></div>
+        <div class="enter-disc">
+          <svg class="enter-glyph" viewBox="0 0 24 24"><path d="M12 3v9"/><path d="M18.4 7.6a9 9 0 1 1-12.8 0"/></svg>
+          <span class="enter-etxt">ENTER</span>
         </div>
       </div>
+      <div class="enter-cap">System Ready &middot; Tap to enter</div>
     </div>
   </div>
 </div>

@@ -1,6 +1,6 @@
 {
-  "version": "phantom-v1.6.42",
+  "version": "phantom-v1.6.43",
   "released": "2026-05-28",
-  "prevVersion": "phantom-v1.6.41",
-  "notes": "Boot-screen visual redesign (part 1). Added per-row line icons to the boot checklist (layers/database/share/zap/shield+/cpu/ghost), each a gradient-stroked inline SVG via a shared #biGrad def. Glowing gradient-bordered panels on the boot checklist and the topology cards, and a pitch-black #boot background. All additive/override CSS scoped under #boot; existing launch() wiring, the ENTER PHANTOM button, boot-item injection points (update/resume/clone-war rows), and topology onclick handlers are untouched. The ENTER ring / 'System Ready' top panel from the design target is intentionally NOT included in this pass (it would relocate the working enter button) — pending explicit go-ahead. Builds on v1.6.41 (Audiowide wordmark)."
+  "prevVersion": "phantom-v1.6.42",
+  "notes": "Boot-screen redesign (part 2). Replaced the rectangular 'ENTER PHANTOM' button with a centered cosmic ENTER circle (rotating conic glow via --border-angle, tick ring, gradient ring, dark disc, power glyph, 'ENTER' wordmark + 'System Ready / Tap to enter' caption), positioned directly below the status checklist. Removed the 'Active Data Topologies' cards (bootTopologies) — those were shortcuts to views still reachable via KNOW->Optic->Verify and BUILD->Rack Map, so nothing is stranded. ENTER circle wired to the same launch() (tap + Enter/Space keydown). All new CSS scoped under #boot; row icons, glow panels, pitch-black bg, and Audiowide wordmark from v1.6.41/42 retained. Builds on v1.6.42."
 }
