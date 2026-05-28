@@ -1,0 +1,1579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PHANTOM — Architecture Reference</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Audiowide&family=Orbitron:wght@500;700&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ─── TOKENS (lifted from PHANTOM :root) ─── */
+:root{
+  --bg0:#06090f; --bg1:#0b1017; --bg2:#12181f;
+  --cyan:#5cf2ff; --cyan-bright:#9af6ff; --cyan2:#00bcd4;
+  --violet:#9b59ff; --violet-bright:#b478ff;
+  --magenta:#ff006e; --gold:#ffd60a; --orange:#ff8a00;
+  --green:#30d158; --red:#ff453a;
+  --slate:#8AAFBF; --slate-dim:#486070;
+  --white:#f5f5f7;
+  --raj:'Rajdhani',-apple-system,'Helvetica Neue',Arial,sans-serif;
+  --orb:'Orbitron',-apple-system,Arial,sans-serif;
+  --brand:'Audiowide',-apple-system,Arial,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,'Menlo',monospace;
+  --panel-bg:linear-gradient(180deg,rgba(11,16,28,0.92),rgba(6,9,17,0.9)) padding-box,
+             linear-gradient(150deg,rgba(92,242,255,0.40),rgba(155,89,255,0.32) 52%,rgba(255,0,150,0.20)) border-box;
+  --panel-shadow:0 16px 46px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.045);
+}
+
+/* ─── BASE ─── */
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg0);color:var(--white);font-family:var(--raj);font-weight:500;line-height:1.55;-webkit-font-smoothing:antialiased}
+body{
+  min-height:100vh;
+  background-image:radial-gradient(560px 320px at 50% 0%, rgba(92,242,255,0.05), transparent 60%);
+  background-attachment:fixed;
+  padding-bottom:80px;
+}
+a{color:var(--cyan);text-decoration:none;border-bottom:1px solid rgba(92,242,255,0.20)}
+a:hover{border-bottom-color:var(--cyan)}
+code,pre,.mono{font-family:var(--mono);font-size:0.92em}
+strong{color:var(--white);font-weight:700}
+em{color:var(--slate);font-style:normal;letter-spacing:0.04em}
+
+/* ─── LAYOUT ─── */
+main{max-width:920px;margin:0 auto;padding:0 22px}
+section{padding:46px 0 18px;scroll-margin-top:76px}
+.lede{color:var(--slate);font-size:14px;max-width:720px;margin-bottom:18px}
+
+/* ─── WORDMARK ─── */
+.wordmark{
+  font-family:var(--brand);
+  font-size:54px;letter-spacing:0.06em;line-height:1;
+  background:linear-gradient(95deg,#2ff0d6 0%,#34dcff 38%,#c45cff 66%,#ff36d4 100%);
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;color:transparent;
+  filter:drop-shadow(0 0 24px rgba(92,242,255,0.22)) drop-shadow(0 0 8px rgba(196,92,255,0.18));
+  display:inline-block;padding:6px 0;
+}
+.subtitle{font-family:var(--mono);font-size:12px;color:var(--slate);letter-spacing:0.16em;text-transform:uppercase;margin-top:4px}
+
+/* ─── HEADER ─── */
+header.hero{padding:54px 0 18px;text-align:center}
+
+/* ─── STICKY NAV (mimics .stab pills) ─── */
+nav.jump{
+  position:sticky;top:0;z-index:50;
+  background:rgba(6,9,15,0.88);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border-bottom:1px solid rgba(92,242,255,0.12);
+  padding:10px 16px;
+  display:flex;gap:6px;flex-wrap:wrap;justify-content:center;
+}
+nav.jump a{
+  font-family:var(--raj);font-weight:700;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;
+  padding:7px 14px;min-height:32px;display:inline-flex;align-items:center;
+  color:var(--slate);border:1px solid rgba(154,246,255,0.18);border-top-color:rgba(154,246,255,0.32);
+  border-radius:6px;background:linear-gradient(180deg,rgba(255,255,255,0.04),rgba(92,242,255,0.02));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.04);
+  transition:color .15s,border-color .15s,box-shadow .15s;
+}
+nav.jump a:hover{color:var(--cyan-bright);border-color:rgba(154,246,255,0.55);box-shadow:0 0 12px rgba(92,242,255,0.30),inset 0 1px 0 rgba(255,255,255,0.08)}
+
+/* ─── SECTION HEADERS ─── */
+h2{
+  font-family:var(--orb);font-weight:700;font-size:18px;letter-spacing:0.18em;text-transform:uppercase;
+  color:var(--cyan);padding-bottom:12px;margin-bottom:18px;
+  border-bottom:1px solid rgba(92,242,255,0.18);
+  display:flex;align-items:baseline;gap:10px;
+}
+h2 .num{font-family:var(--mono);font-size:11px;color:var(--slate);letter-spacing:0.1em}
+h3{
+  font-family:var(--orb);font-weight:500;font-size:13px;letter-spacing:0.18em;text-transform:uppercase;
+  color:var(--cyan-bright);margin:24px 0 8px;
+}
+h4{
+  font-family:var(--mono);font-weight:500;font-size:12px;letter-spacing:0.06em;
+  color:var(--violet-bright);margin:14px 0 6px;
+}
+p{margin:0 0 10px;color:rgba(220,234,249,0.92);font-size:14px}
+ul{margin:6px 0 14px 18px;color:rgba(220,234,249,0.92);font-size:14px}
+li{margin-bottom:4px}
+
+/* ─── PANELS (gradient-bordered, double background) ─── */
+.panel{
+  background:var(--panel-bg);
+  border:1px solid transparent;border-radius:14px;
+  padding:18px 20px;margin:14px 0;
+  box-shadow:var(--panel-shadow);
+}
+.panel .panel-h{
+  display:flex;align-items:baseline;justify-content:space-between;gap:14px;
+  margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid rgba(92,242,255,0.10);
+}
+.panel .panel-h .name{font-family:var(--orb);font-weight:700;font-size:14px;letter-spacing:0.14em;text-transform:uppercase;color:var(--cyan)}
+.panel .panel-h .tag{font-family:var(--mono);font-size:10px;color:var(--slate);letter-spacing:0.08em;text-transform:uppercase}
+.panel .why{color:var(--slate);font-size:12px;letter-spacing:0.02em;margin:8px 0 12px}
+.panel dl{display:grid;grid-template-columns:max-content 1fr;gap:6px 14px;font-size:13px;margin-top:8px}
+.panel dt{font-family:var(--mono);font-size:11px;color:var(--violet-bright);letter-spacing:0.06em;text-transform:uppercase}
+.panel dd{color:rgba(220,234,249,0.90)}
+
+/* ─── FUNCTION TABLE ─── */
+.fn-group{margin:18px 0 26px}
+.fn-group h3{margin-bottom:6px}
+.fn-group .group-line{font-family:var(--mono);font-size:10px;color:var(--slate);letter-spacing:0.06em;margin-bottom:10px}
+.fn-list{display:grid;grid-template-columns:minmax(190px,260px) 1fr;gap:4px 18px;font-size:13px;align-items:baseline}
+.fn-name{font-family:var(--mono);font-size:12px;font-weight:500;color:var(--cyan);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fn-line{padding-bottom:6px;border-bottom:1px dashed rgba(92,242,255,0.06)}
+.fn-purpose{color:rgba(220,234,249,0.86)}
+.fn-need{color:var(--gold);font-style:italic}
+
+/* ─── DATA TABLES ─── */
+table{width:100%;border-collapse:collapse;font-size:12px;margin:10px 0}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid rgba(92,242,255,0.08);vertical-align:top}
+th{font-family:var(--orb);font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--slate);font-weight:500}
+td.key{font-family:var(--mono);color:var(--violet-bright);white-space:nowrap}
+td.const{font-family:var(--mono);color:var(--cyan);white-space:nowrap}
+td.shape{color:rgba(220,234,249,0.86)}
+
+/* ─── DESIGN SYSTEM SAMPLES ─── */
+.swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin:14px 0}
+.swatch{
+  background:var(--bg1);border:1px solid rgba(255,255,255,0.06);border-radius:8px;
+  padding:10px 12px;display:flex;flex-direction:column;gap:4px;
+}
+.swatch .chip{height:36px;border-radius:5px;margin-bottom:6px;box-shadow:inset 0 1px 0 rgba(255,255,255,0.10)}
+.swatch .name{font-family:var(--mono);font-size:11px;color:var(--white)}
+.swatch .val{font-family:var(--mono);font-size:10px;color:var(--slate)}
+
+.samples{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0;align-items:center}
+.sample-stab{
+  font-family:var(--raj);font-weight:700;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;
+  padding:7px 16px;min-height:36px;display:inline-flex;align-items:center;
+  color:var(--slate);background:linear-gradient(180deg,rgba(255,255,255,0.08),rgba(92,242,255,0.02));
+  border:1px solid rgba(154,246,255,0.40);border-top-color:rgba(154,246,255,0.55);border-radius:6px;
+}
+.sample-stab.active{color:var(--cyan-bright);box-shadow:0 0 14px rgba(92,242,255,0.30),inset 0 1px 0 rgba(255,255,255,0.08)}
+.sample-pt{
+  display:inline-flex;align-items:center;gap:8px;font-family:var(--orb);font-weight:700;font-size:10px;letter-spacing:3px;text-transform:uppercase;
+  padding:14px 28px;min-height:48px;border-radius:4px;border:none;cursor:default;
+  clip-path:polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+}
+.sample-pt.primary{background:var(--cyan);color:#020d14;clip-path:none;box-shadow:0 0 20px rgba(92,242,255,0.28)}
+.sample-pt.secondary{background:rgba(92,242,255,0.06);border:1px solid rgba(92,242,255,0.22);color:var(--cyan)}
+.sample-pt.warn{background:rgba(255,214,10,0.08);border:1px solid rgba(255,214,10,0.30);color:var(--gold)}
+.sample-pt.danger{background:rgba(255,45,85,0.08);border:1px solid rgba(255,45,85,0.30);color:var(--red)}
+.sample-mspill{
+  flex:0 0 auto;min-height:44px;background:rgba(11,16,28,0.65);
+  border:1px solid rgba(92,242,255,0.18);color:rgba(220,234,249,0.55);
+  font-family:var(--orb);font-size:11px;letter-spacing:0.18em;text-transform:uppercase;
+  padding:12px 18px;border-radius:10px;display:inline-flex;align-items:center;
+}
+.sample-mspill.active{background:linear-gradient(180deg,rgba(92,242,255,0.10),rgba(92,242,255,0.03));border-color:rgba(92,242,255,0.55);color:var(--cyan);box-shadow:0 0 14px rgba(92,242,255,0.30),inset 0 1px 0 rgba(255,255,255,0.10)}
+.sample-qa{
+  display:inline-flex;flex-direction:column;align-items:center;gap:4px;
+  padding:10px 14px;background:linear-gradient(180deg,rgba(11,16,28,0.85),rgba(6,9,17,0.9));
+  border:1px solid rgba(92,242,255,0.18);border-radius:8px;min-width:90px;position:relative;
+}
+.sample-qa .lbl{font-family:var(--raj);font-weight:700;font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:rgba(92,242,255,0.60)}
+.sample-qa .glyph{width:22px;height:22px;color:var(--cyan)}
+.sample-qa.scan{box-shadow:0 0 14px rgba(92,242,255,0.22)}
+.sample-qa.optic{border-color:rgba(255,214,10,0.30)}
+.sample-qa.optic .lbl{color:var(--gold)} .sample-qa.optic .glyph{color:var(--gold)}
+.sample-qa.blocker{border-color:rgba(255,69,58,0.30);box-shadow:0 0 14px rgba(255,69,58,0.22)}
+.sample-qa.blocker .lbl{color:var(--red)} .sample-qa.blocker .glyph{color:var(--red)}
+.sample-qa.handoff .lbl{color:var(--orange)} .sample-qa.handoff .glyph{color:var(--orange)}
+.sample-qa.ghost{border-color:rgba(155,89,255,0.30)}
+.sample-qa.ghost .lbl{color:var(--violet-bright)} .sample-qa.ghost .glyph{color:var(--violet-bright)}
+
+.sample-bootitem{
+  display:flex;align-items:center;gap:12px;padding:9px 12px;color:rgba(220,230,245,0.85);
+  font-family:var(--raj);font-weight:500;font-size:14px;border-bottom:1px solid rgba(255,255,255,0.04);
+}
+.sample-bootitem .dot{width:6px;height:6px;border-radius:50%}
+.sample-bootitem .dot.ok{background:var(--green);box-shadow:0 0 8px rgba(48,209,88,0.6)}
+.sample-bootitem .dot.warn{background:var(--gold);box-shadow:0 0 8px rgba(255,214,10,0.6)}
+.sample-bootitem .dot.sync{background:var(--cyan);box-shadow:0 0 8px rgba(92,242,255,0.6)}
+.sample-bootitem .badge{
+  margin-left:auto;font-size:11px;padding:4px 12px;border-radius:999px;
+  letter-spacing:1.5px;font-family:var(--raj);font-weight:700;
+  border:1px solid rgba(48,209,88,0.45);color:var(--green);
+}
+
+.enter-demo{
+  display:flex;justify-content:center;padding:20px;margin:14px 0;
+  background:linear-gradient(180deg,rgba(11,16,28,0.40),rgba(2,3,8,0.6));
+  border-radius:14px;border:1px solid rgba(92,242,255,0.10);
+}
+.enter-circle{
+  position:relative;width:150px;height:150px;display:grid;place-items:center;
+}
+.enter-halo{
+  position:absolute;inset:0;border-radius:50%;
+  background:conic-gradient(from 0deg, rgba(92,242,255,0) 0deg, var(--cyan) 80deg, var(--violet) 180deg, var(--magenta) 260deg, rgba(255,0,150,0) 360deg);
+  filter:blur(7px);
+  -webkit-mask:radial-gradient(circle, transparent 56%, black 58%, black 78%, transparent 80%);
+          mask:radial-gradient(circle, transparent 56%, black 58%, black 78%, transparent 80%);
+  animation:spin 2.6s linear infinite;
+}
+.enter-disc{
+  position:relative;z-index:2;width:104px;height:104px;border-radius:50%;
+  background:radial-gradient(circle at 50% 40%, #0e1726 0%, #04070b 70%);
+  border:1px solid rgba(92,242,255,0.30);display:grid;place-items:center;text-align:center;
+  font-family:var(--brand);font-size:18px;color:var(--cyan);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.10), 0 0 20px rgba(92,242,255,0.16);
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ─── SVG DIAGRAMS ─── */
+.diagram{display:block;width:100%;height:auto;margin:14px 0;background:rgba(6,9,17,0.40);border:1px solid rgba(92,242,255,0.08);border-radius:10px;padding:18px}
+
+/* ─── BANNERS ─── */
+.callout{
+  background:linear-gradient(180deg,rgba(255,214,10,0.06),rgba(255,138,0,0.04));
+  border:1px solid rgba(255,214,10,0.22);border-left:3px solid var(--gold);
+  padding:12px 14px;border-radius:8px;margin:14px 0;font-size:13px;color:rgba(220,234,249,0.90);
+}
+.callout strong{color:var(--gold);font-family:var(--orb);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;display:block;margin-bottom:4px}
+
+footer{margin:60px 0 0;padding:22px 0 0;border-top:1px solid rgba(92,242,255,0.10);color:var(--slate);font-size:11px;text-align:center;font-family:var(--mono);letter-spacing:0.06em}
+
+@media (max-width:680px){
+  .wordmark{font-size:38px}
+  .fn-list{grid-template-columns:1fr;gap:0}
+  .fn-name{margin-top:8px}
+  main{padding:0 14px}
+  nav.jump{padding:8px 10px}
+  nav.jump a{font-size:10px;padding:6px 10px;letter-spacing:1.1px}
+  table{font-size:11px}
+  th,td{padding:6px 6px}
+}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <span class="wordmark">PHANTOM</span>
+  <div class="subtitle">Architecture Reference · v1.6.47 · 42,121 lines</div>
+</header>
+
+<nav class="jump" aria-label="Section navigation">
+  <a href="#overview">Overview</a>
+  <a href="#architecture">Architecture</a>
+  <a href="#navigation">Navigation</a>
+  <a href="#subsystems">Subsystems</a>
+  <a href="#functions">Functions</a>
+  <a href="#data-model">Data Model</a>
+  <a href="#design">Design System</a>
+</nav>
+
+<main>
+
+<!-- ════════════════════════════════════════════════════ -->
+<!-- 1. OVERVIEW                                          -->
+<!-- ════════════════════════════════════════════════════ -->
+<section id="overview">
+<h2><span class="num">§1</span> Overview</h2>
+
+<p>PHANTOM is a single-file Progressive Web App built for the CoreWeave AUS-01 floor team running rack-and-stack on <strong>GB300 NVL72</strong> deployments. It collapses the deployment lead's day-0 toolset — EDP intake, manifest review, rack map, fiber/optic reference, ghost echo capture, voice assistant, shift handoff — into one HTML file that runs offline in iOS Safari.</p>
+
+<h3>The Cold Aisle Filter</h3>
+<p>Every line of code answers one of three questions, or it is bloat and gets cut:</p>
+<ul>
+  <li><strong>Does it speed up validation?</strong> — the lead is racing a deployment clock.</li>
+  <li><strong>Does it protect offline data?</strong> — there is no signal between the racks.</li>
+  <li><strong>Does it clarify vendor oversight?</strong> — handoffs and audits are load-bearing.</li>
+</ul>
+<p>Tactical UI doctrine: gloved hand, fast movement, high contrast, large tap targets (44–56 px), monospace tabular data for instant legibility, zero decorative animation that costs Safari render time.</p>
+
+<h3>Day 0 Scope</h3>
+<p>Day 0 is the deployment lead's morning-to-end-of-shift loop:</p>
+<ul>
+  <li>Receive EDP &rarr; verify hash &rarr; parse to racks/optics/port-maps</li>
+  <li>Walk the floor: scan racks, log discrepancies, capture ghost-echo quirks, raise blockers</li>
+  <li>Generate manifests, run port-map validation, mark phases complete with PIN-gated overrides</li>
+  <li>Hand off the shift with an AI-summarized brief and a printable audit log</li>
+</ul>
+
+<h3>Offline-First Commitment</h3>
+<p><code>localStorage</code> is the entire persistence layer. There is no remote database. The service worker precaches the HTML, three vendor libraries (ZXing for scanning, SheetJS for XLSX, lz-string for compression), and <code>version.json</code>. AI calls are the only network request and they cleanly degrade — a downed Cloudflare Worker never takes the app down.</p>
+
+<h3>No Build Step</h3>
+<p>One HTML file, one service worker, one JSON sentinel. Every release ships as three files in a zip. No bundler, no transpiler, no framework. iOS Safari runs it as-shipped.</p>
+</section>
+
+<!-- ════════════════════════════════════════════════════ -->
+<!-- 2. ARCHITECTURE                                      -->
+<!-- ════════════════════════════════════════════════════ -->
+<section id="architecture">
+<h2><span class="num">§2</span> Architecture</h2>
+
+<div class="panel">
+  <div class="panel-h"><span class="name">Shape</span><span class="tag">Single-file PWA</span></div>
+  <dl>
+    <dt>HTML</dt><dd><code>dct-ios.html</code> — 42,121 lines, ~2.2 MB. CSS, JS, SVG, fonts all inline.</dd>
+    <dt>Service Worker</dt><dd><code>sw.js</code> — 134 lines. Cache-version eviction model.</dd>
+    <dt>Sentinel</dt><dd><code>version.json</code> — Polled by the in-app Ghost Update pill at <code>phantom_versionFileBackstop</code>.</dd>
+    <dt>Vendor</dt><dd><code>vendor/zxing.min.js</code>, <code>vendor/xlsx.full.min.js</code>, <code>vendor/lz-string.min.js</code></dd>
+    <dt>Persistence</dt><dd><code>localStorage</code> only. ~33 keyed stores. No IndexedDB except for BOM ingest (<code>bom_openDB</code>).</dd>
+    <dt>AI Path</dt><dd>Cloudflare Worker proxy to Anthropic API. No API key on the client. Origin-allowlisted.</dd>
+    <dt>Build</dt><dd>None. Ship-as-edited.</dd>
+  </dl>
+</div>
+
+<h3>Request Flow</h3>
+<svg class="diagram" viewBox="0 0 880 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Request flow diagram">
+  <defs>
+    <linearGradient id="grad-cyan" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#5cf2ff"/><stop offset="100%" stop-color="#9b59ff"/>
+    </linearGradient>
+    <linearGradient id="grad-violet" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0%" stop-color="#9b59ff"/><stop offset="100%" stop-color="#ff006e"/>
+    </linearGradient>
+    <linearGradient id="grad-edge" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0%" stop-color="#5cf2ff" stop-opacity="0.6"/><stop offset="100%" stop-color="#9b59ff" stop-opacity="0.4"/>
+    </linearGradient>
+    <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#5cf2ff"/>
+    </marker>
+    <marker id="ar2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#9b59ff"/>
+    </marker>
+  </defs>
+  <style>
+    .nbox{fill:rgba(11,16,28,0.85);stroke:url(#grad-edge);stroke-width:1.4}
+    .ntitle{font-family:Orbitron,sans-serif;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;fill:#5cf2ff}
+    .nsub{font-family:'JetBrains Mono',monospace;font-size:10px;fill:#8AAFBF}
+    .nedge{stroke:#5cf2ff;stroke-width:1.6;fill:none}
+    .nedge2{stroke:#9b59ff;stroke-width:1.6;fill:none;stroke-dasharray:4 3}
+    .nlbl{font-family:Rajdhani,sans-serif;font-weight:700;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;fill:#8AAFBF}
+  </style>
+  <!-- Browser -->
+  <rect class="nbox" x="20" y="120" width="170" height="80" rx="10"/>
+  <text class="ntitle" x="105" y="150" text-anchor="middle">iOS Safari</text>
+  <text class="nsub" x="105" y="170" text-anchor="middle">fetch(req)</text>
+  <text class="nsub" x="105" y="184" text-anchor="middle">phantomAPI()</text>
+  <!-- SW -->
+  <rect class="nbox" x="240" y="120" width="170" height="80" rx="10"/>
+  <text class="ntitle" x="325" y="150" text-anchor="middle">Service Worker</text>
+  <text class="nsub" x="325" y="170" text-anchor="middle">cache-first</text>
+  <text class="nsub" x="325" y="184" text-anchor="middle">phantom-v1.6.47</text>
+  <!-- Decision -->
+  <text class="nlbl" x="325" y="76" text-anchor="middle">SAME-ORIGIN?</text>
+  <!-- Same-origin branch -->
+  <rect class="nbox" x="460" y="40" width="190" height="60" rx="10"/>
+  <text class="ntitle" x="555" y="68" text-anchor="middle">Cache / Asset</text>
+  <text class="nsub" x="555" y="84" text-anchor="middle">html · vendor · json</text>
+  <!-- Cloudflare -->
+  <rect class="nbox" x="460" y="220" width="190" height="60" rx="10"/>
+  <text class="ntitle" x="555" y="248" text-anchor="middle">Cloudflare Worker</text>
+  <text class="nsub" x="555" y="264" text-anchor="middle">phantom-api.wfj6t2fk7w</text>
+  <!-- Anthropic -->
+  <rect class="nbox" x="700" y="220" width="160" height="60" rx="10"/>
+  <text class="ntitle" x="780" y="248" text-anchor="middle">Anthropic API</text>
+  <text class="nsub" x="780" y="264" text-anchor="middle">claude-sonnet-4-6</text>
+  <!-- Edges -->
+  <path class="nedge" d="M190 160 L240 160" marker-end="url(#ar)"/>
+  <path class="nedge" d="M410 145 Q435 145 460 90" marker-end="url(#ar)"/>
+  <text class="nlbl" x="430" y="118">YES</text>
+  <path class="nedge2" d="M410 175 Q435 175 460 240" marker-end="url(#ar2)"/>
+  <text class="nlbl" x="430" y="208" fill="#9b59ff">CROSS-ORIGIN BYPASS</text>
+  <path class="nedge2" d="M650 250 L700 250" marker-end="url(#ar2)"/>
+  <text class="nlbl" x="675" y="240" fill="#9b59ff">HTTPS / JSON</text>
+</svg>
+
+<p>The service worker (<code>sw.js</code>) intercepts only same-origin <em>http(s)</em> requests, scheme-guards everything else (<code>chrome-extension:</code>, <code>data:</code>, <code>blob:</code>, <code>file:</code>), and bypasses cross-origin requests entirely. That bypass is what keeps AI traffic flowing directly to the Cloudflare Worker proxy without ever touching the cache. The Worker holds the Anthropic API key in encrypted env vars, enforces an Origin allowlist, and applies a server-side spend cap.</p>
+
+<div class="callout">
+  <strong>Why a proxy?</strong>
+  No API key reaches the client. A leaked PWA build can't burn billing. Origin enforcement and spend cap both live server-side. The client only knows the proxy URL: <code>https://phantom-api.wfj6t2fk7w.workers.dev/v1/messages</code>.
+</div>
+
+<h3>Cache Eviction Contract</h3>
+<p><code>CACHE_VERSION</code> in <code>sw.js</code> and <code>PHANTOM_APP_VERSION</code> in <code>dct-ios.html</code> MUST bump in lockstep with the <code>version</code> field in <code>version.json</code>. On activate, <code>sw.js</code> deletes every cache whose key doesn't match <code>CACHE_VERSION</code>, then calls <code>clients.claim()</code>. The in-app pill (<code>sw_pillRefresh</code>) polls <code>version.json</code> and prompts the operator to tap-to-update when a new build is staged.</p>
+
+<h3>Resilient Precache (v1.6.29)</h3>
+<p>Precache uses <code>Promise.allSettled</code> per URL, not <code>cache.addAll</code>. A single failing precache entry no longer aborts the install. Failures are logged, not fatal.</p>
+</section>
+
+<!-- ════════════════════════════════════════════════════ -->
+<!-- 3. NAVIGATION MAP                                    -->
+<!-- ════════════════════════════════════════════════════ -->
+<section id="navigation">
+<h2><span class="num">§3</span> Navigation Map</h2>
+
+<p class="lede">Five bottom-nav tabs, in lifecycle order: <strong>MASTER</strong> = site, <strong>BUILD</strong> = job, <strong>NOW</strong> = shift, <strong>SCAN</strong> = tool, <strong>KNOW</strong> = reference. The bottom-nav comment in source calls this the "4-Verb Collapse" — visible verbs are NOW · BUILD · SCAN · KNOW, with MASTER added in v1.6.30 as a fifth slot to host the site reference.</p>
+
+<svg class="diagram" viewBox="0 0 880 460" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Navigation hierarchy">
+  <defs>
+    <linearGradient id="g-master" x1="0" x2="1"><stop offset="0%" stop-color="#5cf2ff"/><stop offset="100%" stop-color="#9b59ff"/></linearGradient>
+    <linearGradient id="g-build" x1="0" x2="1"><stop offset="0%" stop-color="#ff8a00"/><stop offset="100%" stop-color="#ffd60a"/></linearGradient>
+    <linearGradient id="g-now" x1="0" x2="1"><stop offset="0%" stop-color="#ff453a"/><stop offset="100%" stop-color="#ff006e"/></linearGradient>
+    <linearGradient id="g-scan" x1="0" x2="1"><stop offset="0%" stop-color="#5cf2ff"/><stop offset="100%" stop-color="#30d158"/></linearGradient>
+    <linearGradient id="g-know" x1="0" x2="1"><stop offset="0%" stop-color="#ffd60a"/><stop offset="100%" stop-color="#5cf2ff"/></linearGradient>
+  </defs>
+  <style>
+    .tbox{fill:rgba(11,16,28,0.85);stroke-width:1.6}
+    .tlbl{font-family:Orbitron,sans-serif;font-size:13px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;text-anchor:middle}
+    .tsub{font-family:'JetBrains Mono',monospace;font-size:9.5px;fill:#8AAFBF;text-anchor:middle}
+    .sub{fill:rgba(11,16,28,0.65);stroke:rgba(92,242,255,0.22);stroke-width:1}
+    .subtxt{font-family:Rajdhani,sans-serif;font-weight:700;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;fill:#8AAFBF;text-anchor:middle}
+    .edge{stroke:rgba(92,242,255,0.30);stroke-width:1;fill:none;stroke-dasharray:2 3}
+  </style>
+  <!-- MASTER -->
+  <rect class="tbox" x="20"  y="20" width="160" height="58" rx="10" stroke="url(#g-master)"/>
+  <text class="tlbl" x="100" y="46" fill="#5cf2ff">MASTER</text>
+  <text class="tsub" x="100" y="64">pg-master · site</text>
+  <!-- BUILD -->
+  <rect class="tbox" x="200" y="20" width="160" height="58" rx="10" stroke="url(#g-build)"/>
+  <text class="tlbl" x="280" y="46" fill="#ff8a00">BUILD</text>
+  <text class="tsub" x="280" y="64">pg-sop · job</text>
+  <!-- NOW -->
+  <rect class="tbox" x="380" y="20" width="160" height="58" rx="10" stroke="url(#g-now)"/>
+  <text class="tlbl" x="460" y="46" fill="#ff453a">NOW</text>
+  <text class="tsub" x="460" y="64">triage · shift</text>
+  <!-- SCAN -->
+  <rect class="tbox" x="560" y="20" width="140" height="58" rx="10" stroke="url(#g-scan)"/>
+  <text class="tlbl" x="630" y="46" fill="#5cf2ff">SCAN</text>
+  <text class="tsub" x="630" y="64">pg-scan · tool</text>
+  <!-- KNOW -->
+  <rect class="tbox" x="720" y="20" width="140" height="58" rx="10" stroke="url(#g-know)"/>
+  <text class="tlbl" x="790" y="46" fill="#ffd60a">KNOW</text>
+  <text class="tsub" x="790" y="64">pg-fiber · ref</text>
+
+  <!-- MASTER children -->
+  <rect class="sub" x="20"  y="118" width="74" height="28" rx="6"/>
+  <text class="subtxt" x="57"  y="136">FILE</text>
+  <rect class="sub" x="106" y="118" width="74" height="28" rx="6"/>
+  <text class="subtxt" x="143" y="136">PROFILE</text>
+  <text class="tsub" x="100" y="160" fill="#9b59ff">v1.6.46 toggle</text>
+  <line class="edge" x1="100" y1="78" x2="100" y2="118"/>
+
+  <!-- BUILD subtabs -->
+  <text class="tsub" x="280" y="98">10 SUBTABS</text>
+  <g font-family="Rajdhani" font-weight="700" font-size="9" fill="#8AAFBF" text-anchor="middle">
+    <rect class="sub" x="200" y="118" width="74" height="22" rx="5"/><text x="237" y="133">DEPLOY</text>
+    <rect class="sub" x="286" y="118" width="74" height="22" rx="5"/><text x="323" y="133">SOPS</text>
+    <rect class="sub" x="200" y="148" width="74" height="22" rx="5"/><text x="237" y="163">BOM</text>
+    <rect class="sub" x="286" y="148" width="74" height="22" rx="5"/><text x="323" y="163">MANIFEST</text>
+    <rect class="sub" x="200" y="178" width="74" height="22" rx="5"/><text x="237" y="193">PORT MAP</text>
+    <rect class="sub" x="286" y="178" width="74" height="22" rx="5"/><text x="323" y="193">RACK MAP</text>
+    <rect class="sub" x="200" y="208" width="74" height="22" rx="5"/><text x="237" y="223">OPTICS</text>
+    <rect class="sub" x="286" y="208" width="74" height="22" rx="5"/><text x="323" y="223">POWER</text>
+    <rect class="sub" x="200" y="238" width="74" height="22" rx="5"/><text x="237" y="253">BURNDOWN</text>
+    <rect class="sub" x="286" y="238" width="74" height="22" rx="5"/><text x="323" y="253">AUDITS</text>
+  </g>
+  <line class="edge" x1="280" y1="78" x2="280" y2="98"/>
+
+  <!-- NOW children -->
+  <g>
+    <rect class="sub" x="380" y="118" width="74" height="22" rx="5"/><text class="subtxt" x="417" y="133">TRIAGE</text>
+    <rect class="sub" x="466" y="118" width="74" height="22" rx="5"/><text class="subtxt" x="503" y="133">MISSION</text>
+    <rect class="sub" x="380" y="148" width="74" height="22" rx="5"/><text class="subtxt" x="417" y="163">BLOCKER</text>
+    <rect class="sub" x="466" y="148" width="74" height="22" rx="5"/><text class="subtxt" x="503" y="163">HANDOFF</text>
+    <rect class="sub" x="380" y="178" width="74" height="22" rx="5"/><text class="subtxt" x="417" y="193">REPORT</text>
+    <rect class="sub" x="466" y="178" width="74" height="22" rx="5"/><text class="subtxt" x="503" y="193">COMPASS</text>
+  </g>
+  <text class="tsub" x="460" y="220" fill="#ff453a">today_render &amp; quick actions</text>
+  <line class="edge" x1="460" y1="78" x2="460" y2="118"/>
+
+  <!-- SCAN children -->
+  <rect class="sub" x="560" y="118" width="140" height="22" rx="5"/><text class="subtxt" x="630" y="133">PhantomScanner (ZXing)</text>
+  <text class="tsub" x="630" y="160" fill="#30d158">.defaultCallback · .rackCallback</text>
+  <text class="tsub" x="630" y="174" fill="#30d158">.opticCallback · .auditCallback</text>
+  <line class="edge" x1="630" y1="78" x2="630" y2="118"/>
+
+  <!-- KNOW children -->
+  <g>
+    <rect class="sub" x="720" y="118" width="140" height="22" rx="5"/><text class="subtxt" x="790" y="133">FIBER</text>
+    <rect class="sub" x="720" y="148" width="140" height="22" rx="5"/><text class="subtxt" x="790" y="163">OPTIC LOOKUP</text>
+    <rect class="sub" x="720" y="178" width="140" height="22" rx="5"/><text class="subtxt" x="790" y="193">CLI · search</text>
+    <rect class="sub" x="720" y="208" width="140" height="22" rx="5"/><text class="subtxt" x="790" y="223">HW MATRIX</text>
+  </g>
+  <line class="edge" x1="790" y1="78" x2="790" y2="118"/>
+
+  <!-- Hidden routes -->
+  <text class="tsub" x="440" y="310" fill="#8AAFBF" font-size="11">Hidden but routable (per #pg-* comment block):</text>
+  <text class="tsub" x="440" y="328" font-size="10">pg-cli (search) · pg-power (SCAN dispatch + QR) · pg-twin (Issue Dashboard) · pg-compass (triage)</text>
+
+  <text class="tsub" x="440" y="380" fill="#5cf2ff" font-size="11">v1.6.46 IA cleanup</text>
+  <text class="tsub" x="440" y="398" font-size="10">SCAN/OPTICS/INTAKE removed from NOW; INTAKE moved into BUILD &rarr; DEPLOY header (+ INTAKE button).</text>
+  <text class="tsub" x="440" y="414" font-size="10">MASTER absorbed the legacy BUILD &rarr; SITE subtab. siteProfile_showEditor renders inside #pg-master.</text>
+</svg>
+
+<div class="callout">
+<strong>Page IDs vs. nav labels</strong>
+The visible nav labels were collapsed to the 4-Verb vocabulary, but the underlying <code>showPage()</code> still routes by legacy page IDs: <code>pg-sop</code> (BUILD), <code>pg-fiber</code> (KNOW), <code>pg-scan</code> (SCAN). There is no <code>pg-now</code> — NOW resolves through <code>showPage('triage')</code> into <code>today_render()</code>. There is no <code>pg-build</code> or <code>pg-know</code>.
+</div>
+</section>
+
+<!-- ════════════════════════════════════════════════════ -->
+<!-- 4. SUBSYSTEMS                                        -->
+<!-- ════════════════════════════════════════════════════ -->
+<section id="subsystems">
+<h2><span class="num">§4</span> Major Subsystems</h2>
+
+<div class="panel">
+  <div class="panel-h"><span class="name">Deployment Command Engine</span><span class="tag">Stage 2+3 · Stage 3.5 · Stage 8</span></div>
+  <p>The core of BUILD: a deployment is a job. EDP intake parses raw vendor docs into racks, phases, optics, and port-maps. Phase advancement is gated; some transitions require a PIN-protected override. Stage 3.5 added the client-side EDP parser (no AI hop) for low-trust environments.</p>
+  <p class="why">Why it matters — the lead lives in this engine. Every other system feeds or reads from <code>phantom_deployments_v1</code>.</p>
+  <dl>
+    <dt>Entry</dt><dd><code>OPS_TABS.deploy</code> &rarr; <code>deploy_showList()</code> &rarr; <code>deploy_showDetail()</code></dd>
+    <dt>Storage</dt><dd><code>phantom_deployments_v1</code>, <code>phantom_deploy_racks_v1</code>, <code>phantom_deploy_phases_v1</code>, <code>phantom_active_deployment</code></dd>
+    <dt>Key funcs</dt><dd><code>deploy_loadAll</code> · <code>deploy_setActive</code> · <code>deploy_advancePhase</code> · <code>deploy_overrideGate</code> · <code>deploy_computeDeployRollup</code> · <code>deploy_showCommandCenter</code> (Stage 8 multi-deploy view)</dd>
+  </dl>
+</div>
+
+<div class="panel">
+  <div class="panel-h"><span class="name">Stage 3.5 — EDP Parser</span><span class="tag">Client-side, no AI</span></div>
+  <p>A heuristic local-only parser for raw EDP text. Caches results by EDP hash so re-loading is instant. Feeds the EDP Gate (hash verification) and the Intake Gate (per-item accept/reject UI).</p>
+  <dl>
+    <dt>Entry</dt><dd><code>edpGate_open</code> &rarr; <code>deploy_preprocessEDP</code> &rarr; <code>deploy_parseEDP_local</code> &rarr; <code>intakeGate_open</code> &rarr; <code>intakeGate_confirm</code></dd>
+    <dt>Storage</dt><dd><code>phantom_edp_cache_v1</code> · <code>phantom_edp_gate_pending</code> · <code>phantom_edp_intake_pending</code> · <code>phantom_edp_progress_v1</code> (chunked checkpoint)</dd>
+  </dl>
+</div>
+
+<div class="panel">
+  <div class="panel-h"><span class="name">Site Profile</span><span class="tag">Stage 7</span></div>
+  <p>Persisted site-level reference: platforms, PDUs, switches. Used as AI prompt context, as a SOP filter, and as the source-of-truth for site-wide validation. v1.6.46 surfaced the editor inside the MASTER &rarr; PROFILE section.</p>
+  <dl>
+    <dt>Entry</dt><dd><code>siteProfile_showEditor</code> (rendered into <code>#pg-master</code> when PROFILE pill is active)</dd>
+    <dt>Storage</dt><dd><code>phantom_site_profile_v1</code> · object {site, platforms[], pdus[], switches[]}</dd>
+    <dt>AI</dt><dd><code>siteProfile_getContextBlock</code> returns a prompt-ready text block</dd>
+  </dl>
+</div>
+
+<div class="panel">
+  <div class="panel-h"><span class="name">Master File</span><span class="tag">MASTER &rarr; FILE</span></div>
+  <p>Loads the cabinet/host CSV that maps physical rack identity. Provides search-first autocomplete from cabinet ID to host list. v1.6.26 added the additive parse so partial files still load.</p>
+  <p class="why">Why it matters — the lead types a cabinet ID and gets the host roster instantly. No round-trip.</p>
+  <dl>
+    <dt>Entry</dt><dd><code>master_initTab</code> &rarr; <code>master_render</code> &rarr; <code>master_runFilter</code></dd>
+    <dt>Storage</dt><dd>In-memory <code>PHANTOM_MASTER_STORE</code> (lz-string compressed). Not persisted in <code>localStorage</code>.</dd>
+  </dl>
+</div>
+
+<div class="panel">
+  <div class="panel-h"><span class="name">Ghost Echo</span><span class="tag">Tribal Knowledge</span></div>
+  <p>The shift-handoff intelligence pipe. Captures hardware-quirk notes keyed by (hardwareType, phaseType). At every phase-complete tap, gates the operator with the capture modal so the next shift inherits the knowledge.</p>
+  <p class="why">Why it matters — handoffs are load-bearing. Ghost Echo is what stops the same trap from catching three shifts in a row.</p>
+  <dl>
+    <dt>Entry</dt><dd><code>ge_onCompleteTap</code> &rarr; <code>ge_openCaptureModal</code> &rarr; <code>ge_saveQuirk</code></dd>
+    <dt>Storage</dt><dd><code>phantom_ghost_echo_v1</code> · object {[hwType]: {[phaseType]: [quirks]}}</dd>
+    <dt>Lookup</dt><dd><code>ge_findQuirks</code> · <code>ge_deriveHardwareType</code></dd>
+  </dl>
+</div>
+
+<div class="panel">
+  <div class="panel-h"><span class="name">Intake</span><span class="tag">v1.6.44 IA cleanup</span></div>
+  <p>The single canonical entry for any inbound file (EDP, BOM, rack list, port map). One drag-drop overlay, one detect-then-dispatch flow. Moved from the NOW dashboard into BUILD &rarr; DEPLOY header (<code>+ INTAKE</code> button).</p>
+  <dl>
+    <dt>Entry</dt><dd><code>intake_open</code> &rarr; <code>intake_handleFile</code> &rarr; <code>intake_detect</code> &rarr; <code>intake_dispatch</code></dd>
+  </dl>
+</div>
+
+<div class="panel">
+  <div class="panel-h"><span class="name">Blocker</span><span class="tag">NOW &rarr; quick capture</span></div>
+  <p>One-tap blocker capture from the triage screen. A blocker is an Issue record with a chosen severity; the wizard walks deploy-picker &rarr; rack-picker &rarr; note &rarr; save.</p>
+  <dl>
+    <dt>Entry</dt><dd><code>blocker_quick</code> &rarr; <code>blocker_render</code> &rarr; <code>blocker_save</code></dd>
+    <dt>Storage</dt><dd><code>phantom_deploy_issues_v1</code> (shared with Issues subsystem)</dd>
+  </dl>
+</div>
+
+<div class="panel">
+  <div class="panel-h"><span class="name">Handoff</span><span class="tag">DCT-13 · Stage 9</span></div>
+  <p>Generates an AI-summarized handoff from the active deployment state, current audit tail, open blockers, and Ghost Echo quirks. Saves to a per-deployment ledger and can export standalone HTML.</p>
+  <dl>
+    <dt>Entry</dt><dd><code>handoff_quick</code> · <code>handoff_showGenerator</code> &rarr; <code>handoff_generate</code> &rarr; <code>handoff_saveRecord</code></dd>
+    <dt>Storage</dt><dd><code>phantom_handoff_v1</code></dd>
+    <dt>Export</dt><dd><code>handoff_exportHTML</code></dd>
+  </dl>
+</div>
+
+<div class="panel">
+  <div class="panel-h"><span class="name">Shift Report</span><span class="tag">end-of-shift bookend</span></div>
+  <p>End-of-shift companion to Mission Brief. Aggregates the day's active deployment + handoff + audit data and feeds <code>phantomAI</code> to produce a structured report.</p>
+  <dl>
+    <dt>Entry</dt><dd><code>shiftReport_generate</code></dd>
+  </dl>
+</div>
+
+<div class="panel">
+  <div class="panel-h"><span class="name">Mission Brief</span><span class="tag">v1.6.46 NOW tile</span></div>
+  <p>Start-of-shift bookend. Time-gated so it shows once per shift. Renders today's deployment focus, blockers, and shift goals. Tile on NOW dashboard (added v1.6.46) paired with SHIFT REPORT.</p>
+  <dl>
+    <dt>Entry</dt><dd><code>brief_shouldShow</code> &rarr; <code>brief_generate</code> &rarr; <code>brief_show</code> &rarr; <code>brief_markSeen</code></dd>
+    <dt>Storage</dt><dd><code>phantom_brief_last_ts</code></dd>
+    <dt>AI</dt><dd><code>brief_buildLiveContext</code> assembles the prompt context block</dd>
+  </dl>
+</div>
+
+<div class="panel">
+  <div class="panel-h"><span class="name">Optic / Fiber Reference</span><span class="tag">KNOW · Day-0 lookup</span></div>
+  <p>Platform &rarr; distance &rarr; optic/reach lookup, plus inline DOM/DDM parser, port-channel parser, IB-perfquery counter parser. The Optic Scan path captures a scanned optic part number and triages it against the inventory.</p>
+  <dl>
+    <dt>Entry</dt><dd><code>getPlatforms</code> · <code>getOpticTypesForPlatform</code> · <code>getOpticResult</code> · <code>opticScanResult</code> · <code>opticManualLookup</code></dd>
+    <dt>Storage</dt><dd><code>phantom_optic_inventory</code> · <code>phantom_optic_score_history</code></dd>
+  </dl>
+</div>
+
+<div class="panel">
+  <div class="panel-h"><span class="name">Rack Map / Rack Viewer</span><span class="tag">Gate 32 · DCT-09</span></div>
+  <p>Two separate flows. <strong>Rack Map</strong> (BUILD &rarr; RACK MAP) is the persisted rack list with add/edit/delete and full history. <strong>Rack Viewer</strong> (Gate 32) is an on-demand single-rack render that doesn't mutate state — used by deep-linking from QR labels.</p>
+  <dl>
+    <dt>Rack Map</dt><dd><code>renderRackMap</code> · <code>rmActive_render</code> · <code>openRmSheet</code> · <code>phantomRackLog</code> · <code>phantomRackShowHistory</code></dd>
+    <dt>Rack Viewer</dt><dd><code>rackViewer_request</code> · <code>rackViewer_softFail</code></dd>
+    <dt>Elevation</dt><dd><code>rackElevation_buildHtml</code> · <code>scrubbar_buildHtml</code></dd>
+    <dt>Storage</dt><dd><code>dct_racks_v1</code> · <code>phantom_rack_history</code></dd>
+  </dl>
+</div>
+
+<div class="panel">
+  <div class="panel-h"><span class="name">BOM Ingest</span><span class="tag">Stage 1 · Stage 2 XLSX · Stage 5 lookup</span></div>
+  <p>Multi-step CSV / XLSX BOM ingestion. IndexedDB-backed (the only non-localStorage store). Wizard: source &rarr; preview &rarr; metadata &rarr; commit. Stage 2 added multi-sheet XLSX. Stage 5 added scan-driven BOM lookup.</p>
+  <dl>
+    <dt>Entry</dt><dd><code>bomTab_render</code> &rarr; <code>bomIngest_render</code> &rarr; <code>bom_parseCSV_local</code></dd>
+    <dt>Lookup</dt><dd><code>bomLookup_open</code> &rarr; <code>bomLookup_scanAnother</code></dd>
+    <dt>Storage</dt><dd>IndexedDB (<code>bom_openDB</code>); overrides in <code>phantom_classifier_overrides_v1</code></dd>
+  </dl>
+</div>
+
+<div class="panel">
+  <div class="panel-h"><span class="name">Triage / Today Dashboard</span><span class="tag">NOW · Build Lead morning view</span></div>
+  <p>The lead's morning landing: active deployment card, system-state pane (storage + handoff + deployments), quick-action tiles (BLOCKER · HANDOFF · DEPLOY · MISSION BRIEF · SHIFT REPORT). Burndown chart per deployment.</p>
+  <dl>
+    <dt>Entry</dt><dd><code>showPage('triage')</code> &rarr; <code>today_render</code></dd>
+    <dt>Cards</dt><dd><code>triage_renderDeployCard</code> · <code>today_systemStatePane</code> · <code>burndown_renderCard</code></dd>
+  </dl>
+</div>
+
+<div class="panel">
+  <div class="panel-h"><span class="name">Compass</span><span class="tag">cage-nut compass</span></div>
+  <p>Tactical helper for chassis install. Tracks start-U and chassis height; visualises cage-nut positions. Persists last state so a partial install resumes correctly.</p>
+  <dl>
+    <dt>Entry</dt><dd><code>compass_render</code></dd>
+    <dt>Storage</dt><dd><code>phantom_compass_last</code> · {startU, chassis}</dd>
+  </dl>
+</div>
+
+<div class="panel">
+  <div class="panel-h"><span class="name">Crash-Cart Mode</span><span class="tag">focused single-rack view</span></div>
+  <p>Toggleable mode that narrows the UI to one rack for high-attention crash-cart work. Picks a rack, then renders a focused view; exiting restores prior view.</p>
+  <dl>
+    <dt>Entry</dt><dd><code>crashcart_toggle</code> &rarr; <code>crashcart_pickRack</code> &rarr; <code>crashcart_render</code></dd>
+  </dl>
+</div>
+
+<div class="panel">
+  <div class="panel-h"><span class="name">Scanner</span><span class="tag">PhantomScanner IIFE · ZXing</span></div>
+  <p>Camera-based barcode/QR scanner singleton with pre-attached callback slots for different consumers (default, rack lookup, optic, audit). Auto-closes on page navigation to free the camera.</p>
+  <dl>
+    <dt>API</dt><dd><code>PhantomScanner.open(cb)</code> · <code>.close()</code> · <code>.isActive()</code></dd>
+    <dt>Slots</dt><dd><code>.defaultCallback</code> · <code>.rapidCallback</code> · <code>.rackCallback</code> · <code>.opticCallback</code> · <code>.auditCallback</code></dd>
+    <dt>Storage</dt><dd><code>phantom_scan_collection</code> (session)</dd>
+  </dl>
+</div>
+
+<div class="panel">
+  <div class="panel-h"><span class="name">Identity / RBAC</span><span class="tag">PIN-based, salted</span></div>
+  <p>Light role system. Operator name is captured on first run. "Build lead" is the role that can advance gated phases and override checks. PIN-based with crypto salt; lockout state after repeated failures.</p>
+  <dl>
+    <dt>Entry</dt><dd><code>identity_promptUser</code> · <code>identity_isLead</code></dd>
+    <dt>Lead session</dt><dd><code>rbac_isLeadSession</code> · <code>rbac_setLeadSession</code> · <code>rbac_clearLeadSession</code> · <code>rbac_exitLeadMode</code></dd>
+    <dt>Storage</dt><dd><code>phantom_current_user_v1</code> · <code>phantom_pin_lockout_v1</code></dd>
+  </dl>
+</div>
+
+<div class="panel">
+  <div class="panel-h"><span class="name">PHANTOM AI Wrapper + PARSERS Registry</span><span class="tag">offline-safe</span></div>
+  <p>One universal fetch wrapper (<code>phantomAPI</code>) handles every Claude call: timeouts, classified error messages for each HTTP code, retry with backoff, AbortController-based timeout. <code>phantomAI</code> picks <code>max_tokens</code> from <code>AI_TOKENS[feature]</code>. A separate parser registry (PARSERS const) holds tactical paste-parsers for NVIDIA-SMI, DOM/DDM, error counters, port-channel, IB perfquery, and port-map.</p>
+  <dl>
+    <dt>API</dt><dd><code>phantomAPI</code> · <code>phantomAI</code> · <code>PARSERS</code> · <code>detectType</code></dd>
+    <dt>Proxy</dt><dd><code>PHANTOM_PROXY_URL</code> = <code>https://phantom-api.wfj6t2fk7w.workers.dev/v1/messages</code></dd>
+    <dt>Model</dt><dd><code>claude-sonnet-4-6</code> · body cap 300 KB · 60 s default timeout · 2 retries with [8 s, 15 s] backoff</dd>
+  </dl>
+</div>
+
+<div class="panel">
+  <div class="panel-h"><span class="name">Boot Sequence</span><span class="tag">ENTER circle · v1.6.43</span></div>
+  <p>Pitch-black boot screen. The Audiowide PHANTOM wordmark sits above a checklist that animates row-by-row (staggered <code>itemReveal</code>); each row carries a status badge fed by injection points (storage health, master sync, SW state, fiber-reference, etc.). Below the checklist is the centered <strong>ENTER circle</strong>: a rotating conic-gradient halo wrapped around a dark disc with the brand wordmark. Tap or Enter/Space fires <code>launch()</code>.</p>
+  <p>A drift-star canvas (<code>BOOT DRIFT STARS</code>) renders 50 slow-drifting twinkles behind the boot content; brightness was bumped in v1.6.46.</p>
+  <dl>
+    <dt>Entry</dt><dd><code>launch</code> &rarr; tear down boot &rarr; <code>showPage</code> initial</dd>
+    <dt>Init</dt><dd><code>phantomDeferredInit</code> runs post-tap setup</dd>
+    <dt>Sentinel</dt><dd><code>PHANTOM_APP_VERSION</code> binds the boot subtitle so version bumps are auto-reflected</dd>
+  </dl>
+</div>
+
+<div class="panel">
+  <div class="panel-h"><span class="name">Discrepancy Log</span><span class="tag">photo-attached</span></div>
+  <p>Captures field discrepancies with category, severity, optional photo (base64 thumbnail), and audit-log linkage. Filterable per deployment.</p>
+  <dl>
+    <dt>Entry</dt><dd><code>discLog_open</code> &rarr; <code>discLog_save</code></dd>
+    <dt>Storage</dt><dd><code>phantom_discrepancies_v1</code></dd>
+  </dl>
+</div>
+
+<div class="panel">
+  <div class="panel-h"><span class="name">Tactical Print (BLE)</span><span class="tag">Zebra / Brady</span></div>
+  <p>Bluetooth printer integration for fault labels. State machine: idle &rarr; searching &rarr; printing &rarr; done/err. Builds ZPL bytes via <code>zpl_faultLabel</code>.</p>
+  <dl>
+    <dt>Entry</dt><dd><code>btPrint_openById</code> · <code>btPrint_open</code> &rarr; <code>btPrint_setState</code></dd>
+  </dl>
+</div>
+
+</section>
+
+<!-- ════════════════════════════════════════════════════ -->
+<!-- 5. FUNCTION INVENTORY                                -->
+<!-- ════════════════════════════════════════════════════ -->
+<section id="functions">
+<h2><span class="num">§5</span> Function Inventory</h2>
+<p class="lede">~210 functions, grouped by source-file banner (<code>// ━━━ DOMAIN ━━━</code>), alphabetical within each group. Trivial helpers (<code>escHtml</code>, <code>$</code>, <code>safeParse</code>, <code>row</code>, <code>genId</code>, <code>pad</code>, <code>hl</code>, <code>pf</code>, etc.) are intentionally skipped. Names in <span class="mono" style="color:var(--cyan)">mono cyan</span>. Click a function in source and use the line-number cross-reference in the extraction report for context.</p>
+
+<div class="fn-group">
+<h3>Service Worker / Ghost Update</h3>
+<div class="group-line">dct-ios.html — line 10167 banner</div>
+<div class="fn-list">
+  <div class="fn-name fn-line">phantom_ghostUpdateReady</div><div class="fn-line fn-purpose">Shows the "tap to update" affordance on the SW pill once a new SW has installed.</div>
+  <div class="fn-name fn-line">phantom_versionFileBackstop</div><div class="fn-line fn-purpose">Polls <code>version.json</code> and arms the ghost-update pill when the build sentinel changes.</div>
+  <div class="fn-name fn-line">sw_pillRefresh</div><div class="fn-line fn-purpose">Recomputes the SW pill visual state (ok / update / fail).</div>
+  <div class="fn-name fn-line">sw_pillTap</div><div class="fn-line fn-purpose">Click handler — triggers SW <code>skipWaiting</code> + reload when an update is staged.</div>
+</div>
+</div>
+
+<div class="fn-group">
+<h3>Storage Hardening · Early Stubs</h3>
+<div class="group-line">lines 13600–14620</div>
+<div class="fn-list">
+  <div class="fn-name fn-line">apiText</div><div class="fn-line fn-purpose">Reaches into Anthropic response shape and returns <code>content[0].text</code>.</div>
+  <div class="fn-name fn-line">cleanJSON</div><div class="fn-line fn-purpose">Strips code-fence / leading prose, tries <code>JSON.parse</code>, returns fallback on miss.</div>
+  <div class="fn-name fn-line">DataStore</div><div class="fn-line fn-purpose">Factory — returns <code>{load, save}</code> bound to a localStorage key. Used by SOPs and racks.</div>
+  <div class="fn-name fn-line">getIncidentsByFaultType</div><div class="fn-line fn-purpose">Pull canned incident playbook entries for a fault, with fallback.</div>
+  <div class="fn-name fn-line">getOpticDetails</div><div class="fn-line fn-purpose">Returns optic detail block for (platform, opticType).</div>
+  <div class="fn-name fn-line">getOpticResult</div><div class="fn-line fn-purpose">Look up (platform, distance) → optic SKU / reach result.</div>
+  <div class="fn-name fn-line">getOpticTypesForPlatform</div><div class="fn-line fn-purpose">Lists optic types valid for a given platform.</div>
+  <div class="fn-name fn-line">getPDUConfig</div><div class="fn-line fn-purpose">Return circuits / breakers / poles for a PDU type key.</div>
+  <div class="fn-name fn-line">getPlatforms</div><div class="fn-line fn-purpose">Returns the platform list for the optic selector.</div>
+  <div class="fn-name fn-line">haptic</div><div class="fn-line fn-purpose">Wrapper around <code>navigator.vibrate</code> with iOS-safe fallbacks.</div>
+  <div class="fn-name fn-line">logCrash</div><div class="fn-line fn-purpose">Closure body of the global-error handler; persists last 20 crash records.</div>
+  <div class="fn-name fn-line">phantomPinpadAsk</div><div class="fn-line fn-purpose">Gloved-hand numeric overlay used for PIN entry (replaces <code>window.prompt</code>).</div>
+  <div class="fn-name fn-line">phantomPromptAsk</div><div class="fn-line fn-purpose">Gloved-hand text-entry overlay (replaces <code>window.prompt</code> for free text).</div>
+  <div class="fn-name fn-line">phantomViewCrashLog</div><div class="fn-line fn-purpose">Opens the crash-log viewer modal and offers a wipe button.</div>
+  <div class="fn-name fn-line">platformExists</div><div class="fn-line fn-purpose">Boolean — is this platform key in the catalog?</div>
+  <div class="fn-name fn-line">renderMetrics</div><div class="fn-line fn-purpose">Renders metric tiles (lbl / val / cls) into a DOM element. Shared by all parsers.</div>
+  <div class="fn-name fn-line">safeStore</div><div class="fn-line fn-purpose">HARDENED SAFESTORE — try/catch around <code>localStorage.setItem</code>, toasts quota fails loudly.</div>
+</div>
+</div>
+
+<div class="fn-group">
+<h3>PHANTOM API Router</h3>
+<div class="group-line">lines 14627+</div>
+<div class="fn-list">
+  <div class="fn-name fn-line">phantomAI</div><div class="fn-line fn-purpose">Thin wrapper over <code>phantomAPI</code> — picks <code>max_tokens</code> from <code>AI_TOKENS[feature]</code> and dispatches.</div>
+  <div class="fn-name fn-line">phantomAPI</div><div class="fn-line fn-purpose">Universal fetch wrapper. POST → Cloudflare Worker, handles 401/402/403/429/500/502/503, retries with backoff, 60 s default timeout.</div>
+</div>
+</div>
+
+<div class="fn-group">
+<h3>Shift Report · Omni-Capture · Boot · Nav</h3>
+<div class="group-line">lines 14757–15724</div>
+<div class="fn-list">
+  <div class="fn-name fn-line">_session_clear</div><div class="fn-line fn-purpose">Wipes the session-state key.</div>
+  <div class="fn-name fn-line">_session_read</div><div class="fn-line fn-purpose">Reads + parses the session-state JSON.</div>
+  <div class="fn-name fn-line">_session_save</div><div class="fn-line fn-purpose">Persists the active page / opsTab to <code>phantom_session_state_v1</code>.</div>
+  <div class="fn-name fn-line">bootRenderTopologies</div><div class="fn-line fn-purpose">Paints 3 topology tiles (rack / network / site) into the boot screen.</div>
+  <div class="fn-name fn-line">bootTopoOpen</div><div class="fn-line fn-purpose">Tapping a topology tile expands the inline panel.</div>
+  <div class="fn-name fn-line">hideStabGroup</div><div class="fn-line fn-purpose">Hides all subtab panes in a given stab group.</div>
+  <div class="fn-name fn-line">initSubtab</div><div class="fn-line fn-purpose">Picks default visible subtab pane for a group on first render.</div>
+  <div class="fn-name fn-line">launch</div><div class="fn-line fn-purpose">Tear down boot overlay → swap to app shell → set initial page.</div>
+  <div class="fn-name fn-line">nav_back</div><div class="fn-line fn-purpose">Pops navigation stack and re-renders the previous {page, opsTab}.</div>
+  <div class="fn-name fn-line">nav_push</div><div class="fn-line fn-purpose"><code>pushState</code> into the History API with {p, o} state.</div>
+  <div class="fn-name fn-line">nav_restore</div><div class="fn-line fn-purpose">Re-applies a History state without pushing.</div>
+  <div class="fn-name fn-line">nav_updateBackButton</div><div class="fn-line fn-purpose">Toggles the in-app back chevron based on stack depth.</div>
+  <div class="fn-name fn-line">omni_getActiveDeployment</div><div class="fn-line fn-purpose">Resolves currently active deployment for log-on-the-fly note.</div>
+  <div class="fn-name fn-line">omni_init</div><div class="fn-line fn-purpose">Wires the omni-bar input + send button; binds the Enter key.</div>
+  <div class="fn-name fn-line">omni_submit</div><div class="fn-line fn-purpose">Writes the typed note into active deployment's audit log.</div>
+  <div class="fn-name fn-line">omni_updatePlaceholder</div><div class="fn-line fn-purpose">Updates the omni-bar placeholder text to reflect active deployment.</div>
+  <div class="fn-name fn-line">phantomDeferredInit</div><div class="fn-line fn-purpose">Boot-after-paint orchestrator — wires post-boot UI once the splash circle is tapped.</div>
+  <div class="fn-name fn-line">shiftReport_generate</div><div class="fn-line fn-purpose">Aggregates active deployment + handoff + audit data, calls <code>phantomAI</code>, renders the report.</div>
+  <div class="fn-name fn-line">showPage</div><div class="fn-line fn-purpose">Master page-router — toggles <code>.page</code> elements and calls per-page initializers.</div>
+  <div class="fn-name fn-line">showPageSafe</div><div class="fn-line fn-purpose">Defensive wrapper around <code>showPage</code> that closes scanner first.</div>
+</div>
+</div>
+
+<div class="fn-group">
+<h3>Ops Tab · Identity</h3>
+<div class="group-line">lines 15724–15977</div>
+<div class="fn-list">
+  <div class="fn-name fn-line">identity_getUser</div><div class="fn-line fn-purpose">Reads <code>phantom_current_user_v1</code> → user name string.</div>
+  <div class="fn-name fn-line">identity_isLead</div><div class="fn-line fn-purpose">Returns true if the current user owns the active deployment.</div>
+  <div class="fn-name fn-line">identity_promptUser</div><div class="fn-line fn-purpose">First-run prompt to capture operator name.</div>
+  <div class="fn-name fn-line">identity_setUser</div><div class="fn-line fn-purpose">Persists current user name.</div>
+  <div class="fn-name fn-line">showOpsTab</div><div class="fn-line fn-purpose">Dispatch into <code>OPS_TABS[tab](c)</code>; scrolls active stab into view and pushes nav state.</div>
+</div>
+</div>
+
+<div class="fn-group">
+<h3>Today Dashboard · Triage · Blocker · Handoff</h3>
+<div class="group-line">lines 15978–16550</div>
+<div class="fn-list">
+  <div class="fn-name fn-line">blocker_back</div><div class="fn-line fn-purpose">One step back in blocker wizard.</div>
+  <div class="fn-name fn-line">blocker_close</div><div class="fn-line fn-purpose">Dismiss blocker sheet.</div>
+  <div class="fn-name fn-line">blocker_pickDeployment</div><div class="fn-line fn-purpose">Select deployment in blocker flow.</div>
+  <div class="fn-name fn-line">blocker_pickRack</div><div class="fn-line fn-purpose">Select rack in blocker flow.</div>
+  <div class="fn-name fn-line">blocker_quick</div><div class="fn-line fn-purpose">Opens the blocker quick-capture sheet.</div>
+  <div class="fn-name fn-line">blocker_render</div><div class="fn-line fn-purpose">Main renderer — chooses deploy-picker / rack-picker / note-entry sub-states.</div>
+  <div class="fn-name fn-line">blocker_save</div><div class="fn-line fn-purpose">Writes a blocker entry into <code>phantom_deploy_issues_v1</code> and rolls up.</div>
+  <div class="fn-name fn-line">blocker_saveFromForm</div><div class="fn-line fn-purpose">Read note + severity from form and persist via <code>blocker_save</code>.</div>
+  <div class="fn-name fn-line">deploy_quick</div><div class="fn-line fn-purpose">Quick "open active deployment" shortcut on triage.</div>
+  <div class="fn-name fn-line">handoff_close</div><div class="fn-line fn-purpose">Dismiss handoff sheet.</div>
+  <div class="fn-name fn-line">handoff_pickDeployment</div><div class="fn-line fn-purpose">Select deployment for handoff generation.</div>
+  <div class="fn-name fn-line">handoff_quick</div><div class="fn-line fn-purpose">Quick-launch the handoff generator (shortcut on triage).</div>
+  <div class="fn-name fn-line">handoff_render</div><div class="fn-line fn-purpose">Render handoff picker / generator depending on state.</div>
+  <div class="fn-name fn-line">today_systemStatePane</div><div class="fn-line fn-purpose">Composes the "system state" pane: deployments + handoff + storage in one card.</div>
+</div>
+</div>
+
+<div class="fn-group">
+<h3>Issues (Stage 4 — Day-0 build issues)</h3>
+<div class="group-line">lines 16589–17406</div>
+<div class="fn-list">
+  <div class="fn-name fn-line">_issue_renderCreateModal</div><div class="fn-line fn-purpose">Renders the modal shell for create flow.</div>
+  <div class="fn-name fn-line">_issue_renderStep1..4</div><div class="fn-line fn-purpose">4 wizard steps: category → deploy/rack → text → review.</div>
+  <div class="fn-name fn-line">issue_addEvent</div><div class="fn-line fn-purpose">Append a timeline event to an issue.</div>
+  <div class="fn-name fn-line">issue_addNote</div><div class="fn-line fn-purpose">Append a free-text note event.</div>
+  <div class="fn-name fn-line">issue_create</div><div class="fn-line fn-purpose">Create a new issue, run de-dup score, store, attach audit event.</div>
+  <div class="fn-name fn-line">issue_create_open</div><div class="fn-line fn-purpose">Opens the 4-step create modal.</div>
+  <div class="fn-name fn-line">issue_findById</div><div class="fn-line fn-purpose">Locate an issue record by id.</div>
+  <div class="fn-name fn-line">issue_findSimilar</div><div class="fn-line fn-purpose">Score + rank similar existing issues for de-dup.</div>
+  <div class="fn-name fn-line">issue_loadAll</div><div class="fn-line fn-purpose">Load all issues from <code>phantom_deploy_issues_v1</code>.</div>
+  <div class="fn-name fn-line">issue_markMitigated</div><div class="fn-line fn-purpose">Convenience for status transition → mitigated.</div>
+  <div class="fn-name fn-line">issue_markResolvedPrompt</div><div class="fn-line fn-purpose">Opens mini-sheet to capture resolution text.</div>
+  <div class="fn-name fn-line">issue_markResolvedSave</div><div class="fn-line fn-purpose">Persists resolution text + sets status resolved.</div>
+  <div class="fn-name fn-line">issue_openDetail</div><div class="fn-line fn-purpose">Open detail view for one issue id.</div>
+  <div class="fn-name fn-line">issue_pageOpen</div><div class="fn-line fn-purpose">Routes <code>#pg-twin</code> into the issue dashboard.</div>
+  <div class="fn-name fn-line">issue_renderDetail</div><div class="fn-line fn-purpose">Detail renderer — header + timeline + actions.</div>
+  <div class="fn-name fn-line">issue_renderList</div><div class="fn-line fn-purpose">Render the issue list filtered by current pill.</div>
+  <div class="fn-name fn-line">issue_saveAll</div><div class="fn-line fn-purpose">Persist issues array.</div>
+  <div class="fn-name fn-line">issue_setFilter</div><div class="fn-line fn-purpose">Pill filter setter (all / open / mitigated / resolved).</div>
+  <div class="fn-name fn-line">issue_setStatus</div><div class="fn-line fn-purpose">Transition status (open | mitigated | resolved), with resolution text.</div>
+</div>
+</div>
+
+<div class="fn-group">
+<h3>Burndown · Triage Cards · Today</h3>
+<div class="group-line">lines 17413–17941</div>
+<div class="fn-list">
+  <div class="fn-name fn-line">burndown_buildSeries</div><div class="fn-line fn-purpose">Compute remaining-work-over-time series for a deployment.</div>
+  <div class="fn-name fn-line">burndown_formatAge</div><div class="fn-line fn-purpose">Format relative duration.</div>
+  <div class="fn-name fn-line">burndown_formatHours</div><div class="fn-line fn-purpose">Format an hour count human-readably.</div>
+  <div class="fn-name fn-line">burndown_renderCard</div><div class="fn-line fn-purpose">Renders one deployment's burndown SVG card.</div>
+  <div class="fn-name fn-line">today_formatAge</div><div class="fn-line fn-purpose">Today-page-specific age formatter.</div>
+  <div class="fn-name fn-line">today_render</div><div class="fn-line fn-purpose">The Today dashboard page renderer (Build Lead morning view).</div>
+  <div class="fn-name fn-line">triage_renderDeployCard</div><div class="fn-line fn-purpose">Renders the active-deployment card on triage.</div>
+</div>
+</div>
+
+<div class="fn-group">
+<h3>RBAC (PIN-based)</h3>
+<div class="group-line">lines 18030–18221</div>
+<div class="fn-list">
+  <div class="fn-name fn-line">rbac_clearLeadSession</div><div class="fn-line fn-purpose">Clears lead session.</div>
+  <div class="fn-name fn-line">rbac_exitLeadMode</div><div class="fn-line fn-purpose">Drop lead privileges for a deployment.</div>
+  <div class="fn-name fn-line">rbac_generateSalt</div><div class="fn-line fn-purpose">Crypto salt for PIN hash.</div>
+  <div class="fn-name fn-line">rbac_isLead</div><div class="fn-line fn-purpose">Returns true if current user is build lead on a deployment.</div>
+  <div class="fn-name fn-line">rbac_isLeadSession</div><div class="fn-line fn-purpose">Boolean — is this device a lead session for a deployment?</div>
+  <div class="fn-name fn-line">rbac_setLeadSession</div><div class="fn-line fn-purpose">Marks device as lead session (post-PIN success).</div>
+</div>
+</div>
+
+<div class="fn-group">
+<h3>Shift Briefing · Mission Brief · SOP · Anomaly · QR</h3>
+<div class="group-line">lines 18222–18560</div>
+<div class="fn-list">
+  <div class="fn-name fn-line">brief_buildLiveContext</div><div class="fn-line fn-purpose">Assembles deployment + rack + identity context block for AI prompts.</div>
+  <div class="fn-name fn-line">brief_generate</div><div class="fn-line fn-purpose">Calls <code>phantomAI</code> for today's mission brief.</div>
+  <div class="fn-name fn-line">brief_markSeen</div><div class="fn-line fn-purpose">Marks briefing as acknowledged.</div>
+  <div class="fn-name fn-line">brief_shouldShow</div><div class="fn-line fn-purpose">Time-based gate — show briefing if not seen this shift.</div>
+  <div class="fn-name fn-line">brief_show</div><div class="fn-line fn-purpose">Renders the briefing modal.</div>
+  <div class="fn-name fn-line">deploy_checkPhaseAnomaly</div><div class="fn-line fn-purpose">Compares current phase metrics to historical norms.</div>
+  <div class="fn-name fn-line">deploy_generateRackQR</div><div class="fn-line fn-purpose">Generates an SVG QR label encoding a deep-link to a rack.</div>
+  <div class="fn-name fn-line">deploy_getRelevantSOPs</div><div class="fn-line fn-purpose">Returns SOPs whose tags intersect rack hardware / site.</div>
+  <div class="fn-name fn-line">va_confirmAuditLog</div><div class="fn-line fn-purpose">Writes the VA-derived note into the deployment audit log.</div>
+  <div class="fn-name fn-line">va_detectAuditIntent</div><div class="fn-line fn-purpose">Heuristic + AI hint to detect "log this" intent in a VA exchange.</div>
+  <div class="fn-name fn-line">va_showLogButton</div><div class="fn-line fn-purpose">Renders inline LOG button on a VA response when an intent is detected.</div>
+</div>
+</div>
+
+<div class="fn-group">
+<h3>Site Profile · Active Deployment Context</h3>
+<div class="group-line">lines 18560–18750</div>
+<div class="fn-list">
+  <div class="fn-name fn-line">activeContext_clear</div><div class="fn-line fn-purpose">Wipe active context.</div>
+  <div class="fn-name fn-line">activeContext_get</div><div class="fn-line fn-purpose">Returns current active context object.</div>
+  <div class="fn-name fn-line">activeContext_getContextBlock</div><div class="fn-line fn-purpose">AI-prompt-ready summary of current focus.</div>
+  <div class="fn-name fn-line">activeContext_load</div><div class="fn-line fn-purpose">Load active context JSON from <code>phantom_active_context_v1</code>.</div>
+  <div class="fn-name fn-line">activeContext_save</div><div class="fn-line fn-purpose">Persist active context object.</div>
+  <div class="fn-name fn-line">activeContext_setDeployment</div><div class="fn-line fn-purpose">Set the active deployment id.</div>
+  <div class="fn-name fn-line">activeContext_setRack</div><div class="fn-line fn-purpose">Set the active rack inside a deployment.</div>
+  <div class="fn-name fn-line">siteProfile_getContextBlock</div><div class="fn-line fn-purpose">Returns a prompt-ready text block describing the site (for AI context).</div>
+  <div class="fn-name fn-line">siteProfile_load</div><div class="fn-line fn-purpose">Load site profile JSON from <code>phantom_site_profile_v1</code>.</div>
+  <div class="fn-name fn-line">siteProfile_migrateV1toV2</div><div class="fn-line fn-purpose">Migrate legacy v1 site profile shape to v2.</div>
+  <div class="fn-name fn-line">siteProfile_save</div><div class="fn-line fn-purpose">Persist site profile (after normalisation).</div>
+</div>
+</div>
+
+<div class="fn-group">
+<h3>Tactical Print · HW Matrix</h3>
+<div class="group-line">lines 18843–19912</div>
+<div class="fn-list">
+  <div class="fn-name fn-line">btPrint_open</div><div class="fn-line fn-purpose">Open BLE-printer sheet directly with a fault entry.</div>
+  <div class="fn-name fn-line">btPrint_openById</div><div class="fn-line fn-purpose">Open BLE-printer sheet for a fault id.</div>
+  <div class="fn-name fn-line">btPrint_setState</div><div class="fn-line fn-purpose">UI state machine (idle / searching / printing / done / err).</div>
+  <div class="fn-name fn-line">hwMatrix_close</div><div class="fn-line fn-purpose">Close HW matrix sheet.</div>
+  <div class="fn-name fn-line">hwMatrix_open</div><div class="fn-line fn-purpose">Open the HW matrix sheet.</div>
+  <div class="fn-name fn-line">hwMatrix_queryContext</div><div class="fn-line fn-purpose">Returns the context summary for an HW question.</div>
+  <div class="fn-name fn-line">hwMatrix_render</div><div class="fn-line fn-purpose">Render HW matrix rows.</div>
+  <div class="fn-name fn-line">hwMatrix_setCat</div><div class="fn-line fn-purpose">Filter matrix by category.</div>
+  <div class="fn-name fn-line">hwMatrix_setModel</div><div class="fn-line fn-purpose">Filter matrix by model.</div>
+  <div class="fn-name fn-line">wakeLock_evaluate</div><div class="fn-line fn-purpose">Acquires / releases wake lock based on whether tech is mid-work.</div>
+  <div class="fn-name fn-line">zpl_faultLabel</div><div class="fn-line fn-purpose">Build ZPL bytes for a Zebra / Brady fault label.</div>
+</div>
+</div>
+
+<div class="fn-group">
+<h3>Deployment Command Engine — Storage / Rollups / Phases / Gates</h3>
+<div class="group-line">lines 19959–21611</div>
+<div class="fn-list">
+  <div class="fn-name fn-line">deploy_advancePhase</div><div class="fn-line fn-purpose">Phase status transition with gate checks.</div>
+  <div class="fn-name fn-line">deploy_computeAggregateStats</div><div class="fn-line fn-purpose">Roll up stats across all deployments (multi-deploy command center).</div>
+  <div class="fn-name fn-line">deploy_computeDeployRollup</div><div class="fn-line fn-purpose">Whole-deployment rollup with caching.</div>
+  <div class="fn-name fn-line">deploy_computeRackRollup</div><div class="fn-line fn-purpose">Per-rack progress rollup (% done, ETA, blockers).</div>
+  <div class="fn-name fn-line">deploy_ensureRacksAndPhases</div><div class="fn-line fn-purpose">Make sure rack + phase tables exist; seed if missing.</div>
+  <div class="fn-name fn-line">deploy_flushState</div><div class="fn-line fn-purpose">Force write-through of in-memory state.</div>
+  <div class="fn-name fn-line">deploy_getActive</div><div class="fn-line fn-purpose">Get full active deployment object.</div>
+  <div class="fn-name fn-line">deploy_getActiveId</div><div class="fn-line fn-purpose">Get id of active deployment.</div>
+  <div class="fn-name fn-line">deploy_getById</div><div class="fn-line fn-purpose">Lookup deployment by id.</div>
+  <div class="fn-name fn-line">deploy_isPhaseGated</div><div class="fn-line fn-purpose">Is this phase blocked by a predecessor?</div>
+  <div class="fn-name fn-line">deploy_loadAll</div><div class="fn-line fn-purpose">All deployments from <code>phantom_deployments_v1</code>.</div>
+  <div class="fn-name fn-line">deploy_loadOptics</div><div class="fn-line fn-purpose">Optics ledger for a deployment.</div>
+  <div class="fn-name fn-line">deploy_loadPhases</div><div class="fn-line fn-purpose">Phases for a deployment.</div>
+  <div class="fn-name fn-line">deploy_loadRacks</div><div class="fn-line fn-purpose">Filter <code>phantom_deploy_racks_v1</code> by deployment.</div>
+  <div class="fn-name fn-line">deploy_overrideGate</div><div class="fn-line fn-purpose">PIN-protected gate override.</div>
+  <div class="fn-name fn-line">deploy_renderPhaseMatrix</div><div class="fn-line fn-purpose">Render the phase matrix grid across deployments.</div>
+  <div class="fn-name fn-line">deploy_saveAll</div><div class="fn-line fn-purpose">Save all + bump rollup generation.</div>
+  <div class="fn-name fn-line">deploy_seedRacksAndPhases</div><div class="fn-line fn-purpose">Seed racks + phases tables for a new deployment.</div>
+  <div class="fn-name fn-line">deploy_setActive</div><div class="fn-line fn-purpose">Set active deployment + write <code>phantom_active_deployment</code>.</div>
+  <div class="fn-name fn-line">deploy_showCommandCenter</div><div class="fn-line fn-purpose">Render the multi-deployment command center page (Stage 8).</div>
+  <div class="fn-name fn-line">deploy_showIngest</div><div class="fn-line fn-purpose">Render the EDP-ingest screen.</div>
+  <div class="fn-name fn-line">deploy_showList</div><div class="fn-line fn-purpose">Render the list-of-deployments BUILD pane.</div>
+  <div class="fn-name fn-line">deploy_statusBadge</div><div class="fn-line fn-purpose">HTML badge for a status string.</div>
+  <div class="fn-name fn-line">power_blastRadius</div><div class="fn-line fn-purpose">Compute downstream impact of a node failure.</div>
+  <div class="fn-name fn-line">power_loadTopology</div><div class="fn-line fn-purpose">Load power topology for a deployment.</div>
+  <div class="fn-name fn-line">power_parseCSV</div><div class="fn-line fn-purpose">Parse PDU / circuit CSV into a topology graph.</div>
+  <div class="fn-name fn-line">power_validateTopology</div><div class="fn-line fn-purpose">Lint topology — orphan ports, over-allocated breakers, etc.</div>
+</div>
+</div>
+
+<div class="fn-group">
+<h3>Site Profile Editor (Stage 7)</h3>
+<div class="group-line">lines 20171–20350</div>
+<div class="fn-list">
+  <div class="fn-name fn-line">siteProfile_editorAddSelectedPlatform</div><div class="fn-line fn-purpose">Adds chosen platform to profile.</div>
+  <div class="fn-name fn-line">siteProfile_editorRemovePlatform</div><div class="fn-line fn-purpose">Removes a platform by index.</div>
+  <div class="fn-name fn-line">siteProfile_editorRenderPlatformRows</div><div class="fn-line fn-purpose">Per-platform row renderer.</div>
+  <div class="fn-name fn-line">siteProfile_resetToDefaults</div><div class="fn-line fn-purpose">Reset profile to baked defaults.</div>
+  <div class="fn-name fn-line">siteProfile_saveFromEditor</div><div class="fn-line fn-purpose">Persist profile from form values.</div>
+  <div class="fn-name fn-line">siteProfile_showEditor</div><div class="fn-line fn-purpose">Render site-profile editor into a container.</div>
+</div>
+</div>
+
+<div class="fn-group">
+<h3>Audit · Stale Phase · Handoff Engine</h3>
+<div class="group-line">lines 20355–20585</div>
+<div class="fn-list">
+  <div class="fn-name fn-line">deploy_flagPhaseReverify</div><div class="fn-line fn-purpose">Flag a phase for re-verify.</div>
+  <div class="fn-name fn-line">deploy_loadAudit</div><div class="fn-line fn-purpose">Load audit log for a deployment.</div>
+  <div class="fn-name fn-line">deploy_logAudit</div><div class="fn-line fn-purpose">Append (actor, action, entity, summary) row to audit.</div>
+  <div class="fn-name fn-line">deploy_openPhaseDriftModal</div><div class="fn-line fn-purpose">Open the per-phase drift modal.</div>
+  <div class="fn-name fn-line">deploy_phaseDriftEvents</div><div class="fn-line fn-purpose">Compute drift / stale events for a phase.</div>
+  <div class="fn-name fn-line">deploy_purgeAudit</div><div class="fn-line fn-purpose">Wipe audit for one deployment.</div>
+  <div class="fn-name fn-line">deploy_renderPhaseStaleBadge</div><div class="fn-line fn-purpose">Render a stale-phase badge if drift exists.</div>
+  <div class="fn-name fn-line">deploy_saveAudit</div><div class="fn-line fn-purpose">Persist audit log.</div>
+  <div class="fn-name fn-line">handoff_generate</div><div class="fn-line fn-purpose">AI-generate handoff text from current state.</div>
+  <div class="fn-name fn-line">handoff_loadAll</div><div class="fn-line fn-purpose">Load all handoffs from <code>phantom_handoff_v1</code>.</div>
+  <div class="fn-name fn-line">handoff_loadForDeployment</div><div class="fn-line fn-purpose">Filter handoffs by deployment.</div>
+  <div class="fn-name fn-line">handoff_purge</div><div class="fn-line fn-purpose">Wipe handoffs for a deployment.</div>
+  <div class="fn-name fn-line">handoff_save</div><div class="fn-line fn-purpose">Persist handoff list.</div>
+</div>
+</div>
+
+<div class="fn-group">
+<h3>Optics Ledger · Ghost Echo</h3>
+<div class="group-line">lines 20586–20933</div>
+<div class="fn-list">
+  <div class="fn-name fn-line">deploy_ensureOptics</div><div class="fn-line fn-purpose">Ensure optics ledger exists, seed if not.</div>
+  <div class="fn-name fn-line">deploy_seedOptics</div><div class="fn-line fn-purpose">Seed optics ledger for a new deployment.</div>
+  <div class="fn-name fn-line">deploy_updateOpticCount</div><div class="fn-line fn-purpose">Increment / decrement an optic count cell.</div>
+  <div class="fn-name fn-line">ge_captureCloseModal</div><div class="fn-line fn-purpose">Dismiss Ghost Echo capture modal.</div>
+  <div class="fn-name fn-line">ge_captureSave</div><div class="fn-line fn-purpose">Persist captured quirk note.</div>
+  <div class="fn-name fn-line">ge_captureSkip</div><div class="fn-line fn-purpose">Skip the capture (still mark phase complete).</div>
+  <div class="fn-name fn-line">ge_captureUpdateCount</div><div class="fn-line fn-purpose">Live char-count for the capture textarea.</div>
+  <div class="fn-name fn-line">ge_deriveHardwareType</div><div class="fn-line fn-purpose">Map rack → hardware-type bucket for quirk lookup.</div>
+  <div class="fn-name fn-line">ge_findQuirks</div><div class="fn-line fn-purpose">Find quirks matching (hardwareType, phaseType).</div>
+  <div class="fn-name fn-line">ge_load</div><div class="fn-line fn-purpose">Load Ghost Echo quirk cache from <code>phantom_ghost_echo_v1</code>.</div>
+  <div class="fn-name fn-line">ge_onCompleteTap</div><div class="fn-line fn-purpose">Gate: phase complete tap → capture modal or pass-through.</div>
+  <div class="fn-name fn-line">ge_openCaptureModal</div><div class="fn-line fn-purpose">Open the quirk-capture modal at phase complete.</div>
+  <div class="fn-name fn-line">ge_save</div><div class="fn-line fn-purpose">Persist Ghost Echo cache.</div>
+  <div class="fn-name fn-line">ge_saveQuirk</div><div class="fn-line fn-purpose">Save a quirk note for (hardwareType, phaseType).</div>
+  <div class="fn-name fn-line">ge_toggleBanner</div><div class="fn-line fn-purpose">Toggle the GE quirk-banner.</div>
+</div>
+</div>
+
+<div class="fn-group">
+<h3>EDP Parser (Stage 3.5) · EDP Gate · Intake Gate</h3>
+<div class="group-line">lines 21725–22570</div>
+<div class="fn-list">
+  <div class="fn-name fn-line">deploy_classifyDevice</div><div class="fn-line fn-purpose">Classify a row's device type.</div>
+  <div class="fn-name fn-line">deploy_extractGpuType</div><div class="fn-line fn-purpose">Pull GPU type token from a model string.</div>
+  <div class="fn-name fn-line">deploy_getCachedParse</div><div class="fn-line fn-purpose">Look up cached parse by EDP hash.</div>
+  <div class="fn-name fn-line">deploy_inferDeviceRole</div><div class="fn-line fn-purpose">Infer functional role from type + context.</div>
+  <div class="fn-name fn-line">deploy_inferOptic</div><div class="fn-line fn-purpose">Infer optic for (fiberType, deviceModel).</div>
+  <div class="fn-name fn-line">deploy_parseCSVLine</div><div class="fn-line fn-purpose">CSV split that respects quoting.</div>
+  <div class="fn-name fn-line">deploy_preprocessEDP</div><div class="fn-line fn-purpose">Normalize raw EDP text before parsing.</div>
+  <div class="fn-name fn-line">deploy_setCachedParse</div><div class="fn-line fn-purpose">Cache a parse result.</div>
+  <div class="fn-name fn-line">edpGate_close</div><div class="fn-line fn-purpose">Close EDP hash gate.</div>
+  <div class="fn-name fn-line">edpGate_devSkipTap</div><div class="fn-line fn-purpose">Dev-mode skip (Easter-egg taps).</div>
+  <div class="fn-name fn-line">edpGate_onHashInput</div><div class="fn-line fn-purpose">Live update verdict as user types hash.</div>
+  <div class="fn-name fn-line">edpGate_open</div><div class="fn-line fn-purpose">Open the EDP-hash verification gate.</div>
+  <div class="fn-name fn-line">edpGate_proceed</div><div class="fn-line fn-purpose">Accept the EDP and route to intake gate.</div>
+  <div class="fn-name fn-line">edpGate_reject</div><div class="fn-line fn-purpose">Reject EDP, return to ingest.</div>
+  <div class="fn-name fn-line">edpGate_updateVerdict</div><div class="fn-line fn-purpose">Recompute verdict (match / no-match).</div>
+  <div class="fn-name fn-line">edpGate_writeAudit</div><div class="fn-line fn-purpose">Audit-log gate events.</div>
+  <div class="fn-name fn-line">intakeGate_confirm</div><div class="fn-line fn-purpose">Commit accepted items, finalize deployment.</div>
+  <div class="fn-name fn-line">intakeGate_open</div><div class="fn-line fn-purpose">Open Stage-3.5 intake gate with parsed result.</div>
+  <div class="fn-name fn-line">intakeGate_reject</div><div class="fn-line fn-purpose">Reject entire intake.</div>
+  <div class="fn-name fn-line">intakeGate_render</div><div class="fn-line fn-purpose">Render intake-gate UI (tiles per discovered category).</div>
+  <div class="fn-name fn-line">intakeGate_toggleDetail</div><div class="fn-line fn-purpose">Expand detail tile.</div>
+  <div class="fn-name fn-line">intakeGate_toggleRow</div><div class="fn-line fn-purpose">Toggle accept / reject for a discovered item.</div>
+  <div class="fn-name fn-line">intakeGate_toggleWarnings</div><div class="fn-line fn-purpose">Expand / collapse warning section.</div>
+  <div class="fn-name fn-line">intakeGate_updateProgress</div><div class="fn-line fn-purpose">Progress + summary recompute on row toggle.</div>
+</div>
+</div>
+
+<div class="fn-group">
+<h3>Manifest · Revision Gate</h3>
+<div class="group-line">lines 22606–23090</div>
+<div class="fn-list">
+  <div class="fn-name fn-line">manifest_render</div><div class="fn-line fn-purpose">Manifest tab top-level renderer.</div>
+  <div class="fn-name fn-line">manifest_renderForDeployment</div><div class="fn-line fn-purpose">Render manifest for a specific deployment.</div>
+  <div class="fn-name fn-line">manifest_switchTo</div><div class="fn-line fn-purpose">Switch the manifest view to another deployment.</div>
+  <div class="fn-name fn-line">manifest_toggleDetail</div><div class="fn-line fn-purpose">Expand a manifest detail tile.</div>
+  <div class="fn-name fn-line">revGate_apply</div><div class="fn-line fn-purpose">Apply the revision (replace parts of current state).</div>
+  <div class="fn-name fn-line">revGate_diffByKey</div><div class="fn-line fn-purpose">Generic by-key array differ.</div>
+  <div class="fn-name fn-line">revGate_diffParsed</div><div class="fn-line fn-purpose">Diff two parsed EDPs.</div>
+  <div class="fn-name fn-line">revGate_open</div><div class="fn-line fn-purpose">Open revision-comparison gate (new EDP vs current).</div>
+  <div class="fn-name fn-line">revGate_reject</div><div class="fn-line fn-purpose">Reject the revision.</div>
+</div>
+</div>
+
+<div class="fn-group">
+<h3>Discrepancy Log</h3>
+<div class="group-line">lines 23138–23720</div>
+<div class="fn-list">
+  <div class="fn-name fn-line">disc_confirmResolve</div><div class="fn-line fn-purpose">Persist resolution.</div>
+  <div class="fn-name fn-line">disc_filteredList</div><div class="fn-line fn-purpose">Filtered list view for discrepancy section.</div>
+  <div class="fn-name fn-line">disc_openResolveSheet</div><div class="fn-line fn-purpose">Open the resolve sheet.</div>
+  <div class="fn-name fn-line">disc_renderCard</div><div class="fn-line fn-purpose">Render one discrepancy card.</div>
+  <div class="fn-name fn-line">disc_renderSection</div><div class="fn-line fn-purpose">Render discrepancies into a mount id.</div>
+  <div class="fn-name fn-line">discLog_focusRack</div><div class="fn-line fn-purpose">Focus the rack input on open.</div>
+  <div class="fn-name fn-line">discLog_handlePhoto</div><div class="fn-line fn-purpose">Photo file → base64 thumbnail.</div>
+  <div class="fn-name fn-line">discLog_loadAll</div><div class="fn-line fn-purpose">Load discrepancies for a deployment.</div>
+  <div class="fn-name fn-line">discLog_open</div><div class="fn-line fn-purpose">Open discrepancy capture sheet.</div>
+  <div class="fn-name fn-line">discLog_renderPhotoMount</div><div class="fn-line fn-purpose">Render photo preview slot.</div>
+  <div class="fn-name fn-line">discLog_save</div><div class="fn-line fn-purpose">Persist discrepancy + audit log.</div>
+  <div class="fn-name fn-line">discLog_setCategory</div><div class="fn-line fn-purpose">Set category chip.</div>
+  <div class="fn-name fn-line">discLog_setSeverity</div><div class="fn-line fn-purpose">Set severity chip.</div>
+  <div class="fn-name fn-line">discLog_validate</div><div class="fn-line fn-purpose">Validate form before save.</div>
+</div>
+</div>
+
+<div class="fn-group">
+<h3>EDP Local Parse · Master File · MASTER Toggle (v1.6.46)</h3>
+<div class="group-line">lines 23775–24972</div>
+<div class="fn-list">
+  <div class="fn-name fn-line">deploy_parseEDP_local</div><div class="fn-line fn-purpose">Heuristic local-only EDP parser (no AI fallback path).</div>
+  <div class="fn-name fn-line">master_extractRu</div><div class="fn-line fn-purpose">Extract RU number from a host string.</div>
+  <div class="fn-name fn-line">master_formatTimestamp</div><div class="fn-line fn-purpose">Format master file <code>savedAt</code>.</div>
+  <div class="fn-name fn-line">master_hasMaster</div><div class="fn-line fn-purpose">Boolean — is a master file loaded?</div>
+  <div class="fn-name fn-line">master_initTab</div><div class="fn-line fn-purpose">Idempotent tab-init hook.</div>
+  <div class="fn-name fn-line">master_normalize</div><div class="fn-line fn-purpose">Normalize raw master-file rows into canonical shape.</div>
+  <div class="fn-name fn-line">master_onHostnameTap</div><div class="fn-line fn-purpose">Drill into a host row.</div>
+  <div class="fn-name fn-line">master_onSuggestionTap</div><div class="fn-line fn-purpose">Open a suggested cabinet from autocomplete.</div>
+  <div class="fn-name fn-line">master_render</div><div class="fn-line fn-purpose">Top-level MASTER page renderer.</div>
+  <div class="fn-name fn-line">master_renderEmpty</div><div class="fn-line fn-purpose">Render the "no master loaded" empty state.</div>
+  <div class="fn-name fn-line">master_renderLoaded</div><div class="fn-line fn-purpose">Render the master-loaded state (FILE mode).</div>
+  <div class="fn-name fn-line">master_renderResultRows</div><div class="fn-line fn-purpose">Render result rows for a rack match.</div>
+  <div class="fn-name fn-line">master_runFilter</div><div class="fn-line fn-purpose">Run search filter over master rows.</div>
+  <div class="fn-name fn-line">master_showSection</div><div class="fn-line fn-purpose">v1.6.46 — switch between FILE and PROFILE sub-sections.</div>
+  <div class="fn-name fn-line">master_sortHostsByRu</div><div class="fn-line fn-purpose">Sort hosts ascending by RU.</div>
+  <div class="fn-name fn-line">phantomConfirmAsk</div><div class="fn-line fn-purpose">Gloved-hand confirmation overlay (Y/N modal).</div>
+</div>
+</div>
+
+<div class="fn-group">
+<h3>Stability Helpers · Ingest Errors · Deploy Detail</h3>
+<div class="group-line">lines 25148–25821</div>
+<div class="fn-list">
+  <div class="fn-name fn-line">deploy_preflightCheck</div><div class="fn-line fn-purpose">Sanity-check raw EDP (size / lines).</div>
+  <div class="fn-name fn-line">deploy_renderIngestError</div><div class="fn-line fn-purpose">Render an ingest-time error tile.</div>
+  <div class="fn-name fn-line">deploy_renderIngestResults</div><div class="fn-line fn-purpose">Render the AI-parsed ingest results.</div>
+  <div class="fn-name fn-line">deploy_scrollToPhase</div><div class="fn-line fn-purpose">Scroll to a phase row in detail view.</div>
+  <div class="fn-name fn-line">deploy_showDetail</div><div class="fn-line fn-purpose">Open deployment detail page.</div>
+  <div class="fn-name fn-line">deploy_togglePause</div><div class="fn-line fn-purpose">Pause / resume a deployment.</div>
+  <div class="fn-name fn-line">deploy_validateRackCap</div><div class="fn-line fn-purpose">Enforce 600-rack cap (Stage 1 stability).</div>
+  <div class="fn-name fn-line">deploy_validateStorageHeadroom</div><div class="fn-line fn-purpose">Reject if estimated storage > headroom.</div>
+</div>
+</div>
+
+<div class="fn-group">
+<h3>Floor Map · Rack Lookup · Crash-Cart</h3>
+<div class="group-line">lines 25827–26498</div>
+<div class="fn-list">
+  <div class="fn-name fn-line">crashcart_exit</div><div class="fn-line fn-purpose">Exit crash-cart mode.</div>
+  <div class="fn-name fn-line">crashcart_pickRack</div><div class="fn-line fn-purpose">Pick rack for crash-cart focus.</div>
+  <div class="fn-name fn-line">crashcart_render</div><div class="fn-line fn-purpose">Render crash-cart focused view.</div>
+  <div class="fn-name fn-line">crashcart_toggle</div><div class="fn-line fn-purpose">Toggle crash-cart mode on / off.</div>
+  <div class="fn-name fn-line">deploy_applyRackView</div><div class="fn-line fn-purpose">Apply view mode to DOM.</div>
+  <div class="fn-name fn-line">deploy_getRackView</div><div class="fn-line fn-purpose">Read rack-view preference (list | grid | floormap).</div>
+  <div class="fn-name fn-line">deploy_renderFloorMap</div><div class="fn-line fn-purpose">Render 2D top-down floor map.</div>
+  <div class="fn-name fn-line">deploy_setRackView</div><div class="fn-line fn-purpose">Persist rack-view preference.</div>
+  <div class="fn-name fn-line">rackLookup_getRecent</div><div class="fn-line fn-purpose">Pull recent-rack chips for a deployment.</div>
+  <div class="fn-name fn-line">rackLookup_init</div><div class="fn-line fn-purpose">Init rack-lookup state machine.</div>
+  <div class="fn-name fn-line">rackLookup_onInput</div><div class="fn-line fn-purpose">Live input handler.</div>
+  <div class="fn-name fn-line">rackLookup_openRack</div><div class="fn-line fn-purpose">Open a rack detail.</div>
+  <div class="fn-name fn-line">rackLookup_pushRecent</div><div class="fn-line fn-purpose">Push a rack onto recent.</div>
+  <div class="fn-name fn-line">rackLookup_render</div><div class="fn-line fn-purpose">Render lookup UI (idle / results).</div>
+  <div class="fn-name fn-line">rackLookup_renderResults</div><div class="fn-line fn-purpose">Render filtered / scored results.</div>
+  <div class="fn-name fn-line">rackLookup_setFilter</div><div class="fn-line fn-purpose">Filter chip.</div>
+  <div class="fn-name fn-line">rackLookup_submitNow</div><div class="fn-line fn-purpose">Submit (Enter / scan) → open match if unique.</div>
+</div>
+</div>
+
+<div class="fn-group">
+<h3>Rack Elevation · Scrubbar · Rack Detail</h3>
+<div class="group-line">lines 26500–26766</div>
+<div class="fn-list">
+  <div class="fn-name fn-line">deploy_showRackDetail</div><div class="fn-line fn-purpose">Render full rack detail page.</div>
+  <div class="fn-name fn-line">rackElevation_buildHtml</div><div class="fn-line fn-purpose">Build elevation HTML for a rack.</div>
+  <div class="fn-name fn-line">rackHybrid_initSync</div><div class="fn-line fn-purpose">Sync between elevation and scrub.</div>
+  <div class="fn-name fn-line">scrubbar_buildHtml</div><div class="fn-line fn-purpose">Build the scrub-bar HTML.</div>
+  <div class="fn-name fn-line">scrubbar_init</div><div class="fn-line fn-purpose">Wire the scrubbar interactions.</div>
+  <div class="fn-name fn-line">scrubbar_onScrub</div><div class="fn-line fn-purpose">Live scrub callback.</div>
+  <div class="fn-name fn-line">scrubbar_openSnapped</div><div class="fn-line fn-purpose">Open detail of snapped device.</div>
+</div>
+</div>
+
+<div class="fn-group">
+<h3>Handoff Generator · Audit · Optics · Acceptance · Close-Out</h3>
+<div class="group-line">lines 27092–28713</div>
+<div class="fn-list">
+  <div class="fn-name fn-line">closeOut_doExport</div><div class="fn-line fn-purpose">Execute close-out export.</div>
+  <div class="fn-name fn-line">closeOut_doPurge</div><div class="fn-line fn-purpose">Execute purge after export.</div>
+  <div class="fn-name fn-line">closeOut_setFormat</div><div class="fn-line fn-purpose">Set export format.</div>
+  <div class="fn-name fn-line">closeOut_updateGates</div><div class="fn-line fn-purpose">Recompute gate satisfaction.</div>
+  <div class="fn-name fn-line">deploy_buildCSV</div><div class="fn-line fn-purpose">Build CSV export of a deployment.</div>
+  <div class="fn-name fn-line">deploy_closeOut</div><div class="fn-line fn-purpose">Run the close-out (export + optional purge).</div>
+  <div class="fn-name fn-line">deploy_completeDeployment</div><div class="fn-line fn-purpose">Mark deployment complete (after acceptance).</div>
+  <div class="fn-name fn-line">deploy_confirmDelete</div><div class="fn-line fn-purpose">Confirm-and-delete sheet.</div>
+  <div class="fn-name fn-line">deploy_evaluateAcceptance</div><div class="fn-line fn-purpose">Compute acceptance pass / fail.</div>
+  <div class="fn-name fn-line">deploy_exportReportHTML</div><div class="fn-line fn-purpose">Export close-out report as standalone HTML.</div>
+  <div class="fn-name fn-line">deploy_exportReportJSON</div><div class="fn-line fn-purpose">Export close-out report as JSON.</div>
+  <div class="fn-name fn-line">deploy_generateReport</div><div class="fn-line fn-purpose">Generate close-out report.</div>
+  <div class="fn-name fn-line">deploy_markAcceptance</div><div class="fn-line fn-purpose">Mark a criterion done.</div>
+  <div class="fn-name fn-line">deploy_opticTap</div><div class="fn-line fn-purpose">Tap handler on optic count cell.</div>
+  <div class="fn-name fn-line">deploy_purgeHeavyData</div><div class="fn-line fn-purpose">Purge heavy artifacts on close.</div>
+  <div class="fn-name fn-line">deploy_renderOpticSummary</div><div class="fn-line fn-purpose">Render aggregated optic summary.</div>
+  <div class="fn-name fn-line">deploy_renderReviewTriage</div><div class="fn-line fn-purpose">Render AI-review triage list.</div>
+  <div class="fn-name fn-line">deploy_saveReviewIssues</div><div class="fn-line fn-purpose">Persist AI-review issue triage.</div>
+  <div class="fn-name fn-line">deploy_seedAcceptance</div><div class="fn-line fn-purpose">Seed acceptance criteria for a deployment.</div>
+  <div class="fn-name fn-line">deploy_showAcceptance</div><div class="fn-line fn-purpose">Render acceptance gate UI.</div>
+  <div class="fn-name fn-line">deploy_showAuditLog</div><div class="fn-line fn-purpose">Render the audit log viewer.</div>
+  <div class="fn-name fn-line">deploy_showCloseOutModal</div><div class="fn-line fn-purpose">Open close-out modal.</div>
+  <div class="fn-name fn-line">deploy_showOpticLedger</div><div class="fn-line fn-purpose">Render the optics ledger.</div>
+  <div class="fn-name fn-line">deploy_showTombstone</div><div class="fn-line fn-purpose">Render tombstone for closed-out deployment.</div>
+  <div class="fn-name fn-line">deploy_triageIssue</div><div class="fn-line fn-purpose">Triage an AI-review issue.</div>
+  <div class="fn-name fn-line">handoff_exportHTML</div><div class="fn-line fn-purpose">Export a handoff as standalone HTML.</div>
+  <div class="fn-name fn-line">handoff_saveRecord</div><div class="fn-line fn-purpose">Save generated handoff record.</div>
+  <div class="fn-name fn-line">handoff_showGenerator</div><div class="fn-line fn-purpose">Render handoff generator UI.</div>
+  <div class="fn-name fn-line">handoff_showLog</div><div class="fn-line fn-purpose">Show prior handoffs for a deployment.</div>
+</div>
+</div>
+
+<div class="fn-group">
+<h3>BOM Ingest · BOM Parse · BOM Lookup</h3>
+<div class="group-line">lines 28786–32525</div>
+<div class="fn-list">
+  <div class="fn-name fn-line">_bomDetectHeader</div><div class="fn-line fn-purpose">Detect header row in BOM CSV.</div>
+  <div class="fn-name fn-line">_bomIngest_renderStepIndicator</div><div class="fn-line fn-purpose">Step indicator strip.</div>
+  <div class="fn-name fn-line">_bomIngest_renderStepSource…Commit</div><div class="fn-line fn-purpose">Wizard step renderers (source / preview / metadata / commit).</div>
+  <div class="fn-name fn-line">_bomIngest_renderStepSuccess</div><div class="fn-line fn-purpose">Success step.</div>
+  <div class="fn-name fn-line">_bomIngest_renderStepXlsxSheets</div><div class="fn-line fn-purpose">Sheet-selection step (Stage 2 XLSX).</div>
+  <div class="fn-name fn-line">_bom_classify_normalize</div><div class="fn-line fn-purpose">Normalize a type string for classifier.</div>
+  <div class="fn-name fn-line">bom_classify_clearOverride</div><div class="fn-line fn-purpose">Clear a classifier override.</div>
+  <div class="fn-name fn-line">bom_classify_loadOverrides</div><div class="fn-line fn-purpose">Load classifier overrides from <code>phantom_classifier_overrides_v1</code>.</div>
+  <div class="fn-name fn-line">bom_classify_saveOverride</div><div class="fn-line fn-purpose">Save a classifier override.</div>
+  <div class="fn-name fn-line">bom_classify_type</div><div class="fn-line fn-purpose">Classify a raw type string → tab bucket.</div>
+  <div class="fn-name fn-line">bom_openDB</div><div class="fn-line fn-purpose">Open IndexedDB for BOM data.</div>
+  <div class="fn-name fn-line">bom_parseCSV_local</div><div class="fn-line fn-purpose">Local-only BOM CSV parser.</div>
+  <div class="fn-name fn-line">bomIngest_advanceToMetadata</div><div class="fn-line fn-purpose">Advance to metadata step.</div>
+  <div class="fn-name fn-line">bomIngest_backToSource</div><div class="fn-line fn-purpose">Back to source step.</div>
+  <div class="fn-name fn-line">bomIngest_handleFile</div><div class="fn-line fn-purpose">Handle selected CSV file.</div>
+  <div class="fn-name fn-line">bomIngest_openMigrationLink</div><div class="fn-line fn-purpose">Open the migration link modal.</div>
+  <div class="fn-name fn-line">bomIngest_pickFile</div><div class="fn-line fn-purpose">Open file picker for CSV.</div>
+  <div class="fn-name fn-line">bomIngest_pickXlsxFile</div><div class="fn-line fn-purpose">Pick XLSX file (Stage 2).</div>
+  <div class="fn-name fn-line">bomIngest_render</div><div class="fn-line fn-purpose">Render BOM ingest tab.</div>
+  <div class="fn-name fn-line">bomIngest_setLinkMode</div><div class="fn-line fn-purpose">Switch link-to-deployment mode.</div>
+  <div class="fn-name fn-line">bomIngest_toggleXlsxSheet</div><div class="fn-line fn-purpose">Toggle inclusion of a sheet.</div>
+  <div class="fn-name fn-line">bomLookup_close</div><div class="fn-line fn-purpose">Close lookup overlay.</div>
+  <div class="fn-name fn-line">bomLookup_open</div><div class="fn-line fn-purpose">Open BOM lookup by scanned / typed query.</div>
+  <div class="fn-name fn-line">bomLookup_scanAnother</div><div class="fn-line fn-purpose">Scan another after a result.</div>
+  <div class="fn-name fn-line">bomProgress_closeLog</div><div class="fn-line fn-purpose">Close progress log.</div>
+  <div class="fn-name fn-line">bomProgress_openLog</div><div class="fn-line fn-purpose">Open per-item progress log modal.</div>
+  <div class="fn-name fn-line">bomProgress_render</div><div class="fn-line fn-purpose">Progress sub-tab dispatcher (tally vs list).</div>
+  <div class="fn-name fn-line">bomProgress_setStatus</div><div class="fn-line fn-purpose">Set status (pending / done / issue).</div>
+  <div class="fn-name fn-line">bomProgress_setView</div><div class="fn-line fn-purpose">Switch tally / list view.</div>
+  <div class="fn-name fn-line">bomTab_render</div><div class="fn-line fn-purpose">Render BOM tab with stab strip + active pane.</div>
+  <div class="fn-name fn-line">bomTab_setSubtab</div><div class="fn-line fn-purpose">Switch INGEST ↔ PROGRESS sub-tab.</div>
+  <div class="fn-name fn-line">deploy_createLightweight</div><div class="fn-line fn-purpose">Lightweight deployment shell (BOM-only ingest path).</div>
+  <div class="fn-name fn-line">scaffold_evictLRU</div><div class="fn-line fn-purpose">Evict scaffolds beyond N.</div>
+  <div class="fn-name fn-line">scaffold_invalidate</div><div class="fn-line fn-purpose">Invalidate cached scaffold.</div>
+  <div class="fn-name fn-line">scaffold_set</div><div class="fn-line fn-purpose">Cache scaffold for a deployment (LRU).</div>
+</div>
+</div>
+
+<div class="fn-group">
+<h3>EDP Chunked Analyzer · BOM Glue · Nav Helpers · Search</h3>
+<div class="group-line">lines 32548–33540</div>
+<div class="fn-list">
+  <div class="fn-name fn-line">_edp_clearCheckpoint</div><div class="fn-line fn-purpose">Clear checkpoint.</div>
+  <div class="fn-name fn-line">_edp_writeCheckpoint</div><div class="fn-line fn-purpose">Persist chunked-parse checkpoint to <code>phantom_edp_progress_v1</code>.</div>
+  <div class="fn-name fn-line">bomPushToApp</div><div class="fn-line fn-purpose">Push BOM data into the app / state.</div>
+  <div class="fn-name fn-line">bomRenderResults</div><div class="fn-line fn-purpose">Render BOM analyzer results into a target el.</div>
+  <div class="fn-name fn-line">bomSetType</div><div class="fn-line fn-purpose">Set type chip.</div>
+  <div class="fn-name fn-line">doSearch</div><div class="fn-line fn-purpose">Smart search with intent routing.</div>
+  <div class="fn-name fn-line">doSearchDebounced</div><div class="fn-line fn-purpose">Debounced search dispatcher.</div>
+  <div class="fn-name fn-line">edp_finalizeChunked</div><div class="fn-line fn-purpose">Finalize chunked parse → unified result.</div>
+  <div class="fn-name fn-line">edp_getInterruptedCheckpoint</div><div class="fn-line fn-purpose">Find any interrupted chunked parse.</div>
+  <div class="fn-name fn-line">edp_renderStatus</div><div class="fn-line fn-purpose">Render chunked-parse per-section status panel.</div>
+  <div class="fn-name fn-line">goCliParser</div><div class="fn-line fn-purpose">Nav shortcut → CLI parser.</div>
+  <div class="fn-name fn-line">goOptic</div><div class="fn-line fn-purpose">Nav shortcut → optic page.</div>
+  <div class="fn-name fn-line">goOpsTab</div><div class="fn-line fn-purpose">Nav shortcut → ops sub-tab.</div>
+  <div class="fn-name fn-line">goOpticVerify</div><div class="fn-line fn-purpose">Nav shortcut → optic verify.</div>
+  <div class="fn-name fn-line">hideSearch</div><div class="fn-line fn-purpose">Hide search overlay.</div>
+  <div class="fn-name fn-line">selType2</div><div class="fn-line fn-purpose">Type-chip selector (parser type 2).</div>
+  <div class="fn-name fn-line">showStab</div><div class="fn-line fn-purpose">Activate a stab within a group.</div>
+  <div class="fn-name fn-line">toggleCard</div><div class="fn-line fn-purpose">Toggle an open card (single-open per section).</div>
+</div>
+</div>
+
+<div class="fn-group">
+<h3>Parser Engine (PARSERS) · Rack Viewer (Gate 32)</h3>
+<div class="group-line">lines 33567–33892</div>
+<div class="fn-list">
+  <div class="fn-name fn-line">detectType</div><div class="fn-line fn-purpose">Pick parser by matcher.</div>
+  <div class="fn-name fn-line">PARSERS (const)</div><div class="fn-line fn-purpose">Array of <code>{type, match, render}</code> for nvidia · dom · errors · portchan · ibperf · portmap.</div>
+  <div class="fn-name fn-line">rackViewer_clear</div><div class="fn-line fn-purpose">Clear rack viewer.</div>
+  <div class="fn-name fn-line">rackViewer_request</div><div class="fn-line fn-purpose">Open a single rack rendered on demand.</div>
+  <div class="fn-name fn-line">rackViewer_softFail</div><div class="fn-line fn-purpose">Render soft-fail state for missing rack.</div>
+  <div class="fn-name fn-line">renderDOM</div><div class="fn-line fn-purpose">Transceiver DOM analyzer (Rx / Tx / temp / bias / voltage).</div>
+  <div class="fn-name fn-line">renderErrors</div><div class="fn-line fn-purpose">Error counter analyzer.</div>
+  <div class="fn-name fn-line">renderIBPerf</div><div class="fn-line fn-purpose">IB perfquery counter analyzer.</div>
+  <div class="fn-name fn-line">renderPortChan</div><div class="fn-line fn-purpose">Port-channel analyzer.</div>
+</div>
+</div>
+
+<div class="fn-group">
+<h3>Rack Map · SOPs · SOP Recommender</h3>
+<div class="group-line">lines 33893–34710</div>
+<div class="fn-list">
+  <div class="fn-name fn-line">deleteCurrentRack</div><div class="fn-line fn-purpose">Delete currently open rack.</div>
+  <div class="fn-name fn-line">openRmDevice</div><div class="fn-line fn-purpose">Open device-detail sheet.</div>
+  <div class="fn-name fn-line">openRmSheet</div><div class="fn-line fn-purpose">Open the rack-add / edit sheet.</div>
+  <div class="fn-name fn-line">phantomRackLog</div><div class="fn-line fn-purpose">Append change to <code>phantom_rack_history</code>.</div>
+  <div class="fn-name fn-line">phantomRackShowHistory</div><div class="fn-line fn-purpose">Show rack change history modal.</div>
+  <div class="fn-name fn-line">renderElevation</div><div class="fn-line fn-purpose">Render rack elevation (used by rack viewer).</div>
+  <div class="fn-name fn-line">renderRackMap</div><div class="fn-line fn-purpose">Render the rack map list.</div>
+  <div class="fn-name fn-line">renderSOPList</div><div class="fn-line fn-purpose">Render the SOP list.</div>
+  <div class="fn-name fn-line">rmActive_openPicker</div><div class="fn-line fn-purpose">Open deployment picker.</div>
+  <div class="fn-name fn-line">rmActive_render</div><div class="fn-line fn-purpose">Render the active-deployment chip.</div>
+  <div class="fn-name fn-line">rmActive_select</div><div class="fn-line fn-purpose">Select a deployment for rack-map.</div>
+  <div class="fn-name fn-line">rmConfirm_show</div><div class="fn-line fn-purpose">Confirm cross-deployment rack open.</div>
+  <div class="fn-name fn-line">rmSearch_request</div><div class="fn-line fn-purpose">Rack search dispatch (separate state from on-demand viewer).</div>
+  <div class="fn-name fn-line">sop_extractSiteTokens</div><div class="fn-line fn-purpose">Tokenize site profile for SOP matching.</div>
+  <div class="fn-name fn-line">sop_recommendForSite</div><div class="fn-line fn-purpose">Score-and-rank SOPs against site profile.</div>
+</div>
+</div>
+
+<div class="fn-group">
+<h3>Voice Assistant</h3>
+<div class="group-line">lines 35296–35660</div>
+<div class="fn-list">
+  <div class="fn-name fn-line">va_parseStructured</div><div class="fn-line fn-purpose">Parse AI response into structured tiles.</div>
+  <div class="fn-name fn-line">va_renderStructured</div><div class="fn-line fn-purpose">Render structured tiles into <code>vaBody</code>.</div>
+  <div class="fn-name fn-line">vaAsk</div><div class="fn-line fn-purpose">(async) Dispatch transcript to <code>phantomAI</code>, render answer.</div>
+  <div class="fn-name fn-line">vaAskAgain</div><div class="fn-line fn-purpose">Re-dispatch the last question.</div>
+  <div class="fn-name fn-line">vaClose</div><div class="fn-line fn-purpose">Dismiss VA sheet, stop speech.</div>
+  <div class="fn-name fn-line">vaEnd</div><div class="fn-line fn-purpose">End recording, dispatch transcript.</div>
+  <div class="fn-name fn-line">vaInit</div><div class="fn-line fn-purpose">Init voice subsystem (perms, recognition handle).</div>
+  <div class="fn-name fn-line">vaShowAnswer</div><div class="fn-line fn-purpose">Render plain answer.</div>
+  <div class="fn-name fn-line">vaShowError</div><div class="fn-line fn-purpose">Render error block.</div>
+  <div class="fn-name fn-line">vaSpeak</div><div class="fn-line fn-purpose">Speak text via <code>speechSynthesis</code> if not muted.</div>
+  <div class="fn-name fn-line">vaStart</div><div class="fn-line fn-purpose">Start recording / wake recogniser.</div>
+  <div class="fn-name fn-line">vaToggleMute</div><div class="fn-line fn-purpose">Toggle audio playback.</div>
+</div>
+</div>
+
+<div class="fn-group">
+<h3>Ghost Echo Sheet · Optic Scan</h3>
+<div class="group-line">lines 36303–36500</div>
+<div class="fn-list">
+  <div class="fn-name fn-line">geOpen</div><div class="fn-line fn-purpose">Open Ghost Echo sheet.</div>
+  <div class="fn-name fn-line">opticManualLookup</div><div class="fn-line fn-purpose">Manual optic lookup (no scan).</div>
+  <div class="fn-name fn-line">opticScanResult</div><div class="fn-line fn-purpose">Handle a scanned optic part value.</div>
+</div>
+</div>
+
+<div class="fn-group">
+<h3>Compass · Intake · Scan Gun</h3>
+<div class="group-line">lines 40516–41043</div>
+<div class="fn-list">
+  <div class="fn-name fn-line">compass_clampStartU</div><div class="fn-line fn-purpose">Clamp the start-U to chassis bounds.</div>
+  <div class="fn-name fn-line">compass_goBack</div><div class="fn-line fn-purpose">Back to triage.</div>
+  <div class="fn-name fn-line">compass_loadState</div><div class="fn-line fn-purpose">Load compass state from <code>phantom_compass_last</code>.</div>
+  <div class="fn-name fn-line">compass_render</div><div class="fn-line fn-purpose">Render the cage-nut compass.</div>
+  <div class="fn-name fn-line">compass_saveState</div><div class="fn-line fn-purpose">Persist compass state.</div>
+  <div class="fn-name fn-line">compass_setChassis</div><div class="fn-line fn-purpose">Change chassis height.</div>
+  <div class="fn-name fn-line">compass_setStartU</div><div class="fn-line fn-purpose">Change start-U (delta button).</div>
+  <div class="fn-name fn-line">intake_attachDragHandlers</div><div class="fn-line fn-purpose">Wire drag-drop.</div>
+  <div class="fn-name fn-line">intake_bgClick</div><div class="fn-line fn-purpose">Background click closes overlay.</div>
+  <div class="fn-name fn-line">intake_close</div><div class="fn-line fn-purpose">Close intake overlay.</div>
+  <div class="fn-name fn-line">intake_detect</div><div class="fn-line fn-purpose">Detect file type / content type.</div>
+  <div class="fn-name fn-line">intake_dispatch</div><div class="fn-line fn-purpose">Dispatch to correct handler (EDP, BOM, rack list, port map, etc.).</div>
+  <div class="fn-name fn-line">intake_dispatchManual</div><div class="fn-line fn-purpose">Manual override dispatch.</div>
+  <div class="fn-name fn-line">intake_handleFile</div><div class="fn-line fn-purpose">Handle dropped / picked file.</div>
+  <div class="fn-name fn-line">intake_open</div><div class="fn-line fn-purpose">Open the intake overlay (file ingress).</div>
+  <div class="fn-name fn-line">intake_renderConfirm</div><div class="fn-line fn-purpose">Render confirm step.</div>
+  <div class="fn-name fn-line">intake_setState</div><div class="fn-line fn-purpose">Set overlay state machine.</div>
+  <div class="fn-name fn-line">scanGun_clear</div><div class="fn-line fn-purpose">Clear input.</div>
+  <div class="fn-name fn-line">scanGun_submit</div><div class="fn-line fn-purpose">Submit scanned / typed value through input.</div>
+  <div class="fn-name fn-line">scanGun_toggleClear</div><div class="fn-line fn-purpose">Toggle clear-button visibility.</div>
+</div>
+</div>
+
+<div class="fn-group">
+<h3>IIFE-Wrapped Modules</h3>
+<div class="group-line">top-level singletons</div>
+<div class="fn-list">
+  <div class="fn-name fn-line">AUDIT</div><div class="fn-line fn-purpose">Audit IIFE — exposes <code>AUDIT.renderList</code> for <code>OPS_TABS.audits</code>; <code>getCurrentId</code> reads <code>phantom_active_audit</code>.</div>
+  <div class="fn-name fn-line">BD</div><div class="fn-line fn-purpose">Burndown IIFE — exposes <code>BD.renderList</code> used by <code>OPS_TABS.burndown</code>; keyed by <code>dct_burndown_v1</code>.</div>
+  <div class="fn-name fn-line">GE</div><div class="fn-line fn-purpose">Ghost Echo IIFE wrapper — exposes <code>geOpen</code>.</div>
+  <div class="fn-name fn-line">PhantomScanner</div><div class="fn-line fn-purpose">ZXing camera scanner singleton. API: <code>.open(cb)</code> · <code>.close()</code> · <code>.isActive()</code>. Pre-attached slots: <code>.defaultCallback · .rapidCallback · .rackCallback · .opticCallback · .auditCallback · .find · .confirm · .resume</code>.</div>
+</div>
+</div>
+
+</section>
+
+<!-- ════════════════════════════════════════════════════ -->
+<!-- 6. DATA MODEL                                        -->
+<!-- ════════════════════════════════════════════════════ -->
+<section id="data-model">
+<h2><span class="num">§6</span> Data Model</h2>
+<p class="lede"><code>localStorage</code> is the entire persistence layer. ~33 named keys, all <code>phantom_*</code>-prefixed except the DataStore-backed pair (<code>dct_racks_v1</code>, <code>dct_sops_v1</code>) which predate the namespace convention. The BOM subsystem uses IndexedDB (<code>bom_openDB</code>) — out of scope for this table.</p>
+
+<h3>Keys via Named Constant</h3>
+<table>
+<thead><tr><th>Constant</th><th>Literal Key</th><th>Shape · Lifecycle</th></tr></thead>
+<tbody>
+<tr><td class="const">CRASH_KEY</td><td class="key">phantom_crash_log</td><td class="shape">Array of <code>{ts, type, msg, src, line, col, ver}</code>. Written by <code>logCrash</code>; wiped by <code>phantomViewCrashLog</code>.</td></tr>
+<tr><td class="const">PHANTOM_SESSION_KEY</td><td class="key">phantom_session_state_v1</td><td class="shape">JSON <code>{page, opsTab, ts}</code>. Written by <code>_session_save</code>; cleared by <code>_session_clear</code>.</td></tr>
+<tr><td class="const">DEPLOY_KEY</td><td class="key">phantom_deployments_v1</td><td class="shape">Array&lt;Deployment&gt;. RW <code>deploy_loadAll</code> / <code>deploy_saveAll</code>.</td></tr>
+<tr><td class="const">DEPLOY_RACKS_KEY</td><td class="key">phantom_deploy_racks_v1</td><td class="shape">Array&lt;Rack&gt;. RW <code>deploy_loadRacks</code> / <code>deploy_saveRacks</code>.</td></tr>
+<tr><td class="const">DEPLOY_PHASES_KEY</td><td class="key">phantom_deploy_phases_v1</td><td class="shape">Array&lt;Phase&gt;. RW <code>deploy_loadPhases</code> / <code>deploy_savePhases</code>.</td></tr>
+<tr><td class="const">DEPLOY_OPTICS_KEY</td><td class="key">phantom_deploy_optics_v1</td><td class="shape">Array&lt;OpticRow&gt;. RW <code>deploy_loadOptics</code> / <code>deploy_saveOptics</code>.</td></tr>
+<tr><td class="const">DEPLOY_AUDIT_KEY</td><td class="key">phantom_deploy_audit_v1</td><td class="shape">Array&lt;AuditEvent&gt;. RW <code>deploy_loadAudit</code> / <code>deploy_saveAudit</code> / <code>deploy_logAudit</code>. Per-deployment purge via <code>deploy_purgeAudit</code>.</td></tr>
+<tr><td class="const">SITE_PROFILE_KEY</td><td class="key">phantom_site_profile_v1</td><td class="shape">Object <code>{site, platforms[], pdus[], switches[]}</code>. RW <code>siteProfile_load</code> / <code>siteProfile_save</code>.</td></tr>
+<tr><td class="const">HANDOFF_KEY</td><td class="key">phantom_handoff_v1</td><td class="shape">Array&lt;Handoff&gt;. RW <code>handoff_loadAll</code> / <code>handoff_save</code>; cleared per-deploy by <code>handoff_purge</code>.</td></tr>
+<tr><td class="const">IDENTITY_USER_KEY</td><td class="key">phantom_current_user_v1</td><td class="shape">String user name. RW <code>identity_getUser</code> / <code>identity_setUser</code>.</td></tr>
+<tr><td class="const">PHANTOM_ISSUES_KEY</td><td class="key">phantom_deploy_issues_v1</td><td class="shape">Array&lt;Issue&gt;. RW <code>issue_loadAll</code> / <code>issue_saveAll</code>. Also written by <code>blocker_save</code>.</td></tr>
+<tr><td class="const">PIN_LOCKOUT_KEY</td><td class="key">phantom_pin_lockout_v1</td><td class="shape">Object <code>{[deployId]: {attempts, lockedUntil}}</code>. RW <code>_pinAttempts_*</code>.</td></tr>
+<tr><td class="const">BRIEF_KEY</td><td class="key">phantom_brief_last_ts</td><td class="shape">String timestamp. RW <code>brief_shouldShow</code> / <code>brief_markSeen</code>.</td></tr>
+<tr><td class="const">ACTIVE_CTX_KEY</td><td class="key">phantom_active_context_v1</td><td class="shape">Object <code>{deploymentId, rackId, ts}</code>. RW <code>activeContext_load</code> / <code>activeContext_save</code> / <code>activeContext_clear</code>.</td></tr>
+<tr><td class="const">ACTIVE_DEPLOYMENT_KEY</td><td class="key">phantom_active_deployment</td><td class="shape">String deployment id. Written by <code>deploy_setActive</code>.</td></tr>
+<tr><td class="const">POWER_TOPO_KEY</td><td class="key">phantom_power_topo_v1</td><td class="shape">Object <code>{[deployId]: topology}</code>. RW <code>power_loadTopology</code> / <code>power_saveTopology</code> / <code>power_deleteTopology</code>.</td></tr>
+<tr><td class="const">GHOST_ECHO_KEY</td><td class="key">phantom_ghost_echo_v1</td><td class="shape">Object <code>{[hwType]: {[phaseType]: [quirks]}}</code>. RW <code>ge_load</code> / <code>ge_save</code>.</td></tr>
+<tr><td class="const">DEPLOY_EDP_CACHE_KEY</td><td class="key">phantom_edp_cache_v1</td><td class="shape">Object <code>{[edpHash]: parsedResult}</code>. RW <code>deploy_getCachedParse</code> / <code>deploy_setCachedParse</code>.</td></tr>
+<tr><td class="const">EDP_GATE_STAGING_KEY</td><td class="key">phantom_edp_gate_pending</td><td class="shape">Staging payload during EDP hash gate. Not always cleared.</td></tr>
+<tr><td class="const">INTAKE_GATE_STAGING_KEY</td><td class="key">phantom_edp_intake_pending</td><td class="shape">Staging payload during intake gate.</td></tr>
+<tr><td class="const">MANIFEST_LAST_KEY</td><td class="key">phantom_manifest_last_deploy</td><td class="shape">String last viewed manifest deployment id.</td></tr>
+<tr><td class="const">DISCREPANCY_KEY</td><td class="key">phantom_discrepancies_v1</td><td class="shape">Array&lt;Discrepancy&gt;. RW <code>discLog_loadAll</code> / <code>discLog_save</code>.</td></tr>
+<tr><td class="const">RACK_VIEW_KEY</td><td class="key">phantom_rack_view_v1</td><td class="shape">String view mode (list | grid | floormap). RW <code>deploy_getRackView</code> / <code>deploy_setRackView</code>.</td></tr>
+<tr><td class="const">RACK_RECENT_KEY</td><td class="key">phantom_rack_recent_v1</td><td class="shape">Object <code>{[deployId]: [recentRackIds]}</code>. RW <code>rackLookup_getRecent</code> / <code>rackLookup_pushRecent</code>.</td></tr>
+<tr><td class="const">_BOM_CLASSIFIER_OVERRIDES_KEY</td><td class="key">phantom_classifier_overrides_v1</td><td class="shape">Object <code>{[rawType]: tabId}</code>. RW <code>bom_classify_loadOverrides</code> / <code>bom_classify_saveOverride</code> / <code>bom_classify_clearOverride</code>.</td></tr>
+<tr><td class="const">PHANTOM_EDP_PROGRESS_KEY</td><td class="key">phantom_edp_progress_v1</td><td class="shape">Object <code>{hash, status[], ts}</code>. RW <code>_edp_writeCheckpoint</code> / <code>_edp_clearCheckpoint</code> / <code>edp_getInterruptedCheckpoint</code>.</td></tr>
+<tr><td class="const">RM_KEY</td><td class="key">dct_racks_v1</td><td class="shape">Array&lt;RackMapRack&gt;. RW via <code>_rackStore</code> (DataStore wrapper).</td></tr>
+<tr><td class="const">RM_HIST_KEY</td><td class="key">phantom_rack_history</td><td class="shape">Object <code>{[rackId]: [historyEvents]}</code>. RW <code>phantomRackLog</code>.</td></tr>
+<tr><td class="const">SOP_KEY</td><td class="key">dct_sops_v1</td><td class="shape">Array&lt;SOP&gt;. RW via <code>_sopStore</code> (DataStore wrapper).</td></tr>
+<tr><td class="const">OPTIC_INV_KEY</td><td class="key">phantom_optic_inventory</td><td class="shape">Array&lt;OpticInvRow&gt;.</td></tr>
+<tr><td class="const">BACKUP_TS_KEY</td><td class="key">phantom_last_backup_ts</td><td class="shape">String timestamp of last manual backup.</td></tr>
+<tr><td class="const">BACKUP_INT_KEY</td><td class="key">phantom_backup_interval_days</td><td class="shape">String day count (auto-backup reminder interval).</td></tr>
+<tr><td class="const">PRESENCE_KEY</td><td class="key">phantom_tab_presence_v1</td><td class="shape">Object <code>{[tabId]: heartbeat}</code>. Used by clone-war (multi-tab) detection.</td></tr>
+<tr><td class="const">DRIFT_KEY</td><td class="key">phantom_drift_ledger_v1</td><td class="shape">Array&lt;DriftEvent&gt;.</td></tr>
+<tr><td class="const">ACTION_STRIPE_OFF_KEY</td><td class="key">phantom_action_stripe_off</td><td class="shape">Bool string — hide action stripe?</td></tr>
+<tr><td class="const">COMPASS_KEY</td><td class="key">phantom_compass_last</td><td class="shape">Object <code>{startU, chassis}</code>. RW <code>compass_loadState</code> / <code>compass_saveState</code>.</td></tr>
+<tr><td class="const">HISTORY_KEY</td><td class="key">phantom_optic_score_history</td><td class="shape">Array&lt;OpticScoreEntry&gt;.</td></tr>
+<tr><td class="const">COLLECTION_KEY</td><td class="key">phantom_scan_collection</td><td class="shape">Array of scanned items collected during a session.</td></tr>
+</tbody>
+</table>
+
+<h3>Direct String Keys (no named constant)</h3>
+<table>
+<thead><tr><th>Literal Key</th><th>Notes</th></tr></thead>
+<tbody>
+<tr><td class="key">phantom_force_lead_v1</td><td class="shape">Dev-override flag. Removed in dev escape hatch.</td></tr>
+<tr><td class="key">gt_lessons</td><td class="shape">Legacy GT cleanup — removed only.</td></tr>
+<tr><td class="key">__phantom_health</td><td class="shape">Ephemeral set/remove — write-test probe for storage health.</td></tr>
+<tr><td class="key">phantom_rack_viewer_last</td><td class="shape">Gate-32 last-viewed rack id. Written by <code>rackViewer_request</code>.</td></tr>
+<tr><td class="key">phantom_seen_boot</td><td class="shape">Bool flag — boot-skip on repeat visits. Removed in dev escape hatch.</td></tr>
+<tr><td class="key">phantom_identity</td><td class="shape">Legacy identity blob.</td></tr>
+<tr><td class="key">dct_burndown_v1</td><td class="shape">Burndown jobs array. Inline-keyed inside the BD IIFE.</td></tr>
+<tr><td class="key">phantom_active_audit</td><td class="shape">String currently active audit id. Read by <code>AUDIT.getCurrentId</code>.</td></tr>
+<tr><td class="key">phantom_handoff_notes</td><td class="shape">String — handoff scratch notes.</td></tr>
+<tr><td class="key">ge_last_rack</td><td class="shape">Last rack used in Ghost Echo quick-log.</td></tr>
+<tr><td class="key">ge_last_fault</td><td class="shape">Last fault used in Ghost Echo quick-log.</td></tr>
+<tr><td class="key">phantom_rm_last</td><td class="shape">Legacy "last opened rack" key in renderRackMap path.</td></tr>
+</tbody>
+</table>
+
+<div class="callout">
+<strong>Note on Master File persistence</strong>
+The cabinet/host map loaded under MASTER &rarr; FILE is NOT persisted in <code>localStorage</code> in v1.6.47. It lives in-memory as <code>PHANTOM_MASTER_STORE</code> (lz-string compressed). The SW v1.6.29 commit header references an older v1.6.28 bug where this variable showed up <code>undefined</code> despite valid <code>&lt;script&gt;</code> tags. Persistence of the master file appears to be handled out-of-band (likely a separate import flow).
+</div>
+</section>
+
+<!-- ════════════════════════════════════════════════════ -->
+<!-- 7. DESIGN SYSTEM                                     -->
+<!-- ════════════════════════════════════════════════════ -->
+<section id="design">
+<h2><span class="num">§7</span> Design System</h2>
+
+<h3>Color Tokens</h3>
+<div class="swatches">
+  <div class="swatch"><div class="chip" style="background:#5cf2ff"></div><div class="name">--cyan</div><div class="val">#5cf2ff</div></div>
+  <div class="swatch"><div class="chip" style="background:#9af6ff"></div><div class="name">--cyan-bright</div><div class="val">#9af6ff</div></div>
+  <div class="swatch"><div class="chip" style="background:#9b59ff"></div><div class="name">--violet</div><div class="val">#9b59ff</div></div>
+  <div class="swatch"><div class="chip" style="background:#b478ff"></div><div class="name">--violet-bright</div><div class="val">#b478ff</div></div>
+  <div class="swatch"><div class="chip" style="background:#ff006e"></div><div class="name">--magenta</div><div class="val">#ff006e</div></div>
+  <div class="swatch"><div class="chip" style="background:#30d158"></div><div class="name">--green</div><div class="val">#30d158</div></div>
+  <div class="swatch"><div class="chip" style="background:#ffd60a"></div><div class="name">--gold</div><div class="val">#ffd60a</div></div>
+  <div class="swatch"><div class="chip" style="background:#ff8a00"></div><div class="name">--orange</div><div class="val">#ff8a00</div></div>
+  <div class="swatch"><div class="chip" style="background:#ff453a"></div><div class="name">--red</div><div class="val">#ff453a</div></div>
+  <div class="swatch"><div class="chip" style="background:#8AAFBF"></div><div class="name">--slate</div><div class="val">#8AAFBF · body text</div></div>
+  <div class="swatch"><div class="chip" style="background:#486070"></div><div class="name">--slate-dim</div><div class="val">#486070 · borders only</div></div>
+  <div class="swatch"><div class="chip" style="background:#06090f;border:1px solid #1f2733"></div><div class="name">--bg0</div><div class="val">#06090f · HUD void</div></div>
+</div>
+
+<h3>Font Roles</h3>
+<div class="panel">
+  <dl>
+    <dt>Wordmark</dt><dd><span style="font-family:var(--brand);font-size:18px;color:var(--cyan)">PHANTOM</span> — Audiowide. Embedded woff2 in the source as <code>PhantomBrand</code> for offline use; system fallback to <code>--brand</code> stack.</dd>
+    <dt>Headers</dt><dd><span style="font-family:var(--orb);letter-spacing:0.18em;text-transform:uppercase;font-size:13px;color:var(--cyan-bright)">Orbitron</span> — uppercase, 0.18em tracking. Section headers, panel titles.</dd>
+    <dt>Body / UI</dt><dd><span style="font-family:var(--raj);font-weight:500">Rajdhani</span> — 500/600 weight for labels, 700 for stab pills. Default UI face.</dd>
+    <dt>Code / Tabular</dt><dd><code style="color:var(--cyan)">JetBrains Mono</code> — CLI output, function names, localStorage keys, version stamps.</dd>
+  </dl>
+  <p class="why">P1.3 commit removed the Google Fonts import from the runtime app — typography resolves entirely from iOS system fonts in production for offline safety. This documentation page uses the Google Fonts versions because it's a maintainer reference, not the cold-aisle runtime.</p>
+</div>
+
+<h3>Component Patterns</h3>
+
+<h4>stab — subtab pill (line 1671)</h4>
+<div class="samples">
+  <span class="sample-stab">Inactive</span>
+  <span class="sample-stab active">Active</span>
+  <span class="sample-stab">SOPs</span>
+  <span class="sample-stab">BOM</span>
+  <span class="sample-stab">Manifest</span>
+</div>
+
+<h4>pt-btn — brutalist button (line 673, 4783)</h4>
+<div class="samples">
+  <button class="sample-pt primary">Primary</button>
+  <button class="sample-pt secondary">Secondary</button>
+  <button class="sample-pt warn">Warning</button>
+  <button class="sample-pt danger">Destructive</button>
+</div>
+
+<h4>master-section-pill — MASTER toggle (line 10149, v1.6.46)</h4>
+<div class="samples">
+  <span class="sample-mspill active">File</span>
+  <span class="sample-mspill">Profile</span>
+</div>
+
+<h4>qa-btn — NOW dashboard tile (line 2965, variants 2984+)</h4>
+<div class="samples">
+  <div class="sample-qa scan">
+    <svg class="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg>
+    <span class="lbl">SCAN</span>
+  </div>
+  <div class="sample-qa optic">
+    <svg class="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="9" width="18" height="6" rx="2"/><circle cx="7" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="17" cy="12" r="1"/></svg>
+    <span class="lbl">OPTIC</span>
+  </div>
+  <div class="sample-qa blocker">
+    <svg class="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3 L22 21 L2 21 Z"/><line x1="12" y1="9" x2="12" y2="15"/><circle cx="12" cy="18" r="0.8"/></svg>
+    <span class="lbl">BLOCKER</span>
+  </div>
+  <div class="sample-qa handoff">
+    <svg class="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 12 L21 12"/><path d="M15 6 L21 12 L15 18"/></svg>
+    <span class="lbl">HANDOFF</span>
+  </div>
+  <div class="sample-qa ghost">
+    <svg class="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12 a7 7 0 0 1 14 0 v8 l-3 -2 l-2 2 l-2 -2 l-2 2 l-3 -2 z"/><circle cx="10" cy="11" r="0.8" fill="currentColor"/><circle cx="14" cy="11" r="0.8" fill="currentColor"/></svg>
+    <span class="lbl">GHOST</span>
+  </div>
+</div>
+
+<h4>boot-item — boot checklist row (line 451)</h4>
+<div class="panel" style="padding:14px 18px">
+  <div class="sample-bootitem"><span class="dot ok"></span><span>Master file synced</span><span class="badge">SYNCED</span></div>
+  <div class="sample-bootitem"><span class="dot sync"></span><span>Fiber + optics reference</span><span class="badge">SYNCED</span></div>
+  <div class="sample-bootitem"><span class="dot ok"></span><span>Service worker registered</span><span class="badge">SYNCED</span></div>
+  <div class="sample-bootitem" style="border-bottom:none"><span class="dot warn"></span><span>Storage 85% — review autoclean</span><span class="badge" style="color:var(--gold);border-color:rgba(255,214,10,0.55)">REVIEW</span></div>
+</div>
+
+<h4>enter-circle — boot entrypoint (line 10128, v1.6.43)</h4>
+<div class="enter-demo">
+  <div class="enter-circle">
+    <div class="enter-halo"></div>
+    <div class="enter-disc">ENTER</div>
+  </div>
+</div>
+<p class="why">The rotating conic-gradient halo uses <code>--border-angle</code>, blurred 7 px and masked to a thin ring via radial-gradient mask. Below the disc, source uses an Orbitron caption "System Ready · Tap to enter". Tap or Enter/Space fires <code>launch()</code>.</p>
+
+<h4>Panel (gradient-bordered, double background)</h4>
+<div class="panel">
+  <div class="panel-h"><span class="name">Sample Panel</span><span class="tag">var(--panel-bg)</span></div>
+  <p class="why">Double-background trick: <code>padding-box</code> holds the dark interior gradient, <code>border-box</code> holds the cyan→violet→magenta border gradient. Border is <code>1px solid transparent</code>. Glow shadow + inset white sheen for elevation.</p>
+</div>
+
+</section>
+
+<footer>
+  PHANTOM v1.6.47 · Architecture Reference · Generated from <code>dct-ios.html</code> (42,121 lines) on 2026-05-28
+</footer>
+
+</main>
+</body>
+</html>
