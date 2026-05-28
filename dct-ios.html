@@ -9708,11 +9708,296 @@ body[data-net="offline"] .va-btn::after {
   }
 }
 
+/* ━━━ MASTER tab (v1.6.30 — Step 2 Site Reference query spine) ━━━━━
+   Scoped to .master-* classes. Existing tokens only. No new design
+   language. Tap targets ≥ 56px for gloved-finger ergonomics.
+   The Zero Horizontal Overflow Rule is honored: every container uses
+   safe-area-inset padding and any text content that could push width
+   (cab IDs, hostnames) is constrained with overflow: hidden /
+   text-overflow: ellipsis or word-break: break-all. */
+
+.master-empty {
+  padding: 32px 16px calc(var(--tabnav-h) + 32px) 16px;
+  text-align: center;
+}
+.master-empty-msg {
+  font-family: var(--mono);
+  font-size: var(--fs-body);
+  line-height: 1.55;
+  max-width: 320px;
+  margin: 0 auto 22px auto;
+  color: var(--slate-readable);
+}
+.master-empty-cta {
+  min-height: 56px;
+  padding: 14px 28px;
+  font-family: var(--mono);
+  font-size: var(--fs-body);
+  letter-spacing: var(--hud-track-data);
+}
+.master-empty-status {
+  margin-top: 18px;
+  font-family: var(--mono);
+  font-size: var(--fs-caption);
+  color: var(--cyan2);
+  letter-spacing: var(--hud-track-data);
+}
+.master-empty-error {
+  margin: 18px auto 0 auto;
+  padding: 12px 14px;
+  border-radius: 6px;
+  background: rgba(255,69,58,0.10);
+  border: 1px solid rgba(255,69,58,0.30);
+  color: var(--red);
+  font-family: var(--mono);
+  font-size: var(--fs-caption);
+  letter-spacing: var(--hud-track-data);
+  text-align: left;
+  max-width: 360px;
+  line-height: 1.5;
+  word-break: break-word;
+}
+.master-empty-retry {
+  display: inline-block;
+  margin-top: 12px;
+  padding: 10px 16px;
+  min-height: 44px;
+  color: var(--cyan);
+  background: transparent;
+  border: 1px solid var(--cyan-border);
+  border-radius: 6px;
+  font-family: var(--mono);
+  font-size: var(--fs-caption);
+  letter-spacing: var(--hud-track-data);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.master-empty-retry:active {
+  background: var(--cyan-surface);
+  transform: translateY(var(--hud-press-travel));
+}
+
+.master-loaded {
+  padding: 0 0 calc(var(--tabnav-h) + 24px) 0;
+}
+.master-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px calc(var(--safe-right) + 14px) 10px calc(var(--safe-left) + 14px);
+  border-bottom: 1px solid var(--cyan-surface-hi);
+  background: rgba(8,14,22,0.65);
+  box-shadow: var(--surf-inset);
+  font-family: var(--mono);
+  font-size: var(--fs-caption);
+  letter-spacing: var(--hud-track-data);
+  color: var(--slate-readable);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  backdrop-filter: var(--soft-blur);
+  -webkit-backdrop-filter: var(--soft-blur);
+}
+.master-banner-meta {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.master-banner-meta strong {
+  color: var(--cyan);
+  font-weight: 600;
+}
+.master-banner-replace {
+  flex-shrink: 0;
+  color: var(--cyan);
+  background: transparent;
+  border: none;
+  font-family: var(--mono);
+  font-size: var(--fs-caption);
+  letter-spacing: var(--hud-track-data);
+  padding: 8px 8px;
+  min-height: 44px;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  -webkit-tap-highlight-color: transparent;
+}
+.master-banner-replace:active { color: var(--cyan-bright); }
+
+.master-search-wrap {
+  padding: 14px calc(var(--safe-right) + 14px) 6px calc(var(--safe-left) + 14px);
+}
+.master-search-input {
+  width: 100%;
+  min-height: 56px;
+  box-sizing: border-box;
+  padding: 14px 16px;
+  background: var(--bg2);
+  border: 1px solid var(--cyan-border);
+  border-radius: 10px;
+  color: var(--cyan-bright);
+  font-family: var(--mono);
+  font-size: var(--fs-body);
+  letter-spacing: var(--hud-track-data);
+  box-shadow: var(--surf-inset);
+  outline: none;
+  -webkit-appearance: none;
+}
+.master-search-input::placeholder {
+  color: var(--slate-readable);
+  opacity: 0.55;
+}
+.master-search-input:focus {
+  border-color: var(--cyan);
+  box-shadow: var(--surf-inset), 0 0 0 2px var(--cyan-dim);
+}
+
+.master-suggestions {
+  margin: 4px calc(var(--safe-right) + 14px) 0 calc(var(--safe-left) + 14px);
+  padding: 4px 0 12px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.master-suggestion {
+  min-height: 56px;
+  padding: 14px 16px;
+  background: var(--cyan-surface);
+  border: 1px solid var(--cyan-border-lo);
+  border-radius: 8px;
+  color: var(--cyan-bright);
+  font-family: var(--mono);
+  font-size: var(--fs-body);
+  letter-spacing: var(--hud-track-data);
+  text-align: left;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 80ms ease-out, background 120ms ease-out;
+  word-break: break-all;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.master-suggestion:active {
+  transform: translateY(var(--hud-press-travel));
+  background: var(--cyan-surface-hi);
+}
+
+.master-results {
+  padding: 8px calc(var(--safe-right) + 14px) 0 calc(var(--safe-left) + 14px);
+}
+.master-results-summary {
+  font-family: var(--mono);
+  font-size: var(--fs-caption);
+  color: var(--cyan2);
+  letter-spacing: var(--hud-track-data);
+  padding: 6px 4px 8px 4px;
+}
+.master-results-summary strong {
+  color: var(--cyan);
+  font-weight: 600;
+}
+.master-result-row {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--cyan-border-lo);
+  border-left: 2px solid var(--cyan-border-lo);
+  background: rgba(8,14,22,0.35);
+  overflow: hidden;
+}
+.master-result-row:first-child {
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+  border-top: 1px solid var(--cyan-border-lo);
+}
+.master-result-row:last-child {
+  border-bottom-left-radius: 6px;
+  border-bottom-right-radius: 6px;
+}
+.master-result-host {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 4px;
+  margin: 0 0 4px 0;
+  background: transparent;
+  border: none;
+  color: var(--cyan);
+  font-family: var(--mono);
+  font-size: var(--fs-body);
+  font-weight: 600;
+  letter-spacing: var(--hud-track-data);
+  text-align: left;
+  word-break: break-all;
+  cursor: pointer;
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 120ms ease-out;
+  border-radius: 4px;
+}
+.master-result-host:active {
+  background: var(--cyan-surface);
+  transform: translateY(var(--hud-press-travel));
+}
+.master-result-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  font-family: var(--mono);
+  font-size: var(--fs-caption);
+  color: var(--slate-readable);
+  letter-spacing: var(--hud-track-data);
+  padding: 0 4px 2px 4px;
+  pointer-events: none;
+  overflow: hidden;
+}
+.master-result-meta > span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.master-result-meta .master-meta-lbl {
+  color: var(--cyan2);
+  opacity: 0.8;
+  margin-right: 4px;
+}
+
+.master-no-match {
+  padding: 28px 16px;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: var(--fs-body);
+  letter-spacing: var(--hud-track-data);
+  color: var(--slate-readable);
+  word-break: break-all;
+}
+.master-no-match strong {
+  color: var(--cyan2);
+  font-weight: 600;
+  word-break: break-all;
+}
+
+/* phantomConfirmAsk (v1.6.30) — reuses .ppt-* base from phantomPromptAsk,
+   only adds a destructive primary-button variant for risky confirms. */
+.ppt-btn.ppt-btn-destructive {
+  color: var(--red);
+  border-color: rgba(255,69,58,0.35);
+  background: rgba(255,69,58,0.08);
+}
+.ppt-btn.ppt-btn-destructive:active {
+  background: rgba(255,69,58,0.18);
+}
+
 </style>
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.6.29';
+const PHANTOM_APP_VERSION = 'phantom-v1.6.30';
 // Poll interval for reg.update() while app is in foreground. 10 min.
 const PHANTOM_UPDATE_POLL_MS = 10 * 60 * 1000;
 
@@ -10264,6 +10549,9 @@ if (typeof window !== 'undefined') {
             <div style="height:1px;background:rgba(255,255,255,0.06);margin:4px 0"></div>
             <button onclick="actionStripe_toggle();document.getElementById('hdr-overflow-menu').classList.remove('hdr-menu-open')" id="hdr-stripe-btn" class="hdr-menu-item" style="color:var(--slate-readable)" aria-label="Toggle action stripe"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8AAFBF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0"><rect x="3" y="9" width="18" height="6" rx="1"/><line x1="7" y1="12" x2="13" y2="12"/></svg> &nbsp;<span id="hdr-stripe-label">ACTION STRIPE: ON</span></button>
             <div style="height:1px;background:rgba(255,255,255,0.06);margin:4px 0"></div>
+            <!-- v1.6.30: HW REF re-homed here when MASTER took its bottom-nav slot.
+                 Reachable from anywhere; hwMatrix_open() is unchanged. -->
+            <button onclick="hwMatrix_open();document.getElementById('hdr-overflow-menu').classList.remove('hdr-menu-open')" class="hdr-menu-item" style="color:var(--cyan)" aria-label="Open hardware reference"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5cf2ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5"/><line x1="12" y1="22" x2="12" y2="15.5"/><polyline points="22 8.5 12 15.5 2 8.5"/></svg> &nbsp;HW REF</button>
             <button onclick="showPage('sop',null,'site');document.getElementById('hdr-overflow-menu').classList.remove('hdr-menu-open')" class="hdr-menu-item" style="color:var(--violet-bright,#b58cff)" aria-label="Open site profile editor"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#b58cff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> &nbsp;SITE PROFILE</button>
           </div>
         </div>
@@ -12658,6 +12946,18 @@ if (typeof window !== 'undefined') {
 
     </div><!-- end pg-compass -->
 
+    <!-- ━━━ PAGE: MASTER (v1.6.30 — Step 2 Site Reference query spine) ━━━
+         The field tech's "I'm standing at cabinet X — what's in it?" lookup.
+         Read-only query interface over the parsed Master file. Does NOT
+         touch phantom_parseMaster, PHANTOM_MASTER_STORE, EDP/BOM/deploy.
+         Two states populated by master_render():
+           #master-empty-state   — no Master loaded → CTA to load
+           #master-loaded-state  — banner + search + suggestions + results -->
+    <div class="page" id="pg-master">
+      <div id="master-empty-state" class="master-empty" hidden></div>
+      <div id="master-loaded-state" class="master-loaded" hidden></div>
+    </div><!-- end pg-master -->
+
   </main><!-- end main -->
 
   <!-- SOP Add Sheet -->
@@ -12862,9 +13162,13 @@ if (typeof window !== 'undefined') {
       <div class="tn-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffd60a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><line x1="9" y1="18" x2="15" y2="18" stroke-width="1.4"/><line x1="10" y1="22" x2="14" y2="22" stroke-width="1.4"/><circle cx="12" cy="9" r="1.4" fill="#ffd60a" stroke="none"/></svg></div>
       <div class="tn-label">Know</div>
     </div>
-    <div class="tn-item" onclick="hwMatrix_open()" aria-label="HW Ref">
-      <div class="tn-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5cf2ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5"/><line x1="12" y1="22" x2="12" y2="15.5"/><polyline points="22 8.5 12 15.5 2 8.5"/><line x1="4" y1="12" x2="10.5" y2="15.6" stroke-width="1.3"/><line x1="4" y1="14" x2="10.5" y2="17.6" stroke-width="1.3"/><line x1="4" y1="16" x2="10.5" y2="19.6" stroke-width="1.3"/></svg></div>
-      <div class="tn-label" style="color:var(--cyan)">HW REF</div>
+    <!-- v1.6.30: MASTER tab — Site Reference query spine.
+         Replaces HW REF in the bottom nav (HW REF relocated to header
+         overflow menu). Keeps the bottom nav at 5 visible slots for
+         320px viewport ergonomics under gloves. -->
+    <div class="tn-item" onclick="showPage('master',this)" aria-label="Master">
+      <div class="tn-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5cf2ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><rect x="3" y="4" width="18" height="6" rx="1"/><rect x="3" y="14" width="18" height="6" rx="1"/><line x1="7" y1="7" x2="7.01" y2="7" stroke-width="2.4"/><line x1="7" y1="17" x2="7.01" y2="17" stroke-width="2.4"/><line x1="11" y1="7" x2="17" y2="7" stroke-width="1.4"/><line x1="11" y1="17" x2="17" y2="17" stroke-width="1.4"/></svg></div>
+      <div class="tn-label" style="color:var(--cyan)">MASTER</div>
     </div>
     <div class="tn-ribbon" id="tn-ribbon" data-color="red"></div>
   </nav>
@@ -15196,6 +15500,13 @@ function showPage(id, tnEl, opsTab) {
   if (id === 'power') initSubtab('pwr-sub',   'pw-power',  '#pg-power .subtab-strip .stab');
   if (id === 'sop')   { _navInternalCall = true; showOpsTab(opsTab || 'deploy'); _navInternalCall = false; }
   if (id === 'twin')  { if (typeof issue_pageOpen === 'function') issue_pageOpen(); }
+  // v1.6.30: MASTER tab activation — idempotent init (one-time wiring)
+  // + render. Render reads window._lastPhantomMaster live; on cold
+  // restore that's already populated by _phantom_master_bootRestore.
+  if (id === 'master') {
+    if (typeof master_initTab === 'function') master_initTab();
+    if (typeof master_render  === 'function') master_render();
+  }
   if (id === 'scan') {
     // Stage 2: refresh SCAN page state on entry
     if (typeof ScanDispatch !== 'undefined' && ScanDispatch.refreshContext) {
@@ -24041,6 +24352,443 @@ window.phantom_testParseMaster = function phantom_testParseMaster() {
 // ═══════════════════════════════════════════════════════════════════════════
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// MASTER TAB — Site Reference query spine (v1.6.30, Step 2)
+//
+// Read-only query surface over the parsed Master file. Does NOT modify
+// phantom_parseMaster, PHANTOM_MASTER_STORE, the boot-restore IIFE,
+// EDP/BOM/deploy_*, Ghost Echo, or PIN gating.
+//
+// State + render are idempotent. master_render() decides empty vs.
+// loaded based on the live value of window._lastPhantomMaster. All
+// new globals are reachable from the console for debugging — this
+// was the lesson from v1.6.28 where PHANTOM_MASTER_STORE almost got
+// trapped inside an IIFE and disappeared from devtools.
+//
+// Globals used (existing):
+//   window._lastPhantomMaster   — set by phantom_parseMaster on
+//                                  success OR by the boot-restore
+//                                  IIFE on cold start (racksByCab is
+//                                  persisted, including each cab's
+//                                  nested .hosts array — verified in
+//                                  PHANTOM_MASTER_STORE.save).
+//   PHANTOM_MASTER_STORE.clear  — used by master_onReplaceTap
+//   phantomToast(text, kind)    — toasts for clipboard feedback
+//   phantom_testParseMaster()   — picker + parse + stash; reused by
+//                                  master_loadFile so we don't
+//                                  duplicate the dynamic-input
+//                                  pattern.
+//
+// New globals reachable from console:
+//   window._masterQueryState
+//   window.master_normalize     window.master_loadFile
+//   window.master_render        window.master_onInput
+//   window.master_onSuggestionTap
+//   window.master_onHostnameTap window.master_onReplaceTap
+//   window.master_initTab       window.phantomConfirmAsk
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+window._masterQueryState = {
+  currentInput:    '',
+  normalizedInput: '',
+  suggestions:     [],
+  activeCabId:     null,
+  lastCopiedAt:    0
+};
+
+function master_normalize(raw) {
+  return String(raw == null ? '' : raw).trim().toLowerCase();
+}
+window.master_normalize = master_normalize;
+
+// Reusable confirm modal — built once, used by Replace flow and any
+// future destructive surface. Reuses the .ppt-* base classes from
+// phantomPromptAsk; adds only a destructive-button variant in CSS.
+function phantomConfirmAsk(opts) {
+  opts = opts || {};
+  var title         = opts.title         || 'Confirm';
+  var body          = opts.body          || '';
+  var confirmLabel  = opts.confirmLabel  || 'OK';
+  var cancelLabel   = opts.cancelLabel   || 'Cancel';
+  var destructive   = opts.destructive === true;
+  return new Promise(function(resolve) {
+    var overlay = document.createElement('div');
+    overlay.className = 'ppt-overlay';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-label', title);
+    var esc = function(s) {
+      if (typeof escHtml === 'function') return escHtml(s);
+      return String(s == null ? '' : s).replace(/[<>&"']/g, function(c) {
+        return { '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#39;' }[c];
+      });
+    };
+    var okClass = 'ppt-btn ppt-btn-ok' + (destructive ? ' ppt-btn-destructive' : '');
+    overlay.innerHTML =
+      '<div class="ppt-card">' +
+        '<div class="ppt-title">' + esc(title) + '</div>' +
+        (body ? '<div class="ppt-sub">' + esc(body) + '</div>' : '<div class="ppt-sub"></div>') +
+        '<div class="ppt-actions">' +
+          '<button type="button" class="ppt-btn ppt-btn-cancel" data-cancel="1">' + esc(cancelLabel).toUpperCase() + '</button>' +
+          '<button type="button" class="' + okClass + '" data-ok="1">' + esc(confirmLabel).toUpperCase() + '</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(overlay);
+    requestAnimationFrame(function() { overlay.classList.add('visible'); });
+    var done = false;
+    function cleanup(result) {
+      if (done) return;
+      done = true;
+      try { document.removeEventListener('keydown', onKey); } catch(_) {}
+      overlay.classList.remove('visible');
+      setTimeout(function() {
+        try { overlay.parentNode && overlay.parentNode.removeChild(overlay); } catch(_) {}
+      }, 120);
+      resolve(result);
+    }
+    overlay.addEventListener('click', function(e) {
+      var t = e.target;
+      if (!t || done) return;
+      if (t.dataset && t.dataset.ok)     { if (typeof haptic === 'function') haptic([8]); cleanup(true);  return; }
+      if (t.dataset && t.dataset.cancel) { cleanup(false); return; }
+    });
+    function onKey(e) {
+      if (done) return;
+      if (e.key === 'Escape') { e.preventDefault(); cleanup(false); return; }
+      if (e.key === 'Enter')  { e.preventDefault(); if (typeof haptic === 'function') haptic([8]); cleanup(true); return; }
+    }
+    document.addEventListener('keydown', onKey);
+  });
+}
+window.phantomConfirmAsk = phantomConfirmAsk;
+
+// Wraps phantom_testParseMaster — that harness already creates a
+// hidden input, awaits arrayBuffer, calls phantom_parseMaster,
+// persists via PHANTOM_MASTER_STORE.save, and stashes the result on
+// window._lastPhantomMaster. We just show inline "Parsing…" status,
+// then re-render on completion.
+async function master_loadFile() {
+  var emptyEl = document.getElementById('master-empty-state');
+  if (emptyEl) master_renderEmpty(emptyEl, { status: 'Parsing…' });
+  try {
+    var site = await window.phantom_testParseMaster();
+    if (!site) {
+      master_render(); // user cancelled — repaint plain empty
+      return null;
+    }
+    master_render();
+    return site;
+  } catch (err) {
+    var msg = (err && (err.message || String(err))) || 'Parse failed';
+    if (emptyEl) master_renderEmpty(emptyEl, { error: msg });
+    if (typeof phantomToast === 'function') phantomToast('Master parse failed: ' + String(msg).slice(0, 80), 'error');
+    return null;
+  }
+}
+window.master_loadFile = master_loadFile;
+
+function master_hasMaster() {
+  var m = window._lastPhantomMaster;
+  return !!(m && m.racksByCab && typeof m.racksByCab === 'object' && Object.keys(m.racksByCab).length > 0);
+}
+
+function master_formatTimestamp(savedAt) {
+  if (!savedAt) return '—';
+  var d;
+  try { d = new Date(savedAt); } catch (_) { return '—'; }
+  if (!d || isNaN(d.getTime())) return '—';
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  return pad(d.getMonth() + 1) + '/' + pad(d.getDate()) + ' ' +
+         pad(d.getHours()) + ':' + pad(d.getMinutes());
+}
+
+// Parser stores location as "cab:rack:RU" (lowercased) in locCabRu.
+// The third colon-separated segment is the RU position. Missing or
+// non-numeric values return null and sort to the bottom.
+function master_extractRu(host) {
+  if (!host) return null;
+  var loc = host.locCabRu ? String(host.locCabRu) : '';
+  var parts = loc.split(':');
+  if (parts.length < 3) return null;
+  var ru = parseInt(parts[2], 10);
+  return isFinite(ru) ? ru : null;
+}
+
+function master_sortHostsByRu(hosts) {
+  if (!Array.isArray(hosts)) return [];
+  var indexed = hosts.map(function(h, i) {
+    return { h: h, i: i, ru: master_extractRu(h) };
+  });
+  indexed.sort(function(a, b) {
+    var aMissing = (a.ru == null);
+    var bMissing = (b.ru == null);
+    if (aMissing && bMissing) return a.i - b.i;
+    if (aMissing) return 1;
+    if (bMissing) return -1;
+    if (a.ru !== b.ru) return a.ru - b.ru;
+    return a.i - b.i;
+  });
+  return indexed.map(function(x) { return x.h; });
+}
+
+function master_escHtml(s) {
+  if (typeof escHtml === 'function') return escHtml(s);
+  return String(s == null ? '' : s).replace(/[<>&"']/g, function(c) {
+    return { '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+function master_escAttr(s) {
+  // For embedding inside an inline onclick='master_fn(\'value\')' string.
+  return String(s == null ? '' : s).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+}
+
+function master_renderEmpty(container, opts) {
+  opts = opts || {};
+  var loadedEl = document.getElementById('master-loaded-state');
+  if (loadedEl) loadedEl.hidden = true;
+  container.hidden = false;
+  var statusBlock = '';
+  if (opts.status) {
+    statusBlock = '<div class="master-empty-status">' + master_escHtml(opts.status) + '</div>';
+  }
+  var errorBlock = '';
+  if (opts.error) {
+    errorBlock =
+      '<div class="master-empty-error">' + master_escHtml(opts.error) + '</div>' +
+      '<button type="button" class="master-empty-retry" onclick="master_loadFile()">TRY AGAIN</button>';
+  }
+  var ctaDisabled = opts.status ? ' disabled' : '';
+  container.innerHTML =
+    '<div class="master-empty-msg">' +
+      'No Master file loaded.<br>' +
+      'Load a Master to query cabinets and host assignments at this site.' +
+    '</div>' +
+    '<button type="button" class="master-empty-cta pt-btn pt-btn-primary"' + ctaDisabled +
+      ' onclick="master_loadFile()">LOAD MASTER FILE</button>' +
+    statusBlock +
+    errorBlock;
+}
+
+function master_renderResultRows(rack, normCab) {
+  if (!rack || !Array.isArray(rack.hosts) || rack.hosts.length === 0) {
+    return '<div class="master-results-summary">' +
+             '<strong>' + master_escHtml(normCab) + '</strong> · no hosts on record' +
+           '</div>';
+  }
+  var sorted = master_sortHostsByRu(rack.hosts);
+  var rows = sorted.map(function(h) {
+    var name   = h && h.dns    ? String(h.dns)    : '';
+    var model  = h && h.model  ? String(h.model)  : '';
+    var serial = h && h.serial ? String(h.serial) : '';
+    var ru     = master_extractRu(h);
+    var ruText = (ru != null) ? ('U' + ru) : 'U—';
+    var safeName   = master_escHtml(name);
+    var safeModel  = master_escHtml(model);
+    var safeSerial = master_escHtml(serial);
+    var hostBlock = name
+      ? '<button type="button" class="master-result-host"' +
+        ' onclick="master_onHostnameTap(\'' + master_escAttr(name) + '\')"' +
+        ' aria-label="Copy hostname ' + safeName + '">' +
+        safeName + '</button>'
+      : '<div class="master-result-host" style="color:var(--slate-readable);cursor:default" aria-disabled="true">—</div>';
+    return '<div class="master-result-row">' +
+             hostBlock +
+             '<div class="master-result-meta">' +
+               '<span><span class="master-meta-lbl">RU</span>' + master_escHtml(ruText) + '</span>' +
+               (model  ? '<span><span class="master-meta-lbl">HW</span>'  + safeModel  + '</span>' : '') +
+               (serial ? '<span><span class="master-meta-lbl">TAG</span>' + safeSerial + '</span>' : '') +
+             '</div>' +
+           '</div>';
+  }).join('');
+  return '<div class="master-results-summary">' +
+           '<strong>' + master_escHtml(normCab) + '</strong> · ' + sorted.length + ' host' +
+           (sorted.length === 1 ? '' : 's') +
+         '</div>' + rows;
+}
+
+function master_renderLoaded(container) {
+  var emptyEl = document.getElementById('master-empty-state');
+  if (emptyEl) emptyEl.hidden = true;
+  container.hidden = false;
+  var st    = window._masterQueryState;
+  var m     = window._lastPhantomMaster || {};
+  var racks = (m.racksByCab && typeof m.racksByCab === 'object') ? m.racksByCab : {};
+  var totalRacks = Object.keys(racks).length;
+  var siteCode = master_escHtml(m.siteCode || '—');
+  // Prefer the persisted savedAt; fall back to ingestedAt for fresh
+  // in-session parses that haven't been written to localStorage yet.
+  var savedAt = m.savedAt || m.ingestedAt || null;
+  var ts = master_escHtml(master_formatTimestamp(savedAt));
+
+  var html = '';
+  html += '<div class="master-banner" id="master-banner">' +
+            '<div class="master-banner-meta">' +
+              '<strong>' + siteCode + '</strong> · ' + totalRacks + ' racks · loaded ' + ts +
+            '</div>' +
+            '<button type="button" class="master-banner-replace"' +
+              ' onclick="master_onReplaceTap()" aria-label="Replace loaded Master">Replace</button>' +
+          '</div>';
+  html += '<div class="master-search-wrap">' +
+            '<input type="text" id="master-search-input" class="master-search-input"' +
+              ' inputmode="text" autocapitalize="off" autocorrect="off" autocomplete="off"' +
+              ' spellcheck="false" maxlength="64"' +
+              ' placeholder="Cabinet ID (e.g. dh1:001)"' +
+              ' aria-label="Cabinet ID search"' +
+              ' oninput="master_onInput(event)"' +
+              ' value="' + master_escHtml(st.currentInput) + '">' +
+          '</div>';
+
+  var norm = st.normalizedInput;
+  var exactHit = norm && Object.prototype.hasOwnProperty.call(racks, norm);
+
+  if (!norm) {
+    html += '<div class="master-results" id="master-results"></div>';
+  } else if (exactHit) {
+    html += '<div class="master-results" id="master-results">' +
+              master_renderResultRows(racks[norm], norm) +
+            '</div>';
+  } else if (st.suggestions && st.suggestions.length > 0) {
+    html += '<div class="master-suggestions" id="master-suggestions">' +
+              st.suggestions.map(function(cid) {
+                return '<button type="button" class="master-suggestion"' +
+                       ' onclick="master_onSuggestionTap(\'' + master_escAttr(cid) + '\')">' +
+                       master_escHtml(cid) + '</button>';
+              }).join('') +
+            '</div>';
+  } else {
+    html += '<div class="master-no-match" id="master-no-match">' +
+              'No match found for <strong>' + master_escHtml(norm) + '</strong>' +
+            '</div>';
+  }
+
+  container.innerHTML = html;
+
+  // Re-rendering wipes focus state. If we have typed input, restore
+  // caret to the end so the next keystroke continues the same word.
+  var input = document.getElementById('master-search-input');
+  if (input && st.currentInput) {
+    try { input.setSelectionRange(input.value.length, input.value.length); } catch (_) {}
+  }
+}
+
+function master_render() {
+  var emptyEl  = document.getElementById('master-empty-state');
+  var loadedEl = document.getElementById('master-loaded-state');
+  if (!emptyEl || !loadedEl) return;
+  if (master_hasMaster()) {
+    master_renderLoaded(loadedEl);
+  } else {
+    master_renderEmpty(emptyEl, {});
+  }
+}
+window.master_render = master_render;
+
+// Debounced input handler. 200ms is keystroke smoothing only — the
+// filter over ~633 keys is sub-millisecond.
+var _masterFilterTimer = null;
+function master_onInput(event) {
+  var raw = event && event.target ? event.target.value : '';
+  var st = window._masterQueryState;
+  st.currentInput = raw;
+  st.normalizedInput = master_normalize(raw);
+  if (_masterFilterTimer) { clearTimeout(_masterFilterTimer); _masterFilterTimer = null; }
+  _masterFilterTimer = setTimeout(master_runFilter, 200);
+}
+window.master_onInput = master_onInput;
+
+function master_runFilter() {
+  _masterFilterTimer = null;
+  var st = window._masterQueryState;
+  var m  = window._lastPhantomMaster;
+  var racks = (m && m.racksByCab) ? m.racksByCab : {};
+  var norm = st.normalizedInput;
+  if (!norm) {
+    st.suggestions = [];
+    master_render();
+    return;
+  }
+  // Prefix match only, alphabetical, capped at 5.
+  var matches = [];
+  for (var key in racks) {
+    if (!Object.prototype.hasOwnProperty.call(racks, key)) continue;
+    if (key.indexOf(norm) === 0) matches.push(key);
+  }
+  matches.sort();
+  st.suggestions = matches.slice(0, 5);
+  master_render();
+}
+
+function master_onSuggestionTap(cabId) {
+  var st = window._masterQueryState;
+  st.currentInput = cabId;
+  st.normalizedInput = master_normalize(cabId);
+  st.suggestions = [];
+  if (_masterFilterTimer) { clearTimeout(_masterFilterTimer); _masterFilterTimer = null; }
+  if (typeof haptic === 'function') try { haptic(4); } catch(_) {}
+  master_render();
+}
+window.master_onSuggestionTap = master_onSuggestionTap;
+
+function master_onHostnameTap(hostname) {
+  var st = window._masterQueryState;
+  st.lastCopiedAt = Date.now();
+  var name = String(hostname == null ? '' : hostname);
+  var didCopy = false;
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(name);
+      didCopy = true;
+    }
+  } catch (_) { didCopy = false; }
+  if (typeof haptic === 'function') try { haptic([8]); } catch(_) {}
+  if (typeof phantomToast === 'function') {
+    if (didCopy) {
+      phantomToast('Copied: ' + name, 'ok');
+    } else {
+      // iOS Safari can reject clipboard writes outside a direct user
+      // gesture. Surface the hostname in a toast so the tech can read
+      // it off the screen instead.
+      phantomToast(name, 'info');
+    }
+  }
+}
+window.master_onHostnameTap = master_onHostnameTap;
+
+async function master_onReplaceTap() {
+  var m = window._lastPhantomMaster || {};
+  var racks = (m.racksByCab && typeof m.racksByCab === 'object') ? m.racksByCab : {};
+  var n = Object.keys(racks).length;
+  var siteCode = m.siteCode || '—';
+  var ok = await phantomConfirmAsk({
+    title: 'Replace loaded Master?',
+    body:  'This will clear the currently loaded Master (' + siteCode + ', ' + n + ' racks) and prompt for a new file. This cannot be undone for the current session.',
+    confirmLabel: 'Replace',
+    cancelLabel:  'Cancel',
+    destructive:  true
+  });
+  if (!ok) return;
+  try { PHANTOM_MASTER_STORE.clear(); } catch (_) {}
+  window._lastPhantomMaster = undefined;
+  window._masterQueryState = {
+    currentInput: '', normalizedInput: '', suggestions: [],
+    activeCabId: null, lastCopiedAt: 0
+  };
+  master_render();
+  // The whole point of Replace is to load a new one — open the picker
+  // immediately, don't make the tech tap the CTA again.
+  master_loadFile();
+}
+window.master_onReplaceTap = master_onReplaceTap;
+
+// Idempotent first-activation hook. Currently a no-op beyond render;
+// the page DOM is static and event handlers are inline. Kept as a
+// named hook so future state-bound wiring has a single place to live.
+function master_initTab() { /* idempotent */ }
+window.master_initTab = master_initTab;
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// END MASTER TAB
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // PHANTOM EDP PARSE — Single source of truth dispatcher
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // Pure parse dispatcher. Order: cache → local → AI chunked.
@@ -32527,10 +33275,13 @@ function doSearch(q) {
       d.onclick = () => {
         document.getElementById('srch').value = '';
         hideSearch();
-        // Stage 3a: visible-tab map — only 4 tabs visible (triage/scan/sop/fiber).
-        // Hidden pages (cli/power/twin) are still routable but pass null tnEl so
-        // showPage doesn't try to highlight a tab that doesn't exist.
-        const VISIBLE_TAB_INDEX = { triage: 0, scan: 1, sop: 2, fiber: 3 };
+        // v1.6.30: visible-tab map reconciled to DOM ground truth.
+        // DOM order is triage/sop/scan/fiber/master. Hidden pages
+        // (cli/power/twin/compass) are still routable but pass null
+        // tnEl so showPage doesn't try to highlight a tab that
+        // doesn't exist. This shadow MUST stay in sync with the
+        // canonical map in getTnItem().
+        const VISIBLE_TAB_INDEX = { triage: 0, sop: 1, scan: 2, fiber: 3, master: 4 };
         const tnItems = document.querySelectorAll('.tn-item');
         const tabIdx = VISIBLE_TAB_INDEX[h.page];
         const tnEl = (tabIdx !== undefined) ? tnItems[tabIdx] : null;
@@ -40011,20 +40762,26 @@ document.addEventListener('keydown', function(e) {
 });
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// TN-ITEM MAP — Stage 3a (4-Verb Collapse)
+// TN-ITEM MAP — Stage 3a (4-Verb Collapse, reconciled v1.6.30)
 // Single source of truth for page-id → bottom-tab-button mapping.
 // Returns the tn-item DOM element to highlight when navigating to a given
 // page, or null if the page is not represented in the bottom nav (hidden
 // but still routable via showPage/qrDeepLink/ScanDispatch).
 //
-// Visible tabs in DOM order: triage, scan, sop, fiber
-// Hidden routable pages:     cli, power, twin
+// Visible tabs in DOM order: triage, sop, scan, fiber, master
+// Hidden routable pages:     cli, power, twin, compass
+//
+// v1.6.30: the prior map had triage/scan/sop/fiber → 0/1/2/3, but the
+// actual DOM order is triage/sop/scan/fiber. HW REF was a 5th visible
+// item with no map entry. MASTER replaced HW REF in slot 4 and the
+// sop/scan indices are now reconciled to DOM ground truth. HW REF is
+// reachable via hwMatrix_open() from the header overflow menu.
 //
 // Use getTnItem(pageId) instead of tnItems[N] anywhere you need the active
 // tab button for a given page navigation. Hardcoded indices break on every
 // IA refactor — this helper survives them.
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-var VISIBLE_TAB_INDEX = { triage: 0, scan: 1, sop: 2, fiber: 3 };
+var VISIBLE_TAB_INDEX = { triage: 0, sop: 1, scan: 2, fiber: 3, master: 4 };
 function getTnItem(pageId) {
   var idx = VISIBLE_TAB_INDEX[pageId];
   if (idx === undefined) return null;
