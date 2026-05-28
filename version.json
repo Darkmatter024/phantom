@@ -1,6 +1,6 @@
 {
-  "version": "phantom-v1.6.41",
+  "version": "phantom-v1.6.42",
   "released": "2026-05-28",
-  "prevVersion": "phantom-v1.6.40",
-  "notes": "PHANTOM wordmark now uses the Audiowide display font in a teal->magenta neon gradient, applied uniformly to every brand wordmark: the boot-screen logo (.boot-logo), the in-app header logo (.app-logo), and the ENTER PHANTOM button label (.boot-cosmic .cosmic-btn). The font is embedded as a base64 woff2 @font-face ('PhantomBrand', ~13KB) routed through a new --brand CSS var, so it stays zero-network / fully offline — no CDN. --orb is left untouched (still drives section headers etc.), and the monospace/terminal doc-IDs and printed reports are intentionally NOT changed. .app-logo switched from a violet text-shadow to a clipped gradient + drop-shadow glow so the glow renders on the gradient text. boot-logo gradient retuned cyan/violet -> teal/magenta and signalLock tracking tightened for the wider face. This is a wordmark/font change only; the boot-screen visual redesign (row icons, glowing panels, pitch-black, ENTER treatment) is a separate pass."
+  "prevVersion": "phantom-v1.6.41",
+  "notes": "Boot-screen visual redesign (part 1). Added per-row line icons to the boot checklist (layers/database/share/zap/shield+/cpu/ghost), each a gradient-stroked inline SVG via a shared #biGrad def. Glowing gradient-bordered panels on the boot checklist and the topology cards, and a pitch-black #boot background. All additive/override CSS scoped under #boot; existing launch() wiring, the ENTER PHANTOM button, boot-item injection points (update/resume/clone-war rows), and topology onclick handlers are untouched. The ENTER ring / 'System Ready' top panel from the design target is intentionally NOT included in this pass (it would relocate the working enter button) — pending explicit go-ahead. Builds on v1.6.41 (Audiowide wordmark)."
 }
