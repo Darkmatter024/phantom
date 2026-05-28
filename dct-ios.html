@@ -9993,11 +9993,73 @@ body[data-net="offline"] .va-btn::after {
   background: rgba(255,69,58,0.18);
 }
 
+/* ━━━ v1.6.31 Visual cleanup ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Three fixes, all visual, no functional surface touched.
+
+   1. Resume banner overlap: the session-resume banner is fixed
+      at top:safe-top+8, and the boot-eyebrow renders just below
+      it inside #boot. Both sit in the same vertical band and
+      both are horizontally centered, producing character-level
+      interleave. When the banner is mounted, the body gets a
+      `has-resume-banner` class; this rule pushes #boot's
+      padding-top so the eyebrow clears the banner's footprint.
+      Class is added on banner-mount and cleared on every boot
+      exit path (Start Fresh / Resume auto-dismiss / Enter
+      Phantom) so no stale padding survives the splash.
+
+   2. Stale subtitle version: handled in the inline boot-init
+      script (sets .boot-eyebrow.textContent from
+      PHANTOM_APP_VERSION). No CSS needed.
+
+   3. Desktop max-width: scope to >= 600px so the iPhone PWA
+      remains byte-identical. On wider viewports, #app and the
+      viewport-anchored fixed siblings (.tab-nav, #action-stripe,
+      #omni-bar) are clamped to a centered 480px column. */
+body.has-resume-banner #boot {
+  padding-top: calc(var(--safe-top) + 80px);
+}
+@media (min-width: 600px) {
+  #app {
+    inset: 0 auto;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 480px;
+  }
+  .tab-nav {
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    width: calc(100% - 24px);
+    max-width: 456px;
+  }
+  #action-stripe,
+  #omni-bar {
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 480px;
+  }
+}
+
 </style>
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.6.30';
+const PHANTOM_APP_VERSION = 'phantom-v1.6.31';
+// v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
+// future version bumps update it automatically. Prior to this, the
+// subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
+// drifted 26+ patch releases. The .boot-eyebrow markup still ships
+// with a literal as a no-script fallback; this handler overwrites
+// it on DOMContentLoaded once the boot DOM is parsed.
+document.addEventListener('DOMContentLoaded', function() {
+  try {
+    var be = document.querySelector('.boot-eyebrow');
+    if (be) be.textContent = 'CoreWeave · AUS-01 · ' + PHANTOM_APP_VERSION.replace('phantom-', '');
+  } catch (_) {}
+});
 // Poll interval for reg.update() while app is in foreground. 10 min.
 const PHANTOM_UPDATE_POLL_MS = 10 * 60 * 1000;
 
@@ -15186,6 +15248,9 @@ function launch() {
   safeStore('phantom_seen_boot','1');
   const boot = document.getElementById('boot');
   boot.classList.add('collapsing');
+  // v1.6.31: release the boot-padding override before collapse so
+  // no stale layout shift carries past the splash → app transition.
+  try { document.body.classList.remove('has-resume-banner'); } catch(_) {}
   haptic(15);
   setTimeout(() => {
     // Reveal app FIRST so it's painted underneath boot before boot disappears.
@@ -15372,10 +15437,16 @@ function _session_clear() {
   try { localStorage.removeItem(PHANTOM_SESSION_KEY); } catch(_) {}
   var b = document.getElementById('phantom-resume-banner');
   if (b) try { b.parentNode.removeChild(b); } catch(_) {}
+  // v1.6.31: clear the boot-padding override so any stale layout
+  // shift from a previous boot-screen banner does not persist.
+  try { document.body.classList.remove('has-resume-banner'); } catch(_) {}
 }
 function _session_dismissBanner() {
   var b = document.getElementById('phantom-resume-banner');
   if (b) try { b.parentNode.removeChild(b); } catch(_) {}
+  // v1.6.31: same — release the #boot padding override on dismiss
+  // (manual × tap and the 8s auto-dismiss both land here).
+  try { document.body.classList.remove('has-resume-banner'); } catch(_) {}
 }
 function _session_startFresh() {
   _session_clear();
@@ -15418,6 +15489,10 @@ function _session_startFresh() {
         'style="background:transparent;border:none;color:var(--slate-readable);font-size:20px;' +
         'line-height:1;cursor:pointer;padding:0 4px;min-height:32px">&times;</button>';
     try { document.body.appendChild(banner); } catch(_) {}
+    // v1.6.31: tag the body so CSS can push #boot's padding-top
+    // and clear the vertical band the fixed banner occupies. The
+    // class is cleared on every boot exit (clear / dismiss / launch).
+    try { document.body.classList.add('has-resume-banner'); } catch(_) {}
     // Auto-dismiss after 8 seconds so it doesn't linger.
     setTimeout(_session_dismissBanner, 8000);
 
