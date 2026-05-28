@@ -1589,5 +1589,21 @@ The cabinet/host map loaded under MASTER &rarr; FILE is NOT persisted in <code>l
 </footer>
 
 </main>
+<script>
+// Blob-based download so save-locally works under file:// too,
+// where the HTML <a download> attribute is unreliable across browsers.
+document.querySelectorAll('a[download]').forEach(function(a){
+  a.addEventListener('click', function(e){
+    e.preventDefault();
+    var html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+    var blob = new Blob([html], {type:'text/html;charset=utf-8'});
+    var url = URL.createObjectURL(blob);
+    var t = document.createElement('a');
+    t.href = url; t.download = a.getAttribute('download') || 'phantom-architecture.html';
+    document.body.appendChild(t); t.click(); document.body.removeChild(t);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1500);
+  });
+});
+</script>
 </body>
 </html>
