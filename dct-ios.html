@@ -838,138 +838,9 @@ body {
   initial-value: 0deg;
   inherits: false;
 }
-.cosmic-wrap {
-  position: relative;
-  width: 100%;
-  height: 52px;
-  cursor: pointer;
-}
-.cosmic-canvas {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  border-radius: 8px;
-  pointer-events: none;
-  z-index: 1;
-}
-.cosmic-border-glow {
-  position: absolute;
-  inset: -2px;
-  border-radius: var(--hud-r12);
-  z-index: 0;
-  opacity: 1;
-  background: conic-gradient(
-    from var(--border-angle),
-    transparent 0%,
-    #9b59ff 8%,
-    #c026d3 12%,
-    transparent 20%,
-    transparent 48%,
-    #5cf2e8 55%,
-    #7eb8ff 60%,
-    transparent 68%
-  );
-  animation: cosmic-rotate 2.5s linear infinite;
-  filter: blur(1.5px);
-  transition: filter 0.15s ease;
-}
 @keyframes cosmic-rotate {
   to { --border-angle: 360deg; }
 }
-.cosmic-btn {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  border: none;
-  border-radius: 8px;
-  background: rgba(4, 7, 14, 0.94);
-  color: rgba(220, 200, 255, 0.85);
-  font-family: var(--raj);
-  font-size: 15px;
-  font-weight: 600;
-  letter-spacing: 1.5px;
-  cursor: pointer;
-  z-index: 2;
-  overflow: hidden;
-  transition: color 0.2s ease, background 0.2s ease, transform 0.1s ease;
-}
-.cosmic-btn::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 8px;
-  border: 1px solid rgba(155, 89, 255, 0.18);
-  pointer-events: none;
-  transition: border-color 0.2s ease;
-}
-.cosmic-wrap:active .cosmic-btn {
-  transform: scale(0.96);
-  background: rgba(80, 20, 140, 0.35);
-  color: #fff;
-}
-.cosmic-wrap:active .cosmic-btn::before {
-  border-color: rgba(192, 38, 211, 0.7);
-}
-.cosmic-wrap:active .cosmic-border-glow {
-  filter: blur(0px);
-  animation-duration: 0.6s;
-}
-.cosmic-wrap:active::after {
-  content: '';
-  position: absolute;
-  inset: -8px;
-  border-radius: 14px;
-  border: 2px solid rgba(192, 38, 211, 0.5);
-  animation: press-ripple 0.4s ease-out forwards;
-  pointer-events: none;
-  z-index: 3;
-}
-@keyframes press-ripple {
-  0%   { transform: scale(1);    opacity: 0.8; }
-  100% { transform: scale(1.08); opacity: 0; }
-}
-.cosmic-btn .cosmic-label {
-  position: relative;
-  z-index: 3;
-  pointer-events: none;
-}
-.boot-cosmic {
-  width: min(280px, 70vw);
-  height: 56px;
-  margin-top: 18px;
-  margin-left: auto;
-  margin-right: auto;
-}
-.boot-cosmic .cosmic-btn {
-  font-family: var(--brand);
-  font-size: 13px;
-  font-weight: 400;
-  letter-spacing: 2px;
-}
-.boot-cosmic .cosmic-border-glow {
-  background: conic-gradient(
-    from var(--border-angle),
-    transparent 0%,
-    var(--violet) 8%,
-    #c026d3 12%,
-    transparent 20%,
-    transparent 48%,
-    var(--cyan) 55%,
-    #7eb8ff 60%,
-    transparent 68%
-  );
-}
-@media (prefers-reduced-motion: reduce) {
-  .cosmic-border-glow {
-    animation: none;
-    background: var(--cyan);
-    opacity: 0.4;
-    filter: blur(2px);
-  }
-}
-
 /* ━━━ APP SHELL ━━━ */
 #app {
   display: none; 
@@ -1777,29 +1648,6 @@ mark { background:var(--cyan-subtle); color:var(--cyan); padding:0 2px; border-r
     inset 0 1px 0 rgba(255,255,255,0.22),
     0 0 18px rgba(255,180,70,0.34),
     0 0 4px rgba(255,206,128,0.45),
-    0 1px 3px rgba(0,0,0,0.4);
-}
-
-/* CONFIG — Site (slate, lowest prominence) */
-#ops-tab-strip .stab[data-tab="site"] {
-  background: linear-gradient(180deg, rgba(30,40,52,0.62) 0%, rgba(20,28,38,0.52) 100%);
-  border: 1px solid rgba(120,145,165,0.28);
-  border-top: 1px solid rgba(120,145,165,0.34);
-  color: rgba(176,196,212,0.78);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 1px 4px rgba(0,0,0,0.18);
-}
-#ops-tab-strip .stab[data-tab="site"].active {
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0.08) 0%, transparent 35%),
-    linear-gradient(165deg, rgba(120,145,165,0.26) 0%, rgba(160,180,200,0.14) 100%);
-  border: 1px solid rgba(160,180,200,0.58);
-  border-top: 1px solid rgba(190,210,225,0.74);
-  border-left: 1px solid rgba(160,180,200,0.42);
-  color: #d4e0eb;
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.18),
-    0 0 14px rgba(120,145,165,0.24),
-    0 0 3px rgba(160,180,200,0.32),
     0 1px 3px rgba(0,0,0,0.4);
 }
 
@@ -4134,8 +3982,6 @@ p { letter-spacing: 0.1px; }
 /* ── TASK 9k: Badge — slightly more open tracking ── */
 .badge { letter-spacing: 1.5px; font-weight: 700; }
 
-/* ── TASK 9l: Boot cosmic button — wider letter spacing ── */
-.boot-cosmic .cosmic-btn { letter-spacing: 1px; }
 
 /* ── TASK 9m: Checklist — slightly more padding ── */
 .chk { padding: 12px 0; }
@@ -10166,7 +10012,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.6.47';
+const PHANTOM_APP_VERSION = 'phantom-v1.6.48';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -11866,10 +11712,7 @@ if (typeof window !== 'undefined') {
 
     <div class="page" id="pg-cli">
       <div class="subtab-strip">
-        <div class="stab active" onclick="showStab(this,'cli-sub','cs-arista')">Arista</div>
-        <div class="stab" onclick="showStab(this,'cli-sub','cs-nxos')">NX-OS</div>
-        <div class="stab" onclick="showStab(this,'cli-sub','cs-mlnx')">MLNX</div>
-        <div class="stab" onclick="showStab(this,'cli-sub','cs-ib')">IB / NDR</div>
+        <div class="stab active" onclick="showStab(this,'cli-sub','cs-ib')">IB / NDR</div>
         <div class="stab" onclick="showStab(this,'cli-sub','cs-oob')">OOB</div>
         <div class="stab" onclick="showStab(this,'cli-sub','cs-console')">Console</div>
         <div class="stab" onclick="showStab(this,'cli-sub','cs-cert')">Test &amp; Cert</div>
@@ -11987,80 +11830,6 @@ if (typeof window !== 'undefined') {
               <tr><td>Terminate hardwired feeds</td><td style="color:var(--red)">✗ NO</td><td style="color:var(--green)">✓</td></tr>
             </table>
           </div>
-        </div>
-      </div>
-
-      <div class="cli-sub" id="cs-arista" style="display:none">
-        <div class="sh">Arista EOS</div>
-        <div class="card" onclick="toggleCard(this)">
-          <div class="card-hdr"><div class="card-title">Interface Status &amp; Errors</div><div class="chev">▶</div></div>
-          <div class="card-body"><div class="cli">
-            <span class="cmd">show interfaces status</span><br>
-            <span class="cmd">show interfaces Ethernet1/1</span><br>
-            <span class="cmd">show interfaces Ethernet1/1 counters errors</span><br>
-            <span class="cmd">show interfaces counters errors</span><br>
-            <span class="cmd">watch 5 show interfaces Ethernet1/1 counters errors</span>
-          </div></div>
-        </div>
-        <div class="card" onclick="toggleCard(this)">
-          <div class="card-hdr"><div class="card-title">MAC / ARP / LLDP / STP</div><div class="chev">▶</div></div>
-          <div class="card-body"><div class="cli">
-            <span class="cmd">show mac address-table</span><br>
-            <span class="cmd">show arp</span><br>
-            <span class="cmd">show lldp neighbors</span><br>
-            <span class="cmd">show spanning-tree</span><br>
-            <span class="cmd">show port-channel summary</span>
-          </div></div>
-        </div>
-        <div class="card" onclick="toggleCard(this)">
-          <div class="card-hdr"><div class="card-title">Logs &amp; Events</div><div class="chev">▶</div></div>
-          <div class="card-body"><div class="cli">
-            <span class="cmd">show logging last 100</span><br>
-            <span class="cmd">show logging | grep Ethernet1/1</span><br>
-            <span class="cmd">show logging | grep -i error</span><br>
-            <span class="cmd">show reload cause</span>
-          </div></div>
-        </div>
-      </div>
-
-      <div class="cli-sub" id="cs-nxos" style="display:none">
-        <div class="sh">Cisco NX-OS</div>
-        <div class="card" onclick="toggleCard(this)">
-          <div class="card-hdr"><div class="card-title">Interface &amp; FEC Counters</div><div class="chev">▶</div></div>
-          <div class="card-body"><div class="cli">
-            <span class="cmd">show interface ethernet 1/1</span><br>
-            <span class="cmd">show interface ethernet 1/1 counters errors</span><br>
-            <span class="cmd">show interface brief</span><br>
-            <span class="cmd">show interface ethernet 1/1 fec</span><br>
-            <span class="cmd">show interface ethernet 1/1 transceiver details</span>
-          </div></div>
-        </div>
-      </div>
-
-      <div class="cli-sub" id="cs-mlnx" style="display:none">
-        <div class="sh">ConnectX-7 / BlueField-3 (Linux)</div>
-        <div class="card" onclick="toggleCard(this)">
-          <div class="card-hdr"><div class="card-title">ethtool &amp; mlxlink</div><div class="chev">▶</div></div>
-          <div class="card-body"><div class="cli">
-            <span class="cmd">ip link show ens1f0</span><br>
-            <span class="cmd">ethtool ens1f0</span><br>
-            <span class="cmd">ethtool -S ens1f0 | grep -i error</span><br>
-            <span class="cmd">ethtool -m ens1f0</span><br>
-            <span class="cc"># MST + mlxlink</span><br>
-            <span class="cmd">mst start && mst status</span><br>
-            <span class="cmd">mlxlink -d /dev/mst/mt4129_pciconf0 -m</span><br>
-            <span class="cmd">mlxlink -d /dev/mst/mt4129_pciconf0 --port 1 -e</span><br>
-            <span class="cmd">mlxlink -d /dev/mst/mt4129_pciconf0 --port 1 --show_fec</span>
-          </div></div>
-        </div>
-        <div class="sh">Mellanox MLNX-OS</div>
-        <div class="card" onclick="toggleCard(this)">
-          <div class="card-hdr"><div class="card-title">Switch Interface &amp; Override</div><div class="chev">▶</div></div>
-          <div class="card-body"><div class="cli">
-            <span class="cmd">show interfaces ethernet 1/1 transceiver</span><br>
-            <span class="cmd">show interfaces ethernet 1/1</span><br>
-            <span class="cmd">interface ethernet 1/1 vendor-override</span>
-          </div></div>
         </div>
       </div>
 
@@ -14140,7 +13909,7 @@ const INDEX = [
 // Pure static config — no functions, no DOM.
 const STAB_GROUPS = {
   'fiber-sub': ['fs-fiber','fs-form','fs-mpo','fs-dom','fs-optic','fs-cable','fs-hardware','fs-triage'],
-  'cli-sub':   ['cs-cert','cs-arista','cs-nxos','cs-mlnx','cs-ib','cs-oob','cs-console','cs-parser'],
+  'cli-sub':   ['cs-cert','cs-ib','cs-oob','cs-console','cs-parser'],
   'pwr-sub':   ['pw-power','pw-hw','pw-rb','pw-rm','pw-thermal','pw-blast'],
 };
 
@@ -15127,115 +14896,6 @@ function phantomDeferredInit() {
   }, 500);
 }
 
-// ━━━ v9.7 BOOT TOPOLOGIES ━━━
-// Reads existing localStorage data and updates the 3 topology tiles
-// to either populated (cyan glow + count) or empty (dimmed + "NO DATA").
-//
-// Data sources updated to match current architecture:
-//   - Optic Ledgers     → optic-score history entries
-//   - Rack Elevations   → unique racks across all loaded deployments
-//   - Network Validation → port-map validation runs (last result count)
-function bootRenderTopologies() {
-  var deps = (typeof deploy_loadAll === 'function') ? deploy_loadAll() : [];
-
-  // OPTIC LEDGERS: optic score Verify history entries
-  var opticCount = 0;
-  try {
-    var hist = safeParse(localStorage.getItem('phantom_optic_score_history'), []);
-    if (Array.isArray(hist)) opticCount = hist.length;
-  } catch(_){}
-
-  // RACK ELEVATIONS: unique racks across all loaded deployments + standalone store
-  var rackCount = 0;
-  try {
-    var seen = {};
-    if (typeof deploy_loadRacks === 'function') {
-      deps.forEach(function(d) {
-        var racks = deploy_loadRacks(d.id) || [];
-        racks.forEach(function(r) {
-          var key = (r && (r.rackId || r.name || r.id)) || '';
-          if (key && !seen[key]) { seen[key] = 1; rackCount++; }
-        });
-      });
-    }
-    if (typeof loadRacks === 'function') {
-      var standalone = loadRacks() || [];
-      standalone.forEach(function(r) {
-        var key = (r && (r.name || r.id)) || '';
-        if (key && !seen[key]) { seen[key] = 1; rackCount++; }
-      });
-    }
-  } catch(_){}
-
-  // NETWORK VALIDATION: deployments that have an EDP with port maps parsed
-  var netCount = 0;
-  try {
-    deps.forEach(function(d) {
-      var edp = d && d.edpParsed;
-      if (edp && Array.isArray(edp.portMaps) && edp.portMaps.length > 0) {
-        netCount++;
-      }
-    });
-  } catch(_){}
-
-  function applyTile(selector, count, label) {
-    var tile = document.querySelector('.boot-topo[data-topo="' + selector + '"]');
-    if (!tile) return;
-    var countEl = tile.querySelector('[data-count]');
-    if (count > 0) {
-      tile.classList.remove('empty');
-      tile.classList.add('populated');
-      if (countEl) countEl.textContent = count + ' ' + label;
-    } else {
-      tile.classList.remove('populated');
-      tile.classList.add('empty');
-      if (countEl) countEl.textContent = 'NO DATA';
-    }
-  }
-  applyTile('optics',  opticCount, opticCount === 1 ? 'ENTRY' : 'ENTRIES');
-  applyTile('racks',   rackCount,  rackCount  === 1 ? 'RACK'  : 'RACKS');
-  applyTile('network', netCount,   netCount   === 1 ? 'EDP'   : 'EDPS');
-}
-function bootTopoOpen(topo) {
-  if (typeof haptic === 'function') haptic(10);
-
-  // Collapse boot, then navigate
-  safeStore('phantom_seen_boot','1');
-  var boot = document.getElementById('boot');
-  boot.classList.add('collapsing');
-  setTimeout(function() {
-    boot.style.display = 'none';
-    boot.classList.remove('collapsing');
-    document.getElementById('app').classList.add('visible');
-    phantomUpdateNetPill(navigator.onLine);
-    setTimeout(phantomDeferredInit, 300);
-
-    // Route to the correct destination
-    if (topo === 'optics') {
-      // Go straight to Optic Score Verify (KNOW → Optic → Verify mode)
-      if (typeof goOpticVerify === 'function') {
-        goOpticVerify();
-      } else {
-        showPage('fiber', getTnItem('fiber'));
-      }
-    } else if (topo === 'racks') {
-      // Go to BUILD → Rack Map subtab (on-demand viewer)
-      showPage('sop', getTnItem('sop'), 'rackmap');
-    } else if (topo === 'network') {
-      // Go to BUILD → Port Map (validator)
-      showPage('sop', getTnItem('sop'), 'portmap');
-    }
-  }, 480);
-}
-// Auto-render on script load (boot screen visible immediately)
-(function() {
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', bootRenderTopologies);
-  } else {
-    bootRenderTopologies();
-  }
-})();
-
 // ━━━ DEV ESCAPE HATCH — 5-tap on PHANTOM logo to replay boot screen ━━━
 (function() {
   function bind() {
@@ -15649,7 +15309,7 @@ function showPage(id, tnEl, opsTab) {
   hideSearch();
 
   if (id === 'fiber') initSubtab('fiber-sub', 'fs-fiber', '#pg-fiber .subtab-strip .stab');
-  if (id === 'cli')   initSubtab('cli-sub',   'cs-arista', '#pg-cli .subtab-strip .stab');
+  if (id === 'cli')   initSubtab('cli-sub',   'cs-ib', '#pg-cli .subtab-strip .stab');
   if (id === 'power') initSubtab('pwr-sub',   'pw-power',  '#pg-power .subtab-strip .stab');
   if (id === 'sop')   { _navInternalCall = true; showOpsTab(opsTab || 'deploy'); _navInternalCall = false; }
   if (id === 'twin')  { if (typeof issue_pageOpen === 'function') issue_pageOpen(); }
@@ -15861,7 +15521,6 @@ const OPS_TABS = {
     //   phantom_deploy_assign_v1  → [ { id, deploymentId, techName, phaseType, rackIds } ]  (Stage 4+)
     deploy_showList(c);
   },
-  site: function(c) { siteProfile_showEditor(c); },
   manifest: function(c) { manifest_render(c); }
 };
 
@@ -21218,10 +20877,6 @@ async function deploy_hash(text) {
   }
 }
 
-function deploy_formatDate(ts) {
-  var d = new Date(ts);
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-}
 
 function deploy_statusBadge(status) {
   var map = {
@@ -21504,7 +21159,7 @@ function deploy_showList(container) {
       //    Do NOT live-compute rollups/optics/blockers — the heavy data is gone.
       if (dep.status === 'closed') {
         var tStats = dep.finalStats || {};
-        var closedOn = dep.closedAt ? deploy_formatDate(dep.closedAt) : '—';
+        var closedOn = dep.closedAt ? formatDate(dep.closedAt) : '—';
         var closedBy = dep.closedBy || '—';
         html += '<div style="background:var(--surf-1);border:1px solid rgba(138,175,191,0.20);border-radius:var(--hud-r12);padding:12px 14px;margin-bottom:8px;cursor:pointer;position:relative;overflow:hidden;opacity:0.85" onclick="deploy_showDetail(\'' + dep.id + '\')" ontouchstart="this.style.opacity=\'0.7\'" ontouchend="this.style.opacity=\'0.85\'">';
         html += '<div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--slate-readable);opacity:0.7"></div>';
@@ -21563,7 +21218,7 @@ function deploy_showList(container) {
 
       // Meta row: lead · date · racks
       html += '<div style="font-family:var(--mono);font-size: var(--fs-caption);letter-spacing:1px;color:var(--slate);margin-bottom:8px">';
-      html += escHtml(dep.buildLead || 'Unassigned') + ' · ' + deploy_formatDate(dep.created) + ' · ' + (dep.rackCount || 0) + ' rack' + ((dep.rackCount || 0) !== 1 ? 's' : '');
+      html += escHtml(dep.buildLead || 'Unassigned') + ' · ' + formatDate(dep.created) + ' · ' + (dep.rackCount || 0) + ' rack' + ((dep.rackCount || 0) !== 1 ? 's' : '');
       html += '</div>';
 
       // ── Live indicator strip ──
@@ -21690,7 +21345,7 @@ async function _deploy_analyze_postGate(raw) {
     var existing = deploy_loadAll();
     var dupe = existing.find(function(d) { return d.edpHash === hash; });
     if (dupe) {
-      results.innerHTML = '<div class="pf warn"><div class="pf-sev"><span class="ico ico-md ico-warning"></span> DUPLICATE EDP DETECTED</div><div class="pf-detail">This EDP has already been ingested as <strong>' + escHtml(dupe.name) + '</strong> (' + deploy_formatDate(dupe.created) + '). The content hash matches an existing deployment.</div></div>' +
+      results.innerHTML = '<div class="pf warn"><div class="pf-sev"><span class="ico ico-md ico-warning"></span> DUPLICATE EDP DETECTED</div><div class="pf-detail">This EDP has already been ingested as <strong>' + escHtml(dupe.name) + '</strong> (' + formatDate(dupe.created) + '). The content hash matches an existing deployment.</div></div>' +
         '<div style="display:flex;gap:8px;margin-top:12px"><button class="pt-btn pt-btn-secondary" onclick="deploy_forceAnalyze()" style="flex:1">ANALYZE ANYWAY</button><button class="pt-btn pt-btn-ghost" onclick="deploy_showDetail(\'' + dupe.id + '\')" style="flex:1">VIEW EXISTING</button></div>';
       btn.disabled = false;
       btn.textContent = '▶  ANALYZE EDP';
@@ -24445,10 +24100,10 @@ async function phantom_parseMaster(arrayBuffer, options) {
   }
 }
 
-// Test harness — invoke from Safari/Chrome console: window.phantom_testParseMaster()
+// Master load (file picker) — opens picker, parses, stashes site. Also callable: window.master_loadFromPicker()
 // Returns a Promise<Site|null> that resolves once the user selects a file (or null on cancel).
 // Side effect: stashes result at window._lastPhantomMaster for inspection.
-window.phantom_testParseMaster = function phantom_testParseMaster() {
+window.master_loadFromPicker = function master_loadFromPicker() {
   return new Promise(function(resolve, reject) {
     var input = null;
     try {
@@ -24526,7 +24181,7 @@ window.phantom_testParseMaster = function phantom_testParseMaster() {
 //                                  PHANTOM_MASTER_STORE.save).
 //   PHANTOM_MASTER_STORE.clear  — used by master_onReplaceTap
 //   phantomToast(text, kind)    — toasts for clipboard feedback
-//   phantom_testParseMaster()   — picker + parse + stash; reused by
+//   master_loadFromPicker()   — picker + parse + stash; reused by
 //                                  master_loadFile so we don't
 //                                  duplicate the dynamic-input
 //                                  pattern.
@@ -24614,7 +24269,7 @@ function phantomConfirmAsk(opts) {
 }
 window.phantomConfirmAsk = phantomConfirmAsk;
 
-// Wraps phantom_testParseMaster — that harness already creates a
+// Wraps master_loadFromPicker — that loader already creates a
 // hidden input, awaits arrayBuffer, calls phantom_parseMaster,
 // persists via PHANTOM_MASTER_STORE.save, and stashes the result on
 // window._lastPhantomMaster. We just show inline "Parsing…" status,
@@ -24623,7 +24278,7 @@ async function master_loadFile() {
   var emptyEl = document.getElementById('master-empty-state');
   if (emptyEl) master_renderEmpty(emptyEl, { status: 'Parsing…' });
   try {
-    var site = await window.phantom_testParseMaster();
+    var site = await window.master_loadFromPicker();
     if (!site) {
       master_render(); // user cancelled — repaint plain empty
       return null;
@@ -25588,7 +25243,7 @@ function deploy_showDetail(id) {
   html += '<div style="display:flex;align-items:center;gap: 8px;margin-bottom:14px">';
   html += '<button class="pt-btn pt-btn-ghost" style="width:auto;padding:10px 16px" onclick="nav_back()">‹ Back</button>';
   html += '<div style="flex:1"><div style="font-family:var(--raj);font-weight:700;font-size:16px">' + escHtml(dep.name) + '</div>';
-  html += '<div style="font-family:var(--mono);font-size: var(--fs-caption);color:var(--slate);letter-spacing:1px">' + escHtml(dep.buildLead) + ' · ' + deploy_formatDate(dep.created) + '</div></div>';
+  html += '<div style="font-family:var(--mono);font-size: var(--fs-caption);color:var(--slate);letter-spacing:1px">' + escHtml(dep.buildLead) + ' · ' + formatDate(dep.created) + '</div></div>';
   html += deploy_statusBadge(dep.status);
   html += '</div>';
 
@@ -26935,7 +26590,7 @@ function deploy_showRackDetail(deployId, rackId) {
         html += '</div>';
         html += '<div id="ge-echo-body" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.06)">';
         geMatches.forEach(function(q) {
-          var when = deploy_formatDate(q.ts);
+          var when = formatDate(q.ts);
           html += '<div style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04)">';
           html += '<div style="font-family:var(--mono);font-size:12px;color:var(--white);line-height:1.45">' + escHtml(q.text) + '</div>';
           html += '<div style="font-family:var(--mono);font-size: var(--fs-caption);color:var(--slate);margin-top:4px;letter-spacing:0.5px">— ' + escHtml(q.author || 'Tech') + ' · ' + when + '</div>';
@@ -26990,7 +26645,7 @@ function deploy_showRackDetail(deployId, rackId) {
     html += '<div style="display:flex;gap: 8px">';
     if (_depLocked) {
       // Completed deployment — read-only
-      var ts = ph.signedOffAt ? deploy_formatDate(ph.signedOffAt) : '';
+      var ts = ph.signedOffAt ? formatDate(ph.signedOffAt) : '';
       var lockLabel = ph.status === 'complete' ? '✓ Completed' + (ts ? ' · ' + ts : '') : ('<span class="ico ico-md ico-lock"></span> ' + statusLabel + ' — deployment locked');
       var lockColor = ph.status === 'complete' ? 'var(--green)' : 'var(--slate)';
       html += '<div style="font-family:var(--mono);font-size: var(--fs-caption);color:' + lockColor + ';padding:8px 0">' + lockLabel + '</div>';
@@ -27007,7 +26662,7 @@ function deploy_showRackDetail(deployId, rackId) {
     } else if (ph.status === 'blocked') {
       html += '<button class="pt-btn pt-btn-secondary" style="flex:1;padding:10px;font-size: var(--fs-caption)" onclick="deploy_advancePhase(\'' + ph.id + '\',\'in_progress\',\'' + deployId + '\');deploy_showRackDetail(\'' + deployId + '\',\'' + rackId + '\')">' + _ico.refresh('#5cf2ff', 12) + ' UNBLOCK</button>';
     } else if (ph.status === 'complete') {
-      var ts = ph.signedOffAt ? deploy_formatDate(ph.signedOffAt) : '';
+      var ts = ph.signedOffAt ? formatDate(ph.signedOffAt) : '';
       html += '<div style="font-family:var(--mono);font-size: var(--fs-caption);color:var(--green);padding:8px 0">✓ Completed' + (ts ? ' · ' + ts : '') + '</div>';
     }
     html += '</div>';
@@ -27445,7 +27100,7 @@ function deploy_showAuditLog(deploymentId) {
   var grouped = {};
   var dateOrder = [];
   entries.forEach(function(e) {
-    var dateKey = deploy_formatDate(e.ts);
+    var dateKey = formatDate(e.ts);
     if (!grouped[dateKey]) { grouped[dateKey] = []; dateOrder.push(dateKey); }
     grouped[dateKey].push(e);
   });
@@ -27909,7 +27564,7 @@ function deploy_showAcceptance(deploymentId) {
     html += '<div style="font-family:var(--raj);font-size: var(--fs-body);color:var(--white);font-weight:600">' + escHtml(cr.description) + '</div>';
     if (isMet && cr.completedAt) {
       html += '<div style="font-family:var(--mono);font-size: var(--fs-caption);color:var(--slate);margin-top:3px">';
-      html += 'MET · ' + escHtml(cr.completedBy || '—') + ' · ' + deploy_formatDate(cr.completedAt);
+      html += 'MET · ' + escHtml(cr.completedBy || '—') + ' · ' + formatDate(cr.completedAt);
       html += '</div>';
     } else if (isAuto) {
       html += '<div style="font-family:var(--mono);font-size: var(--fs-caption);color:var(--slate);margin-top:3px">AUTO-EVALUATED — complete the required work</div>';
@@ -30401,14 +30056,7 @@ async function _bomIngest_sha256(text) {
   }
 }
 
-function _bomIngest_esc(s) {
-  if (s === null || s === undefined) return '';
-  return String(s)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
+function _bomIngest_esc(s) { return (s === null || s === undefined) ? '' : escHtml(String(s)); }
 
 // ── MAIN RENDER — called from OPS_TABS.bom ──
 function bomIngest_render(c) {
@@ -32121,14 +31769,7 @@ async function bomProgress_saveLog() {
   }
 }
 
-function _bp_escape(s) {
-  return String(s == null ? '' : s)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
+function _bp_escape(s) { return escHtml(s == null ? '' : String(s)); }
 
 // ━━━ END BOM INGEST STAGE 3 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -32164,14 +31805,7 @@ const _bomLookupState = {
   error: null
 };
 
-function _bomLookup_esc(s) {
-  if (s === null || s === undefined) return '';
-  return String(s)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
+function _bomLookup_esc(s) { return (s === null || s === undefined) ? '' : escHtml(String(s)); }
 
 // Normalize status strings to a color + canonical label.
 function _bomLookup_statusBadge(rawStatus) {
@@ -33373,8 +33007,8 @@ const INTENT_MAP = [
   { keywords: ['sop','procedure','runbook','handover','shift'], action: () => goOpsTab('sops') },
   { keywords: ['rack map','elevation','rack','u-slot','rack layout'], action: () => { showPage('sop', getTnItem('sop'), 'rackmap'); } },
   { keywords: ['triage','down link','link down','port down','interface down'], action: () => { showPage('triage', getTnItem('triage')); } },
-  { keywords: ['oob','idrac','ilo','ipmi','bmc','out of band'], action: () => { showPage('cli', getTnItem('cli')); setTimeout(() => showStab(document.querySelector('#pg-cli .stab:nth-child(5)'), 'cli-sub', 'cs-oob'), 50); } },
-  { keywords: ['console','baud','serial','rollover','putty','minicom'], action: () => { showPage('cli', getTnItem('cli')); setTimeout(() => showStab(document.querySelector('#pg-cli .stab:nth-child(6)'), 'cli-sub', 'cs-console'), 50); } },
+  { keywords: ['oob','idrac','ilo','ipmi','bmc','out of band'], action: () => { showPage('cli', getTnItem('cli')); setTimeout(() => showStab(document.querySelector('#pg-cli .stab:nth-child(2)'), 'cli-sub', 'cs-oob'), 50); } },
+  { keywords: ['console','baud','serial','rollover','putty','minicom'], action: () => { showPage('cli', getTnItem('cli')); setTimeout(() => showStab(document.querySelector('#pg-cli .stab:nth-child(3)'), 'cli-sub', 'cs-console'), 50); } },
   { keywords: ['power','pdu','derate','phase','cord','c19','c20','l6-30','iec 60309','gb300 power','h100 power'], action: () => { showPage('power', getTnItem('power')); } },
   { keywords: ['led','fault','xid','ecc','nvme','drive','psu','dimm','hardware'], action: () => { showPage('power', getTnItem('power')); setTimeout(() => { const s = document.querySelector('#pg-power .subtab-strip .stab:nth-child(2)'); if(s) s.click(); }, 50); } },
 ];
@@ -37254,113 +36888,6 @@ async function extractSpreadsheetText(file) {
   return allText;
 }
 
-class CosmicButton {
-  constructor(canvas) {
-    this.canvas = canvas;
-    this.wrap = canvas.closest('.cosmic-wrap');
-    this.ctx = canvas.getContext('2d');
-    this.particles = [];
-    this.pressing = false;
-    this.time = 0;
-    this.dpr = Math.min(window.devicePixelRatio || 1, 2);
-    this.resize();
-    this.initParticles();
-    this.bindEvents();
-    this.animate();
-  }
-  resize() {
-    const rect = this.canvas.getBoundingClientRect();
-    this.w = rect.width;
-    this.h = rect.height;
-    if (this.w === 0 || this.h === 0) return;
-    this.canvas.width = this.w * this.dpr;
-    this.canvas.height = this.h * this.dpr;
-    this.ctx.scale(this.dpr, this.dpr);
-  }
-  initParticles() {
-    this.particles = [];
-    for (let i = 0; i < 90; i++) this.particles.push(this.createParticle());
-  }
-  createParticle(burst = false) {
-    return {
-      x: Math.random() * (this.w || 300),
-      y: Math.random() * (this.h || 52),
-      vx: (Math.random() - 0.5) * (burst ? 2.5 : 0.4),
-      vy: (Math.random() - 0.5) * (burst ? 2.5 : 0.4),
-      size: 0.5 + Math.random() * (burst ? 2.5 : 1.8),
-      alpha: burst ? 0.9 : 0.15 + Math.random() * 0.45,
-      baseAlpha: 0.15 + Math.random() * 0.45,
-      hue: 260 + Math.random() * 80,
-      sat: 85,
-      light: 60 + Math.random() * 30,
-      phase: Math.random() * Math.PI * 2,
-      orbitSpeed: (0.4 + Math.random()) * 0.7,
-      burst,
-      life: burst ? 1 : null,
-    };
-  }
-  bindEvents() {
-    const w = this.wrap;
-    w.addEventListener('mousedown', () => this.onPress());
-    w.addEventListener('touchstart', () => this.onPress(), { passive: true });
-  }
-  onPress() {
-    this.pressing = true;
-    for (let i = 0; i < 30; i++) {
-      const p = this.createParticle(true);
-      p.x = this.w / 2 + (Math.random() - 0.5) * 20;
-      p.y = this.h / 2 + (Math.random() - 0.5) * 10;
-      this.particles.push(p);
-    }
-    setTimeout(() => { this.pressing = false; }, 400);
-  }
-  updateParticle(p) {
-    const speed = this.pressing ? 3 : 1;
-    p.x += p.vx * speed;
-    p.y += p.vy * speed;
-    p.x += Math.cos(this.time * p.orbitSpeed + p.phase) * 0.4 * speed;
-    p.y += Math.sin(this.time * p.orbitSpeed + p.phase) * 0.2 * speed;
-    p.vx *= 0.98; p.vy *= 0.98;
-    if (p.burst) {
-      p.life -= 0.04;
-      p.alpha = p.life * 0.9;
-    } else {
-      const boost = this.pressing ? 2.2 : 1;
-      p.alpha = Math.min((p.baseAlpha + Math.sin(this.time * 2 + p.phase) * 0.2) * boost, 1);
-    }
-    if (p.x < -5) p.x = this.w + 5;
-    if (p.x > this.w + 5) p.x = -5;
-    if (p.y < -5) p.y = this.h + 5;
-    if (p.y > this.h + 5) p.y = -5;
-    return !p.burst || p.life > 0;
-  }
-  animate() {
-    this.ctx.clearRect(0, 0, this.w, this.h);
-    this.time += 0.016;
-    if (this.pressing) {
-      const g = this.ctx.createRadialGradient(this.w/2, this.h/2, 0, this.w/2, this.h/2, this.w * 0.6);
-      g.addColorStop(0, 'rgba(192,38,211,0.12)');
-      g.addColorStop(1, 'transparent');
-      this.ctx.fillStyle = g;
-      this.ctx.fillRect(0, 0, this.w, this.h);
-    }
-    this.particles = this.particles.filter(p => this.updateParticle(p));
-    for (const p of this.particles) {
-      this.ctx.beginPath();
-      this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-      this.ctx.fillStyle = `hsla(${p.hue}, ${p.sat}%, ${p.light}%, ${p.alpha})`;
-      this.ctx.fill();
-      if (p.alpha > 0.3) {
-        this.ctx.beginPath();
-        this.ctx.arc(p.x, p.y, p.size * 3.5, 0, Math.PI * 2);
-        this.ctx.fillStyle = `hsla(${p.hue}, ${p.sat}%, ${p.light}%, ${p.alpha * 0.12})`;
-        this.ctx.fill();
-      }
-    }
-    requestAnimationFrame(() => this.animate());
-  }
-}
-
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // PhantomScanner — SINGLETON CAMERA SCANNER
 
@@ -38504,7 +38031,7 @@ function qrDeepLink(val) {
   const rackMatch = racks.find(r => r.name.toLowerCase().includes(q) || r.id === val);
   if (rackMatch) {
     currentRackId = rackMatch.id;
-    showPage('ops', null, 'portmap'); // go to ops page
+    showPage('sop', null, 'portmap'); // go to BUILD page
     // Navigate to rack map subtab
     setTimeout(function() {
       if (typeof showStab === 'function') {
@@ -38521,7 +38048,7 @@ function qrDeepLink(val) {
   const sops = loadSOPs();
   const sopMatch = sops.find(s => s.title.toLowerCase().includes(q) || s.id === val);
   if (sopMatch) {
-    showPage('ops', null, 'sops');
+    showPage('sop', null, 'sops');
     setTimeout(function() { openSopDetail(sopMatch.id); }, 150);
     phantomToast('SOP found: ' + sopMatch.title, 'ok');
     return;
@@ -38913,16 +38440,6 @@ function initRackDrag() {
   });
 }
 
-function initCosmicButtons() {
-  document.querySelectorAll('.cosmic-canvas').forEach(canvas => {
-    if (!canvas._cosmicInit) {
-      setTimeout(() => { new CosmicButton(canvas); canvas._cosmicInit = true; }, 150);
-    }
-  });
-}
-
-initCosmicButtons();
-
 // Close header overflow menu on outside tap
 document.addEventListener('click', function(e) {
   var menu = document.getElementById('hdr-overflow-menu');
@@ -38932,8 +38449,6 @@ document.addEventListener('click', function(e) {
   }
 });
 
-const _cosmicObserver = new MutationObserver(() => { initCosmicButtons(); });
-_cosmicObserver.observe(document.body, { childList: true, subtree: true, attributes: true });
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━
 // DATA EXPORT — SOP + Ghost Echo + Full Backup
