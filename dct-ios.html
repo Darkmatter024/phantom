@@ -8457,21 +8457,50 @@ textarea.hud-input {
 .hwm-count { font-family:var(--mono); font-size:var(--fs-micro); color:var(--slate); letter-spacing:var(--hud-track-mid); padding:6px 16px 2px; }
 
 /* ━━━ GHOST UPDATE TOAST ━━━ */
-#phantom-ghost-toast {
-  position:fixed; top:calc(env(safe-area-inset-top,0px) + 10px); left:50%;
-  transform:translateX(-50%); z-index:99999; cursor:pointer;
-  background:rgba(2,6,14,0.97); border:1px solid rgba(92,242,255,0.5);
-  border-top:2px solid rgba(92,242,255,0.95); color:#5cf2ff;
-  font-family:var(--mono); font-size:11px; letter-spacing:1.8px; font-weight:700;
-  padding:11px 22px; white-space:nowrap; text-align:center;
-  box-shadow:0 0 28px rgba(92,242,255,0.2), 0 6px 24px rgba(0,0,0,0.8);
-  backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
-  animation:ghost-toast-in 0.35s cubic-bezier(0.22,1,0.36,1) both;
-  max-width:calc(100vw - 32px); box-sizing:border-box;
+/* ── Update notice — inline boot-list row (v1.6.36) ───────────
+   Rendered as the 8th .boot-item directly below "Ghost Echo · Phantom"
+   when a newer build is detected. Reads as part of the boot panel, not
+   a floating popup. Tap (or Enter) reloads into the new build. In-app
+   detection is carried by the SW status pill in the NOW header. */
+.boot-item.boot-update {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  color: #e8590c;
+  border-radius: 8px;
+  margin: 2px -8px 0;
+  padding-left: 8px; padding-right: 8px;
+  background: linear-gradient(90deg, rgba(232,89,12,0.07), rgba(232,89,12,0));
+  animation: itemReveal 0.4s cubic-bezier(0.22,1,0.36,1) both;
+  transition: background 140ms ease, transform 80ms ease;
 }
-@keyframes ghost-toast-in {
-  from { opacity:0; transform:translateX(-50%) translateY(-16px); }
-  to   { opacity:1; transform:translateX(-50%) translateY(0); }
+.boot-item.boot-update:hover {
+  background: linear-gradient(90deg, rgba(232,89,12,0.13), rgba(232,89,12,0.03));
+}
+.boot-item.boot-update:active { transform: scale(0.99); }
+.boot-item.boot-update .boot-dot {
+  background: #e8590c;
+  box-shadow: 0 0 8px rgba(232,89,12,0.75);
+  opacity: 1;
+  animation: bootUpdateDotPulse 2s ease-in-out infinite;
+  animation-play-state: running;
+}
+@keyframes bootUpdateDotPulse {
+  0%,100% { opacity: 0.7; transform: scale(1);    }
+  50%     { opacity: 1;   transform: scale(1.25); }
+}
+.boot-badge-update {
+  border: 1px solid rgba(232,89,12,0.55);
+  color: #e8590c;
+  background: rgba(232,89,12,0.11);
+  animation: bootUpdateBadgePulse 2s ease-in-out infinite;
+}
+@keyframes bootUpdateBadgePulse {
+  0%,100% { box-shadow: 0 0 0 rgba(232,89,12,0);     }
+  50%     { box-shadow: 0 0 10px rgba(232,89,12,0.45); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .boot-item.boot-update .boot-dot,
+  .boot-badge-update { animation: none; }
 }
 
 /* ━━━ SUB-SECTION VISIBILITY — class-driven (enables CSS grid on desktop) ━━━
@@ -10041,7 +10070,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.6.35';
+const PHANTOM_APP_VERSION = 'phantom-v1.6.36';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -10121,17 +10150,34 @@ function phantom_versionFileBackstop() {
 
 function phantom_ghostUpdateReady() {
   if (document.getElementById('phantom-ghost-toast')) return;
-  var toast = document.createElement('div');
-  toast.id = 'phantom-ghost-toast';
-  toast.textContent = '\u25C6 \u00A0NEW TACTICAL DATA SYNCED \u2014 TAP TO RELOAD';
-  toast.addEventListener('click', function() {
+
+  function phantom_reloadToUpdate() {
     navigator.serviceWorker.getRegistration().then(function(reg) {
       if (reg && reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
       setTimeout(function() { window.location.reload(); }, 80);
     }).catch(function() { window.location.reload(); });
-  });
-  document.body ? document.body.appendChild(toast) : document.addEventListener('DOMContentLoaded', function() { document.body.appendChild(toast); });
-  // Refresh the SW pill to UPDATE state
+  }
+
+  var bootList = document.querySelector('#boot .boot-items');
+  if (bootList) {
+    // Inline row inside the boot panel, directly below the Ghost Echo item.
+    var row = document.createElement('div');
+    row.id = 'phantom-ghost-toast';
+    row.className = 'boot-item boot-update';
+    row.setAttribute('role', 'button');
+    row.setAttribute('tabindex', '0');
+    row.innerHTML =
+      '<div class="boot-dot"></div>' +
+      '<span>New tactical data synced</span>' +
+      '<span class="boot-badge boot-badge-update">TAP TO RELOAD</span>';
+    row.addEventListener('click', phantom_reloadToUpdate);
+    row.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); phantom_reloadToUpdate(); }
+    });
+    bootList.appendChild(row);
+  }
+  // In-app (boot dismissed): the SW status pill in the NOW header carries
+  // the UPDATE state and is tappable — no floating popup.
   if (typeof sw_pillRefresh === 'function') sw_pillRefresh('update');
 }
 
