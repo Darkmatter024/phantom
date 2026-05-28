@@ -3063,6 +3063,30 @@ code { font-family:var(--mono); font-size: var(--fs-caption); color:var(--cyan2)
 }
 @keyframes swPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
 
+/* multi-tab chip — sibling of .sw-pill, burnt-orange (matches the boot-update row) */
+.tab-pill {
+  display: none;
+  align-items: center; gap: 8px;
+  background: rgba(232,89,12,0.10);
+  border: 1px solid rgba(232,89,12,0.55);
+  color: #f08a4b;
+  font-family: var(--mono); font-size: 11px; font-weight: 700;
+  letter-spacing: 1.6px;
+  padding: 6px 12px; border-radius: 10px;
+  min-height: 30px; cursor: pointer;
+  box-shadow: 0 0 14px rgba(232,89,12,0.28), inset 0 1px 0 rgba(255,255,255,0.08);
+  transition: all 200ms ease;
+  text-transform: uppercase;
+  -webkit-appearance: none;
+  white-space: nowrap;
+}
+.tab-pill .tab-pill-led {
+  width: 10px; height: 10px; border-radius: 2px;
+  background: #e8590c;
+  box-shadow: 0 0 6px #e8590c;
+  animation: swPulse 1.6s ease-in-out infinite;
+}
+
 /* ─── B. Hud-pill icon slot + outer halo (4-quadrant TODAY status grid) ── */
 .hud-pill {
   position: relative;
@@ -10070,7 +10094,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.6.36';
+const PHANTOM_APP_VERSION = 'phantom-v1.6.40';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -10657,6 +10681,10 @@ if (typeof window !== 'undefined') {
             <button onclick="showPage('sop',null,'site');document.getElementById('hdr-overflow-menu').classList.remove('hdr-menu-open')" class="hdr-menu-item" style="color:var(--violet-bright,#b58cff)" aria-label="Open site profile editor"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#b58cff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> &nbsp;SITE PROFILE</button>
           </div>
         </div>
+        <button id="phantom-tab-pill" class="tab-pill" onclick="tab_pillTap()" aria-label="PHANTOM open in another tab — tap for details">
+          <span class="tab-pill-led"></span>
+          <span class="tab-pill-text">2 TABS</span>
+        </button>
         <button id="sw-status-pill" class="sw-pill" data-sw-state="none" onclick="sw_pillTap()" aria-label="Service worker status">
           <span class="sw-pill-led"></span>
           <span class="sw-pill-text">SW NONE</span>
@@ -15513,26 +15541,19 @@ function _session_startFresh() {
     banner.id = 'phantom-resume-banner';
     banner.setAttribute('role', 'status');
     banner.setAttribute('aria-live', 'polite');
-    banner.style.cssText =
-      'position:fixed;top:calc(var(--safe-top) + 8px);left:50%;transform:translateX(-50%);' +
-      'z-index:9400;background:rgba(92,242,255,0.10);border:1px solid rgba(92,242,255,0.45);' +
-      'border-radius:8px;padding:8px 12px;font-family:var(--mono);font-size:var(--fs-caption);' +
-      'color:var(--cyan);letter-spacing:0.5px;display:flex;align-items:center;gap:10px;' +
-      'max-width:calc(100vw - 32px);box-shadow:0 8px 24px rgba(0,0,0,0.4)';
+    banner.className = 'boot-item boot-update';
     banner.innerHTML =
-      '<span aria-hidden="true">&#8634;</span><span>Resumed from ' + ageLabel + '</span>' +
-      '<button type="button" onclick="_session_startFresh()" ' +
-        'style="background:transparent;border:1px solid rgba(92,242,255,0.45);border-radius:4px;' +
-        'color:var(--cyan);font-family:var(--mono);font-size:var(--fs-micro);letter-spacing:1px;' +
-        'padding:5px 9px;min-height:32px;cursor:pointer">START FRESH</button>' +
-      '<button type="button" onclick="_session_dismissBanner()" aria-label="Dismiss banner" ' +
-        'style="background:transparent;border:none;color:var(--slate-readable);font-size:20px;' +
-        'line-height:1;cursor:pointer;padding:0 4px;min-height:32px">&times;</button>';
-    try { document.body.appendChild(banner); } catch(_) {}
-    // v1.6.31: tag the body so CSS can push #boot's padding-top
-    // and clear the vertical band the fixed banner occupies. The
-    // class is cleared on every boot exit (clear / dismiss / launch).
-    try { document.body.classList.add('has-resume-banner'); } catch(_) {}
+      '<div class="boot-dot"></div>' +
+      '<span>Resumed from ' + ageLabel + '</span>' +
+      '<span class="boot-badge boot-badge-update" role="button" tabindex="0" style="cursor:pointer" ' +
+        'onclick="_session_startFresh()">START FRESH</span>';
+    // v1.6.37: render the resume banner inline inside the boot panel,
+    // directly below the Ghost Echo row, instead of floating at the top.
+    try {
+      var _bootList = document.querySelector('#boot .boot-items');
+      if (_bootList) { _bootList.appendChild(banner); }
+      else { document.body.appendChild(banner); }
+    } catch(_) {}
     // Auto-dismiss after 8 seconds so it doesn't linger.
     setTimeout(_session_dismissBanner, 8000);
 
@@ -39280,29 +39301,31 @@ setInterval(phantomStorageCheck, 300000);
   var knownTabs = {};
   var bc = null;
   var bannerActive = false;
+  var TAB_TTL = 70000; // ms — drop tabs we haven't heard from (prevents stale chip)
 
   function showBanner() {
     if (bannerActive) return;
     if (document.getElementById('phantom-clonewar-banner')) return;
+    // Doctrine: no floating top banners. On the boot screen this renders as an
+    // inline burnt-orange row matching the Ghost Echo / update / resume rows.
+    // In-app (boot dismissed) we intentionally show no floating popup.
+    var bootList = document.querySelector('#boot .boot-items');
+    if (!bootList) return;
     bannerActive = true;
-    var banner = document.createElement('div');
-    banner.id = 'phantom-clonewar-banner';
-    banner.style.cssText =
-      'position:fixed;top:0;left:0;right:0;z-index:100000;' +
-      'background:linear-gradient(90deg, rgba(255,150,0,0.96), rgba(255,59,59,0.96));' +
-      'color:#000;padding:10px 14px;' +
-      'font-family:var(--mono, monospace);font-size: var(--fs-caption);letter-spacing:1px;' +
-      'display:flex;justify-content:space-between;align-items:center;gap:12px;' +
-      'box-shadow:0 2px 16px rgba(0,0,0,0.5);' +
-      'padding-top:calc(10px + env(safe-area-inset-top))';
-    banner.innerHTML =
-      '<div style="flex:1;font-weight:700">&#9888; PHANTOM OPEN IN ANOTHER TAB &mdash; Using both may cause data loss</div>' +
-      '<button id="phantom-clonewar-dismiss" style="background:rgba(0,0,0,0.35);border:1px solid rgba(0,0,0,0.5);color:#fff;padding:7px 11px;border-radius:6px;font-family:inherit;font-size: var(--fs-caption);letter-spacing:1px;cursor:pointer;min-height:32px">DISMISS</button>';
-    document.body.appendChild(banner);
-    document.getElementById('phantom-clonewar-dismiss').addEventListener('click', function() {
-      banner.remove();
-      bannerActive = false;
-    });
+    var row = document.createElement('div');
+    row.id = 'phantom-clonewar-banner';
+    row.className = 'boot-item boot-update';
+    row.setAttribute('role', 'status');
+    row.setAttribute('aria-live', 'polite');
+    row.innerHTML =
+      '<div class="boot-dot"></div>' +
+      '<span>Open in another tab</span>' +
+      '<span class="boot-badge boot-badge-update" role="button" tabindex="0" style="cursor:pointer">DISMISS</span>';
+    var dismiss = function() { row.remove(); bannerActive = false; };
+    var badge = row.querySelector('.boot-badge-update');
+    badge.addEventListener('click', function(e) { e.stopPropagation(); dismiss(); });
+    badge.addEventListener('keydown', function(e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); dismiss(); } });
+    bootList.appendChild(row);
     if (typeof haptic === 'function') haptic([40, 30, 40]);
   }
 
@@ -39325,6 +39348,7 @@ setInterval(phantomStorageCheck, 300000);
     } else if (msg.type === 'bye') {
       delete knownTabs[msg.id];
     }
+    tab_pillRefresh();
   }
 
   if (typeof BroadcastChannel !== 'undefined') {
@@ -39347,6 +39371,41 @@ setInterval(phantomStorageCheck, 300000);
   setInterval(function() {
     if (document.visibilityState === 'visible') announce('here');
   }, 30000);
+
+  function liveTabCount() {
+    var now = Date.now(), n = 0;
+    for (var id in knownTabs) {
+      if (!knownTabs.hasOwnProperty(id)) continue;
+      if ((now - knownTabs[id]) < TAB_TTL) n++;
+      else delete knownTabs[id]; // heartbeat prune — stale tab, drop it
+    }
+    return n;
+  }
+  function tab_pillRefresh() {
+    var pill = document.getElementById('phantom-tab-pill');
+    if (!pill) return;
+    var others = liveTabCount();
+    if (others >= 1) {
+      var txt = pill.querySelector('.tab-pill-text');
+      if (txt) txt.textContent = (others + 1) + ' TABS';
+      pill.style.display = 'inline-flex';
+    } else {
+      pill.style.display = 'none';
+    }
+  }
+  window.tab_pillTap = function() {
+    var m = 'PHANTOM is open in another tab \u2014 close it to avoid data loss.';
+    try {
+      if (typeof phantomToast === 'function') phantomToast(m, 'warn');
+      else alert('[PHANTOM] ' + m);
+    } catch (_) { try { alert('[PHANTOM] ' + m); } catch (__) {} }
+    if (typeof haptic === 'function') haptic([40, 30, 40]);
+  };
+  // Heartbeat prune: live tabs re-announce every 30s; anything silent past
+  // TAB_TTL is dropped and the chip refreshed, so a closed tab never leaves a
+  // stale "N TABS" warning behind.
+  setInterval(tab_pillRefresh, 20000);
+  setTimeout(tab_pillRefresh, 1500); // initial paint once any 'here' replies land
 
   window.__phantomClonewar = {
     tabId: MY_TAB_ID,
