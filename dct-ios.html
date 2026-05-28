@@ -121,6 +121,24 @@
   --header-h: 56px;
   --search-h: 52px;
   --tabnav-h: calc(72px + var(--safe-bottom));
+
+  /* ━━━ v1.6.34 Tap-target token scale (Option D — no-op refactor) ━━━
+     The four dominant min-height values across PHANTOM (56/52/48/44 —
+     81 of 107 min-height declarations, 76%) are routed through these
+     tokens so a future glove-ergonomics tune is a one-line edit per
+     token instead of touching ~80 rules. Values are byte-identical to
+     the pre-v1.6.34 state: this release is purely structural. Any
+     proportional reduction is a SEPARATE later release. The Apple HIG
+     accessibility floor is 44px; gloved-hand realistic minimum is
+     ~50px — keep that in mind when these get edited.
+       --tap-xl  glove-primary  (NOW tiles, primary CTAs, search input)
+       --tap-l   nav-secondary  (bottom-nav tn-items, search-row)
+       --tap-m   modal-actions  (pt-btn base, intake controls)
+       --tap-s   secondary list (HIG-min, modal cancels, result rows) */
+  --tap-xl: 56px;
+  --tap-l:  52px;
+  --tap-m:  48px;
+  --tap-s:  44px;
   /* Reserved space below sheet/scroll content so the persistent action
      stripe (#action-stripe, z-index 800) never obscures primary buttons.
      Stripe geometry: ~40px tall, sits at bottom: var(--tabnav-h) + 54px.
@@ -655,7 +673,7 @@ body {
   gap: 8px;
   font-family: var(--orb); font-weight: 700;
   font-size: var(--fs-micro); letter-spacing: 3px; text-transform: uppercase;
-  padding: 14px 28px; min-height: 48px;
+  padding: 14px 28px; min-height: var(--tap-m);
   border-radius: 4px;
   clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
   cursor: pointer; border: none; outline: none;
@@ -1214,7 +1232,7 @@ body {
   display: flex; align-items: center;
   justify-content: space-between; gap: 12px;
   cursor: pointer; user-select: none;
-  min-height: 52px; /* Apple HIG minimum */
+  min-height: var(--tap-l); /* Apple HIG minimum */
 }
 .card-hdr:active { background: rgba(92,242,255,0.04); }
 
@@ -1365,7 +1383,7 @@ body {
 .chk {
   display:flex; gap:12px; align-items:flex-start;
   padding:11px 0; border-bottom:1px solid rgba(92,242,255,0.05);
-  cursor:pointer; min-height:48px; /* HIG */
+  cursor:pointer; min-height:var(--tap-m); /* HIG */
 }
 .chk:last-child { border-bottom:none; }
 .chk:active { background:rgba(92,242,255,0.02); }
@@ -1387,7 +1405,7 @@ body {
   background:var(--bg2); border:1px solid var(--cyan-surface-hi);
   border-left:3px solid var(--cyan); border-radius:0 8px 8px 0;
   padding:12px 14px; margin-bottom:7px; cursor:pointer;
-  min-height:52px;
+  min-height:var(--tap-l);
 }
 .s-hit:active { background:rgba(92,242,255,0.05); }
 .s-cat { font-family:var(--orb); font-size: var(--fs-micro); color:var(--cyan); letter-spacing:3px; margin-bottom:3px; opacity:0.7; }
@@ -1436,7 +1454,7 @@ mark { background:var(--cyan-subtle); color:var(--cyan); padding:0 2px; border-r
   display:flex; flex-direction:column; align-items:center; justify-content:center;
   cursor:pointer; color:var(--slate); user-select:none;
   /* big tap area */
-  min-height:52px; padding:8px 4px 4px;
+  min-height:var(--tap-l); padding:8px 4px 4px;
   position:relative; transition:color 0.15s;
   -webkit-tap-highlight-color: transparent;
 }
@@ -1820,7 +1838,7 @@ mark { background:var(--cyan-subtle); color:var(--cyan); padding:0 2px; border-r
   color:var(--cyan); font-family:var(--orb); font-weight:700;
   font-size:11px; letter-spacing:var(--hud-track-display); text-transform:uppercase;
   padding:15px; border:1.5px solid rgba(92,242,255,0.40); border-radius:4px;
-  cursor:pointer; min-height:52px; -webkit-appearance:none;
+  cursor:pointer; min-height:var(--tap-l); -webkit-appearance:none;
   box-shadow: 0 0 0 0 transparent;
   transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
 }
@@ -1835,7 +1853,7 @@ mark { background:var(--cyan-subtle); color:var(--cyan); padding:0 2px; border-r
   font-family:var(--orb); font-weight:700;
   font-size: var(--fs-micro); letter-spacing:3px; text-transform:uppercase;
   padding:15px 18px; border:1.5px solid rgba(155,89,255,0.35); border-radius:4px;
-  cursor:pointer; min-height:52px; -webkit-appearance:none;
+  cursor:pointer; min-height:var(--tap-l); -webkit-appearance:none;
   transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
   display:inline-flex; align-items:center; justify-content:center; gap: 8px;
 }
@@ -2085,7 +2103,7 @@ code { font-family:var(--mono); font-size: var(--fs-caption); color:var(--cyan2)
 }
 .rack-viewer-input {
   width: 100%;
-  min-height: 56px;
+  min-height: var(--tap-xl);
   padding: 14px 56px 14px 18px;
   border-radius: var(--hud-r12);
   background: rgba(0, 0, 0, 0.35);
@@ -2200,7 +2218,7 @@ code { font-family:var(--mono); font-size: var(--fs-caption); color:var(--cyan2)
 .rm-active-pill {
   display: flex; align-items: center; gap: 8px;
   margin: 0 0 10px; padding: 10px 14px;
-  min-height: 44px;
+  min-height: var(--tap-s);
   background: var(--surface-0, #0a0d13);
   border: 1px solid rgba(92,242,255,0.22);
   cursor: pointer; -webkit-tap-highlight-color: transparent;
@@ -2255,7 +2273,7 @@ code { font-family:var(--mono); font-size: var(--fs-caption); color:var(--cyan2)
 }
 .rmap-list { flex: 1; overflow-y: auto; padding: 8px 0; }
 .rmap-row {
-  display: flex; align-items: center; padding: 14px 18px; min-height: 56px;
+  display: flex; align-items: center; padding: 14px 18px; min-height: var(--tap-xl);
   border-bottom: 1px solid rgba(180,194,208,0.08);
   cursor: pointer; -webkit-tap-highlight-color: transparent;
   position: relative; transition: background 140ms;
@@ -2953,7 +2971,7 @@ code { font-family:var(--mono); font-size: var(--fs-caption); color:var(--cyan2)
   backdrop-filter: var(--soft-blur);
   border: 1px solid rgba(255,255,255,0.16);
   border-bottom-color: rgba(255,255,255,0.05);
-  border-radius:12px; cursor:pointer; min-height:56px;
+  border-radius:12px; cursor:pointer; min-height:var(--tap-xl);
   -webkit-appearance:none; user-select:none;
   box-shadow:
     inset 0 2px 0 rgba(255,255,255,0.16),
@@ -3352,7 +3370,7 @@ code { font-family:var(--mono); font-size: var(--fs-caption); color:var(--cyan2)
   background: linear-gradient(145deg, rgba(16,28,42,0.99), rgba(11,20,32,0.99));
   border: 1px solid rgba(92,242,255,0.12);
   border-radius: var(--hud-r12); cursor: pointer; transition: border-color 0.15s;
-  min-height: 52px;
+  min-height: var(--tap-l);
 }
 .bd-port-row:active { opacity: 0.8; }
 .bd-port-row.status-progress { border-color: rgba(92,242,255,0.25); }
@@ -3886,7 +3904,7 @@ code { font-family:var(--mono); font-size: var(--fs-caption); color:var(--cyan2)
   display: flex; align-items: center;
   gap: 8px;
   padding: 10px 14px;
-  min-height: 44px;
+  min-height: var(--tap-s);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   border-bottom: 1px solid rgba(255,255,255,0.04);
@@ -4254,7 +4272,7 @@ select {
   letter-spacing: 1px;
   -webkit-appearance: none;
   transition: border-color 0.15s, box-shadow 0.15s;
-  min-height: 44px;
+  min-height: var(--tap-s);
 }
 .rl-search-input::placeholder {
   color: rgba(170,200,220,0.35);
@@ -4462,7 +4480,7 @@ select {
   align-items: center;
   gap: 8px;
   transition: border-color 0.15s, background 0.15s;
-  min-height: 52px;
+  min-height: var(--tap-l);
 }
 .rl-row:active { opacity: 0.75; }
 .rl-row.rl-status-blocked   { border-left-color: var(--red); }
@@ -4738,7 +4756,7 @@ body.phantom-booting #omni-bar { display: none; }
    ══════════════════════════════════════════════════════════════════════ */
 
 .pt-btn {
-  min-height: 44px;
+  min-height: var(--tap-s);
   background: var(--hud-surface-0);
   border: var(--hud-edge-firm);
   border-radius: 8px;
@@ -4847,7 +4865,7 @@ input[type="text"].hud-input,
 input[type="number"].hud-input,
 input[type="search"].hud-input,
 textarea.hud-input {
-  min-height: 44px;
+  min-height: var(--tap-s);
   background: var(--hud-surface-0);
   border: var(--hud-edge-subtle);
   border-radius: 6px;
@@ -5051,7 +5069,7 @@ body {
 
 .pt-btn {
   /* Geometry */
-  min-height: 44px;
+  min-height: var(--tap-s);
   padding: 12px 20px;
   border-radius: 8px;                  /* softened mil-spec — flows with .card / .badge */
   border: 1px solid var(--hud-edge-base);
@@ -5208,7 +5226,7 @@ input[type="text"].hud-input,
 input[type="number"].hud-input,
 input[type="search"].hud-input,
 textarea.hud-input {
-  min-height: 44px;
+  min-height: var(--tap-s);
   padding: 12px 14px;
   border-radius: 8px;
   border: 1px solid var(--hud-edge-base);
@@ -5502,7 +5520,7 @@ textarea.hud-input {
   border-bottom: 1px solid var(--hud-edge-hair);
   color: var(--hud-slate-3);
   align-items: center;
-  min-height: 44px;
+  min-height: var(--tap-s);
 }
 
 .hud-ledger-row:nth-child(even) {
@@ -6222,7 +6240,7 @@ textarea.hud-input {
   background: rgba(255,255,255,0.02);
   border: 1px solid rgba(255,255,255,0.08);
   border-radius: 0;
-  min-height: 56px;
+  min-height: var(--tap-xl);
   padding: 8px 26px 8px 14px;
   cursor: pointer;
   transition: transform 90ms ease-out, border-color 90ms ease-out, background 90ms ease-out;
@@ -6307,7 +6325,7 @@ textarea.hud-input {
   transition: transform 90ms ease-out, border-color 90ms ease-out, color 90ms ease-out;
   -webkit-appearance: none;
   -webkit-tap-highlight-color: transparent;
-  min-height: 44px;
+  min-height: var(--tap-s);
 }
 .br-sheet-close-btn:active {
   transform: scale(0.97);
@@ -6399,7 +6417,7 @@ textarea.hud-input {
   letter-spacing: 3px;
   text-transform: uppercase;
   padding: 12px 16px;
-  min-height: 44px;
+  min-height: var(--tap-s);
   min-width: 72px;
   cursor: pointer;
   transition: transform 90ms ease-out, border-color 90ms ease-out, color 90ms ease-out, background 90ms ease-out;
@@ -6834,7 +6852,7 @@ textarea.hud-input {
 }
 .scan-export-btn {
   flex: 1;
-  min-height: 52px;
+  min-height: var(--tap-l);
   padding: 12px 16px;
   border-radius: var(--hud-r12);
   background: var(--cyan, #5cf2ff);
@@ -6849,7 +6867,7 @@ textarea.hud-input {
 .scan-export-btn:active { background: #3de8f5; transform: scale(0.98); }
 .scan-clear-btn {
   flex-shrink: 0;
-  min-height: 52px;
+  min-height: var(--tap-l);
   padding: 12px 16px;
   border-radius: var(--hud-r12);
   background: transparent;
@@ -6901,7 +6919,7 @@ textarea.hud-input {
 }
 .scan-retag-opt {
   flex: 1 1 30%;
-  min-height: 44px;
+  min-height: var(--tap-s);
   padding: 10px 12px;
   border-radius: 8px;
   background: rgba(255,255,255,0.04);
@@ -6919,7 +6937,7 @@ textarea.hud-input {
 .scan-retag-opt.tag-unknown { color: var(--slate); }
 .scan-retag-cancel {
   width: 100%;
-  min-height: 44px;
+  min-height: var(--tap-s);
   padding: 10px;
   border-radius: 8px;
   background: transparent;
@@ -6957,7 +6975,7 @@ textarea.hud-input {
 }
 .scan-gun-input {
   width: 100%;
-  min-height: 44px;
+  min-height: var(--tap-s);
   padding: 10px 12px;
   border-radius: 8px;
   background: rgba(0, 0, 0, 0.35);
@@ -7067,7 +7085,7 @@ textarea.hud-input {
   border: 1px solid rgba(92,242,255,0.22);
 }
 .osm-tab {
-  flex: 1; min-height: 44px;
+  flex: 1; min-height: var(--tap-s);
   display: flex; align-items: center; justify-content: center;
   gap: 8px;
   font-family: var(--orb); font-size: var(--fs-micro); letter-spacing: var(--hud-track-wide);
@@ -7118,7 +7136,7 @@ textarea.hud-input {
 
 /* Big primary scan/action button */
 .osv-primary-btn {
-  width: 100%; min-height: 56px;
+  width: 100%; min-height: var(--tap-xl);
   margin-top: 10px;
   border-radius: 12px;
   background: linear-gradient(160deg, rgba(92,242,255,0.20), rgba(92,242,255,0.10));
@@ -7132,7 +7150,7 @@ textarea.hud-input {
 .osv-primary-btn:active { opacity: 0.8; transform: scale(0.99); }
 
 .osv-secondary-btn {
-  width: 100%; min-height: 44px;
+  width: 100%; min-height: var(--tap-s);
   margin-top: 8px;
   border-radius: var(--hud-r12);
   background: rgba(255,255,255,0.04);
@@ -7755,7 +7773,7 @@ textarea.hud-input {
 }
 .eh-actions::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--cyan-bright, #9af6ff) 50%, transparent); opacity: 0.5; }
 .eh-btn {
-  flex: 1; min-height: 52px; padding: 8px 14px; border-radius: 4px;
+  flex: 1; min-height: var(--tap-l); padding: 8px 14px; border-radius: 4px;
   cursor: pointer; -webkit-appearance: none;
   font-family: var(--orb); font-size: 11px; letter-spacing: var(--hud-track-button); font-weight: 700; text-transform: uppercase;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
@@ -7916,7 +7934,7 @@ textarea.hud-input {
 .ei-row {
   position: relative;
   display: grid; grid-template-columns: 36px 30px 1fr auto;
-  align-items: center; min-height: 56px;
+  align-items: center; min-height: var(--tap-xl);
   background: var(--hud-surface-0, #0a0d13);
   border: 1px solid rgba(180,194,208,0.18);
   cursor: pointer; -webkit-tap-highlight-color: transparent;
@@ -7956,7 +7974,7 @@ textarea.hud-input {
 }
 .ei-actions::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--cyan-bright, #9af6ff) 50%, transparent); opacity: 0.5; }
 .ei-btn {
-  flex: 1; min-height: 52px; padding: 8px 14px; border-radius: 4px;
+  flex: 1; min-height: var(--tap-l); padding: 8px 14px; border-radius: 4px;
   cursor: pointer; -webkit-appearance: none;
   font-family: var(--orb); font-size: 11px; letter-spacing: var(--hud-track-button); font-weight: 700; text-transform: uppercase;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
@@ -8163,7 +8181,7 @@ textarea.hud-input {
 .dr-textarea { width: 100%; min-height: 60px; padding: 8px 10px; background: rgba(20,30,40,0.4); border: 1px solid rgba(140,160,180,0.18); color: #d4dde6; font-family: var(--raj); font-size: 14px; line-height: 1.4; resize: vertical; box-sizing: border-box; }
 .dr-textarea:focus { outline: none; border-color: var(--cyan-bright, #9af6ff); background: rgba(20,30,40,0.6); }
 .dr-actions { display: flex; gap: 8px; margin-top: 16px; }
-.dr-btn { flex: 1; min-height: 48px; font-family: var(--mono); font-size: 12px; letter-spacing: 1.4px; font-weight: 700; text-transform: uppercase; padding: 12px; border: 1px solid; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: all 120ms cubic-bezier(0.2, 0.7, 0.3, 1); background: rgba(20,30,40,0.4); }
+.dr-btn { flex: 1; min-height: var(--tap-m); font-family: var(--mono); font-size: 12px; letter-spacing: 1.4px; font-weight: 700; text-transform: uppercase; padding: 12px; border: 1px solid; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: all 120ms cubic-bezier(0.2, 0.7, 0.3, 1); background: rgba(20,30,40,0.4); }
 .dr-btn:active { transform: translateY(2px); transition-duration: 70ms; }
 .dr-btn-cancel { color: var(--hud-slate-2, #8ea1b3); border-color: rgba(140,160,180,0.20); }
 .dr-btn-confirm { color: var(--green, #30d158); border-color: rgba(48,209,88,0.45); background: rgba(48,209,88,0.04); }
@@ -9539,7 +9557,7 @@ button:active:not(:disabled),
 }
 .pp-cancel {
   width: 100%;
-  min-height: 52px;
+  min-height: var(--tap-l);
   background: transparent;
   border: var(--hud-edge-firm);
   border-radius: var(--btn-radius);
@@ -9600,7 +9618,7 @@ button:active:not(:disabled),
 }
 .ppt-input {
   width: 100%;
-  min-height: 56px;
+  min-height: var(--tap-xl);
   background: var(--surf-2);
   border: var(--hud-edge-firm);
   border-radius: var(--btn-radius);
@@ -9626,7 +9644,7 @@ button:active:not(:disabled),
   gap: 10px;
 }
 .ppt-btn {
-  min-height: 56px;
+  min-height: var(--tap-xl);
   border-radius: var(--btn-radius);
   font-family: var(--mono);
   font-size: var(--fs-body);
@@ -9729,7 +9747,7 @@ body[data-net="offline"] .va-btn::after {
   color: var(--slate-readable);
 }
 .master-empty-cta {
-  min-height: 56px;
+  min-height: var(--tap-xl);
   padding: 14px 28px;
   font-family: var(--mono);
   font-size: var(--fs-body);
@@ -9761,7 +9779,7 @@ body[data-net="offline"] .va-btn::after {
   display: inline-block;
   margin-top: 12px;
   padding: 10px 16px;
-  min-height: 44px;
+  min-height: var(--tap-s);
   color: var(--cyan);
   background: transparent;
   border: 1px solid var(--cyan-border);
@@ -9819,7 +9837,7 @@ body[data-net="offline"] .va-btn::after {
   font-size: var(--fs-caption);
   letter-spacing: var(--hud-track-data);
   padding: 8px 8px;
-  min-height: 44px;
+  min-height: var(--tap-s);
   cursor: pointer;
   text-decoration: underline;
   text-underline-offset: 2px;
@@ -9832,7 +9850,7 @@ body[data-net="offline"] .va-btn::after {
 }
 .master-search-input {
   width: 100%;
-  min-height: 56px;
+  min-height: var(--tap-xl);
   box-sizing: border-box;
   padding: 14px 16px;
   background: var(--bg2);
@@ -9863,7 +9881,7 @@ body[data-net="offline"] .va-btn::after {
   gap: 4px;
 }
 .master-suggestion {
-  min-height: 56px;
+  min-height: var(--tap-xl);
   padding: 14px 16px;
   background: var(--cyan-surface);
   border: 1px solid var(--cyan-border-lo);
@@ -9920,7 +9938,7 @@ body[data-net="offline"] .va-btn::after {
 .master-result-host {
   display: block;
   width: 100%;
-  min-height: 44px;
+  min-height: var(--tap-s);
   padding: 8px 4px;
   margin: 0 0 4px 0;
   background: transparent;
@@ -10094,7 +10112,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.6.32';
+const PHANTOM_APP_VERSION = 'phantom-v1.6.34';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -10840,7 +10858,7 @@ if (typeof window !== 'undefined') {
       </div>
 
       <!-- DOWN LINK PROTOCOL — shortcut to full content in Reference tab -->
-      <button onclick="goFiberTriage()" style="width:100%;display:flex;align-items:center;justify-content:flex-start;gap:14px;min-height:56px;padding:12px 16px;margin-bottom:10px;border-radius:12px;border:1px solid rgba(255,45,85,0.3);background:linear-gradient(135deg,rgba(255,45,85,0.07),rgba(255,45,85,0.02));cursor:pointer;-webkit-appearance:none;user-select:none" aria-label="Down Link Protocol — opens in Reference">
+      <button onclick="goFiberTriage()" style="width:100%;display:flex;align-items:center;justify-content:flex-start;gap:14px;min-height:var(--tap-xl);padding:12px 16px;margin-bottom:10px;border-radius:12px;border:1px solid rgba(255,45,85,0.3);background:linear-gradient(135deg,rgba(255,45,85,0.07),rgba(255,45,85,0.02));cursor:pointer;-webkit-appearance:none;user-select:none" aria-label="Down Link Protocol — opens in Reference">
         <div><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ff2d55" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg></div>
         <div style="text-align:left;flex:1">
           <div style="font-family:var(--orb);font-size: var(--fs-micro);letter-spacing:2px;color:var(--red);text-transform:uppercase">Down Link Protocol</div>
@@ -16143,12 +16161,12 @@ function _blocker_renderHeader() {
 
   var html = '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">';
   if (canBack) {
-    html += '<button onclick="blocker_back()" style="background:none;border:none;color:var(--cyan,#5cf2ff);font-family:var(--mono);font-size:16px;padding:6px 10px;cursor:pointer;min-height:44px;min-width:44px">←</button>';
+    html += '<button onclick="blocker_back()" style="background:none;border:none;color:var(--cyan,#5cf2ff);font-family:var(--mono);font-size:16px;padding:6px 10px;cursor:pointer;min-height:var(--tap-s);min-width:44px">←</button>';
   } else {
     html += '<div style="width:44px"></div>';
   }
   html += '<div style="flex:1;text-align:center;font-family:var(--orb);font-size:11px;letter-spacing:3px;color:#ff453a">⛔ ' + stepLabel + '</div>';
-  html += '<button onclick="blocker_close()" style="background:none;border:none;color:var(--slate,#8a99ad);font-family:var(--mono);font-size:18px;padding:6px 10px;cursor:pointer;min-height:44px;min-width:44px">✕</button>';
+  html += '<button onclick="blocker_close()" style="background:none;border:none;color:var(--slate,#8a99ad);font-family:var(--mono);font-size:18px;padding:6px 10px;cursor:pointer;min-height:var(--tap-s);min-width:44px">✕</button>';
   html += '</div>';
   html += '<div style="height:1px;background:linear-gradient(90deg,transparent,rgba(255,69,58,0.4),transparent);margin-bottom:14px"></div>';
   return html;
@@ -16158,7 +16176,7 @@ function _blocker_renderEmpty() {
   return '<div style="padding:30px 20px;text-align:center">' +
          '<div style="font-family:var(--raj);font-size:15px;color:var(--white);margin-bottom:10px">No active deployments</div>' +
          '<div style="font-family:var(--mono);font-size:12px;color:var(--slate,#8a99ad);margin-bottom:24px">Drop an EDP via INTAKE to begin tracking blockers.</div>' +
-         '<button onclick="blocker_close();intake_open()" style="background:linear-gradient(180deg,rgba(48,209,88,0.18),rgba(48,209,88,0.06));border:1px solid rgba(48,209,88,0.45);color:var(--white);font-family:var(--mono);font-size:12px;letter-spacing:2px;padding:14px 24px;border-radius:10px;min-height:48px;cursor:pointer">OPEN INTAKE →</button>' +
+         '<button onclick="blocker_close();intake_open()" style="background:linear-gradient(180deg,rgba(48,209,88,0.18),rgba(48,209,88,0.06));border:1px solid rgba(48,209,88,0.45);color:var(--white);font-family:var(--mono);font-size:12px;letter-spacing:2px;padding:14px 24px;border-radius:10px;min-height:var(--tap-m);cursor:pointer">OPEN INTAKE →</button>' +
          '</div>';
 }
 
@@ -16208,7 +16226,7 @@ function _blocker_renderRackPicker() {
     var border  = blocked ? 'rgba(255,69,58,0.45)' : 'rgba(92,242,255,0.18)';
     var bg      = blocked ? 'rgba(255,69,58,0.06)'  : 'rgba(92,242,255,0.04)';
     var badge   = blocked ? '<span style="color:#ff453a;font-family:var(--mono);font-size:10px;letter-spacing:1.5px">BLOCKED</span>' : '';
-    html += '<button onclick="blocker_pickRack(\'' + r.id + '\')" style="display:block;width:100%;text-align:left;background:' + bg + ';border:1px solid ' + border + ';border-radius:10px;padding:14px 16px;margin-bottom:8px;min-height:56px;cursor:pointer;color:var(--white)">' +
+    html += '<button onclick="blocker_pickRack(\'' + r.id + '\')" style="display:block;width:100%;text-align:left;background:' + bg + ';border:1px solid ' + border + ';border-radius:10px;padding:14px 16px;margin-bottom:8px;min-height:var(--tap-xl);cursor:pointer;color:var(--white)">' +
               '<div style="display:flex;align-items:center;justify-content:space-between">' +
                 '<div style="font-family:var(--raj);font-size:15px;font-weight:600">' + label + '</div>' +
                 badge +
@@ -16244,15 +16262,15 @@ function _blocker_renderNoteEntry() {
 
   if (!phaseId) {
     html += '<div style="padding:20px;text-align:center;font-family:var(--mono);font-size:12px;color:#ff453a">No phases on this rack. Cannot attach blocker.</div>';
-    html += '<button onclick="blocker_close()" style="display:block;width:100%;background:transparent;border:1px solid rgba(138,153,173,0.3);color:var(--slate,#8a99ad);font-family:var(--mono);font-size:13px;letter-spacing:2px;padding:14px;border-radius:10px;margin-top:14px;min-height:48px;cursor:pointer">CLOSE</button>';
+    html += '<button onclick="blocker_close()" style="display:block;width:100%;background:transparent;border:1px solid rgba(138,153,173,0.3);color:var(--slate,#8a99ad);font-family:var(--mono);font-size:13px;letter-spacing:2px;padding:14px;border-radius:10px;margin-top:14px;min-height:var(--tap-m);cursor:pointer">CLOSE</button>';
     return html;
   }
 
   html += '<textarea id="blocker-note-input" placeholder="What is blocking this rack? (e.g. missing optics, port mapping mismatch, awaiting cage door)" style="width:100%;box-sizing:border-box;min-height:140px;background:rgba(0,0,0,0.35);border:1px solid rgba(255,69,58,0.3);border-radius:10px;color:var(--white);font-family:var(--mono);font-size:13px;line-height:1.5;padding:12px;outline:none;resize:vertical;margin-bottom:14px">' + escHtml(existingNote) + '</textarea>';
 
   html += '<div style="display:flex;gap:8px">';
-  html += '<button onclick="blocker_close()" style="flex:1;background:transparent;border:1px solid rgba(138,153,173,0.3);color:var(--slate,#8a99ad);font-family:var(--mono);font-size:13px;letter-spacing:2px;padding:14px;border-radius:10px;min-height:52px;cursor:pointer">CANCEL</button>';
-  html += '<button onclick="blocker_saveFromForm()" style="flex:2;background:linear-gradient(180deg,rgba(255,69,58,0.25),rgba(255,69,58,0.1));border:1px solid rgba(255,69,58,0.55);color:var(--white);font-family:var(--mono);font-size:13px;letter-spacing:2px;padding:14px;border-radius:10px;min-height:52px;cursor:pointer">SAVE BLOCKER</button>';
+  html += '<button onclick="blocker_close()" style="flex:1;background:transparent;border:1px solid rgba(138,153,173,0.3);color:var(--slate,#8a99ad);font-family:var(--mono);font-size:13px;letter-spacing:2px;padding:14px;border-radius:10px;min-height:var(--tap-l);cursor:pointer">CANCEL</button>';
+  html += '<button onclick="blocker_saveFromForm()" style="flex:2;background:linear-gradient(180deg,rgba(255,69,58,0.25),rgba(255,69,58,0.1));border:1px solid rgba(255,69,58,0.55);color:var(--white);font-family:var(--mono);font-size:13px;letter-spacing:2px;padding:14px;border-radius:10px;min-height:var(--tap-l);cursor:pointer">SAVE BLOCKER</button>';
   html += '</div>';
 
   return html;
@@ -16426,7 +16444,7 @@ function _handoff_renderHeader() {
   var html = '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">';
   html += '<div style="width:44px"></div>';
   html += '<div style="flex:1;text-align:center;font-family:var(--orb);font-size:11px;letter-spacing:3px;color:#ff8a00">⇄ ' + stepLabel + '</div>';
-  html += '<button onclick="handoff_close()" style="background:none;border:none;color:var(--slate,#8a99ad);font-family:var(--mono);font-size:18px;padding:6px 10px;cursor:pointer;min-height:44px;min-width:44px">✕</button>';
+  html += '<button onclick="handoff_close()" style="background:none;border:none;color:var(--slate,#8a99ad);font-family:var(--mono);font-size:18px;padding:6px 10px;cursor:pointer;min-height:var(--tap-s);min-width:44px">✕</button>';
   html += '</div>';
   html += '<div style="height:1px;background:linear-gradient(90deg,transparent,rgba(255,138,0,0.4),transparent);margin-bottom:14px"></div>';
   return html;
@@ -16436,7 +16454,7 @@ function _handoff_renderEmpty() {
   return '<div style="padding:30px 20px;text-align:center">' +
          '<div style="font-family:var(--raj);font-size:15px;color:var(--white);margin-bottom:10px">No active deployments</div>' +
          '<div style="font-family:var(--mono);font-size:12px;color:var(--slate,#8a99ad);margin-bottom:24px">Drop an EDP via INTAKE to begin generating handoffs.</div>' +
-         '<button onclick="handoff_close();intake_open()" style="background:linear-gradient(180deg,rgba(48,209,88,0.18),rgba(48,209,88,0.06));border:1px solid rgba(48,209,88,0.45);color:var(--white);font-family:var(--mono);font-size:12px;letter-spacing:2px;padding:14px 24px;border-radius:10px;min-height:48px;cursor:pointer">OPEN INTAKE →</button>' +
+         '<button onclick="handoff_close();intake_open()" style="background:linear-gradient(180deg,rgba(48,209,88,0.18),rgba(48,209,88,0.06));border:1px solid rgba(48,209,88,0.45);color:var(--white);font-family:var(--mono);font-size:12px;letter-spacing:2px;padding:14px 24px;border-radius:10px;min-height:var(--tap-m);cursor:pointer">OPEN INTAKE →</button>' +
          '</div>';
 }
 
@@ -16842,7 +16860,7 @@ function issue_renderList() {
   html += '</div>';
 
   // New Issue button
-  html += '<button onclick="issue_create_open()" style="display:block;width:100%;background:linear-gradient(180deg,rgba(255,138,0,0.22),rgba(255,138,0,0.08));border:1px solid rgba(255,138,0,0.55);color:#fff;font-family:var(--mono);font-size:13px;letter-spacing:2px;padding:14px;border-radius:10px;min-height:52px;cursor:pointer;margin-bottom:14px">+ NEW ISSUE</button>';
+  html += '<button onclick="issue_create_open()" style="display:block;width:100%;background:linear-gradient(180deg,rgba(255,138,0,0.22),rgba(255,138,0,0.08));border:1px solid rgba(255,138,0,0.55);color:#fff;font-family:var(--mono);font-size:13px;letter-spacing:2px;padding:14px;border-radius:10px;min-height:var(--tap-l);cursor:pointer;margin-bottom:14px">+ NEW ISSUE</button>';
 
   // List
   if (list.length === 0) {
@@ -16904,7 +16922,7 @@ function issue_renderDetail() {
   var html = '';
 
   // Back bar
-  html += '<button onclick="issue_renderList()" style="background:none;border:none;color:var(--cyan,#5cf2ff);font-family:var(--mono);font-size:13px;padding:8px 0;cursor:pointer;margin-bottom:8px;min-height:44px">‹ ALL ISSUES</button>';
+  html += '<button onclick="issue_renderList()" style="background:none;border:none;color:var(--cyan,#5cf2ff);font-family:var(--mono);font-size:13px;padding:8px 0;cursor:pointer;margin-bottom:8px;min-height:var(--tap-s)">‹ ALL ISSUES</button>';
 
   // Header
   html += '<div style="margin-bottom:14px">';
@@ -16974,16 +16992,16 @@ function issue_renderDetail() {
 
   // Action buttons
   html += '<div style="display:flex;flex-direction:column;gap:8px;margin-top:14px">';
-  html += '<button onclick="issue_addNotePrompt(\'' + iss.id + '\')" style="background:rgba(92,242,255,0.06);border:1px solid rgba(92,242,255,0.3);color:var(--cyan,#5cf2ff);font-family:var(--mono);font-size:12px;letter-spacing:1.5px;padding:14px;border-radius:10px;min-height:48px;cursor:pointer">+ ADD NOTE</button>';
+  html += '<button onclick="issue_addNotePrompt(\'' + iss.id + '\')" style="background:rgba(92,242,255,0.06);border:1px solid rgba(92,242,255,0.3);color:var(--cyan,#5cf2ff);font-family:var(--mono);font-size:12px;letter-spacing:1.5px;padding:14px;border-radius:10px;min-height:var(--tap-m);cursor:pointer">+ ADD NOTE</button>';
 
   if (iss.status === 'open') {
-    html += '<button onclick="issue_markMitigated(\'' + iss.id + '\')" style="background:rgba(255,138,0,0.10);border:1px solid rgba(255,138,0,0.45);color:#ff8a00;font-family:var(--mono);font-size:12px;letter-spacing:1.5px;padding:14px;border-radius:10px;min-height:48px;cursor:pointer">⚑ MARK MITIGATED</button>';
+    html += '<button onclick="issue_markMitigated(\'' + iss.id + '\')" style="background:rgba(255,138,0,0.10);border:1px solid rgba(255,138,0,0.45);color:#ff8a00;font-family:var(--mono);font-size:12px;letter-spacing:1.5px;padding:14px;border-radius:10px;min-height:var(--tap-m);cursor:pointer">⚑ MARK MITIGATED</button>';
   }
   if (iss.status === 'open' || iss.status === 'mitigated') {
-    html += '<button onclick="issue_markResolvedPrompt(\'' + iss.id + '\')" style="background:rgba(48,209,88,0.10);border:1px solid rgba(48,209,88,0.45);color:#30d158;font-family:var(--mono);font-size:12px;letter-spacing:1.5px;padding:14px;border-radius:10px;min-height:48px;cursor:pointer">✓ MARK RESOLVED</button>';
+    html += '<button onclick="issue_markResolvedPrompt(\'' + iss.id + '\')" style="background:rgba(48,209,88,0.10);border:1px solid rgba(48,209,88,0.45);color:#30d158;font-family:var(--mono);font-size:12px;letter-spacing:1.5px;padding:14px;border-radius:10px;min-height:var(--tap-m);cursor:pointer">✓ MARK RESOLVED</button>';
   }
   if (iss.status === 'resolved') {
-    html += '<button onclick="issue_reopen(\'' + iss.id + '\')" style="background:rgba(255,69,58,0.10);border:1px solid rgba(255,69,58,0.45);color:#ff453a;font-family:var(--mono);font-size:12px;letter-spacing:1.5px;padding:14px;border-radius:10px;min-height:48px;cursor:pointer">↻ REOPEN</button>';
+    html += '<button onclick="issue_reopen(\'' + iss.id + '\')" style="background:rgba(255,69,58,0.10);border:1px solid rgba(255,69,58,0.45);color:#ff453a;font-family:var(--mono);font-size:12px;letter-spacing:1.5px;padding:14px;border-radius:10px;min-height:var(--tap-m);cursor:pointer">↻ REOPEN</button>';
   }
   html += '</div>';
 
@@ -17077,13 +17095,13 @@ function _issue_openMiniSheet(title, hint, inputId, placeholder, saveLabel, save
   var h = '<div style="width:100%;max-width:520px;background:linear-gradient(180deg, var(--bg2,#141f2e) 0%, var(--bg0,#04070b) 100%);border-top:2px solid rgba(255,138,0,0.6);border-radius:18px 18px 0 0;padding:18px 18px calc(18px + env(safe-area-inset-bottom)) 18px;max-height:80vh;overflow-y:auto">';
   h += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">';
   h += '<div style="flex:1;font-family:var(--orb);font-size:11px;letter-spacing:3px;color:#ff8a00">' + escHtml(title) + '</div>';
-  h += '<button onclick="_issue_closeMiniSheet()" style="background:none;border:none;color:var(--slate,#8a99ad);font-family:var(--mono);font-size:18px;padding:6px 10px;cursor:pointer;min-height:44px;min-width:44px">✕</button>';
+  h += '<button onclick="_issue_closeMiniSheet()" style="background:none;border:none;color:var(--slate,#8a99ad);font-family:var(--mono);font-size:18px;padding:6px 10px;cursor:pointer;min-height:var(--tap-s);min-width:44px">✕</button>';
   h += '</div>';
   h += '<div style="font-family:var(--mono);font-size:11px;color:var(--slate,#8a99ad);margin-bottom:12px">' + escHtml(hint) + '</div>';
   h += '<textarea id="' + inputId + '" placeholder="' + escHtml(placeholder) + '" style="width:100%;box-sizing:border-box;min-height:140px;background:rgba(0,0,0,0.35);border:1px solid rgba(255,138,0,0.3);border-radius:10px;color:var(--white);font-family:var(--mono);font-size:13px;line-height:1.5;padding:12px;outline:none;resize:vertical;margin-bottom:14px"></textarea>';
   h += '<div style="display:flex;gap:8px">';
-  h += '<button onclick="_issue_closeMiniSheet()" style="flex:1;background:transparent;border:1px solid rgba(138,153,173,0.3);color:var(--slate,#8a99ad);font-family:var(--mono);font-size:13px;letter-spacing:2px;padding:14px;border-radius:10px;min-height:52px;cursor:pointer">CANCEL</button>';
-  h += '<button onclick="' + saveAction + '" style="flex:2;background:linear-gradient(180deg,rgba(255,138,0,0.25),rgba(255,138,0,0.1));border:1px solid rgba(255,138,0,0.55);color:#fff;font-family:var(--mono);font-size:13px;letter-spacing:2px;padding:14px;border-radius:10px;min-height:52px;cursor:pointer">' + escHtml(saveLabel) + '</button>';
+  h += '<button onclick="_issue_closeMiniSheet()" style="flex:1;background:transparent;border:1px solid rgba(138,153,173,0.3);color:var(--slate,#8a99ad);font-family:var(--mono);font-size:13px;letter-spacing:2px;padding:14px;border-radius:10px;min-height:var(--tap-l);cursor:pointer">CANCEL</button>';
+  h += '<button onclick="' + saveAction + '" style="flex:2;background:linear-gradient(180deg,rgba(255,138,0,0.25),rgba(255,138,0,0.1));border:1px solid rgba(255,138,0,0.55);color:#fff;font-family:var(--mono);font-size:13px;letter-spacing:2px;padding:14px;border-radius:10px;min-height:var(--tap-l);cursor:pointer">' + escHtml(saveLabel) + '</button>';
   h += '</div></div>';
   overlay.innerHTML = h;
 
@@ -17144,12 +17162,12 @@ function _issue_renderCreateModal() {
   var stepLabels = { 1: 'CATEGORY', 2: 'CONTEXT', 3: 'DETAILS', 4: 'MATCH REVIEW' };
   sheet += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">';
   if (_issueStep > 1) {
-    sheet += '<button onclick="_issue_createBack()" style="background:none;border:none;color:var(--cyan,#5cf2ff);font-family:var(--mono);font-size:16px;padding:6px 10px;cursor:pointer;min-height:44px;min-width:44px">←</button>';
+    sheet += '<button onclick="_issue_createBack()" style="background:none;border:none;color:var(--cyan,#5cf2ff);font-family:var(--mono);font-size:16px;padding:6px 10px;cursor:pointer;min-height:var(--tap-s);min-width:44px">←</button>';
   } else {
     sheet += '<div style="width:44px"></div>';
   }
   sheet += '<div style="flex:1;text-align:center;font-family:var(--orb);font-size:11px;letter-spacing:3px;color:#ff8a00">NEW ISSUE · ' + stepLabels[_issueStep] + '</div>';
-  sheet += '<button onclick="issue_create_close()" style="background:none;border:none;color:var(--slate,#8a99ad);font-family:var(--mono);font-size:18px;padding:6px 10px;cursor:pointer;min-height:44px;min-width:44px">✕</button>';
+  sheet += '<button onclick="issue_create_close()" style="background:none;border:none;color:var(--slate,#8a99ad);font-family:var(--mono);font-size:18px;padding:6px 10px;cursor:pointer;min-height:var(--tap-s);min-width:44px">✕</button>';
   sheet += '</div>';
   // Step indicator
   sheet += '<div style="display:flex;gap:4px;margin-bottom:14px">';
@@ -17199,7 +17217,7 @@ function _issue_renderStep2() {
   if (deps.length === 0) {
     html += '<div style="font-family:var(--mono);font-size:11px;color:var(--slate,#8a99ad);padding:10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.10);border-radius:8px;margin-bottom:12px">No active deployments — issue will be site-scoped only.</div>';
   } else {
-    html += '<select id="issue-deploy-select" onchange="_issue_setDeploy(this.value)" style="width:100%;box-sizing:border-box;background:rgba(0,0,0,0.35);border:1px solid rgba(255,138,0,0.3);border-radius:8px;color:#fff;font-family:var(--mono);font-size:13px;padding:12px;min-height:44px;margin-bottom:12px">';
+    html += '<select id="issue-deploy-select" onchange="_issue_setDeploy(this.value)" style="width:100%;box-sizing:border-box;background:rgba(0,0,0,0.35);border:1px solid rgba(255,138,0,0.3);border-radius:8px;color:#fff;font-family:var(--mono);font-size:13px;padding:12px;min-height:var(--tap-s);margin-bottom:12px">';
     html += '<option value="">— None (site-scoped) —</option>';
     deps.forEach(function(d) {
       var sel = (_issueDraft.deploymentId === d.id) ? ' selected' : '';
@@ -17214,7 +17232,7 @@ function _issue_renderStep2() {
     try { racks = deploy_loadRacks(_issueDraft.deploymentId) || []; } catch (e) {}
     if (racks.length) {
       html += '<label style="font-family:var(--mono);font-size:10px;letter-spacing:1.5px;color:#ff8a00;display:block;margin-bottom:5px">RACK</label>';
-      html += '<select id="issue-rack-select" onchange="_issue_setRack(this.value)" style="width:100%;box-sizing:border-box;background:rgba(0,0,0,0.35);border:1px solid rgba(255,138,0,0.3);border-radius:8px;color:#fff;font-family:var(--mono);font-size:13px;padding:12px;min-height:44px;margin-bottom:12px">';
+      html += '<select id="issue-rack-select" onchange="_issue_setRack(this.value)" style="width:100%;box-sizing:border-box;background:rgba(0,0,0,0.35);border:1px solid rgba(255,138,0,0.3);border-radius:8px;color:#fff;font-family:var(--mono);font-size:13px;padding:12px;min-height:var(--tap-s);margin-bottom:12px">';
       html += '<option value="">— None (deployment-scoped) —</option>';
       racks.forEach(function(r) {
         var sel = (_issueDraft.rackId === r.id) ? ' selected' : '';
@@ -17225,7 +17243,7 @@ function _issue_renderStep2() {
   }
 
   // Next button
-  html += '<button onclick="_issue_createNext()" style="display:block;width:100%;background:linear-gradient(180deg,rgba(255,138,0,0.25),rgba(255,138,0,0.1));border:1px solid rgba(255,138,0,0.55);color:#fff;font-family:var(--mono);font-size:13px;letter-spacing:2px;padding:14px;border-radius:10px;min-height:52px;cursor:pointer;margin-top:6px">NEXT →</button>';
+  html += '<button onclick="_issue_createNext()" style="display:block;width:100%;background:linear-gradient(180deg,rgba(255,138,0,0.25),rgba(255,138,0,0.1));border:1px solid rgba(255,138,0,0.55);color:#fff;font-family:var(--mono);font-size:13px;letter-spacing:2px;padding:14px;border-radius:10px;min-height:var(--tap-l);cursor:pointer;margin-top:6px">NEXT →</button>';
   return html;
 }
 
@@ -17245,7 +17263,7 @@ function _issue_renderStep3() {
   var html = '<div style="font-family:var(--mono);font-size:11px;letter-spacing:1.5px;color:var(--slate,#8a99ad);margin-bottom:10px">DETAILS</div>';
 
   html += '<label style="font-family:var(--mono);font-size:10px;letter-spacing:1.5px;color:#ff8a00;display:block;margin-bottom:5px">TITLE (required)</label>';
-  html += '<input id="issue-title-input" type="text" maxlength="140" placeholder="One-line summary" value="' + escHtml(_issueDraft.title || '') + '" style="width:100%;box-sizing:border-box;background:rgba(0,0,0,0.35);border:1px solid rgba(255,138,0,0.3);border-radius:8px;color:#fff;font-family:var(--raj);font-size:14px;padding:12px;outline:none;min-height:44px;margin-bottom:12px">';
+  html += '<input id="issue-title-input" type="text" maxlength="140" placeholder="One-line summary" value="' + escHtml(_issueDraft.title || '') + '" style="width:100%;box-sizing:border-box;background:rgba(0,0,0,0.35);border:1px solid rgba(255,138,0,0.3);border-radius:8px;color:#fff;font-family:var(--raj);font-size:14px;padding:12px;outline:none;min-height:var(--tap-s);margin-bottom:12px">';
 
   html += '<label style="font-family:var(--mono);font-size:10px;letter-spacing:1.5px;color:#ff8a00;display:block;margin-bottom:5px">DESCRIPTION</label>';
   html += '<textarea id="issue-desc-input" maxlength="4000" placeholder="What happened? What did you observe?" style="width:100%;box-sizing:border-box;min-height:100px;background:rgba(0,0,0,0.35);border:1px solid rgba(255,138,0,0.3);border-radius:8px;color:#fff;font-family:var(--mono);font-size:13px;line-height:1.5;padding:10px 12px;outline:none;resize:vertical;margin-bottom:12px">' + escHtml(_issueDraft.description || '') + '</textarea>';
@@ -17264,7 +17282,7 @@ function _issue_renderStep3() {
   html += '<label style="font-family:var(--mono);font-size:10px;letter-spacing:1.5px;color:var(--slate,#8a99ad);display:block;margin-bottom:5px">HARDWARE TYPE</label>';
   html += '<input id="issue-hw-input" type="text" placeholder="GB300 NVL72, H200 SXM5…" value="' + escHtml(_issueDraft.hardwareType || '') + '" style="width:100%;box-sizing:border-box;background:rgba(0,0,0,0.35);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#fff;font-family:var(--mono);font-size:12px;padding:10px;outline:none;min-height:42px;margin-bottom:14px">';
 
-  html += '<button onclick="_issue_createNext()" style="display:block;width:100%;background:linear-gradient(180deg,rgba(255,138,0,0.25),rgba(255,138,0,0.1));border:1px solid rgba(255,138,0,0.55);color:#fff;font-family:var(--mono);font-size:13px;letter-spacing:2px;padding:14px;border-radius:10px;min-height:52px;cursor:pointer">CHECK FOR MATCHES →</button>';
+  html += '<button onclick="_issue_createNext()" style="display:block;width:100%;background:linear-gradient(180deg,rgba(255,138,0,0.25),rgba(255,138,0,0.1));border:1px solid rgba(255,138,0,0.55);color:#fff;font-family:var(--mono);font-size:13px;letter-spacing:2px;padding:14px;border-radius:10px;min-height:var(--tap-l);cursor:pointer">CHECK FOR MATCHES →</button>';
 
   return html;
 }
@@ -17303,8 +17321,8 @@ function _issue_renderStep4() {
   }
 
   html += '<div style="display:flex;gap:8px;margin-top:14px">';
-  html += '<button onclick="_issue_createBack()" style="flex:1;background:transparent;border:1px solid rgba(138,153,173,0.3);color:var(--slate,#8a99ad);font-family:var(--mono);font-size:13px;letter-spacing:2px;padding:14px;border-radius:10px;min-height:52px;cursor:pointer">← BACK</button>';
-  html += '<button onclick="_issue_createSave()" style="flex:2;background:linear-gradient(180deg,rgba(255,138,0,0.25),rgba(255,138,0,0.1));border:1px solid rgba(255,138,0,0.55);color:#fff;font-family:var(--mono);font-size:13px;letter-spacing:2px;padding:14px;border-radius:10px;min-height:52px;cursor:pointer">SAVE ISSUE</button>';
+  html += '<button onclick="_issue_createBack()" style="flex:1;background:transparent;border:1px solid rgba(138,153,173,0.3);color:var(--slate,#8a99ad);font-family:var(--mono);font-size:13px;letter-spacing:2px;padding:14px;border-radius:10px;min-height:var(--tap-l);cursor:pointer">← BACK</button>';
+  html += '<button onclick="_issue_createSave()" style="flex:2;background:linear-gradient(180deg,rgba(255,138,0,0.25),rgba(255,138,0,0.1));border:1px solid rgba(255,138,0,0.55);color:#fff;font-family:var(--mono);font-size:13px;letter-spacing:2px;padding:14px;border-radius:10px;min-height:var(--tap-l);cursor:pointer">SAVE ISSUE</button>';
   html += '</div>';
   return html;
 }
@@ -18477,7 +18495,7 @@ function deploy_generateRackQR(deployId, rackId) {
   win.document.write('.lbl{font-size:14px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-top:8px;text-align:center}');
   win.document.write('.sub{font-size: var(--fs-caption);color:#666;letter-spacing:1px;margin-top:4px;text-align:center}');
   win.document.write('.btn-row{margin-top:24px;display:flex;gap: 8px;flex-wrap:wrap;justify-content:center}');
-  win.document.write('.btn{padding:12px 22px;background:#000;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px;letter-spacing:1px;font-family:monospace;-webkit-appearance:none;min-height:44px}');
+  win.document.write('.btn{padding:12px 22px;background:#000;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px;letter-spacing:1px;font-family:monospace;-webkit-appearance:none;min-height:var(--tap-s)}');
   win.document.write('.btn-close{background:#fff;color:#000;border:2px solid #000}');
   win.document.write('.close-x{position:fixed;top:16px;right:16px;width:44px;height:44px;background:#000;color:#fff;border:none;border-radius:50%;font-size:20px;font-weight:700;cursor:pointer;z-index:10;display:flex;align-items:center;justify-content:center;-webkit-appearance:none;font-family:monospace;line-height:1}');
   win.document.write('@media print{.btn-row,.close-x{display:none}}');
@@ -25866,7 +25884,7 @@ function deploy_renderFloorMap(deployId) {
   html += '<div style="display:grid;grid-template-columns:repeat(' + cols + ',1fr);gap:6px;margin-bottom:12px">';
   tiles.forEach(function(t) {
     var pct = t.ru.pctComplete || 0;
-    html += '<button onclick="deploy_showRackDetail(\'' + deployId + '\',\'' + t.rack.id + '\')" style="position:relative;aspect-ratio:1;min-height:56px;background:' + t.bgColor + ';border:1px solid ' + t.borderColor + ';border-radius:6px;padding:4px 2px;cursor:pointer;-webkit-appearance:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;-webkit-tap-highlight-color:transparent" ontouchstart="this.style.opacity=\'0.7\'" ontouchend="this.style.opacity=\'1\'">';
+    html += '<button onclick="deploy_showRackDetail(\'' + deployId + '\',\'' + t.rack.id + '\')" style="position:relative;aspect-ratio:1;min-height:var(--tap-xl);background:' + t.bgColor + ';border:1px solid ' + t.borderColor + ';border-radius:6px;padding:4px 2px;cursor:pointer;-webkit-appearance:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;-webkit-tap-highlight-color:transparent" ontouchstart="this.style.opacity=\'0.7\'" ontouchend="this.style.opacity=\'1\'">';
     // Rack label
     html += '<div style="font-family:var(--mono);font-size:10px;font-weight:700;color:' + t.color + ';letter-spacing:0.5px;line-height:1">' + escHtml(t.rack.rackId) + '</div>';
     // Percent
@@ -28471,7 +28489,7 @@ function deploy_renderCloseOutModal() {
     var bg = isActive ? 'rgba(92,242,255,0.18)' : 'rgba(255,255,255,0.03)';
     var border = isActive ? 'var(--cyan)' : 'rgba(255,255,255,0.1)';
     var fg = isActive ? 'var(--cyan)' : 'var(--white)';
-    html += '<button onclick="closeOut_setFormat(\'' + f + '\')" style="flex:1;background:' + bg + ';border:1px solid ' + border + ';border-radius:8px;padding:10px 8px;color:' + fg + ';font-family:var(--mono);font-size: var(--fs-caption);letter-spacing:1px;cursor:pointer;-webkit-appearance:none;min-height:48px">';
+    html += '<button onclick="closeOut_setFormat(\'' + f + '\')" style="flex:1;background:' + bg + ';border:1px solid ' + border + ';border-radius:8px;padding:10px 8px;color:' + fg + ';font-family:var(--mono);font-size: var(--fs-caption);letter-spacing:1px;cursor:pointer;-webkit-appearance:none;min-height:var(--tap-m)">';
     html += '<div style="font-weight:700">' + label + '</div>';
     html += '<div style="font-size: var(--fs-caption);color:var(--slate);margin-top:3px;letter-spacing:var(--hud-track-data)">' + hint + '</div>';
     html += '</button>';
@@ -28494,7 +28512,7 @@ function deploy_renderCloseOutModal() {
     var expBg     = exportDisabled ? 'rgba(255,255,255,0.04)' : 'rgba(92,242,255,0.12)';
     var expBorder = exportDisabled ? 'rgba(255,255,255,0.08)' : 'var(--cyan)';
     var expColor  = exportDisabled ? 'var(--slate)' : 'var(--cyan)';
-    html += '<button onclick="closeOut_doExport()" ' + (exportDisabled ? 'disabled' : '') + ' style="width:100%;background:' + expBg + ';border:1px solid ' + expBorder + ';border-radius:8px;padding:12px;color:' + expColor + ';font-family:var(--mono);font-size:11px;letter-spacing:1.5px;cursor:' + (exportDisabled ? 'not-allowed' : 'pointer') + ';-webkit-appearance:none;min-height:44px;opacity:' + (exportDisabled ? '0.5' : '1') + '">';
+    html += '<button onclick="closeOut_doExport()" ' + (exportDisabled ? 'disabled' : '') + ' style="width:100%;background:' + expBg + ';border:1px solid ' + expBorder + ';border-radius:8px;padding:12px;color:' + expColor + ';font-family:var(--mono);font-size:11px;letter-spacing:1.5px;cursor:' + (exportDisabled ? 'not-allowed' : 'pointer') + ';-webkit-appearance:none;min-height:var(--tap-s);opacity:' + (exportDisabled ? '0.5' : '1') + '">';
     html += s.busy ? '<span class="ico ico-md ico-loader"></span> GENERATING...' : '▶ GENERATE EXPORT';
     html += '</button>';
     if (!s.format) {
@@ -28518,7 +28536,7 @@ function deploy_renderCloseOutModal() {
   html += '<div style="margin-top:8px">';
   html += '<div data-co-typed-lbl style="font-family:var(--mono);font-size: var(--fs-caption);color:' + typedLblColor + ';margin-bottom:4px;letter-spacing:0.5px">Type <b>CLOSE</b> to confirm:</div>';
   // font-size 16px — avoid iOS viewport auto-zoom on focus
-  html += '<input type="text" data-co-typed value="' + escHtml(s.typedText) + '" oninput="closeOut_typeConfirm(this.value)" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" style="width:100%;box-sizing:border-box;background:rgba(0,0,0,0.35);border:1px solid ' + typedInputBorder + ';border-radius:6px;padding:10px 12px;color:var(--white);font-family:var(--mono);font-size:16px;letter-spacing:2px;-webkit-appearance:none;min-height:44px">';
+  html += '<input type="text" data-co-typed value="' + escHtml(s.typedText) + '" oninput="closeOut_typeConfirm(this.value)" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" style="width:100%;box-sizing:border-box;background:rgba(0,0,0,0.35);border:1px solid ' + typedInputBorder + ';border-radius:6px;padding:10px 12px;color:var(--white);font-family:var(--mono);font-size:16px;letter-spacing:2px;-webkit-appearance:none;min-height:var(--tap-s)">';
   html += '</div>';
   html += '</div></div>';
 
@@ -28526,7 +28544,7 @@ function deploy_renderCloseOutModal() {
   var pBg     = canPurge ? 'rgba(255,45,85,0.15)' : 'rgba(255,255,255,0.04)';
   var pBorder = canPurge ? 'var(--red)' : 'rgba(255,255,255,0.08)';
   var pColor  = canPurge ? 'var(--red)' : 'var(--slate)';
-  html += '<button data-co-purge onclick="closeOut_doPurge()" ' + (canPurge ? '' : 'disabled') + ' style="width:100%;background:' + pBg + ';border:1px solid ' + pBorder + ';border-radius:var(--hud-r12);padding:14px;color:' + pColor + ';font-family:var(--orb);font-size:12px;letter-spacing:2px;cursor:' + (canPurge ? 'pointer' : 'not-allowed') + ';-webkit-appearance:none;min-height:52px;opacity:' + (canPurge ? '1' : '0.5') + '">';
+  html += '<button data-co-purge onclick="closeOut_doPurge()" ' + (canPurge ? '' : 'disabled') + ' style="width:100%;background:' + pBg + ';border:1px solid ' + pBorder + ';border-radius:var(--hud-r12);padding:14px;color:' + pColor + ';font-family:var(--orb);font-size:12px;letter-spacing:2px;cursor:' + (canPurge ? 'pointer' : 'not-allowed') + ';-webkit-appearance:none;min-height:var(--tap-l);opacity:' + (canPurge ? '1' : '0.5') + '">';
   html += s.busy ? '<span class="ico ico-md ico-loader"></span> CLOSING OUT...' : '<span class="ico ico-md ico-trash"></span> PURGE AND CLOSE OUT';
   html += '</button>';
 
@@ -39822,13 +39840,13 @@ function actionStripe_renderRackToolbar(el, deployId, rackId) {
       '<div style="flex-shrink:0;font-family:var(--mono);font-size: var(--fs-caption);color:var(--slate);letter-spacing:1px;padding-right:8px;border-right:1px solid rgba(255,255,255,0.08);margin-right:4px">' + escHtml(rackLabel) + '</div>' +
       '<button onclick="stripeRack_logNote(\'' + deployId + '\',\'' + rackId + '\')" ' +
         'ontouchstart="this.style.opacity=\'0.7\'" ontouchend="this.style.opacity=\'1\'" ' +
-        'style="flex:1;min-height:44px;background:rgba(92,242,255,0.06);border:1px solid rgba(92,242,255,0.2);border-radius:var(--hud-r8);color:var(--cyan);font-family:var(--mono);font-size: var(--fs-micro);letter-spacing:1px;cursor:pointer;-webkit-appearance:none">LOG NOTE</button>' +
+        'style="flex:1;min-height:var(--tap-s);background:rgba(92,242,255,0.06);border:1px solid rgba(92,242,255,0.2);border-radius:var(--hud-r8);color:var(--cyan);font-family:var(--mono);font-size: var(--fs-micro);letter-spacing:1px;cursor:pointer;-webkit-appearance:none">LOG NOTE</button>' +
       '<button onclick="handoff_showGenerator(\'' + deployId + '\')" ' +
         'ontouchstart="this.style.opacity=\'0.7\'" ontouchend="this.style.opacity=\'1\'" ' +
-        'style="flex:1;min-height:44px;background:rgba(255,138,0,0.06);border:1px solid rgba(255,138,0,0.25);border-radius:var(--hud-r8);color:var(--orange,#ff8a00);font-family:var(--mono);font-size: var(--fs-micro);letter-spacing:1px;cursor:pointer;-webkit-appearance:none">HANDOFF</button>' +
+        'style="flex:1;min-height:var(--tap-s);background:rgba(255,138,0,0.06);border:1px solid rgba(255,138,0,0.25);border-radius:var(--hud-r8);color:var(--orange,#ff8a00);font-family:var(--mono);font-size: var(--fs-micro);letter-spacing:1px;cursor:pointer;-webkit-appearance:none">HANDOFF</button>' +
       '<button onclick="deploy_generateRackQR(\'' + deployId + '\',\'' + rackId + '\')" ' +
         'ontouchstart="this.style.opacity=\'0.7\'" ontouchend="this.style.opacity=\'1\'" ' +
-        'style="flex:1;min-height:44px;background:rgba(92,242,255,0.06);border:1px solid rgba(92,242,255,0.2);border-radius:var(--hud-r8);color:var(--cyan);font-family:var(--mono);font-size: var(--fs-micro);letter-spacing:1px;cursor:pointer;-webkit-appearance:none">QR LABEL</button>' +
+        'style="flex:1;min-height:var(--tap-s);background:rgba(92,242,255,0.06);border:1px solid rgba(92,242,255,0.2);border-radius:var(--hud-r8);color:var(--cyan);font-family:var(--mono);font-size: var(--fs-micro);letter-spacing:1px;cursor:pointer;-webkit-appearance:none">QR LABEL</button>' +
     '</div>';
 }
 // ────────────────────────────────────────────────────────────────
