@@ -1,6 +1,6 @@
 {
-  "version": "phantom-v1.6.45",
+  "version": "phantom-v1.6.46",
   "released": "2026-05-28",
-  "prevVersion": "phantom-v1.6.44",
-  "notes": "Re-applies the brighter boot drift stars from the (overwritten) earlier v1.6.44 build, on top of the v1.6.44 IA cleanup. Per-star baseAlpha 0.45-0.95 -> 0.65-1.0; star colors (rare violet, cyan accent, mostly white) 0.55/0.55/0.50 -> 0.85/0.85/0.80 alpha. Size, drift speed, twinkle range, count (50), and prefers-reduced-motion opt-out unchanged. No change to v1.6.44 IA cleanup (intake migration, NOW tile rationalization) or the v1.6.43 ENTER circle. SOURCE-OF-TRUTH NOTE: fold this same five-line change into the local PHANTOM source so the next zip ship does not revert it again."
+  "prevVersion": "phantom-v1.6.45",
+  "notes": "MASTER <-> SITE consolidation. The MASTER tab now hosts the full site-level reference: a section toggle at the top with two pills [FILE | PROFILE]. FILE keeps the existing master-CSV loader (cabinet/host map) behavior — default on tab open, full backward compatibility. PROFILE renders the existing siteProfile_showEditor() (switches, GPU platforms, PDUs, etc.) into a new container inside pg-master — same editor, new home. The BUILD -> SITE subtab pill is removed; the header overflow menu's SITE PROFILE button now routes to MASTER -> PROFILE. Help text 'Open SITE PROFILE from the menu' rewritten to 'Open MASTER -> PROFILE'. The siteProfile_showEditor function, OPS_TABS.site delegate, and all profile data (SITE_PROFILE_KEY in localStorage) are untouched — only the navigation surface changed. Two dead CSS rules for #ops-tab-strip .stab[data-tab='site'] left in place (no element matches them; removing the chunks is unnecessary risk). Builds on v1.6.45 (which carried v1.6.44 IA cleanup + v1.6.43 ENTER circle + brightened boot stars)."
 }

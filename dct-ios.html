@@ -10144,12 +10144,29 @@ body.has-resume-banner #boot {
 #boot .enter-glyph path { stroke:url(#biGrad); stroke-width:2; fill:none; stroke-linecap:round; stroke-linejoin:round; }
 #boot .enter-etxt { font-family:var(--brand); font-weight:400; letter-spacing:.16em; font-size:14px; color:#eaf6ff; text-shadow:0 0 14px rgba(120,200,255,0.55); }
 #boot .enter-cap { font-family:var(--mono); font-size:10px; letter-spacing:.28em; text-transform:uppercase; color:#6f84a0; }
+/* MASTER section toggle (v1.6.46) — site reference consolidated under MASTER */
+#master-section-bar { display:flex; gap:8px; padding:0 0 14px; margin:0 0 4px; }
+.master-section-pill {
+  flex:1; min-height:44px;
+  background:rgba(11,16,28,0.65); border:1px solid rgba(92,242,255,0.18);
+  color:rgba(220,234,249,0.55);
+  font-family:var(--orb); font-size:11px; letter-spacing:0.18em; text-transform:uppercase;
+  padding:12px 14px; border-radius:10px; cursor:pointer;
+  transition:color 0.15s, border-color 0.15s, background 0.15s, box-shadow 0.15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.master-section-pill.active {
+  background:linear-gradient(180deg, rgba(92,242,255,0.10), rgba(92,242,255,0.03));
+  border-color:rgba(92,242,255,0.55); color:var(--cyan);
+  box-shadow:0 0 14px rgba(92,242,255,0.18), inset 0 1px 0 rgba(255,255,255,0.04);
+}
+.master-section-pill:not(.active):hover { color:rgba(220,234,249,0.8); border-color:rgba(92,242,255,0.32); }
 
 </style>
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.6.45';
+const PHANTOM_APP_VERSION = 'phantom-v1.6.46';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -10683,7 +10700,7 @@ if (typeof window !== 'undefined') {
             <!-- v1.6.30: HW REF re-homed here when MASTER took its bottom-nav slot.
                  Reachable from anywhere; hwMatrix_open() is unchanged. -->
             <button onclick="hwMatrix_open();document.getElementById('hdr-overflow-menu').classList.remove('hdr-menu-open')" class="hdr-menu-item" style="color:var(--cyan)" aria-label="Open hardware reference"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5cf2ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5"/><line x1="12" y1="22" x2="12" y2="15.5"/><polyline points="22 8.5 12 15.5 2 8.5"/></svg> &nbsp;HW REF</button>
-            <button onclick="showPage('sop',null,'site');document.getElementById('hdr-overflow-menu').classList.remove('hdr-menu-open')" class="hdr-menu-item" style="color:var(--violet-bright,#b58cff)" aria-label="Open site profile editor"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#b58cff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> &nbsp;SITE PROFILE</button>
+            <button onclick="showPage('master');setTimeout(function(){master_showSection('profile');},10);document.getElementById('hdr-overflow-menu').classList.remove('hdr-menu-open')" class="hdr-menu-item" style="color:var(--violet-bright,#b58cff)" aria-label="Open site profile editor"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#b58cff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> &nbsp;SITE PROFILE</button>
           </div>
         </div>
         <button id="phantom-tab-pill" class="tab-pill" onclick="tab_pillTap()" aria-label="PHANTOM open in another tab — tap for details">
@@ -13011,7 +13028,6 @@ if (typeof window !== 'undefined') {
         <div class="stab" data-tab="power" onclick="showPageSafe('power','sop')">Power</div>
         <div class="stab" data-tab="burndown" onclick="showOpsTab('burndown')">Burndown</div>
         <div class="stab" data-tab="audits" onclick="showOpsTab('audits')">Audits</div>
-        <div class="stab" data-tab="site" onclick="showOpsTab('site')">Site</div>
       </div>
       <div id="ops-content"></div>
     </div><!-- end pg-sop -->
@@ -13074,6 +13090,12 @@ if (typeof window !== 'undefined') {
            #master-empty-state   — no Master loaded → CTA to load
            #master-loaded-state  — banner + search + suggestions + results -->
     <div class="page" id="pg-master">
+      <!-- v1.6.46: section toggle — site reference now consolidated under MASTER -->
+      <div class="master-section-bar" id="master-section-bar">
+        <button class="master-section-pill active" data-section="file" onclick="master_showSection('file')" aria-label="Master file — cabinet and host map">File</button>
+        <button class="master-section-pill" data-section="profile" onclick="master_showSection('profile')" aria-label="Site profile — switches, GPUs, PDUs">Profile</button>
+      </div>
+      <div id="master-profile-state" class="master-profile" hidden></div>
       <div id="master-empty-state" class="master-empty" hidden></div>
       <div id="master-loaded-state" class="master-loaded" hidden></div>
     </div><!-- end pg-master -->
@@ -24797,6 +24819,12 @@ function master_renderLoaded(container) {
 }
 
 function master_render() {
+  // v1.6.46: ensure profile section is hidden when re-entering file mode
+  var _p = document.getElementById('master-profile-state'); if (_p) _p.hidden = true;
+  var _b = document.getElementById('master-section-bar');
+  if (_b) _b.querySelectorAll('.master-section-pill').forEach(function(p) {
+    p.classList.toggle('active', p.dataset.section === 'file');
+  });
   var emptyEl  = document.getElementById('master-empty-state');
   var loadedEl = document.getElementById('master-loaded-state');
   if (!emptyEl || !loadedEl) return;
@@ -24807,6 +24835,34 @@ function master_render() {
   }
 }
 window.master_render = master_render;
+
+// ━━━ v1.6.46: MASTER section toggle (File vs Profile) ━━━
+// File   → existing master_render() empty/loaded behavior (cabinet/host map)
+// Profile → siteProfile_showEditor() rendered into pg-master's profile container
+function master_showSection(section) {
+  section = section || 'file';
+  var bar = document.getElementById('master-section-bar');
+  if (bar) {
+    bar.querySelectorAll('.master-section-pill').forEach(function(p) {
+      p.classList.toggle('active', p.dataset.section === section);
+    });
+  }
+  var profileEl = document.getElementById('master-profile-state');
+  var emptyEl   = document.getElementById('master-empty-state');
+  var loadedEl  = document.getElementById('master-loaded-state');
+  if (section === 'profile') {
+    if (emptyEl)   emptyEl.hidden = true;
+    if (loadedEl)  loadedEl.hidden = true;
+    if (profileEl) {
+      profileEl.hidden = false;
+      if (typeof siteProfile_showEditor === 'function') siteProfile_showEditor(profileEl);
+    }
+  } else {
+    if (profileEl) profileEl.hidden = true;
+    if (typeof master_render === 'function') master_render();
+  }
+}
+window.master_showSection = master_showSection;
 
 // Debounced input handler. 200ms is keystroke smoothing only — the
 // filter over ~633 keys is sub-millisecond.
@@ -34836,7 +34892,7 @@ function opticSelector_renderPlatforms() {
   var profile = (typeof siteProfile_load === 'function') ? siteProfile_load() : null;
   var platforms = (profile && Array.isArray(profile.platforms)) ? profile.platforms : [];
   if (platforms.length === 0) {
-    host.innerHTML = '<div style="font-family:var(--mono);font-size:11px;color:var(--slate);padding:14px;border:1px dashed rgba(138,175,191,0.30);border-radius:8px;text-align:center">No platforms configured for this site.<br><br>Open <strong>SITE PROFILE</strong> from the menu to add the platforms you run.</div>';
+    host.innerHTML = '<div style="font-family:var(--mono);font-size:11px;color:var(--slate);padding:14px;border:1px dashed rgba(138,175,191,0.30);border-radius:8px;text-align:center">No platforms configured for this site.<br><br>Open <strong>MASTER &rarr; PROFILE</strong> to add the platforms you run.</div>';
     return;
   }
   // Sort by role for predictable order
