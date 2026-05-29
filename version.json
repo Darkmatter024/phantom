@@ -1,6 +1,6 @@
 {
-  "version": "phantom-v1.6.49",
+  "version": "phantom-v1.6.50",
   "released": "2026-05-28",
-  "prevVersion": "phantom-v1.6.48",
-  "notes": "Data-model hygiene: 6 active read/write localStorage keys promoted from inline string literals to named constants. File scope: BURNDOWN_KEY ('dct_burndown_v1'), HANDOFF_NOTES_KEY ('phantom_handoff_notes'), RACK_VIEWER_LAST_KEY ('phantom_rack_viewer_last') — co-located after OPTIC_INV_KEY. IIFE scope: ACTIVE_AUDIT_KEY ('phantom_active_audit') inside AUDIT, GE_LAST_RACK_KEY + GE_LAST_FAULT_KEY ('ge_last_rack', 'ge_last_fault') inside GE. The BD IIFE's pre-existing internal const KEY now resolves to BURNDOWN_KEY rather than its own literal (single source of truth). Total: 17 inline literal sites replaced + 6 constant declarations. 6 cleanup-only / dev-only direct-string keys left inline (gt_lessons, phantom_seen_boot, phantom_force_lead_v1, phantom_identity, phantom_rm_last, __phantom_health) — naming a one-shot removeItem call is cosmetic. Zero behavior change. Cache bumped to flush v1.6.48 SW. Builds on v1.6.48 Phase 2 de-bloat."
+  "prevVersion": "phantom-v1.6.49",
+  "notes": "Legacy-key reaper. Tiny boot-time IIFE (_phantom_legacyKeyReaper) clears two orphan localStorage keys from every production iPad: phantom_force_lead_v1 (dev-override flag, never read in prod) and gt_lessons (legacy GT cleanup target, never read). Both were previously only cleared by the dev escape hatch (5-tap-on-logo), so production caches accumulated them indefinitely. Idempotent: removeItem on a missing key is a no-op; safe to re-run every boot. Scope deliberately narrow: phantom_identity is still read as a legacy-fallback in _resolveIdentity (would need read->migrate->remove); phantom_rm_last is still actively used by renderRackMap; phantom_seen_boot is still written (read path is disabled but write is intentional) — all three NOT touched. Zero behavior change for users without legacy data. Builds on v1.6.49."
 }
