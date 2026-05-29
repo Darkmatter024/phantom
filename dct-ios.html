@@ -6506,6 +6506,58 @@ textarea.hud-input {
 .cn-u.cn-u-context .cn-u-label { color: rgba(72,96,112,0.55); }
 .cn-u.cn-u-context .cn-hole { opacity: 0.45; }
 
+/* MASTER rack elevation - mirrored absolute layers over the .cn-* rail visual */
+.master-elev-rail { padding: 12px 10px 14px; overflow-x: hidden; touch-action: pan-y; }
+.master-elev-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 8px;
+  font-family: var(--orb); font-size: var(--fs-micro); letter-spacing: 2px;
+  color: rgba(92,242,255,0.5); text-transform: uppercase;
+}
+.master-elev-head-mid { color: var(--cyan); letter-spacing: 1px; }
+.master-elev-body { position: relative; }
+/* Layer 1: rail hole columns at each edge - identical content, so symmetric */
+.master-elev-railcol {
+  position: absolute; top: 0; bottom: 0; width: 30px; z-index: 1;
+  display: flex; flex-direction: column;
+}
+.master-elev-railcol-l { left: 0; }
+.master-elev-railcol-r { right: 0; }
+.master-elev-railcol .cn-u { width: 30px; }
+.master-elev-railcol .cn-u.cn-u-equipment {
+  background: linear-gradient(90deg, rgba(34,52,66,0.55), rgba(24,38,50,0.40) 50%, rgba(34,52,66,0.55));
+}
+.master-elev-railcol .cn-hole.lit {
+  background: rgba(92,242,255,0.62); border-color: rgba(92,242,255,0.70);
+  box-shadow: 0 0 3px rgba(92,242,255,0.42), inset 0 0 2px rgba(255,255,255,0.38);
+}
+/* Layer 2: chassis bay - laps over the inner edge of both rails equally */
+.master-elev-chassis { position: absolute; top: 0; bottom: 0; left: 22px; right: 22px; z-index: 2; pointer-events: none; }
+.master-elev-node {
+  position: absolute; left: 0; right: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; padding: 2px 6px; overflow: hidden;
+  background: linear-gradient(180deg, rgba(32,48,62,0.62), rgba(20,32,44,0.55));
+  border: 1px solid rgba(92,242,255,0.22); border-radius: 3px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+}
+.master-elev-node-name {
+  font-family: var(--orb); font-size: 13px; color: var(--cyan); font-weight: 500;
+  letter-spacing: 0.5px; line-height: 1.2;
+  max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.master-elev-node-sub {
+  font-family: var(--mono); font-size: 11px; color: var(--slate-readable);
+  letter-spacing: 0.5px; margin-top: 2px;
+}
+/* Layer 3: U numbers on top, one column per side, mirrored */
+.master-elev-numcol { position: absolute; top: 0; bottom: 0; width: 40px; z-index: 3; display: flex; flex-direction: column; pointer-events: none; }
+.master-elev-numcol-l { left: 32px; }
+.master-elev-numcol-r { right: 32px; }
+.master-elev-urow { height: 38px; display: flex; align-items: center; justify-content: center; }
+.master-elev-unum { font-family: var(--mono); font-size: 11px; letter-spacing: 0.5px; color: rgba(245,245,247,0.9); }
+.master-elev-urow.eq .master-elev-unum { color: #ffffff; font-weight: 600; }
+
 /* Footer status row */
 .cn-footer {
   display: flex; align-items: center; justify-content: space-between;
@@ -9819,6 +9871,29 @@ body[data-net="offline"] .va-btn::after {
   color: var(--cyan);
   font-weight: 600;
 }
+
+/* LIST | ELEVATION result toggle (mirrors .master-section-pill) */
+.master-view-toggle { display:flex; gap:8px; padding:2px 0 12px; }
+.master-view-tab {
+  flex:1; min-height:44px;
+  background:rgba(11,16,28,0.65); border:1px solid rgba(92,242,255,0.18);
+  color:rgba(220,234,249,0.55);
+  font-family:var(--orb); font-size:11px; letter-spacing:0.18em; text-transform:uppercase;
+  padding:12px 14px; border-radius:10px; cursor:pointer;
+  transition:color 0.15s, border-color 0.15s, background 0.15s, box-shadow 0.15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.master-view-tab.active {
+  background:linear-gradient(180deg, rgba(92,242,255,0.10), rgba(92,242,255,0.03));
+  border-color:rgba(92,242,255,0.55); color:var(--cyan);
+  box-shadow:0 0 14px rgba(92,242,255,0.18), inset 0 1px 0 rgba(255,255,255,0.04);
+}
+.master-view-tab:not(.active):hover { color:rgba(220,234,249,0.8); border-color:rgba(92,242,255,0.32); }
+.master-unplaced {
+  margin-top:12px; padding:10px 12px; border-radius:10px;
+  background:rgba(255,214,10,0.06); border:1px solid rgba(255,214,10,0.22);
+  color:var(--gold,#ffd60a); font-family:var(--mono); font-size:12px; line-height:1.5;
+}
 .master-result-row {
   padding: 10px 12px;
   border-bottom: 1px solid var(--cyan-border-lo);
@@ -10012,7 +10087,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.6.51';
+const PHANTOM_APP_VERSION = 'phantom-v1.6.52';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -24426,6 +24501,140 @@ function master_renderResultRows(rack, normCab) {
          '</div>' + rows;
 }
 
+// -- MASTER -> rack elevation (reuses rackElevation_buildHtml) --------
+// AUS-01 runs 8U Supermicro HGX H100/H200 nodes. The master export carries
+// each node's BOTTOM U (locCabRu) but not its height, so height is derived
+// here; the site profile will own this mapping later. 8U matches the floor.
+function master_nodeHeightU(host) {
+  return 8;
+}
+
+// Map a master rack (hosts[]) to the elevation renderer's slot contract.
+// A host's RU is the node's bottom U (U1 = rack bottom, counting up).
+function master_rackToElevation(rack, cabId) {
+  var hosts = (rack && Array.isArray(rack.hosts)) ? rack.hosts : [];
+  var totalU = (rack && rack.totalU) ? rack.totalU : 42;
+  var slots = [];
+  var unplaced = [];
+  hosts.forEach(function(h) {
+    var name = (h && h.dns) ? String(h.dns) : ((h && h.model) ? String(h.model) : '—');
+    var bottomU = master_extractRu(h);
+    if (bottomU == null) { unplaced.push(name); return; }
+    var heightU = master_nodeHeightU(h);
+    slots.push({
+      uStart: bottomU,
+      uEnd:   Math.min(bottomU + heightU - 1, totalU),
+      name:   name,
+      model:  (h && h.model) ? String(h.model) : '',
+      type:   'gpu'
+    });
+  });
+  return { id: cabId, totalU: totalU, slots: slots, unplaced: unplaced };
+}
+
+// LIST | ELEVATION toggle (mirrors the FILE | PROFILE section pills).
+function master_renderResultToggle(view) {
+  var isElev = (view === 'elevation');
+  return '<div class="master-view-toggle">' +
+           '<button type="button" class="master-view-tab' + (isElev ? '' : ' active') + '"' +
+             ' onclick="master_setResultView(\'list\')" aria-label="List view">List</button>' +
+           '<button type="button" class="master-view-tab' + (isElev ? ' active' : '') + '"' +
+             ' onclick="master_setResultView(\'elevation\')" aria-label="Rack elevation view">Elevation</button>' +
+         '</div>';
+}
+
+// Elevation body: reuse the existing renderer; surface any unplaced hosts.
+// Twin-rail rack elevation - reuses the Cage Nut Compass cn-* visual.
+// Full rack (U1 = bottom, highest U first), nodes as cyan equipment bands
+// with lit rail holes; empty U as dimmed context rows. Node name/model rides
+// in the center gap, absolutely positioned over the body.
+// MASTER_ELEV_ROW_H MUST match the .cn-u height in CSS (38px). Global
+// box-sizing:border-box means the 1px row border is inside that 38px, so
+// the overlay aligns with no cumulative drift.
+var MASTER_ELEV_ROW_H = 38;
+function master_buildElevationRail(ev) {
+  var totalU = ev.totalU || 42;
+  var slots  = ev.slots || [];
+  var occ = {};
+  slots.forEach(function(sl, i) {
+    for (var u = sl.uStart; u <= sl.uEnd; u++) occ[u] = i;
+  });
+  function railRows() {
+    var rows = '';
+    for (var u = totalU; u >= 1; u--) {
+      var isEq = (occ[u] != null);
+      var holes = '';
+      ['top', 'mid', 'bot'].forEach(function(pos) {
+        holes += '<span class="cn-hole' + (isEq ? ' lit' : '') + '" data-pos="' + pos + '"></span>';
+      });
+      rows += '<div class="cn-u ' + (isEq ? 'cn-u-equipment' : 'cn-u-context') + '">' +
+                '<div class="cn-holes">' + holes + '</div></div>';
+    }
+    return rows;
+  }
+  function numRows() {
+    var rows = '';
+    for (var u = totalU; u >= 1; u--) {
+      var isEq = (occ[u] != null);
+      var label = 'U' + (u < 10 ? '0' + u : u);
+      rows += '<div class="master-elev-urow' + (isEq ? ' eq' : '') + '">' +
+                '<span class="master-elev-unum">' + label + '</span></div>';
+    }
+    return rows;
+  }
+  var nodes = '';
+  slots.forEach(function(sl) {
+    var top = (totalU - sl.uEnd) * MASTER_ELEV_ROW_H;
+    var h   = (sl.uEnd - sl.uStart + 1) * MASTER_ELEV_ROW_H;
+    var model = String(sl.model || '').trim();
+    var sub = (model ? escHtml(model) + ' · ' : '') + 'U' + sl.uStart + '–' + sl.uEnd;
+    nodes += '<div class="master-elev-node" style="top:' + top + 'px;height:' + h + 'px">' +
+               '<div class="master-elev-node-name">' + escHtml(sl.name || 'UNKNOWN') + '</div>' +
+               '<div class="master-elev-node-sub">' + sub + '</div></div>';
+  });
+  var bodyH = totalU * MASTER_ELEV_ROW_H;
+  return '<div class="cn-rail-viewport master-elev-rail">' +
+           '<div class="master-elev-head">' +
+             '<span>L · RAIL</span>' +
+             '<span class="master-elev-head-mid">' + escHtml(ev.id || '') + ' · ' + totalU + 'U</span>' +
+             '<span>R · RAIL</span>' +
+           '</div>' +
+           '<div class="master-elev-body" style="height:' + bodyH + 'px">' +
+             '<div class="master-elev-railcol master-elev-railcol-l cn-rail">' + railRows() + '</div>' +
+             '<div class="master-elev-railcol master-elev-railcol-r cn-rail">' + railRows() + '</div>' +
+             '<div class="master-elev-chassis">' + nodes + '</div>' +
+             '<div class="master-elev-numcol master-elev-numcol-l">' + numRows() + '</div>' +
+             '<div class="master-elev-numcol master-elev-numcol-r">' + numRows() + '</div>' +
+           '</div>' +
+         '</div>';
+}
+
+function master_renderElevationView(rack, cabId) {
+  var ev = master_rackToElevation(rack, cabId);
+  var html = '';
+  if (ev.slots.length === 0) {
+    html += '<div class="master-results-summary"><strong>' + master_escHtml(cabId) +
+            '</strong> · no hosts with a U position on record</div>';
+  } else {
+    html += master_buildElevationRail(ev);
+  }
+  if (ev.unplaced.length > 0) {
+    html += '<div class="master-unplaced">' + ev.unplaced.length + ' host' +
+            (ev.unplaced.length === 1 ? '' : 's') + ' with no U position: ' +
+            ev.unplaced.map(function(n){ return master_escHtml(n); }).join(', ') +
+            '</div>';
+  }
+  return html;
+}
+
+function master_setResultView(mode) {
+  var st = window._masterQueryState;
+  if (!st) return;
+  st.resultView = (mode === 'elevation') ? 'elevation' : 'list';
+  master_render();
+}
+window.master_setResultView = master_setResultView;
+
 function master_renderLoaded(container) {
   var emptyEl = document.getElementById('master-empty-state');
   if (emptyEl) emptyEl.hidden = true;
@@ -24464,8 +24673,12 @@ function master_renderLoaded(container) {
   if (!norm) {
     html += '<div class="master-results" id="master-results"></div>';
   } else if (exactHit) {
+    var _rv = (st.resultView === 'elevation') ? 'elevation' : 'list';
     html += '<div class="master-results" id="master-results">' +
-              master_renderResultRows(racks[norm], norm) +
+              master_renderResultToggle(_rv) +
+              (_rv === 'elevation'
+                ? master_renderElevationView(racks[norm], norm)
+                : master_renderResultRows(racks[norm], norm)) +
             '</div>';
   } else if (st.suggestions && st.suggestions.length > 0) {
     html += '<div class="master-suggestions" id="master-suggestions">' +
