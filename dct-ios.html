@@ -10087,7 +10087,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.6.52';
+const PHANTOM_APP_VERSION = 'phantom-v1.6.53';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -24667,41 +24667,58 @@ function master_renderLoaded(container) {
               ' value="' + master_escHtml(st.currentInput) + '">' +
           '</div>';
 
-  var norm = st.normalizedInput;
-  var exactHit = norm && Object.prototype.hasOwnProperty.call(racks, norm);
-
-  if (!norm) {
-    html += '<div class="master-results" id="master-results"></div>';
-  } else if (exactHit) {
-    var _rv = (st.resultView === 'elevation') ? 'elevation' : 'list';
-    html += '<div class="master-results" id="master-results">' +
-              master_renderResultToggle(_rv) +
-              (_rv === 'elevation'
-                ? master_renderElevationView(racks[norm], norm)
-                : master_renderResultRows(racks[norm], norm)) +
-            '</div>';
-  } else if (st.suggestions && st.suggestions.length > 0) {
-    html += '<div class="master-suggestions" id="master-suggestions">' +
-              st.suggestions.map(function(cid) {
-                return '<button type="button" class="master-suggestion"' +
-                       ' onclick="master_onSuggestionTap(\'' + master_escAttr(cid) + '\')">' +
-                       master_escHtml(cid) + '</button>';
-              }).join('') +
-            '</div>';
-  } else {
-    html += '<div class="master-no-match" id="master-no-match">' +
-              'No match found for <strong>' + master_escHtml(norm) + '</strong>' +
-            '</div>';
-  }
-
+  // Stable shell: banner + search are built once; the results region refreshes
+  // in isolation so the search input is never torn down mid-type (focus survives).
+  html += '<div class="master-results-region" id="master-results-region"></div>';
   container.innerHTML = html;
-
-  // Re-rendering wipes focus state. If we have typed input, restore
-  // caret to the end so the next keystroke continues the same word.
   var input = document.getElementById('master-search-input');
   if (input && st.currentInput) {
     try { input.setSelectionRange(input.value.length, input.value.length); } catch (_) {}
   }
+  master_renderResults();
+}
+
+// Refreshes ONLY the results region (toggle/elevation/list/suggestions/no-match).
+// Never rebuilds the search input - the focus-preserving path used by every
+// keystroke and the LIST/ELEVATION toggle.
+function master_renderResults() {
+  var region = document.getElementById('master-results-region');
+  if (!region) return;
+  var st    = window._masterQueryState;
+  var m     = window._lastPhantomMaster || {};
+  var racks = (m.racksByCab && typeof m.racksByCab === 'object') ? m.racksByCab : {};
+  var norm  = st.normalizedInput;
+  var exactHit = norm && Object.prototype.hasOwnProperty.call(racks, norm);
+  var html = '';
+  function resultBlock(cab, rv) {
+    return '<div class="master-results" id="master-results">' +
+             master_renderResultToggle(rv) +
+             (rv === 'elevation'
+               ? master_renderElevationView(racks[cab], cab)
+               : master_renderResultRows(racks[cab], cab)) +
+           '</div>';
+  }
+  var rv = (st.resultView === 'elevation') ? 'elevation' : 'list';
+  if (!norm) {
+    html = '<div class="master-results" id="master-results"></div>';
+  } else if (exactHit) {
+    html = resultBlock(norm, rv);
+  } else if (st.suggestions && st.suggestions.length === 1) {
+    html = resultBlock(st.suggestions[0], rv);
+  } else if (st.suggestions && st.suggestions.length > 0) {
+    html = '<div class="master-suggestions" id="master-suggestions">' +
+             st.suggestions.map(function(cid) {
+               return '<button type="button" class="master-suggestion"' +
+                      ' onclick="master_onSuggestionTap(\'' + master_escAttr(cid) + '\')">' +
+                      master_escHtml(cid) + '</button>';
+             }).join('') +
+           '</div>';
+  } else {
+    html = '<div class="master-no-match" id="master-no-match">' +
+             'No match found for <strong>' + master_escHtml(norm) + '</strong>' +
+           '</div>';
+  }
+  region.innerHTML = html;
 }
 
 function master_render() {
@@ -24763,26 +24780,54 @@ function master_onInput(event) {
 }
 window.master_onInput = master_onInput;
 
+// Flexible match: a typed token is tested (case-insensitive substring) against
+// EVERY identifier the master carries for a cabinet - the cab ID itself plus its
+// hosts' pod/grid/locode/dns fields. Type anything that's in the data and it
+// surfaces; no field-picking, no scheme rules. Cab-ID prefix hits rank first.
+function master_findMatches(norm) {
+  var m = window._lastPhantomMaster;
+  var racks = (m && m.racksByCab) ? m.racksByCab : {};
+  if (!norm) return [];
+  var q = norm;
+  var prefixHits = [];
+  var fieldHits = [];
+  var POD_FIELDS = ['gridPod','superpodId','gridGroup','grid','leafGroupId'];
+  for (var key in racks) {
+    if (!Object.prototype.hasOwnProperty.call(racks, key)) continue;
+    var r = racks[key];
+    var keyL = String(key).toLowerCase();
+    if (keyL.indexOf(q) === 0) { prefixHits.push(key); continue; }
+    var hit = (keyL.indexOf(q) !== -1) ||
+              (r.locode && String(r.locode).toLowerCase().indexOf(q) !== -1);
+    if (!hit && Array.isArray(r.hosts)) {
+      for (var hi = 0; hi < r.hosts.length && !hit; hi++) {
+        var h = r.hosts[hi];
+        if (!h) continue;
+        if (h.dns && String(h.dns).toLowerCase().indexOf(q) !== -1) { hit = true; break; }
+        for (var fi = 0; fi < POD_FIELDS.length; fi++) {
+          var v = h[POD_FIELDS[fi]];
+          if (v && String(v).toLowerCase().indexOf(q) !== -1) { hit = true; break; }
+        }
+      }
+    }
+    if (hit) fieldHits.push(key);
+  }
+  prefixHits.sort();
+  fieldHits.sort();
+  return prefixHits.concat(fieldHits);
+}
+
 function master_runFilter() {
   _masterFilterTimer = null;
   var st = window._masterQueryState;
-  var m  = window._lastPhantomMaster;
-  var racks = (m && m.racksByCab) ? m.racksByCab : {};
   var norm = st.normalizedInput;
   if (!norm) {
     st.suggestions = [];
-    master_render();
+    master_renderResults();
     return;
   }
-  // Prefix match only, alphabetical, capped at 5.
-  var matches = [];
-  for (var key in racks) {
-    if (!Object.prototype.hasOwnProperty.call(racks, key)) continue;
-    if (key.indexOf(norm) === 0) matches.push(key);
-  }
-  matches.sort();
-  st.suggestions = matches.slice(0, 5);
-  master_render();
+  st.suggestions = master_findMatches(norm).slice(0, 12);
+  master_renderResults();
 }
 
 function master_onSuggestionTap(cabId) {
@@ -24792,7 +24837,9 @@ function master_onSuggestionTap(cabId) {
   st.suggestions = [];
   if (_masterFilterTimer) { clearTimeout(_masterFilterTimer); _masterFilterTimer = null; }
   if (typeof haptic === 'function') try { haptic(4); } catch(_) {}
-  master_render();
+  var input = document.getElementById('master-search-input');
+  if (input) input.value = cabId;
+  master_renderResults();
 }
 window.master_onSuggestionTap = master_onSuggestionTap;
 
