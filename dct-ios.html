@@ -10087,7 +10087,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.6.53';
+const PHANTOM_APP_VERSION = 'phantom-v1.6.54';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -24791,23 +24791,33 @@ function master_findMatches(norm) {
   var q = norm;
   var prefixHits = [];
   var fieldHits = [];
-  var POD_FIELDS = ['gridPod','superpodId','gridGroup','grid','leafGroupId'];
+  // The master is the source of truth: match against EVERY field it carries on a
+  // rack and its hosts, whatever this site happens to call them. No hardcoded
+  // field list. The only exclusions are pure-numeric network fields, which would
+  // let a bare number (e.g. a rack sticker) spuriously match IP octets / ASNs.
+  var SKIP_FIELDS = { ipv4: 1, ipv6: 1, asn: 1, hosts: 1, cablesOut: 1, cablesIn: 1 };
+  function anyFieldHit(obj) {
+    if (!obj || typeof obj !== 'object') return false;
+    for (var f in obj) {
+      if (!Object.prototype.hasOwnProperty.call(obj, f)) continue;
+      if (SKIP_FIELDS[f]) continue;
+      var v = obj[f];
+      if (v == null) continue;
+      var t = typeof v;
+      if (t !== 'string' && t !== 'number') continue;
+      if (String(v).toLowerCase().indexOf(q) !== -1) return true;
+    }
+    return false;
+  }
   for (var key in racks) {
     if (!Object.prototype.hasOwnProperty.call(racks, key)) continue;
     var r = racks[key];
     var keyL = String(key).toLowerCase();
     if (keyL.indexOf(q) === 0) { prefixHits.push(key); continue; }
-    var hit = (keyL.indexOf(q) !== -1) ||
-              (r.locode && String(r.locode).toLowerCase().indexOf(q) !== -1);
+    var hit = (keyL.indexOf(q) !== -1) || anyFieldHit(r);
     if (!hit && Array.isArray(r.hosts)) {
       for (var hi = 0; hi < r.hosts.length && !hit; hi++) {
-        var h = r.hosts[hi];
-        if (!h) continue;
-        if (h.dns && String(h.dns).toLowerCase().indexOf(q) !== -1) { hit = true; break; }
-        for (var fi = 0; fi < POD_FIELDS.length; fi++) {
-          var v = h[POD_FIELDS[fi]];
-          if (v && String(v).toLowerCase().indexOf(q) !== -1) { hit = true; break; }
-        }
+        if (anyFieldHit(r.hosts[hi])) { hit = true; break; }
       }
     }
     if (hit) fieldHits.push(key);
