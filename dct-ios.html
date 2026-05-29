@@ -10012,7 +10012,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.6.50';
+const PHANTOM_APP_VERSION = 'phantom-v1.6.51';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -13202,7 +13202,7 @@ if (typeof window !== 'undefined') {
       </div>
 
       <div style="font-family:var(--mono);font-size: var(--fs-micro);letter-spacing:1.5px;color:var(--slate);margin-bottom:6px">SHIFT NOTES</div>
-      <textarea id="handoff-notes" rows="5" placeholder="Write handoff notes for incoming tech…&#10;&#10;• Open issues&#10;• In-progress changes&#10;• Things to watch" style="width:100%;box-sizing:border-box;background:rgba(0,0,0,0.35);border:1px solid rgba(92,242,255,0.15);border-radius:8px;color:var(--white);font-family:var(--raj);font-size: var(--fs-body);padding:10px 12px;outline:none;resize:vertical;margin-bottom:4px" oninput="safeStore(HANDOFF_NOTES_KEY,this.value)"></textarea>
+      <textarea id="handoff-notes" rows="5" placeholder="Write handoff notes for incoming tech…&#10;&#10;• Open issues&#10;• In-progress changes&#10;• Things to watch" style="width:100%;box-sizing:border-box;background:rgba(0,0,0,0.35);border:1px solid rgba(92,242,255,0.15);border-radius:8px;color:var(--white);font-family:var(--raj);font-size: var(--fs-body);padding:10px 12px;outline:none;resize:vertical;margin-bottom:4px" oninput="safeStore('phantom_handoff_notes',this.value)"></textarea>
       <div style="font-family:var(--raj);font-size: var(--fs-caption);color:var(--slate);margin-bottom:16px">Auto-saved to this device.</div>
 
       <div style="font-family:var(--mono);font-size: var(--fs-micro);letter-spacing:1.5px;color:var(--slate);margin-bottom:8px">OPEN BURNDOWN JOBS</div>
@@ -35616,8 +35616,8 @@ const GE = (() => {
   const DB_NAME    = 'GhostEchoDB';
   const DB_VERSION = 1;
   const STORE      = 'ghosts';
-  const GE_LAST_RACK_KEY  = GE_LAST_RACK_KEY;
-  const GE_LAST_FAULT_KEY = GE_LAST_FAULT_KEY;
+  const GE_LAST_RACK_KEY  = 'ge_last_rack';
+  const GE_LAST_FAULT_KEY = 'ge_last_fault';
   let   db         = null;
   let   pendingId  = null; // ID of last logged echo awaiting outcome
 
@@ -35973,9 +35973,9 @@ const OPTIC_INV_KEY = 'phantom_optic_inventory';
 // 6 cleanup-only / dev-only direct-string keys (gt_lessons, phantom_seen_boot,
 // phantom_force_lead_v1, phantom_identity, phantom_rm_last, __phantom_health)
 // stay inline — naming a one-shot removeItem call is cosmetic.
-const BURNDOWN_KEY        = BURNDOWN_KEY;
-const HANDOFF_NOTES_KEY   = HANDOFF_NOTES_KEY;
-const RACK_VIEWER_LAST_KEY = RACK_VIEWER_LAST_KEY;
+const BURNDOWN_KEY        = 'dct_burndown_v1';
+const HANDOFF_NOTES_KEY   = 'phantom_handoff_notes';
+const RACK_VIEWER_LAST_KEY = 'phantom_rack_viewer_last';
 
 const _opticStore = DataStore(OPTIC_INV_KEY);
 function loadOpticInventory() { return _opticStore.load(); }
@@ -37361,7 +37361,7 @@ document.addEventListener('visibilitychange', () => {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 const AUDIT = (() => {
   const KEY = 'phantom_audits_v1';
-  const ACTIVE_AUDIT_KEY = ACTIVE_AUDIT_KEY;
+  const ACTIVE_AUDIT_KEY = 'phantom_active_audit';
   const OPTIC_TYPES = ['SR4','LR4','DR4','ER4','ZR','DAC','AOC','QSFP28','QSFP-DD','OSFP','SFP+','SFP28','OTHER'];
   let currentAuditId = null;
 
