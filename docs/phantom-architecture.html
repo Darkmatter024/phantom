@@ -559,11 +559,13 @@ The visible nav labels were collapsed to the 4-Verb vocabulary, but the underlyi
 
 <div class="panel">
   <div class="panel-h"><span class="name">Master File</span><span class="tag">MASTER &rarr; FILE</span></div>
-  <p>Loads the cabinet/host CSV that maps physical rack identity. Provides search-first autocomplete from cabinet ID to host list. v1.6.26 added the additive parse so partial files still load.</p>
-  <p class="why">Why it matters — the lead types a cabinet ID and gets the host roster instantly. No round-trip.</p>
+  <p>Loads the cabinet/host XLSX (WIP / CUTSHEET / SITE-HOSTS sheets) that maps physical rack identity. Provides search-first autocomplete from cabinet ID to host list. v1.6.26 added the additive parse so partial files still load.</p>
+  <p class="why">Why it matters — the lead types a cabinet ID and gets the host roster instantly. No round-trip, and persists across iPad reboots.</p>
   <dl>
-    <dt>Entry</dt><dd><code>master_initTab</code> &rarr; <code>master_render</code> &rarr; <code>master_runFilter</code></dd>
-    <dt>Storage</dt><dd>In-memory <code>PHANTOM_MASTER_STORE</code> (lz-string compressed). Not persisted in <code>localStorage</code>.</dd>
+    <dt>Entry</dt><dd><code>master_loadFromPicker</code> (v1.6.48 rename) &rarr; <code>phantom_parseMaster</code> &rarr; <code>PHANTOM_MASTER_STORE.save</code></dd>
+    <dt>Boot restore</dt><dd><code>_phantom_master_bootRestore</code> IIFE auto-loads on boot &rarr; <code>window._lastPhantomMaster</code> (flagged <code>restoredFromStorage: true</code>)</dd>
+    <dt>Storage</dt><dd><code>localStorage['phantom_master_v1']</code> — lz-string <code>compressToUTF16</code> JSON. Payload: <code>{schemaVersion, savedAt, sourceFileHash, siteCode, racksByCab}</code>. Step 1.5 scope (v1.6.28): only <code>racksByCab</code> persists; hosts &amp; cables stay in-session.</dd>
+    <dt>Quota fallback</dt><dd><code>QuotaExceededError</code> &rarr; in-memory only, console warn, no crash. Future schema bumps reserved as <code>phantom_master_v2</code>.</dd>
   </dl>
 </div>
 
@@ -1424,6 +1426,7 @@ Section line-number markers below are <em>approximate</em> after the delete pass
 <table>
 <thead><tr><th>Constant</th><th>Literal Key</th><th>Shape · Lifecycle</th></tr></thead>
 <tbody>
+<tr><td class="const">PHANTOM_MASTER_STORE.KEY</td><td class="key">phantom_master_v1</td><td class="shape">lz-string <code>compressToUTF16</code> JSON. Payload <code>{schemaVersion:1, savedAt, sourceFileHash, siteCode, racksByCab}</code>. Save: <code>PHANTOM_MASTER_STORE.save</code> after parse. Boot restore: <code>_phantom_master_bootRestore</code> IIFE &rarr; <code>window._lastPhantomMaster</code>. Clear: <code>PHANTOM_MASTER_STORE.clear</code> (also exposed as <code>window.phantom_clearMaster</code>).</td></tr>
 <tr><td class="const">CRASH_KEY</td><td class="key">phantom_crash_log</td><td class="shape">Array of <code>{ts, type, msg, src, line, col, ver}</code>. Written by <code>logCrash</code>; wiped by <code>phantomViewCrashLog</code>.</td></tr>
 <tr><td class="const">PHANTOM_SESSION_KEY</td><td class="key">phantom_session_state_v1</td><td class="shape">JSON <code>{page, opsTab, ts}</code>. Written by <code>_session_save</code>; cleared by <code>_session_clear</code>.</td></tr>
 <tr><td class="const">DEPLOY_KEY</td><td class="key">phantom_deployments_v1</td><td class="shape">Array&lt;Deployment&gt;. RW <code>deploy_loadAll</code> / <code>deploy_saveAll</code>.</td></tr>
@@ -1485,8 +1488,8 @@ Section line-number markers below are <em>approximate</em> after the delete pass
 </table>
 
 <div class="callout">
-<strong>Note on Master File persistence</strong>
-The cabinet/host map loaded under MASTER &rarr; FILE is NOT persisted in <code>localStorage</code> in v1.6.48. It lives in-memory as <code>PHANTOM_MASTER_STORE</code> (lz-string compressed). The SW v1.6.29 commit header references an older v1.6.28 bug where this variable showed up <code>undefined</code> despite valid <code>&lt;script&gt;</code> tags. Persistence of the master file appears to be handled out-of-band (likely a separate import flow).
+<strong>Note on Master File persistence — corrected</strong>
+The cabinet/host map IS persisted in <code>localStorage</code> as <code>phantom_master_v1</code> (lz-string <code>compressToUTF16</code> JSON). The <code>PHANTOM_MASTER_STORE</code> object at source line 23811 wraps save/load/clear over that key with schema versioning (<code>schemaVersion: 1</code>; future bumps will use <code>phantom_master_v2</code>). Auto-restore on boot via the <code>_phantom_master_bootRestore</code> IIFE means the master survives iPad reboot and Safari heap eviction — the offline-first survival contract is honored. Step 1.5 scope (v1.6.28) deliberately persists only <code>racksByCab</code>; hosts and cables remain in-session.
 </div>
 </section>
 
