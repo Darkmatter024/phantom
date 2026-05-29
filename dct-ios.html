@@ -10012,7 +10012,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.6.48';
+const PHANTOM_APP_VERSION = 'phantom-v1.6.49';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -13202,7 +13202,7 @@ if (typeof window !== 'undefined') {
       </div>
 
       <div style="font-family:var(--mono);font-size: var(--fs-micro);letter-spacing:1.5px;color:var(--slate);margin-bottom:6px">SHIFT NOTES</div>
-      <textarea id="handoff-notes" rows="5" placeholder="Write handoff notes for incoming tech…&#10;&#10;• Open issues&#10;• In-progress changes&#10;• Things to watch" style="width:100%;box-sizing:border-box;background:rgba(0,0,0,0.35);border:1px solid rgba(92,242,255,0.15);border-radius:8px;color:var(--white);font-family:var(--raj);font-size: var(--fs-body);padding:10px 12px;outline:none;resize:vertical;margin-bottom:4px" oninput="safeStore('phantom_handoff_notes',this.value)"></textarea>
+      <textarea id="handoff-notes" rows="5" placeholder="Write handoff notes for incoming tech…&#10;&#10;• Open issues&#10;• In-progress changes&#10;• Things to watch" style="width:100%;box-sizing:border-box;background:rgba(0,0,0,0.35);border:1px solid rgba(92,242,255,0.15);border-radius:8px;color:var(--white);font-family:var(--raj);font-size: var(--fs-body);padding:10px 12px;outline:none;resize:vertical;margin-bottom:4px" oninput="safeStore(HANDOFF_NOTES_KEY,this.value)"></textarea>
       <div style="font-family:var(--raj);font-size: var(--fs-caption);color:var(--slate);margin-bottom:16px">Auto-saved to this device.</div>
 
       <div style="font-family:var(--mono);font-size: var(--fs-micro);letter-spacing:1.5px;color:var(--slate);margin-bottom:8px">OPEN BURNDOWN JOBS</div>
@@ -15485,7 +15485,7 @@ const OPS_TABS = {
       // Silent mode → if the rack is gone (deployment deleted, EDP changed),
       // we land on empty state, NOT a "NOT FOUND" flash. Graceful fallback.
       try {
-        var last = localStorage.getItem('phantom_rack_viewer_last');
+        var last = localStorage.getItem(RACK_VIEWER_LAST_KEY);
         if (last) rackViewer_request(last, true);
       } catch(_){}
       try { rmActive_render('rm-active-pill-mount-ops'); } catch(_){}
@@ -32800,7 +32800,7 @@ function bomPushToApp() {
 
   // Push Burndown Jobs
   if (isEnabled('burndownJobs') && r.burndownJobs && r.burndownJobs.length) {
-    var jobs = safeParse(localStorage.getItem('dct_burndown_v1') || '[]', []);
+    var jobs = safeParse(localStorage.getItem(BURNDOWN_KEY) || '[]', []);
     r.burndownJobs.forEach(function(job) {
       jobs.push({
         id: genId(),
@@ -32812,7 +32812,7 @@ function bomPushToApp() {
         archived: false
       });
     });
-    safeStore('dct_burndown_v1', JSON.stringify(jobs));
+    safeStore(BURNDOWN_KEY, JSON.stringify(jobs));
     pushed.push(r.burndownJobs.length + ' burndown job(s)');
   }
 
@@ -33473,7 +33473,7 @@ function rackViewer_request(rackId, silent) {
   // We persist the human-readable name (rackId/name), not the synthetic .id.
   try {
     var lastKey = (rack.rackId || rack.name || rack.id || '').toString();
-    if (lastKey) safeStore('phantom_rack_viewer_last', lastKey);
+    if (lastKey) safeStore(RACK_VIEWER_LAST_KEY, lastKey);
   } catch(_){}
   if (input) input.value = '';
   // Silent mode (auto-restore on tab entry) suppresses the success toast.
@@ -35603,6 +35603,8 @@ const GE = (() => {
   const DB_NAME    = 'GhostEchoDB';
   const DB_VERSION = 1;
   const STORE      = 'ghosts';
+  const GE_LAST_RACK_KEY  = GE_LAST_RACK_KEY;
+  const GE_LAST_FAULT_KEY = GE_LAST_FAULT_KEY;
   let   db         = null;
   let   pendingId  = null; // ID of last logged echo awaiting outcome
 
@@ -35843,7 +35845,7 @@ const GE = (() => {
       const sheet = document.getElementById('geSheet');
       if (!sheet) return;
       // Pre-fill rack from last used
-      const lastRack = localStorage.getItem('ge_last_rack') || '';
+      const lastRack = localStorage.getItem(GE_LAST_RACK_KEY) || '';
       const rackInput = document.getElementById('ge-rack-input');
       if (rackInput && lastRack) rackInput.value = lastRack;
       // Show log view if no ghosts, replay if we have some
@@ -35869,8 +35871,8 @@ const GE = (() => {
     showReplay: async function() {
       document.getElementById('ge-view-log').style.display = 'none';
       document.getElementById('ge-view-replay').style.display = '';
-      const rackId    = (localStorage.getItem('ge_last_rack') || '').trim();
-      const faultType = localStorage.getItem('ge_last_fault') || '';
+      const rackId    = (localStorage.getItem(GE_LAST_RACK_KEY) || '').trim();
+      const faultType = localStorage.getItem(GE_LAST_FAULT_KEY) || '';
       const ghosts    = await getAllGhosts().catch(() => []);
       const suggs     = getSuggestions(ghosts, rackId, faultType);
       renderSuggestions(suggs, rackId, faultType);
@@ -35896,8 +35898,8 @@ const GE = (() => {
       pendingId = id;
 
       // Persist last used for pre-fill
-      safeStore('ge_last_rack',  rackId);
-      safeStore('ge_last_fault', faultType);
+      safeStore(GE_LAST_RACK_KEY,  rackId);
+      safeStore(GE_LAST_FAULT_KEY, faultType);
 
       // Reset form
       document.getElementById('ge-fault-select').value  = '';
@@ -35915,7 +35917,7 @@ const GE = (() => {
     },
 
     clearRack: async function() {
-      const rackId = (localStorage.getItem('ge_last_rack') || '').trim().toUpperCase();
+      const rackId = (localStorage.getItem(GE_LAST_RACK_KEY) || '').trim().toUpperCase();
       if (!rackId) return;
       if (!confirm('Clear all ghosts for rack ' + rackId + '?')) return;
       await deleteByRack(rackId).catch(e => {});
@@ -35925,8 +35927,8 @@ const GE = (() => {
     clearAll: async function() {
       if (!confirm('Clear ALL ghost echoes? This cannot be undone.')) return;
       await deleteAll().catch(e => {});
-      localStorage.removeItem('ge_last_rack');
-      localStorage.removeItem('ge_last_fault');
+      localStorage.removeItem(GE_LAST_RACK_KEY);
+      localStorage.removeItem(GE_LAST_FAULT_KEY);
       pendingId = null;
       this.showLog();
     },
@@ -35952,6 +35954,15 @@ function geClearAll()  { GE.clearAll(); }
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 const OPTIC_INV_KEY = 'phantom_optic_inventory';
+
+// v1.6.49 dedup: pull these three keys out of inline string literals so the
+// data model is greppable from one place. Active read/write keys only; the
+// 6 cleanup-only / dev-only direct-string keys (gt_lessons, phantom_seen_boot,
+// phantom_force_lead_v1, phantom_identity, phantom_rm_last, __phantom_health)
+// stay inline — naming a one-shot removeItem call is cosmetic.
+const BURNDOWN_KEY        = BURNDOWN_KEY;
+const HANDOFF_NOTES_KEY   = HANDOFF_NOTES_KEY;
+const RACK_VIEWER_LAST_KEY = RACK_VIEWER_LAST_KEY;
 
 const _opticStore = DataStore(OPTIC_INV_KEY);
 function loadOpticInventory() { return _opticStore.load(); }
@@ -36411,7 +36422,7 @@ function autoIdentifyOptic(scanned) {
 // BURNDOWN ENGINE
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 const BD = (() => {
-  const KEY      = 'dct_burndown_v1';
+  const KEY      = BURNDOWN_KEY;
   const STATUSES = ['pending', 'progress', 'done'];
   const STATUS_LABELS = { pending: 'PENDING', progress: 'IN PROGRESS', done: 'DONE' };
   const STATUS_ICONS  = { pending: '○', progress: '◑', done: '✓' };
@@ -37337,6 +37348,7 @@ document.addEventListener('visibilitychange', () => {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 const AUDIT = (() => {
   const KEY = 'phantom_audits_v1';
+  const ACTIVE_AUDIT_KEY = ACTIVE_AUDIT_KEY;
   const OPTIC_TYPES = ['SR4','LR4','DR4','ER4','ZR','DAC','AOC','QSFP28','QSFP-DD','OSFP','SFP+','SFP28','OTHER'];
   let currentAuditId = null;
 
@@ -37400,7 +37412,7 @@ const AUDIT = (() => {
     const audit = getAudit(id);
     if (!audit) return;
     currentAuditId = id;
-    safeStore('phantom_active_audit', id);
+    safeStore(ACTIVE_AUDIT_KEY, id);
 
     const c = document.getElementById('ops-content');
     if (!c) return;
@@ -37604,7 +37616,7 @@ const AUDIT = (() => {
     const audits = load().filter(a => a.id !== currentAuditId);
     save(audits);
     currentAuditId = null;
-    localStorage.removeItem('phantom_active_audit');
+    localStorage.removeItem(ACTIVE_AUDIT_KEY);
     showOpsTab('audits');
   }
 
@@ -37909,7 +37921,7 @@ const AUDIT = (() => {
     removeEntry, deleteAudit, pickType, aiIdentify, importFile, exportCSV,
     rapidScan, rapidSubmit, rapidClose, rapidCamera, rapidUndo,
     setPri: () => {},
-    getCurrentId: () => currentAuditId || localStorage.getItem('phantom_active_audit'),
+    getCurrentId: () => currentAuditId || localStorage.getItem(ACTIVE_AUDIT_KEY),
     OPTIC_TYPES,
   };
 })();
@@ -37936,12 +37948,12 @@ function phantomHandoffOpenLegacy() {
 
   // Restore notes
   const notes = document.getElementById('handoff-notes');
-  if (notes) notes.value = localStorage.getItem('phantom_handoff_notes') || '';
+  if (notes) notes.value = localStorage.getItem(HANDOFF_NOTES_KEY) || '';
 
   // Open burndown jobs
   const bdEl = document.getElementById('handoff-burndown');
   if (bdEl) {
-    const jobs = safeParse(localStorage.getItem('dct_burndown_v1') || '[]', []).filter(j => !j.archived);
+    const jobs = safeParse(localStorage.getItem(BURNDOWN_KEY) || '[]', []).filter(j => !j.archived);
     if (!jobs.length) {
       bdEl.innerHTML = '<div style="font-family:var(--raj);font-size:12px;color:var(--slate);padding:8px 0">No open jobs.</div>';
     } else {
@@ -37991,7 +38003,7 @@ function phantomHandoffClose() {
 
 function phantomHandoffExport() {
   const notes = document.getElementById('handoff-notes')?.value || '';
-  const jobs = safeParse(localStorage.getItem('dct_burndown_v1') || '[]', []).filter(j => !j.archived);
+  const jobs = safeParse(localStorage.getItem(BURNDOWN_KEY) || '[]', []).filter(j => !j.archived);
   // Pull from Ghost Echo's actual store. Outgoing layer, newest-first, top 10.
   const _geCache = (typeof ge_load === 'function') ? ge_load() : { outgoing: [] };
   const ghost = (_geCache.outgoing || [])
@@ -38525,7 +38537,7 @@ function exportAllData() {
   if (window.phantomMarkBackupDone) phantomMarkBackupDone();
   const sops = loadSOPs();
   const racks = safeParse(localStorage.getItem('dct_racks_v1') || '[]', []);
-  const burndown = safeParse(localStorage.getItem('dct_burndown_v1') || '[]', []);
+  const burndown = safeParse(localStorage.getItem(BURNDOWN_KEY) || '[]', []);
 
   const dbName = 'GhostEchoDB';
   const storeName = 'incidents';
@@ -39022,7 +39034,7 @@ function phantomImport() {
 
         if (Array.isArray(bundle.sops))     safeStore('dct_sops_v1', JSON.stringify(bundle.sops));
         if (Array.isArray(bundle.rackMaps)) safeStore('dct_racks_v1',    JSON.stringify(bundle.rackMaps));
-        if (Array.isArray(bundle.burndown)) safeStore('dct_burndown_v1', JSON.stringify(bundle.burndown));
+        if (Array.isArray(bundle.burndown)) safeStore(BURNDOWN_KEY, JSON.stringify(bundle.burndown));
         if (bundle.rackHistory && typeof bundle.rackHistory === 'object') safeStore('phantom_rack_history', JSON.stringify(bundle.rackHistory));
         if (Array.isArray(bundle.opticInventory)) safeStore('phantom_optic_inventory', JSON.stringify(bundle.opticInventory));
         if (Array.isArray(bundle.deployments)) safeStore('phantom_deployments_v1', JSON.stringify(bundle.deployments));
