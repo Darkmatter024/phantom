@@ -1634,6 +1634,7 @@ The cabinet/host map IS persisted in <code>localStorage</code> as <code>phantom_
     <dt>Code / Tabular</dt><dd><code style="color:var(--cyan)">JetBrains Mono</code> — CLI output, function names, localStorage keys, version stamps.</dd>
   </dl>
   <p class="why">P1.3 commit removed the Google Fonts import from the runtime app — typography resolves entirely from iOS system fonts in production for offline safety. This documentation page uses the Google Fonts versions because it's a maintainer reference, not the cold-aisle runtime.</p>
+  <p class="why">A second <code>:root</code> block lives inside <code>@media (min-width: 1024px)</code> (source line ~8832) and rebinds <code>--fs-body</code> / <code>--fs-caption</code> / <code>--fs-micro</code> to <code>clamp()</code> values for fluid desktop typography. Mobile sizes stay fixed; laptop+ widths scale smoothly. The second <code>:root</code> is intentional, not dead.</p>
 </div>
 
 <h3>Component Patterns</h3>
