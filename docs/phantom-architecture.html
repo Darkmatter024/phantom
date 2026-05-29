@@ -527,6 +527,116 @@ The visible nav labels were collapsed to the 4-Verb vocabulary, but the underlyi
 <section id="subsystems">
 <h2><span class="num">§4</span> Major Subsystems</h2>
 
+<h3>Deployment Lifecycle</h3>
+<p class="lede">A single deployment moves left-to-right through eight stages. Circles are normal stages; diamonds are <strong>gates</strong> that can block or require PIN override. The dashed branch shows the AI fallback when the local Stage 3.5 parser misses cache. The strip below names the localStorage keys written as the deployment progresses.</p>
+
+<svg class="diagram" viewBox="0 0 920 380" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Deployment lifecycle timeline">
+  <defs>
+    <linearGradient id="lc-edge" x1="0" x2="1"><stop offset="0%" stop-color="#5cf2ff" stop-opacity="0.75"/><stop offset="100%" stop-color="#9b59ff" stop-opacity="0.55"/></linearGradient>
+    <linearGradient id="lc-ai" x1="0" x2="1"><stop offset="0%" stop-color="#ffd60a" stop-opacity="0.85"/><stop offset="100%" stop-color="#ff8a00" stop-opacity="0.65"/></linearGradient>
+    <linearGradient id="lc-stage" x1="0" x2="1" y1="0" y2="1"><stop offset="0%" stop-color="#0b1017"/><stop offset="100%" stop-color="#06090f"/></linearGradient>
+    <radialGradient id="lc-stage-fill"><stop offset="0%" stop-color="#0b1017"/><stop offset="100%" stop-color="#04070b"/></radialGradient>
+    <marker id="lc-ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#5cf2ff"/></marker>
+    <marker id="lc-ar-ai" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#ffd60a"/></marker>
+  </defs>
+  <style>
+    .lc-spine{stroke:url(#lc-edge);stroke-width:2;fill:none}
+    .lc-spine-ai{stroke:url(#lc-ai);stroke-width:1.6;fill:none;stroke-dasharray:5 4}
+    .lc-stage{fill:url(#lc-stage-fill);stroke:#5cf2ff;stroke-width:1.6}
+    .lc-gate{fill:url(#lc-stage-fill);stroke:#ffd60a;stroke-width:1.8}
+    .lc-label{font-family:Orbitron,sans-serif;font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;fill:#5cf2ff;text-anchor:middle}
+    .lc-glabel{fill:#ffd60a}
+    .lc-fn{font-family:'JetBrains Mono',monospace;font-size:9.5px;fill:#8AAFBF;text-anchor:middle}
+    .lc-cap{font-family:Rajdhani,sans-serif;font-weight:700;font-size:9.5px;letter-spacing:0.12em;text-transform:uppercase;fill:rgba(220,234,249,0.55);text-anchor:middle}
+    .lc-keys{font-family:'JetBrains Mono',monospace;font-size:9.5px;fill:#b478ff;text-anchor:middle}
+    .lc-band{font-family:Rajdhani,sans-serif;font-weight:700;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;fill:#8AAFBF;text-anchor:start}
+    .lc-band-rule{stroke:rgba(92,242,255,0.18);stroke-width:0.7;fill:none}
+  </style>
+
+  <!-- Spine -->
+  <line class="lc-spine" x1="50" y1="110" x2="870" y2="110" marker-end="url(#lc-ar)"/>
+
+  <!-- Stage 1: INTAKE (normal) -->
+  <circle class="lc-stage" cx="60" cy="110" r="11"/>
+  <text class="lc-label" x="60" y="80">INTAKE</text>
+  <text class="lc-fn" x="60" y="138">intake_open</text>
+  <text class="lc-fn" x="60" y="150">→ intake_detect</text>
+  <text class="lc-fn" x="60" y="162">→ intake_dispatch</text>
+
+  <!-- Stage 2: EDP GATE (gate diamond) -->
+  <rect class="lc-gate" x="148" y="100" width="20" height="20" transform="rotate(45,158,110)"/>
+  <text class="lc-label lc-glabel" x="158" y="80">EDP GATE</text>
+  <text class="lc-fn" x="158" y="138">hash verify</text>
+  <text class="lc-fn" x="158" y="150">edpGate_proceed</text>
+
+  <!-- Stage 3: PARSE (normal, with AI fork) -->
+  <circle class="lc-stage" cx="262" cy="110" r="11"/>
+  <text class="lc-label" x="262" y="80">PARSE</text>
+  <text class="lc-fn" x="262" y="138">deploy_preprocessEDP</text>
+  <text class="lc-fn" x="262" y="150">→ parseEDP_local</text>
+  <text class="lc-fn" x="262" y="162">(Stage 3.5)</text>
+
+  <!-- Stage 4: INTAKE GATE -->
+  <rect class="lc-gate" x="370" y="100" width="20" height="20" transform="rotate(45,380,110)"/>
+  <text class="lc-label lc-glabel" x="380" y="80">INTAKE GATE</text>
+  <text class="lc-fn" x="380" y="138">per-row accept/reject</text>
+  <text class="lc-fn" x="380" y="150">intakeGate_confirm</text>
+
+  <!-- Stage 5: SEED -->
+  <circle class="lc-stage" cx="492" cy="110" r="11"/>
+  <text class="lc-label" x="492" y="80">SEED</text>
+  <text class="lc-fn" x="492" y="138">deploy_setActive</text>
+  <text class="lc-fn" x="492" y="150">deploy_seedRacks</text>
+  <text class="lc-fn" x="492" y="162">AndPhases</text>
+
+  <!-- Stage 6: RUN PHASES (with embedded sub-gates) -->
+  <circle class="lc-stage" cx="610" cy="110" r="11"/>
+  <text class="lc-label" x="610" y="80">RUN PHASES</text>
+  <text class="lc-fn" x="610" y="138">deploy_advancePhase</text>
+  <text class="lc-fn" x="610" y="150">+ ge_onCompleteTap</text>
+  <text class="lc-fn" x="610" y="162">+ PIN override</text>
+
+  <!-- Stage 7: ACCEPTANCE (gate) -->
+  <rect class="lc-gate" x="730" y="100" width="20" height="20" transform="rotate(45,740,110)"/>
+  <text class="lc-label lc-glabel" x="740" y="80">ACCEPTANCE</text>
+  <text class="lc-fn" x="740" y="138">criteria pass</text>
+  <text class="lc-fn" x="740" y="150">deploy_markAcceptance</text>
+
+  <!-- Stage 8: CLOSE-OUT -->
+  <circle class="lc-stage" cx="855" cy="110" r="11"/>
+  <text class="lc-label" x="855" y="80">CLOSE-OUT</text>
+  <text class="lc-fn" x="855" y="138">closeOut_doExport</text>
+  <text class="lc-fn" x="855" y="150">+ doPurge</text>
+  <text class="lc-fn" x="855" y="162">→ tombstone</text>
+
+  <!-- AI fallback branch: from PARSE, dipping down -->
+  <path class="lc-spine-ai" d="M 262 122 Q 262 200 320 200 L 360 200 Q 380 200 380 175" marker-end="url(#lc-ar-ai)"/>
+  <text class="lc-cap" x="320" y="218" fill="#ffd60a">CACHE MISS → AI CHUNKED</text>
+  <text class="lc-fn" x="320" y="232" fill="#ffd60a">edp_finalizeChunked · phantomAI</text>
+
+  <!-- HANDOFF arc (sits above the main spine between RUN PHASES and CLOSE-OUT) -->
+  <path class="lc-spine-ai" d="M 610 98 Q 700 30 855 98" stroke="#9b59ff" stroke-dasharray="3 3" marker-end="url(#lc-ar-ai)" style="stroke:#9b59ff"/>
+  <text class="lc-cap" x="732" y="30" fill="#b478ff">HANDOFF (every shift)</text>
+  <text class="lc-fn" x="732" y="46" fill="#b478ff">handoff_generate · handoff_saveRecord · handoff_exportHTML</text>
+
+  <!-- Persistence band -->
+  <line class="lc-band-rule" x1="50" y1="280" x2="870" y2="280"/>
+  <text class="lc-band" x="50" y="272">PERSISTENCE WRITES</text>
+  <text class="lc-keys" x="155" y="304">phantom_edp_cache_v1</text>
+  <text class="lc-keys" x="380" y="304">phantom_edp_intake_pending</text>
+  <text class="lc-keys" x="492" y="324">phantom_deployments_v1 · phantom_deploy_racks_v1 · phantom_deploy_phases_v1 · phantom_deploy_optics_v1</text>
+  <text class="lc-keys" x="610" y="304">phantom_deploy_audit_v1 (every event)</text>
+  <text class="lc-keys" x="610" y="344">phantom_ghost_echo_v1 (on phase complete)</text>
+  <text class="lc-keys" x="780" y="324">phantom_handoff_v1 (per shift) · close-out export ZIP</text>
+</svg>
+
+<div class="callout">
+<strong>Gate semantics</strong>
+A gate is any predecessor-checking transition that can BLOCK forward motion. PHANTOM has four gate types: <strong>EDP Gate</strong> (hash verification before parse), <strong>Intake Gate</strong> (per-row accept/reject before commit), <strong>Phase Gate</strong> (<code>deploy_isPhaseGated</code> — predecessor phase must be complete; overridable by PIN via <code>deploy_overrideGate</code>), and <strong>Acceptance Gate</strong> (<code>deploy_evaluateAcceptance</code> must return pass before close-out is unlocked). The Ghost Echo capture modal at phase complete is also a gate, but a soft one — operator can <code>ge_captureSkip</code> to pass through.
+</div>
+
+<h3>Subsystem Cards</h3>
+
 <div class="panel">
   <div class="panel-h"><span class="name">Deployment Command Engine</span><span class="tag">Stage 2+3 · Stage 3.5 · Stage 8</span></div>
   <p>The core of BUILD: a deployment is a job. EDP intake parses raw vendor docs into racks, phases, optics, and port-maps. Phase advancement is gated; some transitions require a PIN-protected override. Stage 3.5 added the client-side EDP parser (no AI hop) for low-trust environments.</p>
