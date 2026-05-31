@@ -10137,7 +10137,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.6.58';
+const PHANTOM_APP_VERSION = 'phantom-v1.6.59';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -24616,6 +24616,43 @@ function master_rackToElevation(rack, cabId) {
   return { id: cabId, totalU: totalU, slots: slots, unplaced: unplaced };
 }
 
+// Step 1 bridge: resolve a rack-lookup query against the loaded Master.
+// READ-ONLY over the store — no mutation. Returns {id, source:'master', hosts}
+// or null. Exact, case-folded match (mirrors the legacy === lookup semantics).
+function master_findRack(query) {
+  var q = String(query == null ? '' : query).trim().toLowerCase();
+  if (!q) return null;
+  // Live hydrated handle first (what every other master reader uses), then the
+  // persisted store as a cold-start fallback. Neither is mutated.
+  var m = window._lastPhantomMaster;
+  if (!(m && m.racksByCab) && typeof PHANTOM_MASTER_STORE !== 'undefined') {
+    try { m = PHANTOM_MASTER_STORE.load(); } catch (e) { m = null; }
+  }
+  var racks = (m && m.racksByCab && typeof m.racksByCab === 'object') ? m.racksByCab : null;
+  if (!racks) return null;
+  var keys = Object.keys(racks);
+  // 1) Exact cab-key / rack id / rack name
+  for (var i = 0; i < keys.length; i++) {
+    var k = keys[i], r = racks[k] || {};
+    if (k.toLowerCase() === q ||
+        String(r.id || '').toLowerCase() === q ||
+        String(r.name || '').toLowerCase() === q) {
+      return { id: k, source: 'master', hosts: Array.isArray(r.hosts) ? r.hosts : [] };
+    }
+  }
+  // 2) Exact nested host dns -> resolve to that host's rack
+  for (var j = 0; j < keys.length; j++) {
+    var kk = keys[j], rr = racks[kk] || {};
+    var hosts = Array.isArray(rr.hosts) ? rr.hosts : [];
+    for (var h = 0; h < hosts.length; h++) {
+      if (String((hosts[h] && hosts[h].dns) || '').toLowerCase() === q) {
+        return { id: kk, source: 'master', hosts: hosts };
+      }
+    }
+  }
+  return null;
+}
+
 // LIST | ELEVATION toggle (mirrors the FILE | PROFILE section pills).
 function master_renderResultToggle(view) {
   var isElev = (view === 'elevation');
@@ -33825,6 +33862,25 @@ function rackViewer_request(rackId, silent) {
     } catch(_){}
   }
 
+  // -- Master fall-through (Step 1 bridge) --------------------------------
+  // Legacy stores missed. On an explicit submit (not mid-type), consult the
+  // loaded Master and render via the existing elevation engine. View-only:
+  // Master racks are not drag-editable (no backing store to persist reorders).
+  if (!rack && !silent && typeof master_findRack === 'function') {
+    var mHit = master_findRack(query);
+    if (mHit && typeof master_rackToElevation === 'function' && typeof renderElevation === 'function') {
+      var mRack = master_rackToElevation({ hosts: mHit.hosts }, mHit.id);
+      target.innerHTML = '';
+      renderElevation(mRack, target);
+      if (typeof _rmRenderHeaderInArea === 'function') _rmRenderHeaderInArea(mRack, target);
+      try { if (typeof RACK_VIEWER_LAST_KEY !== 'undefined') safeStore(RACK_VIEWER_LAST_KEY, String(mHit.id)); } catch (_) {}
+      if (input) input.value = '';
+      if (typeof haptic === 'function') haptic([8]);
+      if (typeof phantomToast === 'function') phantomToast('Loaded ' + mHit.id + ' \u00b7 Master', 'ok');
+      return;
+    }
+  }
+
   if (!rack) {
     // Silent mode (called from debounced auto-search while user is still typing):
     // do nothing on miss. Only the explicit submit paths (form/Enter) render soft-fail.
@@ -33870,7 +33926,7 @@ function rackViewer_softFail(rackId) {
     '<div class="rack-viewer-soft-fail">' +
       '<div class="rack-viewer-soft-fail-eyebrow">Not found</div>' +
       '<div class="rack-viewer-soft-fail-title">' + escHtml(rackId) + '</div>' +
-      '<div class="rack-viewer-soft-fail-detail">That rack doesn\'t exist in any loaded EDP.</div>' +
+      '<div class="rack-viewer-soft-fail-detail">That rack doesn\'t exist in any loaded EDP or Master.</div>' +
     '</div>';
   if (typeof haptic === 'function') haptic([10, 30, 10]);
 }
@@ -33889,6 +33945,17 @@ const TYPE_COLORS = {
   kvm:     { bar: '#8888ff', cls: 'rm-type-kvm',     label: 'KVM'     },
   other:   { bar: '#486070', cls: 'rm-type-other',   label: 'Other'   },
   empty:   { bar: null,      cls: 'empty',            label: 'Empty'   },
+  // Step 1 bridge (Q3): aliases mapping master_hostType outputs onto the legacy
+  // color vocab so Master faceplates render colored, not grey. Additive only —
+  // legacy EDP/standalone data never emits these keys, so existing racks are
+  // unaffected. (master_hostType emits sw/pwr/stor/cdu/fw/cpu/gpu/patch/other;
+  // gpu/patch/other already match above.)
+  sw:      { bar: '#5cf2ff', cls: 'rm-type-switch',  label: 'Switch'  },
+  pwr:     { bar: '#ffd60a', cls: 'rm-type-pdu',     label: 'PDU'     },
+  stor:    { bar: '#00bcd4', cls: 'rm-type-storage', label: 'Storage' },
+  cdu:     { bar: '#00bcd4', cls: 'rm-type-storage', label: 'CDU'     },
+  fw:      { bar: '#486070', cls: 'rm-type-other',   label: 'Firewall'},
+  cpu:     { bar: '#30d158', cls: 'rm-type-server',  label: 'Compute' },
 };
 
 const _rackStore = DataStore(RM_KEY);
@@ -34273,6 +34340,26 @@ function rmSearch_request(query, silent) {
     } catch(_){}
   }
 
+  // -- Master fall-through (Step 1 bridge) -- view-only; see fn#1 note.
+  // currentRackId deliberately NOT set: a Master cab has no backing entry in
+  // loadRacks(), so leaving currentRackId null prevents any downstream
+  // save/edit path from trying to mutate a rack that isn't in the store.
+  if (!rack && !silent && typeof master_findRack === 'function') {
+    var mHit2 = master_findRack(query);
+    if (mHit2 && typeof master_rackToElevation === 'function' && typeof renderElevation === 'function') {
+      var mRack2 = master_rackToElevation({ hosts: mHit2.hosts }, mHit2.id);
+      area.innerHTML = '';
+      renderElevation(mRack2, area);
+      if (typeof _rmRenderHeaderInArea === 'function') _rmRenderHeaderInArea(mRack2, area);
+      if (legend) legend.style.display = 'flex';
+      try { safeStore('phantom_rm_last', String(mHit2.id)); } catch (_) {}
+      if (input) input.value = '';
+      if (typeof haptic === 'function') haptic([8]);
+      if (typeof phantomToast === 'function') phantomToast('Loaded ' + mHit2.id + ' \u00b7 Master', 'ok');
+      return;
+    }
+  }
+
   if (!rack) {
     if (silent) return; // debounced auto-search: silent on miss
     rmSearch_softFail(query);
@@ -34335,7 +34422,7 @@ function rmSearch_softFail(query) {
     '<div class="rack-viewer-soft-fail">' +
       '<div class="rack-viewer-soft-fail-eyebrow">Not found</div>' +
       '<div class="rack-viewer-soft-fail-title">' + escHtml(query) + '</div>' +
-      '<div class="rack-viewer-soft-fail-detail">No saved rack matches that ID, and it doesn\'t exist in any loaded EDP.</div>' +
+      '<div class="rack-viewer-soft-fail-detail">No saved rack matches that ID, and it doesn\'t exist in any loaded EDP or Master.</div>' +
     '</div>';
   if (legend) legend.style.display = 'none';
   if (typeof haptic === 'function') haptic([10, 30, 10]);
