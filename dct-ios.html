@@ -10137,7 +10137,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.6.59';
+const PHANTOM_APP_VERSION = 'phantom-v1.6.60';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -23923,9 +23923,9 @@ async function _phantom_master_hashAB(arrayBuffer) {
 function _phantom_master_findSheet(wb, name) {
   if (wb && wb.Sheets && wb.Sheets[name]) return wb.Sheets[name];
   if (!wb || !wb.SheetNames) return null;
-  var lower = String(name).toLowerCase();
+  var lower = String(name).trim().toLowerCase();
   for (var i = 0; i < wb.SheetNames.length; i++) {
-    if (String(wb.SheetNames[i]).toLowerCase() === lower) {
+    if (String(wb.SheetNames[i]).trim().toLowerCase() === lower) {
       return wb.Sheets[wb.SheetNames[i]];
     }
   }
@@ -24060,9 +24060,13 @@ async function phantom_parseMaster(arrayBuffer, options) {
     var wipSheet      = _phantom_master_findSheet(wb, 'WIP');
     var cutsheetSheet = _phantom_master_findSheet(wb, 'CUTSHEET');
     var hostsSheet    = _phantom_master_findSheet(wb, 'SITE-HOSTS');
-    if (!wipSheet)      throw new Error('phantom_parseMaster: Master file missing required sheet: WIP');
-    if (!cutsheetSheet) throw new Error('phantom_parseMaster: Master file missing required sheet: CUTSHEET');
+    // Step 1.6: cables may live in WIP or CUTSHEET. Require at least one; WIP wins
+    // if both present (per spec §7). Real production Masters (e.g. US-SPK03) ship
+    // cables in CUTSHEET with no WIP tab — those previously threw and loaded nothing.
+    if (!wipSheet && !cutsheetSheet) throw new Error('phantom_parseMaster: Master file missing cable sheet (need WIP or CUTSHEET)');
     if (!hostsSheet)    throw new Error('phantom_parseMaster: Master file missing required sheet: SITE-HOSTS');
+    var cableSheet  = wipSheet || cutsheetSheet;
+    var cableSource = wipSheet ? 'WIP' : 'CUTSHEET';
 
     // 6. Output containers + single-pass index helper
     var racksByCab = {};
@@ -24085,8 +24089,9 @@ async function phantom_parseMaster(arrayBuffer, options) {
     var nLow = _phantom_master_normLower;
     var CAB_RE = _PHANTOM_MASTER_CAB_RE;
 
-    // 7. Parse WIP — cables to store
-    var wipRows = XLSX.utils.sheet_to_json(wipSheet, { header: 1, raw: true, defval: '', blankrows: false });
+    // 7. Parse cables from the chosen source sheet (WIP or CUTSHEET — identical
+    //    column layout; same loop, same CAB_RE row-guard skips section headers/blanks).
+    var wipRows = XLSX.utils.sheet_to_json(cableSheet, { header: 1, raw: true, defval: '', blankrows: false });
     for (var i = 1; i < wipRows.length; i++) {
       var row = wipRows[i];
       var aLoc = nLow(row[2]);
@@ -24117,7 +24122,7 @@ async function phantom_parseMaster(arrayBuffer, options) {
         zOptic: n(row[17]),
         zPatch: n(row[18]),
         cable: n(row[19]),
-        source: 'WIP'
+        source: cableSource
       };
       cables.push(cable);
       var aLocode = n(row[1]);
@@ -24130,15 +24135,10 @@ async function phantom_parseMaster(arrayBuffer, options) {
       }
     }
 
-    // 8. Parse CUTSHEET — iterated for sheetsParsed honesty; rows discarded
-    //    (WIP wins per spec §7: "parallel to CUTSHEET — pick WIP if both present")
-    var cutRows = XLSX.utils.sheet_to_json(cutsheetSheet, { header: 1, raw: true, defval: '', blankrows: false });
-    for (var j = 1; j < cutRows.length; j++) {
-      // Validate but discard
-      if (j > 0 && (j % chunkSize) === 0) {
-        await new Promise(function(r) { setTimeout(r, 0); });
-      }
-    }
+    // 8. CUTSHEET: when WIP was the cable source, CUTSHEET is a redundant parallel
+    //    copy and is intentionally NOT re-parsed (WIP wins, no double-count). When
+    //    CUTSHEET WAS the source, it was already parsed in step 7 above. Either way,
+    //    nothing to do here — cables come from exactly one sheet per parse.
 
     // 9. Parse SITE-HOSTS — devices to index
     var hostRows = XLSX.utils.sheet_to_json(hostsSheet, { header: 1, raw: true, defval: '', blankrows: false });
@@ -24202,7 +24202,8 @@ async function phantom_parseMaster(arrayBuffer, options) {
         totalCabinets: Object.keys(racksByCab).length,
         totalHosts: hosts.length,
         totalCables: cables.length,
-        sheetsParsed:  ['WIP', 'CUTSHEET', 'SITE-HOSTS'],
+        cableSource: cableSource,
+        sheetsParsed:  [cableSource, 'SITE-HOSTS'],
         sheetsSkipped: ['OVERHEAD', 'LEGEND-NET', 'LEGEND-GPU', 'LEGEND-CPU', 'SITE-NODE-DATA', 'SITE-VARS'],
         parseMs: Math.round(t1 - t0),
         sourceFileHash: sourceFileHash
