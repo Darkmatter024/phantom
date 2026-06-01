@@ -10133,11 +10133,30 @@ body.has-resume-banner #boot {
 }
 .master-section-pill:not(.active):hover { color:rgba(220,234,249,0.8); border-color:rgba(92,242,255,0.32); }
 
+/* Step B: host-less cab cabling list (grouped, capped, Cold-Aisle-Filtered) */
+.master-cbl-wrap { width:100%; box-sizing:border-box; }
+.master-cbl-summary { display:flex; align-items:center; flex-wrap:wrap; gap:8px; padding:8px 0 4px; }
+.master-cbl-id { font-family:var(--raj); font-weight:700; font-size:var(--fs-body); color:#5cf2ff; }
+.master-cbl-badge { font-family:var(--orb); font-size:10px; letter-spacing:0.16em; color:#ffd60a; border:1px solid rgba(255,214,10,0.4); border-radius:6px; padding:3px 7px; }
+.master-cbl-total { font-family:var(--raj); font-size:12px; color:var(--slate-readable); margin-left:auto; }
+.master-cbl-dir { font-family:var(--raj); font-weight:700; font-size:18px; color:var(--slate-readable); padding:6px 0 12px; }
+.master-cbl-sec-hd { font-family:var(--orb); font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:var(--slate); padding:10px 0 6px; }
+.master-cbl-row { display:flex; align-items:center; gap:10px; min-height:44px; width:100%; box-sizing:border-box; padding:8px 12px; border:1px solid rgba(92,242,255,0.14); border-radius:8px; margin-bottom:6px; background:rgba(11,16,28,0.5); cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.master-cbl-far { flex:1 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-family:var(--raj); font-size:14px; color:var(--slate-readable); }
+.master-cbl-cnt { flex:0 0 auto; font-family:var(--raj); font-weight:700; font-size:14px; color:#5cf2ff; }
+.master-cbl-more { font-family:var(--raj); font-size:12px; font-style:italic; color:var(--slate-readable); padding:6px 12px 10px; }
+.master-cbl-drill { width:100%; box-sizing:border-box; padding:2px 0 8px 12px; }
+.master-cbl-cable { font-family:var(--raj); font-size:12px; color:var(--slate); padding:5px 8px; width:100%; box-sizing:border-box; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; border-left:2px solid rgba(92,242,255,0.2); margin:3px 0; }
+.master-cbl-nodata { display:flex; flex-direction:column; align-items:center; gap:12px; width:100%; box-sizing:border-box; padding:32px 16px; text-align:center; }
+.master-cbl-nd-cab { font-family:var(--raj); font-weight:700; font-size:var(--fs-body); color:#5cf2ff; }
+.master-cbl-nd-msg { font-family:var(--raj); font-size:var(--fs-body); color:var(--slate-readable); line-height:1.5; }
+.master-cbl-nd-btn { min-height:44px; padding:10px 18px; font-family:var(--orb); font-size:11px; letter-spacing:0.16em; color:var(--cyan); background:rgba(92,242,255,0.08); border:1px solid rgba(92,242,255,0.4); border-radius:10px; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+
 </style>
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.6.60';
+const PHANTOM_APP_VERSION = 'phantom-v1.6.61';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -24638,7 +24657,10 @@ function master_findRack(query) {
     if (k.toLowerCase() === q ||
         String(r.id || '').toLowerCase() === q ||
         String(r.name || '').toLowerCase() === q) {
-      return { id: k, source: 'master', hosts: Array.isArray(r.hosts) ? r.hosts : [] };
+      return { id: k, source: 'master',
+        hosts:     Array.isArray(r.hosts)     ? r.hosts     : [],
+        cablesOut: Array.isArray(r.cablesOut) ? r.cablesOut : [],
+        cablesIn:  Array.isArray(r.cablesIn)  ? r.cablesIn  : [] };
     }
   }
   // 2) Exact nested host dns -> resolve to that host's rack
@@ -24647,11 +24669,138 @@ function master_findRack(query) {
     var hosts = Array.isArray(rr.hosts) ? rr.hosts : [];
     for (var h = 0; h < hosts.length; h++) {
       if (String((hosts[h] && hosts[h].dns) || '').toLowerCase() === q) {
-        return { id: kk, source: 'master', hosts: hosts };
+        return { id: kk, source: 'master',
+          hosts:     hosts,
+          cablesOut: Array.isArray(rr.cablesOut) ? rr.cablesOut : [],
+          cablesIn:  Array.isArray(rr.cablesIn)  ? rr.cablesIn  : [] };
       }
     }
   }
   return null;
+}
+
+// ── Step B: render a Master hit (elevation | cabling | nodata) ────────────
+// Decides WHAT to render for a Master lookup hit and writes into `container`.
+// Returns a short kind string for the caller's toast copy. No store mutation;
+// no last-key/legend side effects (callers keep their own wiring around this).
+function master_renderHit(mHit, container) {
+  var hasHosts = mHit.hosts && mHit.hosts.length > 0;
+  if (hasHosts) {
+    var ev = master_rackToElevation({ hosts: mHit.hosts }, mHit.id);
+    container.innerHTML = '';
+    renderElevation(ev, container);
+    if (typeof _rmRenderHeaderInArea === 'function') _rmRenderHeaderInArea(ev, container);
+    return 'elevation';
+  }
+  var nCables = (mHit.cablesOut ? mHit.cablesOut.length : 0) +
+                (mHit.cablesIn  ? mHit.cablesIn.length  : 0);
+  if (nCables > 0) { master_renderCablingList(mHit, container); return 'cabling'; }
+  master_renderCablingNoData(mHit, container);
+  return 'nodata';
+}
+
+// Group cables by far-end cab. dir 'out' groups on zLoc, 'in' groups on aLoc.
+function _master_groupCables(cables, dir) {
+  var by = {};
+  for (var i = 0; i < cables.length; i++) {
+    var c = cables[i] || {};
+    var far = _phantom_master_rackOf(dir === 'out' ? c.zLoc : c.aLoc);
+    if (!far) far = '(unknown)';
+    if (!by[far]) by[far] = [];
+    by[far].push(c);
+  }
+  var groups = Object.keys(by).map(function (k) { return { farEndCab: k, count: by[k].length, cables: by[k] }; });
+  // Spatial / predictable: far-end cab id ascending (stable position = muscle memory).
+  groups.sort(function (a, b) { return String(a.farEndCab).localeCompare(String(b.farEndCab), undefined, { numeric: true }); });
+  return groups;
+}
+
+var MASTER_CAP_GROUPS = 12;   // far-end groups shown per direction before "+N more"
+var MASTER_CAP_CABLES = 50;   // individual cables shown per drilled-down group
+
+// Build one direction's section (heading + capped group rows + "+N more").
+function _master_cablingSection(groups, dir) {
+  var label = dir === 'out' ? 'OUT \u2192' : 'IN \u2190';
+  var noun  = dir === 'out' ? 'destinations' : 'sources';
+  var html = '<div class="master-cbl-sec-hd">' + label + ' (' + groups.length + ' ' + noun + ')</div>';
+  var shown = Math.min(groups.length, MASTER_CAP_GROUPS);
+  for (var i = 0; i < shown; i++) {
+    var g = groups[i];
+    var arrow = dir === 'out' ? '\u2192 ' : '\u2190 ';
+    html += '<div class="master-cbl-row" data-dir="' + dir + '" data-far="' + master_escHtml(g.farEndCab) + '" onclick="master_cblToggle(this)">' +
+              '<span class="master-cbl-far">' + arrow + master_escHtml(g.farEndCab) + '</span>' +
+              '<span class="master-cbl-cnt">' + g.count + '</span>' +
+            '</div>' +
+            '<div class="master-cbl-drill" data-dir="' + dir + '" data-far="' + master_escHtml(g.farEndCab) + '" style="display:none;"></div>';
+  }
+  if (groups.length > MASTER_CAP_GROUPS) {
+    html += '<div class="master-cbl-more">+' + (groups.length - MASTER_CAP_GROUPS) + ' more ' + noun + '</div>';
+  }
+  return html;
+}
+
+// Lazy drill-down: build the per-cable rows for one group on tap (capped).
+function master_cblToggle(rowEl) {
+  var drill = rowEl.nextElementSibling;
+  if (!drill || drill.className !== 'master-cbl-drill') return;
+  if (drill.style.display !== 'none') { drill.style.display = 'none'; return; }
+  if (!drill.getAttribute('data-built')) {
+    var dir = rowEl.getAttribute('data-dir');
+    var far = rowEl.getAttribute('data-far');
+    var hit = window._master_cblHit;
+    var cables = (hit && (dir === 'out' ? hit.cablesOut : hit.cablesIn)) || [];
+    var matches = [];
+    for (var i = 0; i < cables.length; i++) {
+      var c = cables[i] || {};
+      var f = _phantom_master_rackOf(dir === 'out' ? c.zLoc : c.aLoc) || '(unknown)';
+      if (f === far) matches.push(c);
+    }
+    var shown = Math.min(matches.length, MASTER_CAP_CABLES);
+    var html = '';
+    for (var j = 0; j < shown; j++) {
+      var cb = matches[j];
+      html += '<div class="master-cbl-cable">' +
+                master_escHtml((cb.aDns || '') + ':' + (cb.aPort || '')) + ' \u2192 ' +
+                master_escHtml((cb.zDns || '') + ':' + (cb.zPort || '')) +
+              '</div>';
+    }
+    if (matches.length > MASTER_CAP_CABLES) {
+      html += '<div class="master-cbl-more">+' + (matches.length - MASTER_CAP_CABLES) + ' more cables</div>';
+    }
+    drill.innerHTML = html;
+    drill.setAttribute('data-built', '1');
+  }
+  drill.style.display = 'block';
+}
+
+// Grouped, capped, summarized cabling view for a host-less cab.
+function master_renderCablingList(mHit, container) {
+  window._master_cblHit = mHit;  // referenced by lazy drill-down
+  var out = mHit.cablesOut || [], inn = mHit.cablesIn || [];
+  var total = out.length + inn.length;
+  var outGroups = _master_groupCables(out, 'out');
+  var inGroups  = _master_groupCables(inn, 'in');
+  var html = '<div class="master-cbl-wrap">' +
+    '<div class="master-cbl-summary">' +
+      '<span class="master-cbl-id">' + master_escHtml(mHit.id) + '</span>' +
+      '<span class="master-cbl-badge">CABLING-ONLY</span>' +
+      '<span class="master-cbl-total">' + total.toLocaleString() + ' cables</span>' +
+    '</div>' +
+    '<div class="master-cbl-dir">\u2191 ' + out.length.toLocaleString() + ' out \u00b7 \u2193 ' + inn.length.toLocaleString() + ' in</div>';
+  if (outGroups.length) html += _master_cablingSection(outGroups, 'out');
+  if (inGroups.length)  html += _master_cablingSection(inGroups, 'in');
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+// Quiet no-data fallback — host-less cab that resolved with ZERO cables.
+// On SPK03 this never fires; reachable only if a future payload blows quota.
+function master_renderCablingNoData(mHit, container) {
+  container.innerHTML = '<div class="master-cbl-nodata">' +
+    '<div class="master-cbl-nd-cab">' + master_escHtml(mHit.id) + '</div>' +
+    '<div class="master-cbl-nd-msg">No cabling data loaded.<br>Re-import the Master to view this cab\'s cabling.</div>' +
+    '<button class="master-cbl-nd-btn" onclick="if(typeof master_loadFile===\'function\')master_loadFile()">RE-IMPORT MASTER</button>' +
+    '</div>';
 }
 
 // LIST | ELEVATION toggle (mirrors the FILE | PROFILE section pills).
@@ -33869,15 +34018,13 @@ function rackViewer_request(rackId, silent) {
   // Master racks are not drag-editable (no backing store to persist reorders).
   if (!rack && !silent && typeof master_findRack === 'function') {
     var mHit = master_findRack(query);
-    if (mHit && typeof master_rackToElevation === 'function' && typeof renderElevation === 'function') {
-      var mRack = master_rackToElevation({ hosts: mHit.hosts }, mHit.id);
-      target.innerHTML = '';
-      renderElevation(mRack, target);
-      if (typeof _rmRenderHeaderInArea === 'function') _rmRenderHeaderInArea(mRack, target);
+    if (mHit && typeof master_renderHit === 'function') {
+      var kind = master_renderHit(mHit, target);
       try { if (typeof RACK_VIEWER_LAST_KEY !== 'undefined') safeStore(RACK_VIEWER_LAST_KEY, String(mHit.id)); } catch (_) {}
       if (input) input.value = '';
       if (typeof haptic === 'function') haptic([8]);
-      if (typeof phantomToast === 'function') phantomToast('Loaded ' + mHit.id + ' \u00b7 Master', 'ok');
+      var lbl = kind === 'cabling' ? ' \u00b7 Cabling' : kind === 'nodata' ? ' \u00b7 Cabling (no data)' : ' \u00b7 Master';
+      if (typeof phantomToast === 'function') phantomToast('Loaded ' + mHit.id + lbl, 'ok');
       return;
     }
   }
@@ -34347,16 +34494,14 @@ function rmSearch_request(query, silent) {
   // save/edit path from trying to mutate a rack that isn't in the store.
   if (!rack && !silent && typeof master_findRack === 'function') {
     var mHit2 = master_findRack(query);
-    if (mHit2 && typeof master_rackToElevation === 'function' && typeof renderElevation === 'function') {
-      var mRack2 = master_rackToElevation({ hosts: mHit2.hosts }, mHit2.id);
-      area.innerHTML = '';
-      renderElevation(mRack2, area);
-      if (typeof _rmRenderHeaderInArea === 'function') _rmRenderHeaderInArea(mRack2, area);
+    if (mHit2 && typeof master_renderHit === 'function') {
+      var kind2 = master_renderHit(mHit2, area);
       if (legend) legend.style.display = 'flex';
       try { safeStore('phantom_rm_last', String(mHit2.id)); } catch (_) {}
       if (input) input.value = '';
       if (typeof haptic === 'function') haptic([8]);
-      if (typeof phantomToast === 'function') phantomToast('Loaded ' + mHit2.id + ' \u00b7 Master', 'ok');
+      var lbl2 = kind2 === 'cabling' ? ' \u00b7 Cabling' : kind2 === 'nodata' ? ' \u00b7 Cabling (no data)' : ' \u00b7 Master';
+      if (typeof phantomToast === 'function') phantomToast('Loaded ' + mHit2.id + lbl2, 'ok');
       return;
     }
   }
