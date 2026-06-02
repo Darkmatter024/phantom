@@ -10156,7 +10156,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.6.61';
+const PHANTOM_APP_VERSION = 'phantom-v1.6.62';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -18307,6 +18307,9 @@ function deploy_generateRackQR(deployId, rackId) {
 
   var qrData = 'PHANTOM:rack:' + rackId + ':' + deployId;
   var label = rack.rackId + ' · ' + dep.name;
+  // C1: QR via vendored same-origin vendor/qrcode.min.js (no CDN). The popup is a separate
+  // document, so build an absolute same-origin URL the service worker can serve offline.
+  var _qrLibUrl = location.origin + location.pathname.replace(/[^\/]*$/, '') + 'vendor/qrcode.min.js';
 
   // Open print modal
   var win = window.open('', '_blank', 'width=420,height=480');
@@ -18314,7 +18317,7 @@ function deploy_generateRackQR(deployId, rackId) {
 
   win.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>QR — ' + escHtml(rack.rackId) + '</title>');
   win.document.write('<meta name="viewport" content="width=device-width, initial-scale=1">');
-  win.document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>');
+  win.document.write('<script src="' + _qrLibUrl + '"><\/script>');
   win.document.write('<style>body{margin:0;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:#fff;font-family:monospace;padding:20px;box-sizing:border-box}');
   win.document.write('#qr{padding:16px}');
   win.document.write('.lbl{font-size:14px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-top:8px;text-align:center}');
@@ -18334,7 +18337,7 @@ function deploy_generateRackQR(deployId, rackId) {
   win.document.write('<button class="btn" onclick="window.print()">PRINT LABEL</button>');
   win.document.write('<button class="btn btn-close" onclick="window.close();setTimeout(function(){history.back()},100)">CLOSE</button>');
   win.document.write('</div>');
-  win.document.write('<script>new QRCode(document.getElementById("qr"),{text:"' + qrData + '",width:180,height:180,colorDark:"#000",colorLight:"#fff"});<\/script>');
+  win.document.write('<script>if(typeof QRCode==="undefined"){document.body.innerHTML+=\'<div style="color:#ff4d8d;font:14px monospace;padding:16px;text-align:center;">QR library unavailable — reinstall the app while online once to cache it.</div>\';}else{new QRCode(document.getElementById("qr"),{text:"' + qrData + '",width:180,height:180,colorDark:"#000",colorLight:"#fff"});}<\/script>');
   win.document.write('</body></html>');
   win.document.close();
   haptic([8]);
@@ -36635,6 +36638,44 @@ function matchOpticBarcode(scanned) {
 
 // ── SCAN HANDLER ──
 // Called when a barcode is scanned from the optics tab
+// C3: auto-credit the active deployment's optic ledger from a confident, unambiguous scan.
+// Returns a small result object for the CREDITED pill, or null when no credit applies
+// (no active deployment / no ledger match / low confidence) — in which case the scan
+// still saves to inventory exactly as before. Never corrupts counts: credits only on a
+// single normalized-type match, and bumps dispensed before installed to satisfy the guard.
+function optic_autoCreditLedger(entry, matches) {
+  try {
+    if (!entry || !entry.matched || !matches || !matches.length) return null;
+    var m = matches[0];
+    if ((m.score || 0) < 80) return null; // confidence floor
+    var dep = (typeof deploy_getActive === 'function') ? deploy_getActive() : null;
+    if (!dep) return null; // no active deployment → inventory only
+    if (dep.status === 'complete') return { credited: false, reason: 'locked' };
+    var optics = (typeof deploy_loadOptics === 'function') ? deploy_loadOptics(dep.id) : [];
+    if (!optics || !optics.length) return null;
+    var norm = function(s) { return String(s == null ? '' : s).toUpperCase().replace(/[^A-Z0-9]/g, ''); };
+    var target = norm(m.optic);
+    if (!target) return null;
+    var hits = optics.filter(function(o) { return norm(o.opticType) === target; });
+    if (hits.length === 0) return null;                       // no ledger line for this optic
+    if (hits.length > 1) return { credited: false, reason: 'ambiguous', count: hits.length };
+    var rec = hits[0];
+    var okD = deploy_updateOpticCount(rec.id, 'dispensed', 1);
+    var okI = okD && deploy_updateOpticCount(rec.id, 'installed', 1);
+    if (!okI) return { credited: false, reason: 'guard' };
+    var fresh = (deploy_loadOptics(dep.id) || []).find(function(o) { return o.id === rec.id; }) || rec;
+    return {
+      credited: true,
+      opticType: rec.opticType,
+      deployName: dep.name || dep.site || dep.siteCode || 'deployment',
+      installed: fresh.installed,
+      required: fresh.required
+    };
+  } catch (e) {
+    return null; // never let a credit attempt break the scan flow
+  }
+}
+
 function opticScanResult(val) {
   const matches = matchOpticBarcode(val);
   const rackTag = document.getElementById('optic-rack-tag')?.value?.trim().toUpperCase() || '';
@@ -36663,10 +36704,13 @@ function opticScanResult(val) {
   inv.unshift(entry);
   saveOpticInventory(inv);
 
+  // C3: attempt ledger auto-credit (safe no-op when no confident/unambiguous match)
+  entry.credit = optic_autoCreditLedger(entry, matches);
+
   // Show result
   renderOpticScanResult(entry, matches);
   renderOpticInventoryList();
-  haptic([10, 50, 10]);
+  haptic(entry.credit && entry.credit.credited ? [10, 40, 10, 40, 10] : [10, 50, 10]);
 }
 
 // ── RENDER SCAN RESULT ──
@@ -36693,6 +36737,12 @@ function renderOpticScanResult(entry, matches) {
         <div class="os-result-sub">${escHtml(m.platform)} · ${escHtml(m.cage)} · ${escHtml(m.speed)}</div>
         ${m.score < 80 ? '<div style="font-family:var(--mono);font-size: var(--fs-caption);color:var(--gold);margin-top:4px"><span class="ico ico-md ico-warning"></span> PARTIAL MATCH (' + m.score + '% confidence)</div>' : ''}
       </div>
+      ${entry.credit && entry.credit.credited ? `<div style="margin-top:10px;display:flex;align-items:center;gap:10px;background:rgba(52,224,161,0.12);border:1px solid var(--green);border-radius:10px;padding:10px 14px">
+        <span style="font-family:var(--mono);font-weight:700;color:var(--green);letter-spacing:1px">✓ CREDITED</span>
+        <span style="font-family:var(--raj);font-size:var(--fs-body);color:var(--white)">${escHtml(entry.credit.opticType)} — now ${entry.credit.installed}/${entry.credit.required} installed on ${escHtml(entry.credit.deployName)}</span>
+      </div>` : ''}
+      ${entry.credit && entry.credit.reason === 'ambiguous' ? `<div style="margin-top:10px;background:rgba(255,138,0,0.08);border:1px solid var(--gold);border-radius:10px;padding:10px 14px;font-family:var(--raj);font-size:var(--fs-body);color:var(--white)">${entry.credit.count} ledger lines match this optic — open the Optic Ledger to credit the right one.</div>` : ''}
+      ${entry.credit && entry.credit.reason === 'locked' ? `<div style="margin-top:10px;background:rgba(255,138,0,0.08);border:1px solid var(--gold);border-radius:10px;padding:10px 14px;font-family:var(--raj);font-size:var(--fs-body);color:var(--white)">Deployment is complete — optics are locked. Scan saved to inventory only.</div>` : ''}
       <div class="os-result-body">
         ${row('Scanned', entry.scanned)}
         ${row('Part Number', m.pn)}
@@ -37321,11 +37371,14 @@ function readAsText(file) {
 async function extractPdfText(file) {
   // Load PDF.js from same-origin vendor (./vendor/) — SW-cached, no CDN dependency.
   if (!window.pdfjsLib) {
+    if (!navigator.onLine) {
+      throw new Error('PDF parsing needs a one-time online load. Connect to network once and re-import this PDF — or convert it to .xlsx. (Loads once, then works offline.)');
+    }
     try {
       await loadScript('./vendor/pdf.min.js');
       window.pdfjsLib.GlobalWorkerOptions.workerSrc = './vendor/pdf.worker.min.js';
     } catch (loadErr) {
-      throw new Error('PDF reader could not load — vendor file missing or SW cache stale');
+      throw new Error('PDF reader failed to load. Check connection and retry, or convert the file to .xlsx.');
     }
   }
 
