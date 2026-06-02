@@ -27,7 +27,7 @@
 //   Only same-origin assets are cached.
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-const CACHE_VERSION = 'phantom-v1.6.62';
+const CACHE_VERSION = 'phantom-v1.6.63';
 
 // Assets to precache on install. Keep this minimal — single-file PWA means
 // most of PHANTOM is in dct-ios.html itself.
@@ -37,6 +37,7 @@ const PRECACHE_URLS = [
   'vendor/zxing.min.js',
   'vendor/xlsx.full.min.js',
   'vendor/qrcode.min.js',
+  'vendor/sha256.min.js',
   'vendor/lz-string.min.js'
 ];
 

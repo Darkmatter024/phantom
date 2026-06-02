@@ -10156,7 +10156,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.6.62';
+const PHANTOM_APP_VERSION = 'phantom-v1.6.63';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -13504,6 +13504,8 @@ if (typeof window !== 'undefined') {
 <script src="./vendor/xlsx.full.min.js"></script>
 <!-- 🗜 Master persistence: vendored lz-string v1.5.0 for compressed-localStorage Site snapshot -->
 <script src="./vendor/lz-string.min.js"></script>
+<!-- 🔐 C4: vendored js-sha256 (sync, eager) — audit hash chain needs window.sha256 before app code runs -->
+<script src="./vendor/sha256.min.js"></script>
 
 <script>
 // ━━━ HAPTIC ━━━
@@ -20174,6 +20176,40 @@ function deploy_loadAudit(deployId) {
 }
 function deploy_saveAudit(arr) { return safeStore(DEPLOY_AUDIT_KEY, JSON.stringify(arr)); }
 
+// C4: tamper-evident audit chain. Canonical = FIXED whitelist (annotation fields excluded).
+var _AUDIT_HASH_FIELDS = ['id','deploymentId','ts','actor','action','entityType','entityId','summary','prevHash'];
+function _audit_canonical(e) {
+  var o = {};
+  for (var i = 0; i < _AUDIT_HASH_FIELDS.length; i++) {
+    var k = _AUDIT_HASH_FIELDS[i];
+    o[k] = (e[k] === undefined || e[k] === null) ? '' : e[k];
+  }
+  return JSON.stringify(o);
+}
+function _audit_hashEntry(e) {
+  try {
+    return (typeof window.sha256 === 'function') ? window.sha256(_audit_canonical(e)) : '';
+  } catch (_) { return ''; }
+}
+// Verify the global chain. Returns {ok, brokenAt, total, hashed, legacy, truncations}.
+// Legacy entries (pre-C4, no hash) are skipped until the first hashed entry. A chainReset
+// entry is an authorized truncation gap and does not count as a break.
+function deploy_verifyAuditChain() {
+  var all = safeParse(localStorage.getItem(DEPLOY_AUDIT_KEY) || '[]', []);
+  if (!Array.isArray(all)) all = [];
+  var baseline = null, legacy = 0, hashed = 0, truncations = 0, brokenAt = null;
+  for (var i = 0; i < all.length; i++) {
+    var e = all[i];
+    if (!e || !e.hash) { legacy++; baseline = null; continue; } // legacy / unhashed
+    hashed++;
+    if (_audit_hashEntry(e) !== e.hash) { brokenAt = i; break; }   // content tampered
+    if (e.chainReset) { truncations++; baseline = e.hash; continue; } // authorized gap
+    if (baseline !== null && e.prevHash !== baseline) { brokenAt = i; break; } // link broken
+    baseline = e.hash;
+  }
+  return { ok: brokenAt === null, brokenAt: brokenAt, total: all.length, hashed: hashed, legacy: legacy, truncations: truncations };
+}
+
 // Append a single immutable audit entry. Never updates existing records.
 function deploy_logAudit(deploymentId, action, entityType, entityId, summary) {
   try {
@@ -20181,7 +20217,7 @@ function deploy_logAudit(deploymentId, action, entityType, entityId, summary) {
     var actor = identity_getUser() || (dep && dep.buildLead) || 'System';
     var all = safeParse(localStorage.getItem(DEPLOY_AUDIT_KEY) || '[]', []);
     if (!Array.isArray(all)) all = [];
-    all.push({
+    var _entry = {
       id: 'audit_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
       deploymentId: deploymentId,
       ts: Date.now(),
@@ -20190,10 +20226,25 @@ function deploy_logAudit(deploymentId, action, entityType, entityId, summary) {
       entityType: entityType,
       entityId: entityId,
       summary: summary || action
-    });
-    // FIFO cap at 2,000 entries — prevents Safari 10MB localStorage crash
-    // on month-4+ deployments. Most-recent 2,000 retained, oldest evicted.
-    if (all.length > 2000) all = all.slice(-2000);
+    };
+    // C4: chain to previous entry, then self-hash
+    var _prev = all.length ? all[all.length - 1] : null;
+    _entry.prevHash = (_prev && _prev.hash) ? _prev.hash : '';
+    _entry.hash = _audit_hashEntry(_entry);
+    all.push(_entry);
+    // FIFO cap at 2,000 — prevents Safari 10MB localStorage crash. C4: instead of
+    // silently dropping, annotate the new head with a recorded, tamper-evident
+    // truncation marker so the eviction is visible and the chain has a known reset point.
+    if (all.length > 2000) {
+      var _evicted = all.slice(0, all.length - 2000);
+      all = all.slice(-2000);
+      var _last = _evicted[_evicted.length - 1];
+      all[0] = all[0] || {};
+      all[0].chainReset = true;
+      all[0].truncatedCount = (all[0].truncatedCount || 0) + _evicted.length;
+      all[0].truncatedAt = Date.now();
+      all[0].truncatedLastHash = (_last && _last.hash) ? _last.hash : '';
+    }
     deploy_saveAudit(all);
   } catch(e) {
     // Audit log is non-blocking — a write failure must never interrupt the main operation
@@ -20927,6 +20978,8 @@ function deploy_advancePhase(phaseId, newStatus, deployId) {
   all[idx].status = newStatus;
   if (newStatus === 'complete') {
     all[idx].signedOffAt = Date.now();
+    all[idx].signedOffBy = (typeof identity_getUser === 'function' && identity_getUser())
+      || (_dep && _dep.buildLead) || 'Tech';
   }
   if (!deploy_savePhases(all)) {
     phantomToast('Storage full — phase not saved. Export backup and clear old data.', 'error');
@@ -27616,6 +27669,16 @@ function deploy_showAuditLog(deploymentId) {
     html += '</div>';
     c.innerHTML = html;
     return;
+  }
+
+  // C4: tamper-evident chain status banner (non-empty logs only)
+  var _chain = (typeof deploy_verifyAuditChain === 'function') ? deploy_verifyAuditChain() : null;
+  if (_chain) {
+    if (_chain.ok) {
+      html += '<div style="font-family:var(--mono);font-size:var(--fs-caption);color:var(--green);border:1px solid var(--green);border-radius:8px;padding:8px 12px;margin-bottom:10px">CHAIN VERIFIED — ' + _chain.hashed + ' sealed' + (_chain.truncations ? ' · ' + _chain.truncations + ' truncation(s) recorded' : '') + (_chain.legacy ? ' · ' + _chain.legacy + ' legacy' : '') + '</div>';
+    } else {
+      html += '<div style="font-family:var(--mono);font-size:var(--fs-caption);color:var(--red,#ff4d4d);border:1px solid var(--red,#ff4d4d);border-radius:8px;padding:8px 12px;margin-bottom:10px">CHAIN BROKEN at entry ' + _chain.brokenAt + ' — audit log may have been altered</div>';
+    }
   }
 
   // Action color map
@@ -39685,24 +39748,62 @@ function phantomImport() {
           bundle.deployments.forEach(function(d) { if (d && d.id) validDepIds[d.id] = true; });
         }
         var cleanRacks   = Array.isArray(bundle.deployRacks)  ? bundle.deployRacks.filter(function(r)  { return r && r.deploymentId && validDepIds[r.deploymentId]; })  : [];
-        var cleanPhases  = Array.isArray(bundle.deployPhases) ? bundle.deployPhases.filter(function(p)  { return p && p.deploymentId && validDepIds[p.deploymentId]; })  : [];
-        var cleanOptics  = Array.isArray(bundle.deployOptics) ? bundle.deployOptics.filter(function(o)  { return o && o.deploymentId && validDepIds[o.deploymentId]; })  : [];
+        var validRackIds = {};
+        cleanRacks.forEach(function(r) { if (r && r.id) validRackIds[r.id] = true; });
+        var _rackOk = function(x) { return !x.rackId || validRackIds[x.rackId]; }; // tolerate records with no rackId
+        var cleanPhases  = Array.isArray(bundle.deployPhases) ? bundle.deployPhases.filter(function(p)  { return p && p.deploymentId && validDepIds[p.deploymentId] && _rackOk(p); }) : [];
+        var cleanOptics  = Array.isArray(bundle.deployOptics) ? bundle.deployOptics.filter(function(o)  { return o && o.deploymentId && validDepIds[o.deploymentId] && _rackOk(o); }) : [];
         var cleanAudit   = Array.isArray(bundle.deployAudit)  ? bundle.deployAudit.filter(function(a)   { return a && a.deploymentId && validDepIds[a.deploymentId]; })   : [];
         var cleanHandoff = Array.isArray(bundle.handoffs)      ? bundle.handoffs.filter(function(h)      { return h && h.deploymentId && validDepIds[h.deploymentId]; })  : [];
+        // C4 interaction: filtering may have removed audit entries → mark restored head as an
+        // authorized chain reset so the tamper-verify doesn't false-flag a post-import gap.
+        if (cleanAudit.length) { cleanAudit[0] = cleanAudit[0] || {}; cleanAudit[0].chainReset = true; cleanAudit[0].truncatedAt = Date.now(); }
 
-        if (Array.isArray(bundle.sops))     safeStore('dct_sops_v1', JSON.stringify(bundle.sops));
-        if (Array.isArray(bundle.rackMaps)) safeStore('dct_racks_v1',    JSON.stringify(bundle.rackMaps));
-        if (Array.isArray(bundle.burndown)) safeStore(BURNDOWN_KEY, JSON.stringify(bundle.burndown));
-        if (bundle.rackHistory && typeof bundle.rackHistory === 'object') safeStore('phantom_rack_history', JSON.stringify(bundle.rackHistory));
-        if (Array.isArray(bundle.opticInventory)) safeStore('phantom_optic_inventory', JSON.stringify(bundle.opticInventory));
-        if (Array.isArray(bundle.deployments)) safeStore('phantom_deployments_v1', JSON.stringify(bundle.deployments));
-        safeStore('phantom_deploy_racks_v1',  JSON.stringify(cleanRacks));
-        safeStore('phantom_deploy_phases_v1', JSON.stringify(cleanPhases));
-        safeStore('phantom_deploy_optics_v1', JSON.stringify(cleanOptics));
-        safeStore('phantom_deploy_audit_v1',  JSON.stringify(cleanAudit));
-        if (bundle.siteProfile && typeof bundle.siteProfile === 'object') safeStore('phantom_site_profile_v1', JSON.stringify(bundle.siteProfile));
-        safeStore('phantom_handoff_v1', JSON.stringify(cleanHandoff));
-        if (bundle.edpCache && typeof bundle.edpCache === 'object') safeStore('phantom_edp_cache_v1', JSON.stringify(bundle.edpCache));
+        // C5: atomic restore — build the full write set, snapshot current values,
+        // pre-check headroom, write all, roll back on ANY failure.
+        var _writes = [];
+        if (Array.isArray(bundle.sops))           _writes.push(['dct_sops_v1', JSON.stringify(bundle.sops)]);
+        if (Array.isArray(bundle.rackMaps))       _writes.push(['dct_racks_v1', JSON.stringify(bundle.rackMaps)]);
+        if (Array.isArray(bundle.burndown))       _writes.push([BURNDOWN_KEY, JSON.stringify(bundle.burndown)]);
+        if (bundle.rackHistory && typeof bundle.rackHistory === 'object') _writes.push(['phantom_rack_history', JSON.stringify(bundle.rackHistory)]);
+        if (Array.isArray(bundle.opticInventory)) _writes.push(['phantom_optic_inventory', JSON.stringify(bundle.opticInventory)]);
+        if (Array.isArray(bundle.deployments))    _writes.push(['phantom_deployments_v1', JSON.stringify(bundle.deployments)]);
+        _writes.push(['phantom_deploy_racks_v1',  JSON.stringify(cleanRacks)]);
+        _writes.push(['phantom_deploy_phases_v1', JSON.stringify(cleanPhases)]);
+        _writes.push(['phantom_deploy_optics_v1', JSON.stringify(cleanOptics)]);
+        _writes.push(['phantom_deploy_audit_v1',  JSON.stringify(cleanAudit)]);
+        if (bundle.siteProfile && typeof bundle.siteProfile === 'object') _writes.push(['phantom_site_profile_v1', JSON.stringify(bundle.siteProfile)]);
+        _writes.push(['phantom_handoff_v1', JSON.stringify(cleanHandoff)]);
+        if (bundle.edpCache && typeof bundle.edpCache === 'object') _writes.push(['phantom_edp_cache_v1', JSON.stringify(bundle.edpCache)]);
+
+        // Snapshot existing values for rollback (null = key absent → remove on rollback)
+        var _snapshot = _writes.map(function(w) { return [w[0], localStorage.getItem(w[0])]; });
+
+        // Pre-flight headroom: rough byte sum of the new payload vs a safe ceiling.
+        var _payloadBytes = 0;
+        _writes.forEach(function(w) { _payloadBytes += (w[0].length + (w[1] ? w[1].length : 0)); });
+        // ~4.5MB conservative ceiling for the restore payload (Safari ~5MB origin quota; leaves headroom).
+        if (_payloadBytes > 4500000) {
+          alert('Backup is too large to restore safely (' + Math.round(_payloadBytes/1024) + ' KB). Free space or split the backup.');
+          return;
+        }
+
+        // Stage all writes; on first failure, roll back everything written so far.
+        var _ok = true, _failKey = null;
+        for (var _w = 0; _w < _writes.length; _w++) {
+          if (!safeStore(_writes[_w][0], _writes[_w][1])) { _ok = false; _failKey = _writes[_w][0]; break; }
+        }
+        if (!_ok) {
+          // rollback to snapshot
+          _snapshot.forEach(function(s) {
+            try {
+              if (s[1] === null) localStorage.removeItem(s[0]);
+              else localStorage.setItem(s[0], s[1]);
+            } catch (_) {}
+          });
+          alert('Restore failed at "' + _failKey + '" — not enough storage. No changes were made (rolled back). Free space and try again.');
+          return;
+        }
         if (Array.isArray(bundle.ghostEcho) && bundle.ghostEcho.length) {
           const req = indexedDB.open('GhostEchoDB', 1);
           req.onsuccess = function(ev2) {
