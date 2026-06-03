@@ -2,7 +2,7 @@
   "name": "PHANTOM — Field Intelligence System",
   "short_name": "PHANTOM",
   "description": "Field operations tool for data center technicians. Fiber, CLI, GPU faults, PDU diagrams, Ghost Echo, and AI assistant.",
-  "start_url": "./dct-ios.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#020408",
