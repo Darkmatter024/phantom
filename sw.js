@@ -27,7 +27,9 @@
 //   Only same-origin assets are cached.
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-const CACHE_VERSION = 'phantom-v1.6.65';
+// v1.6.66: HTML navigations are now network-first (see fetch handler) so the
+// live landing always wins online; cache bumped to evict any poisoned root.
+const CACHE_VERSION = 'phantom-v1.6.66';
 
 // Assets to precache on install. Keep this minimal — single-file PWA means
 // most of PHANTOM is in dct-ios.html itself.
@@ -109,7 +111,27 @@ self.addEventListener('fetch', (event) => {
     return;  // let the browser handle it normally
   }
 
-  // Same-origin cache-first
+  // ── NAVIGATIONS (HTML documents): NETWORK-FIRST ──────────────────────
+  // v1.6.66: HTML page-loads (the bare /phantom/ root, index.html, and
+  // dct-ios.html) go network-first so a fresh deploy ALWAYS wins while
+  // online — no stale cached shell can sit in front of the live landing.
+  // This is what makes the bare /phantom/ root render index.html (the
+  // landing) instead of the app's built-in boot screen. Offline, fall back
+  // to the precached shell: the directory root maps to the landing
+  // (index.html); any other document maps to the app (dct-ios.html).
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).catch(function () {
+        if (url.pathname.endsWith('/') || url.pathname.endsWith('/index.html')) {
+          return caches.match('index.html');
+        }
+        return caches.match('dct-ios.html');
+      })
+    );
+    return;
+  }
+
+  // Same-origin cache-first (static assets: JS, fonts, vendors, version.json)
   event.respondWith(
     caches.match(event.request).then((cached) => {
       if (cached) return cached;

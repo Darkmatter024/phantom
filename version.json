@@ -1,6 +1,6 @@
 {
-  "version": "phantom-v1.6.65",
+  "version": "phantom-v1.6.66",
   "released": "2026-06-02",
-  "prevVersion": "phantom-v1.6.64",
-  "notes": "Cache bump only. Forces the service worker to re-fetch index.html / landing.html / dct-ios.html so the v1.6.64 landing redesign (the V1.7.3 front door with the power-topology panel and status chips) actually reaches installed PWAs and returning browsers that were still serving the previously cached landing. No layout, logic, or routing changes. Three stamps aligned at v1.6.65 (dct-ios.html PHANTOM_APP_VERSION, sw.js CACHE_VERSION, version.json)."
+  "prevVersion": "phantom-v1.6.65",
+  "notes": "Service-worker routing fix. HTML page-loads are now network-first: the bare /phantom/ root, index.html, and dct-ios.html are fetched live first and only fall back to the precached shell when offline. Previously the SW was cache-first for the page itself, so the app's built-in boot screen (inside dct-ios.html) was served at the root instead of the new index.html landing, and no deploy could displace it. Offline behavior preserved: root maps to index.html (landing), other documents map to dct-ios.html (app). Static assets (JS, fonts, vendors) stay cache-first. Three stamps aligned at v1.6.66."
 }
