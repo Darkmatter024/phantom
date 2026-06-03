@@ -1,6 +1,6 @@
 {
-  "version": "phantom-v1.6.67",
+  "version": "phantom-v1.6.68",
   "released": "2026-06-02",
-  "prevVersion": "phantom-v1.6.66",
-  "notes": "Home-screen icon now opens the landing. The existing installed icon was baked at install time to launch dct-ios.html directly (iOS does not update an existing install's start_url from a manifest change), so it skipped the landing. dct-ios.html now carries a front-door guard: a fresh launch redirects to index.html (the landing); the landing's ENTER sets a sessionStorage flag and returns, so the app passes straight through and in-app reloads stay in the app for that session. Next fresh launch shows the landing again. No re-add of the home icon required. Three stamps aligned at v1.6.67."
+  "prevVersion": "phantom-v1.6.67",
+  "notes": "Landing redesign + ENTER fix. (1) ENTER now works: the landing-to-app handoff moved from sessionStorage (iOS dropped it across the jump, bouncing users back) to a URL flag (dct-ios.html?from=landing) that always survives; dct-ios.html's front-door guard checks the flag. (2) Single-screen landing: removed the seven status rows and hid clutter, KEPT the power-topology graphic, and made ENTER the hero centered in the lower half so the page fits one screen with no scroll. Three stamps aligned at v1.6.68."
 }

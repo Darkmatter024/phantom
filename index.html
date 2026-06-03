@@ -209,6 +209,16 @@
   .footer .rdy svg{width:15px;height:15px;}
   .footer .sep{width:1px;height:14px;background:rgba(140,170,200,0.3);}
   .footer .tap{color:var(--slate);}
+
+  /* ── v1.6.68 single-screen landing: status rows removed, power topology kept, hero ENTER below ── */
+  body{display:flex;flex-direction:column;padding-bottom:calc(24px + env(safe-area-inset-bottom));}
+  .wordmark{margin:18px 0 6px;}
+  .subtitle{margin-bottom:16px;}
+  .power{margin-bottom:0;}
+  .chips{margin:18px 0 0;}
+  .enterwrap{flex:1 1 auto;justify-content:center;gap:18px;}
+  @media (max-height:780px){ .wordmark{margin:10px 0 4px;} .enter{width:176px;height:176px;} .chips{margin-top:12px;} }
+  @media (max-height:660px){ .enter{width:148px;height:148px;font-size:18px;} .wordmark{font-size:40px;} .subtitle{margin-bottom:8px;} .chips{margin-top:8px;} }
 </style>
 </head>
 <body>
@@ -233,46 +243,7 @@
   <div class="wordmark">PHANTOM</div>
   <div class="subtitle">FIELD INTELLIGENCE SYSTEM</div>
 
-  <!-- STATUS PANEL -->
-  <div class="panel">
-    <div class="row">
-      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3 L21 8 L12 13 L3 8 Z"/><path d="M3 13 L12 18 L21 13"/></svg>
-      <div class="meta"><div class="t">EDP context</div><div class="s">Environmental + Device Profile</div></div>
-      <div class="pill"><span class="pdot"></span><span class="ptag">READY</span></div>
-    </div>
-    <div class="row">
-      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6 V18 C4 19.7 7.6 21 12 21 C16.4 21 20 19.7 20 18 V6"/><path d="M4 12 C4 13.7 7.6 15 12 15 C16.4 15 20 13.7 20 12"/></svg>
-      <div class="meta"><div class="t">Offline cache</div><div class="s">Local assets available</div></div>
-      <div class="pill"><span class="pdot"></span><span class="ptag">READY</span></div>
-    </div>
-    <div class="row">
-      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="12" r="2.4"/><circle cx="18" cy="6" r="2.4"/><circle cx="18" cy="18" r="2.4"/><path d="M8.1 11 L15.9 6.9"/><path d="M8.1 13 L15.9 17.1"/></svg>
-      <div class="meta"><div class="t">Fiber + optics reference</div><div class="s">Signal library verified</div></div>
-      <div class="pill"><span class="pdot"></span><span class="ptag">SYNCED</span></div>
-    </div>
-    <div class="row">
-      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M13 2 L4 14 H11 L10 22 L20 9 H13 Z"/></svg>
-      <div class="meta"><div class="t">Power topology</div><div class="s">Distribution map valid</div></div>
-      <div class="pill"><span class="pdot"></span><span class="ptag">MAPPED</span></div>
-    </div>
-    <div class="row">
-      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M12 2 L20 5 V11 C20 16 16.5 20 12 22 C7.5 20 4 16 4 11 V5 Z"/></svg>
-      <div class="meta"><div class="t">Triage protocols</div><div class="s">Response playbooks ready</div></div>
-      <div class="pill"><span class="pdot"></span><span class="ptag">READY</span></div>
-    </div>
-    <div class="row">
-      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="7" y="7" width="10" height="10" rx="1.5"/><rect x="10" y="10" width="4" height="4"/><path d="M10 7V4M14 7V4M10 20v-3M14 20v-3M7 10H4M7 14H4M20 10h-3M20 14h-3"/></svg>
-      <div class="meta"><div class="t">Hardware fault patterns</div><div class="s">Signature set loaded</div></div>
-      <div class="pill"><span class="pdot"></span><span class="ptag">LOADED</span></div>
-    </div>
-    <div class="row ghost">
-      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M5 20 V10 A7 7 0 0 1 19 10 V20 L16.5 18 L14 20 L12 18 L10 20 L7.5 18 Z"/><circle cx="9.5" cy="11" r="1" fill="currentColor" stroke="none"/><circle cx="14.5" cy="11" r="1" fill="currentColor" stroke="none"/></svg>
-      <div class="meta"><div class="t">Ghost Echo · Phantom</div><div class="s">Active intelligence layer</div></div>
-      <div class="pill m"><span class="pdot"></span><span class="ptag">ACTIVE</span></div>
-    </div>
-  </div>
-
-  <!-- POWER TOPOLOGY -->
+<!-- POWER TOPOLOGY -->
   <div class="power">
     <div class="lead">
       <div class="ey">POWER TOPOLOGY</div>
@@ -508,7 +479,7 @@
   <!-- ENTER -->
   <div class="enterwrap">
     <div class="enter-deco"></div>
-    <button class="enter" onclick="try{sessionStorage.setItem('phantom_entered','1')}catch(e){};location.href='dct-ios.html'" aria-label="Enter PHANTOM"><i class="e-aura"></i><i class="e-ticks"></i><i class="e-comet"></i><span>ENTER</span></button>
+    <button class="enter" onclick="location.href='dct-ios.html?from=landing'" aria-label="Enter PHANTOM"><i class="e-aura"></i><i class="e-ticks"></i><i class="e-comet"></i><span>ENTER</span></button>
     <div class="footer">
       <span class="rdy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 2 L20 5 V11 C20 16 16.5 20 12 22 C7.5 20 4 16 4 11 V5 Z"/><path d="M9 12 l2 2 l4 -4"/></svg>SYSTEM READY</span>
       <span class="sep"></span>
