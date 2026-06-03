@@ -2,6 +2,17 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<script>
+/* v1.6.67 Landing front-door guard: the home-screen icon was installed with
+   dct-ios.html baked in as its launch URL (iOS bakes start_url at install and
+   won't update it). A fresh launch lands here on the app and skips the new
+   landing, so bounce it to the landing front door; the landing's ENTER sets a
+   session flag and returns here to pass straight through. Uses sessionStorage
+   (not hash/query) so the app's own routing and any in-app reload stay
+   untouched — the flag lives for the session, so reloads stay in the app and
+   the next fresh launch shows the landing again. */
+(function(){try{if(!sessionStorage.getItem('phantom_entered')){location.replace('index.html');}}catch(e){}})();
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -10156,7 +10167,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.6.66';
+const PHANTOM_APP_VERSION = 'phantom-v1.6.67';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
