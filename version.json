@@ -1,6 +1,6 @@
 {
-  "version": "phantom-v1.6.68",
-  "released": "2026-06-02",
-  "prevVersion": "phantom-v1.6.67",
-  "notes": "Landing redesign + ENTER fix. (1) ENTER now works: the landing-to-app handoff moved from sessionStorage (iOS dropped it across the jump, bouncing users back) to a URL flag (dct-ios.html?from=landing) that always survives; dct-ios.html's front-door guard checks the flag. (2) Single-screen landing: removed the seven status rows and hid clutter, KEPT the power-topology graphic, and made ENTER the hero centered in the lower half so the page fits one screen with no scroll. Three stamps aligned at v1.6.68."
+  "version": "phantom-v1.6.69",
+  "released": "2026-06-03",
+  "prevVersion": "phantom-v1.6.68",
+  "notes": "Landing retired — power-topology folded into the app boot screen. dct-ios.html: front-door guard removed; power-topology box transplanted into #boot (scoped .pwr-topo, hardcoded colors, namespaced SVG ids pt-*, renamed keyframes pwrflow/pwrnodepulse/pwrsrcpulse — collision-proof); status rows trimmed to 4 (EDP, Fiber+optics, Triage, Ghost Echo; cut Offline cache, Power topology, Hardware faults). index.html is now a redirect to dct-ios.html; landing.html deleted. manifest start_url back to ./dct-ios.html; sw.js drops index.html from precache and navigation offline-fallback maps to dct-ios.html. C1-C6 intact. Three stamps at v1.6.69."
 }

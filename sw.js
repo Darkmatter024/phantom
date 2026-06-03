@@ -29,13 +29,12 @@
 
 // v1.6.66: HTML navigations are now network-first (see fetch handler) so the
 // live landing always wins online; cache bumped to evict any poisoned root.
-const CACHE_VERSION = 'phantom-v1.6.68';
+const CACHE_VERSION = 'phantom-v1.6.69';
 
 // Assets to precache on install. Keep this minimal — single-file PWA means
 // most of PHANTOM is in dct-ios.html itself.
 const PRECACHE_URLS = [
   'dct-ios.html',
-  'index.html',
   'version.json',
   'vendor/zxing.min.js',
   'vendor/xlsx.full.min.js',
@@ -122,9 +121,6 @@ self.addEventListener('fetch', (event) => {
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request).catch(function () {
-        if (url.pathname.endsWith('/') || url.pathname.endsWith('/index.html')) {
-          return caches.match('index.html');
-        }
         return caches.match('dct-ios.html');
       })
     );
