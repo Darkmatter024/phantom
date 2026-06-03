@@ -1,6 +1,6 @@
 {
-  "version": "phantom-v1.6.69",
+  "version": "phantom-v1.6.70",
   "released": "2026-06-03",
-  "prevVersion": "phantom-v1.6.68",
-  "notes": "Landing retired — power-topology folded into the app boot screen. dct-ios.html: front-door guard removed; power-topology box transplanted into #boot (scoped .pwr-topo, hardcoded colors, namespaced SVG ids pt-*, renamed keyframes pwrflow/pwrnodepulse/pwrsrcpulse — collision-proof); status rows trimmed to 4 (EDP, Fiber+optics, Triage, Ghost Echo; cut Offline cache, Power topology, Hardware faults). index.html is now a redirect to dct-ios.html; landing.html deleted. manifest start_url back to ./dct-ios.html; sw.js drops index.html from precache and navigation offline-fallback maps to dct-ios.html. C1-C6 intact. Three stamps at v1.6.69."
+  "prevVersion": "phantom-v1.6.69",
+  "notes": "Phase 1 — first-run confirm gate. New device with no confirmed profile now hits a one-screen setup over the app on launch: enter operator name (required), confirm the baked AUS-01 site summary, optionally fill rack-naming + PDU (blank is safe — getContextBlock skips blanks). On CONFIRM, stamps confirmedAt so it never re-fires. SITE_PROFILE_DEFAULTS gains operator + confirmedAt; siteProfile_load() backfills confirmedAt from lastUpdated so existing saved profiles are never re-prompted; new siteProfile_isConfirmed(). New collision-free fr-* overlay (z-index 9500) + firstRun_show/confirm/renderChip/openProfile. NOW page shows an 'AUS-01 · {operator}' chip (one-tap to the profile editor, replacing the buried Master-overflow path; flags 'floor details pending' if rack/PDU blank). No change to getContextBlock or the 7 AI injection sites. Three stamps at v1.6.70."
 }

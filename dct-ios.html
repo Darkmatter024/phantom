@@ -7585,6 +7585,20 @@ textarea.hud-input {
   display: none;
 }
 .eh-overlay.show { display: block; }
+/* First-Run Confirm Gate (v1.6.70) — full-screen gate above all other overlays */
+.fr-overlay {
+  position: fixed; inset: 0; z-index: 9500;
+  background: var(--hud-void, #05070b);
+  overflow-y: auto; -webkit-overflow-scrolling: touch;
+  display: none;
+}
+.fr-overlay.show { display: block; }
+.fr-inner {
+  max-width: 430px; margin: 0 auto;
+  min-height: 100vh; min-height: 100dvh;
+  padding: 0 18px calc(40px + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+}
 .eh-overlay-inner {
   position: relative; z-index: 1;
   max-width: 430px; margin: 0 auto;
@@ -10174,7 +10188,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.6.69';
+const PHANTOM_APP_VERSION = 'phantom-v1.6.70';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -10644,6 +10658,12 @@ if (typeof window !== 'undefined') {
 </div>
 
 
+<!-- ━━━ First-Run Confirm Gate (v1.6.70) — populated by firstRun_show() ━━━ -->
+<div class="fr-overlay" id="fr-overlay" role="dialog" aria-label="Set up this device" aria-modal="true">
+  <div class="fr-inner" id="fr-inner"></div>
+</div>
+
+
 <!-- ━━━ BOOT ━━━ -->
 <div id="boot">
   <canvas id="bootCanvas" style="position:absolute;inset:0;pointer-events:none;z-index:1"></canvas>
@@ -10999,6 +11019,7 @@ if (typeof window !== 'undefined') {
       <!-- DCT-05: HEALTH STATUS — now in header dots -->
 
       <!-- TODAY DASHBOARD — build lead morning overview (populated by today_render on tab open) -->
+      <div id="fr-chip"></div>
       <div id="today-dashboard"></div>
 
       <!-- SHIFT BRIEFING BAR — shown on first open each shift -->
@@ -15390,6 +15411,14 @@ function launch() {
     });
     phantomUpdateNetPill(navigator.onLine);
     setTimeout(phantomDeferredInit, 300);
+    // v1.6.70: first-run confirm gate — a never-confirmed device must confirm
+    // the site + identify the operator before using the app. Fires over the app.
+    try {
+      if (typeof siteProfile_isConfirmed === 'function' && !siteProfile_isConfirmed()
+          && typeof firstRun_show === 'function') {
+        firstRun_show();
+      }
+    } catch (_) {}
   }, 480);
 }
 
@@ -17632,6 +17661,7 @@ function burndown_renderCard(deployId, dep) {
 function today_render() {
   var el = document.getElementById('today-dashboard');
   if (!el) return;
+  if (typeof firstRun_renderChip === 'function') firstRun_renderChip();
 
   var deploys = deploy_loadAll();
   var active = deploys.filter(function(d) {
@@ -18594,6 +18624,8 @@ var SITE_PROFILE_DEFAULTS = {
   pduType:              '',  // TODO: capture when on floor
   floorZones:           'L1 = top floor, U1 = lower floor; on-site Storage and RMA areas',
   buildLead:            '',
+  operator:             '',    // v1.6.70: who is on THIS device — default source for signedOffBy (C6)
+  confirmedAt:          null,  // v1.6.70: ms ts of first-run confirmation (null = never confirmed)
   schemaVersion:        2,
   lastUpdated:          null
 };
@@ -18633,14 +18665,134 @@ function siteProfile_load() {
   if (!stored) return Object.assign({}, SITE_PROFILE_DEFAULTS);
   // Migrate v1 → v2 if needed (handles stored profiles from earlier versions)
   stored = siteProfile_migrateV1toV2(stored);
+  // v1.6.70: backfill confirmedAt for profiles saved before the first-run gate
+  // existed. A stored profile with lastUpdated means a human already saved it
+  // via the editor → treat as confirmed so existing users are never re-prompted.
+  if (!stored.confirmedAt && stored.lastUpdated) stored.confirmedAt = stored.lastUpdated;
   // Merge so any new default fields appear gracefully
   return Object.assign({}, SITE_PROFILE_DEFAULTS, stored);
+}
+
+// v1.6.70: a profile is "confirmed" once a human has explicitly accepted it via
+// the first-run gate (sets confirmedAt) or saved it via the editor (backfilled
+// above). Until then siteProfile_load() returns raw baked defaults nobody has
+// verified — yet getContextBlock() already feeds them to the AI as ground truth.
+function siteProfile_isConfirmed() {
+  return !!(siteProfile_load().confirmedAt);
 }
 
 function siteProfile_save(profile) {
   profile.lastUpdated = Date.now();
   profile.schemaVersion = 2;
   return safeStore(SITE_PROFILE_KEY, JSON.stringify(profile));
+}
+
+// ━━━ FIRST-RUN CONFIRM GATE (v1.6.70) ━━━
+// A fresh device runs on baked AUS-01 defaults no human has verified — and
+// getContextBlock() already feeds them to the AI as fact. This gate makes a
+// human confirm the site + identify themselves ONCE, then stamps confirmedAt
+// so it never fires again. Floor fields (rack naming, PDU) are optional here:
+// blank is safe (getContextBlock skips blanks), and forcing a value just
+// invites garbage that would poison AI context.
+function firstRun_show() {
+  var inner = document.getElementById('fr-inner');
+  var ov    = document.getElementById('fr-overlay');
+  if (!inner || !ov) return;
+  var p = siteProfile_load();
+
+  // Read-only "what the AI will be told" summary, grouped by role.
+  var byRole = {};
+  (p.platforms || []).forEach(function(pl) {
+    var r = pl.role || 'other';
+    (byRole[r] = byRole[r] || []).push(pl.display || pl.id);
+  });
+  var roleOrder  = ['spine','leaf','mgmt','ib-fabric','gpu','other'];
+  var roleLabels = { spine:'Spine', leaf:'Leaf', mgmt:'Mgmt', 'ib-fabric':'IB fabric', gpu:'GPU', other:'Other' };
+  var rows = '';
+  roleOrder.forEach(function(r) {
+    if (byRole[r]) rows += '<div style="display:flex;gap:8px;padding:5px 0;font-family:var(--mono);font-size:12px;line-height:1.4">'
+      + '<span style="color:var(--slate,#8194ab);min-width:62px">' + roleLabels[r] + '</span>'
+      + '<span style="color:var(--white)">' + escHtml(byRole[r].join(', ')) + '</span></div>';
+  });
+
+  var fieldCss = 'width:100%;box-sizing:border-box;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.18);'
+    + 'border-radius:10px;padding:14px;color:var(--white);font-family:var(--raj);font-size:17px;-webkit-appearance:none;outline:none';
+  var labelCss = 'font-family:var(--mono);font-size:11px;letter-spacing:1.5px;color:var(--cyan);margin:18px 0 7px';
+
+  inner.innerHTML =
+    '<div style="padding:26px 0 4px">'
+    +   '<div style="font-family:var(--mono);font-size:11px;letter-spacing:2px;color:var(--violet-bright,#b58cff);margin-bottom:8px">PHANTOM // SET UP THIS DEVICE</div>'
+    +   '<div style="font-family:var(--raj);font-weight:700;font-size:26px;color:var(--white);line-height:1.1">' + escHtml(p.facilityId || 'Site') + '</div>'
+    +   '<div style="font-family:var(--raj);font-size:15px;color:var(--slate,#8194ab)">' + escHtml(p.facilityName || '') + '</div>'
+    + '</div>'
+    + '<div style="' + labelCss + '">YOUR NAME</div>'
+    + '<input id="fr-operator" type="text" autocapitalize="words" autocomplete="name" spellcheck="false" placeholder="e.g. J. Hamilton" style="' + fieldCss + '" value="' + escHtml(p.operator || '') + '">'
+    + '<div style="font-family:var(--mono);font-size:11px;color:var(--slate,#8194ab);margin-top:6px">Used on your sign-offs and handoffs.</div>'
+    + '<div style="' + labelCss + '">CONFIRM THE SITE</div>'
+    + '<div style="background:rgba(92,242,255,0.04);border:1px solid rgba(92,242,255,0.15);border-radius:12px;padding:12px 14px">'
+    +   '<div style="font-family:var(--mono);font-size:10px;letter-spacing:1.5px;color:var(--slate,#8194ab);margin-bottom:6px">PHANTOM TELLS THE AI THIS IS YOUR SITE</div>'
+    +   rows
+    +   '<div style="display:flex;gap:8px;padding:6px 0 0;margin-top:6px;border-top:1px solid rgba(255,255,255,0.08);font-family:var(--mono);font-size:12px;line-height:1.4">'
+    +     '<span style="color:var(--slate,#8194ab);min-width:62px">Optics</span><span style="color:var(--white)">' + escHtml(p.standardOptics || '\u2014') + '</span></div>'
+    + '</div>'
+    + '<div style="' + labelCss + '">FLOOR DETAILS <span style="color:var(--slate,#8194ab);letter-spacing:0;text-transform:none">\u2014 optional, fill when you are on the floor</span></div>'
+    + '<input id="fr-rackNaming" type="text" autocapitalize="characters" spellcheck="false" placeholder="Rack naming convention" style="' + fieldCss + ';margin-bottom:10px" value="' + escHtml(p.rackNamingConvention || '') + '">'
+    + '<input id="fr-pdu" type="text" autocapitalize="characters" spellcheck="false" placeholder="PDU type" style="' + fieldCss + '" value="' + escHtml(p.pduType || '') + '">'
+    + '<button id="fr-confirm" onclick="firstRun_confirm()" style="width:100%;margin-top:26px;background:linear-gradient(135deg,#34d2f2,#b58cff);border:none;border-radius:12px;padding:18px;color:#05070b;font-family:var(--raj);font-weight:700;font-size:18px;letter-spacing:1px;cursor:pointer;-webkit-tap-highlight-color:transparent">CONFIRM &amp; ENTER</button>';
+
+  ov.classList.add('show');
+  setTimeout(function() { var f = document.getElementById('fr-operator'); if (f) f.focus(); }, 60);
+}
+
+function firstRun_confirm() {
+  var nameEl = document.getElementById('fr-operator');
+  var name   = nameEl ? nameEl.value.trim() : '';
+  if (!name) {
+    if (typeof phantomToast === 'function') phantomToast('Enter your name first', 'error');
+    if (nameEl) nameEl.focus();
+    return;
+  }
+  var rackEl = document.getElementById('fr-rackNaming');
+  var pduEl  = document.getElementById('fr-pdu');
+  var p = siteProfile_load();
+  p.operator = name;
+  if (rackEl && rackEl.value.trim()) p.rackNamingConvention = rackEl.value.trim();
+  if (pduEl  && pduEl.value.trim())  p.pduType              = pduEl.value.trim();
+  p.confirmedAt = Date.now();
+  if (siteProfile_save(p)) {            // siteProfile_save stamps lastUpdated + schemaVersion
+    if (typeof haptic === 'function') haptic([10, 30, 10]);
+    var ov = document.getElementById('fr-overlay');
+    if (ov) ov.classList.remove('show');
+    if (typeof firstRun_renderChip === 'function') firstRun_renderChip();
+    if (typeof phantomToast === 'function') phantomToast('Device ready \u2014 ' + (p.facilityId || 'site') + ' confirmed', 'ok');
+  } else {
+    if (typeof phantomToast === 'function') phantomToast('Save failed \u2014 storage may be full', 'error');
+  }
+}
+
+// Compact "AUS-01 · {operator}" chip at the top of NOW — replaces the
+// buried-in-Master-overflow path to the profile editor with one tap.
+function firstRun_renderChip() {
+  var el = document.getElementById('fr-chip');
+  if (!el) return;
+  var p = siteProfile_load();
+  if (!p.confirmedAt) { el.innerHTML = ''; return; }
+  var pending = (!p.rackNamingConvention || !p.pduType);
+  el.innerHTML =
+    '<button onclick="firstRun_openProfile()" style="width:100%;box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;gap:8px;'
+    + 'background:rgba(181,140,255,0.06);border:1px solid rgba(181,140,255,0.22);border-radius:var(--hud-r12,12px);'
+    + 'padding:10px 14px;margin-bottom:10px;cursor:pointer;-webkit-tap-highlight-color:transparent">'
+    +   '<span style="font-family:var(--mono);font-size:12px;letter-spacing:1px;color:var(--white);text-align:left">'
+    +     escHtml(p.facilityId || 'SITE') + ' <span style="color:var(--slate,#8194ab)">\u00b7</span> ' + escHtml(p.operator || 'operator')
+    +     (pending ? ' <span style="color:#e0b341">\u00b7 floor details pending</span>' : '')
+    +   '</span>'
+    +   '<span style="font-family:var(--mono);font-size:11px;color:var(--violet-bright,#b58cff)">EDIT \u203a</span>'
+    + '</button>';
+}
+
+function firstRun_openProfile() {
+  showPage('master');
+  setTimeout(function() { if (typeof master_showSection === 'function') master_showSection('profile'); }, 10);
 }
 
 // Returns a formatted context block injected into every AI system prompt.
