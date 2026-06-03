@@ -10188,7 +10188,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.6.70';
+const PHANTOM_APP_VERSION = 'phantom-v1.6.72';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -18289,6 +18289,89 @@ async function rbac_promptSetPin(deploymentId) {
   deploy_showDetail(deploymentId);
 }
 
+// ━━━ DEVICE LEAD PIN (v1.6.71) — gates Master writes ━━━
+// The Master is GLOBAL (one store, no deployment), so per-deployment RBAC can't
+// reach it. This is a device-scoped mirror of the RBAC PIN: same crypto (PBKDF2
+// v2), same pinpad, same lockout — one PIN per device, session-only lead state.
+// Option C: if a device PIN is set it is REQUIRED to replace/clear the Master;
+// if none is set yet, the caller's existing destructive confirm stands in (the
+// Master is never unprotected, never blocked before a lead sets a PIN).
+var DEVICE_LEAD_PIN_KEY = 'phantom_device_lead_pin_v1';
+var DEVICE_LEAD_ID = '__device';   // pseudo-id reused with rbac session + lockout helpers
+
+function deviceLead_getStored() { return safeParse(localStorage.getItem(DEVICE_LEAD_PIN_KEY), null); }
+function deviceLead_hasPin()   { var s = deviceLead_getStored(); return !!(s && s.hash); }
+function deviceLead_isActive() { return rbac_isLeadSession(DEVICE_LEAD_ID); }
+
+// Verify the device PIN and activate the session. Mirrors rbac_enterLeadMode.
+async function deviceLead_enterMode() {
+  var stored = deviceLead_getStored();
+  if (!stored || !stored.hash) { phantomToast('No device Lead PIN set', 'warn'); return false; }
+  var attempts = _pinAttempts_get(DEVICE_LEAD_ID);
+  if (attempts.lockedUntil > Date.now()) {
+    var remain = Math.ceil((attempts.lockedUntil - Date.now()) / 1000);
+    phantomToast('PIN locked — wait ' + remain + 's after failed attempts', 'error');
+    return false;
+  }
+  var pin = await phantomPinpadAsk({ title: 'Enter Device Lead PIN', subtitle: '4 digits — required to change the Master', length: 4, autosubmit: true });
+  if (pin === null || !pin) return false;
+  try {
+    var v = await rbac_verifyPin(pin, stored);
+    if (v.match) {
+      _pinAttempts_clear(DEVICE_LEAD_ID);
+      if (v.needsUpgrade) {
+        try { var ns = rbac_generateSalt(); var nh = await rbac_hashPin_v2(pin, ns); safeStore(DEVICE_LEAD_PIN_KEY, JSON.stringify({ v: 2, salt: ns, hash: nh })); } catch (_) {}
+      }
+      rbac_setLeadSession(DEVICE_LEAD_ID);
+      haptic([10, 40, 10]);
+      phantomToast('Device Lead Mode active', 'ok');
+      return true;
+    }
+    attempts.count++;
+    if (attempts.count >= 5) { attempts.lockedUntil = Date.now() + 60000; attempts.count = 0; phantomToast('Too many failed attempts — PIN locked for 60s', 'error'); }
+    else { phantomToast('Incorrect PIN — ' + (5 - attempts.count) + ' attempt' + (5 - attempts.count !== 1 ? 's' : '') + ' remaining', 'error'); }
+    _pinAttempts_set(DEVICE_LEAD_ID, attempts);
+    haptic([20, 60, 20]);
+    return false;
+  } catch (err) {
+    phantomToast('PIN verification failed: ' + (err.message || 'crypto unavailable') + ' — try again', 'error');
+    haptic([20, 60, 20]);
+    return false;
+  }
+}
+
+// Set or change the device Lead PIN. Mirrors rbac_promptSetPin. If a PIN is
+// already set, require device lead mode first (can't change it blind).
+async function deviceLead_promptSetPin() {
+  if (deviceLead_hasPin() && !deviceLead_isActive()) { phantomToast('Enter Device Lead Mode first to change the PIN', 'warn'); return false; }
+  var pin = await phantomPinpadAsk({ title: 'Set Device Lead PIN', subtitle: 'Share only with authorized build leads', length: 4, autosubmit: true });
+  if (pin === null) return false;
+  if (!/^\d{4}$/.test(pin)) { phantomToast('PIN must be exactly 4 digits (0–9)', 'warn'); return false; }
+  var confirm_pin = await phantomPinpadAsk({ title: 'Confirm PIN', subtitle: 'Re-enter the 4 digits', length: 4, autosubmit: true });
+  if (confirm_pin === null) return false;
+  if (confirm_pin !== pin) { phantomToast('PINs do not match — try again', 'warn'); return false; }
+  var salt = rbac_generateSalt();
+  var hash = await rbac_hashPin_v2(pin, salt);
+  if (!safeStore(DEVICE_LEAD_PIN_KEY, JSON.stringify({ v: 2, salt: salt, hash: hash }))) { phantomToast('Save failed — storage may be full', 'error'); return false; }
+  _pinAttempts_clear(DEVICE_LEAD_ID);
+  rbac_setLeadSession(DEVICE_LEAD_ID);
+  haptic([10, 40, 10]);
+  phantomToast('Device Lead PIN set — Lead Mode active', 'ok');
+  return true;
+}
+
+// Gate used by Master write paths. Returns true if the caller may proceed.
+// PIN set → must be (or become) device lead. No PIN → allow (caller's own
+// destructive confirm is the fallback guard — option C).
+async function deviceLead_requireForMaster() {
+  if (!deviceLead_hasPin()) return true;
+  if (deviceLead_isActive()) return true;
+  return await deviceLead_enterMode();
+}
+
+window.deviceLead_promptSetPin = deviceLead_promptSetPin;
+window.deviceLead_enterMode    = deviceLead_enterMode;
+
 // ━━━ FEATURE: SHIFT BRIEFING ━━━
 var BRIEF_KEY = 'phantom_brief_last_ts';
 var BRIEF_SHIFT_GAP = 6 * 60 * 60 * 1000; // 6 hours between auto-briefs
@@ -23271,6 +23354,16 @@ function revGate_apply() {
     if (typeof phantomToast === 'function') phantomToast('Compute diff first', 'warn');
     return;
   }
+  // v1.6.72: applying a new EDP revision overwrites the deployment's EDP. Gate
+  // behind that deployment's Build Lead PIN when one is set (option C — a
+  // deployment with no PIN configured is not blocked).
+  if (typeof rbac_isLead === 'function') {
+    var _edep = (typeof deploy_getById === 'function') ? deploy_getById(s.deployId) : null;
+    if (_edep && _edep.leadPinHash && !rbac_isLead(_edep)) {
+      if (typeof phantomToast === 'function') phantomToast('Build Lead access required to apply an EDP revision — enter Lead Mode first', 'warn');
+      return;
+    }
+  }
   var deploys = (typeof deploy_loadAll === 'function') ? deploy_loadAll() : [];
   var idx = deploys.findIndex(function(d) { return d.id === s.deployId; });
   if (idx < 0) {
@@ -24863,6 +24956,14 @@ window.phantomConfirmAsk = phantomConfirmAsk;
 // window._lastPhantomMaster. We just show inline "Parsing…" status,
 // then re-render on completion.
 async function master_loadFile() {
+  // v1.6.71: re-importing over an already-loaded Master is destructive — gate it
+  // behind the device Lead PIN. First load (nothing loaded yet) stays open, and
+  // master_onReplaceTap clears before calling here, so it never double-prompts.
+  try {
+    var _m = window._lastPhantomMaster;
+    var _loaded = !!(_m && _m.racksByCab && Object.keys(_m.racksByCab).length);
+    if (_loaded && typeof deviceLead_requireForMaster === 'function' && !(await deviceLead_requireForMaster())) return null;
+  } catch (_) {}
   var emptyEl = document.getElementById('master-empty-state');
   if (emptyEl) master_renderEmpty(emptyEl, { status: 'Parsing…' });
   try {
@@ -25366,6 +25467,10 @@ function master_renderLoaded(container) {
             '</div>' +
             '<button type="button" class="master-banner-replace"' +
               ' onclick="master_onReplaceTap()" aria-label="Replace loaded Master">Replace</button>' +
+            '<button type="button" class="master-banner-replace" style="margin-left:6px"' +
+              ' onclick="deviceLead_promptSetPin().then(function(ok){ if(ok &amp;&amp; typeof master_render===\'function\') master_render(); })"' +
+              ' aria-label="Set or change the device Lead PIN that protects the Master">' +
+              ((typeof deviceLead_hasPin === 'function' && deviceLead_hasPin()) ? 'PIN: ON' : 'Set PIN') + '</button>' +
           '</div>';
   html += '<div class="master-search-wrap">' +
             '<input type="text" id="master-search-input" class="master-search-input"' +
@@ -25589,6 +25694,9 @@ function master_onHostnameTap(hostname) {
 window.master_onHostnameTap = master_onHostnameTap;
 
 async function master_onReplaceTap() {
+  // v1.6.71: replacing a loaded Master is destructive — gate behind the device
+  // Lead PIN if one is set (option C: no PIN → the confirm below is the guard).
+  if (typeof deviceLead_requireForMaster === 'function' && !(await deviceLead_requireForMaster())) return;
   var m = window._lastPhantomMaster || {};
   var racks = (m.racksByCab && typeof m.racksByCab === 'object') ? m.racksByCab : {};
   var n = Object.keys(racks).length;
@@ -31869,6 +31977,19 @@ async function bomIngest_commit() {
     s.error = 'Link this BOM to a deployment before committing.';
     bomIngest_refresh();
     return;
+  }
+
+  // v1.6.72: re-ingesting a BOM into an EXISTING deployment can clobber or
+  // duplicate its bill of materials — gate behind that deployment's Build Lead
+  // PIN when one is set (option C). Ingest into a NEW deployment is first-load
+  // and stays open; a deployment with no PIN configured is not blocked.
+  if (s.metadata && s.metadata.link_mode === 'existing' && typeof rbac_isLead === 'function') {
+    var _bdep = (typeof deploy_getById === 'function') ? deploy_getById(s.metadata.deployment_id) : null;
+    if (_bdep && _bdep.leadPinHash && !rbac_isLead(_bdep)) {
+      s.error = 'Build Lead access required to re-ingest a BOM into this deployment — enter Lead Mode on it first.';
+      bomIngest_refresh();
+      return;
+    }
   }
 
   // Pre-flight dedup check (Finding #11). Runs BEFORE step 4 transition
