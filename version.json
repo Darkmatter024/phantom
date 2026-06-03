@@ -1,6 +1,6 @@
 {
-  "version": "phantom-v1.6.64",
+  "version": "phantom-v1.6.65",
   "released": "2026-06-02",
-  "prevVersion": "phantom-v1.6.63",
-  "notes": "Landing page is now the app entry point. manifest.json start_url -> ./index.html, so the installed PWA opens the PHANTOM landing screen and ENTER routes to dct-ios.html. The landing (index.html) is added to the service-worker PRECACHE_URLS so it loads offline on a cold launch, and it now registers the service worker itself for offline-first robustness on first visit. No app logic changed — this is entry/manifest/cache wiring only. Bare .../phantom/ serves the landing (front door); FORGE-01 GPU Ops moved to /phantom/forge.html. Three stamps aligned at v1.6.64."
+  "prevVersion": "phantom-v1.6.64",
+  "notes": "Cache bump only. Forces the service worker to re-fetch index.html / landing.html / dct-ios.html so the v1.6.64 landing redesign (the V1.7.3 front door with the power-topology panel and status chips) actually reaches installed PWAs and returning browsers that were still serving the previously cached landing. No layout, logic, or routing changes. Three stamps aligned at v1.6.65 (dct-ios.html PHANTOM_APP_VERSION, sw.js CACHE_VERSION, version.json)."
 }
