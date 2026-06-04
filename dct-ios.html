@@ -10188,7 +10188,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.6.73';
+const PHANTOM_APP_VERSION = 'phantom-v1.6.74';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -11070,10 +11070,10 @@ if (typeof window !== 'undefined') {
           <div class="qa-icon"><span class="ico ico-2xl ico-ghost" style="vertical-align:middle"></span></div>
           <div class="qa-label">Ghost Echo</div>
         </button>
-        <!-- CRASH-CART — hands-free racking mode toggle -->
-        <button class="qa-btn" onclick="crashcart_toggle()" aria-label="Toggle Crash-Cart Mode">
-          <div class="qa-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#9af6ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><rect x="2" y="6" width="20" height="12" rx="1"/><line x1="6" y1="10" x2="18" y2="10"/><line x1="6" y1="14" x2="14" y2="14"/></svg></div>
-          <div class="qa-label" style="color: var(--cyan-bright);">Crash-Cart</div>
+        <!-- HW REF — hardware reference matrix. v1.6.74: re-homed from header overflow to a NOW tile (crash-cart moved to BUILD subtab). Overflow entry retained for reach-from-anywhere. -->
+        <button class="qa-btn" onclick="hwMatrix_open()" aria-label="Open hardware reference">
+          <div class="qa-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#5cf2ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5"/><line x1="12" y1="22" x2="12" y2="15.5"/><polyline points="22 8.5 12 15.5 2 8.5"/></svg></div>
+          <div class="qa-label" style="color: var(--cyan-bright);">HW Ref</div>
         </button>
         <!-- SHIFT REPORT — generate end-of-shift report -->
         <button class="qa-btn qa-parser" onclick="shiftReport_generate()" aria-label="Generate shift report">
@@ -13185,6 +13185,7 @@ if (typeof window !== 'undefined') {
         <div class="stab" data-tab="manifest" onclick="showOpsTab('manifest')">Manifest</div>
         <div class="stab" data-tab="portmap" onclick="showOpsTab('portmap')">Port Map</div>
         <div class="stab" data-tab="rackmap" onclick="showOpsTab('rackmap')">Rack Map</div>
+        <div class="stab" data-tab="crashcart" onclick="showOpsTab('crashcart')">Crash-Cart</div>
         <div class="stab" data-tab="optics" onclick="showOpsTab('optics')">Optics</div>
         <div class="stab" data-tab="power" onclick="showPageSafe('power','sop')">Power</div>
         <div class="stab" data-tab="burndown" onclick="showOpsTab('burndown')">Burndown</div>
@@ -15931,7 +15932,19 @@ const OPS_TABS = {
     //   phantom_deploy_assign_v1  → [ { id, deploymentId, techName, phaseType, rackIds } ]  (Stage 4+)
     deploy_showList(c);
   },
-  manifest: function(c) { manifest_render(c); }
+  manifest: function(c) { manifest_render(c); },
+  crashcart: function(c) {
+    // v1.6.74: Crash-Cart re-homed from NOW tile to a BUILD subtab. This pane is a
+    // launch card only — the mode itself (full-screen #crashcart-layer overlay) is
+    // unchanged. crashcart_toggle() enters; crashcart_exit() removes the overlay and
+    // reveals this subtab beneath it, so exit returns here with no extra wiring.
+    c.innerHTML = `
+      <div class="sh">Crash-Cart Mode</div>
+      <p>Hands-free, four-foot-readable single-rack view for crash-cart work. Enter the mode, then snap to a rack on the scrub-bar. Exiting returns you to this tab.</p>
+      <div style="margin-top:12px">
+        <button class="pt-btn pt-btn-secondary" onclick="crashcart_toggle()" style="width:100%;margin-top:0">▶ &nbsp;ENTER CRASH-CART MODE</button>
+      </div>`;
+  }
 };
 
 function showOpsTab(tab) {

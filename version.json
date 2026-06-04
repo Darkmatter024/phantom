@@ -1,6 +1,6 @@
 {
-  "version": "phantom-v1.6.73",
-  "released": "2026-06-03",
-  "prevVersion": "phantom-v1.6.72",
-  "notes": "Refactor (behavior-preserving) — consolidated the two Rack Map resolvers. rackViewer_request (BUILD ops-tab, view-only) and rmSearch_request (POWER pw-rm, authoring) were ~250 lines of duplicate search ladder walking the same four stores in the same order — the drift behind the old Master dual-path bug. Extracted one shared _rackResolve(query, silent, opts); both public functions are now thin wrappers (names kept — call sites, deep links, rmConfirm_show re-entry unchanged). Per-surface tails preserved exactly via opts: BUILD stays view-only (currentRackId never set, no legend), POWER still sets currentRackId / shows legend / clears last-viewed-mount / toasts via _rmDisplayName. Last-viewed memory unified to one key RACK_VIEWER_LAST_KEY — phantom_rm_last fully retired (renderRackMap auto-restore + rmSearch_clear repointed; zero literals remain), so a rack scanned in BUILD auto-restores in POWER and vice versa. One-time: a device's old POWER last-rack memory drops on upgrade and self-heals next open. Two micro-normalizations (both invisible to which rack resolves): POWER search query now trimmed like BUILD; clearing the POWER rack map now forgets the shared last-viewed (coherent with one memory). Three stamps at v1.6.73."
+  "version": "phantom-v1.6.74",
+  "released": "2026-06-04",
+  "prevVersion": "phantom-v1.6.73",
+  "notes": "Nav swap (additive, no mode refactor) — HW REF and Crash-Cart trade homes. HW REF was reachable only from the header overflow kebab; it is now a one-tap NOW dashboard tile in the slot Crash-Cart vacated (overflow entry retained for reach-from-anywhere). Crash-Cart leaves the NOW dashboard and becomes a BUILD subtab after Rack Map, rendered as a launch card that enters the existing full-screen mode — crashcart_toggle/exit/pickRack unchanged; exit lifts the overlay to reveal the subtab beneath, so no extra wiring. Net: NOW stays a row of launchers (HW REF opens a sheet like its neighbors), Crash-Cart sits with the rack-work tools in BUILD. Three stamps at v1.6.74."
 }
