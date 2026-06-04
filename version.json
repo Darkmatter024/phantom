@@ -1,6 +1,6 @@
 {
-  "version": "phantom-v1.6.74",
+  "version": "phantom-v1.6.75",
   "released": "2026-06-04",
-  "prevVersion": "phantom-v1.6.73",
-  "notes": "Nav swap (additive, no mode refactor) — HW REF and Crash-Cart trade homes. HW REF was reachable only from the header overflow kebab; it is now a one-tap NOW dashboard tile in the slot Crash-Cart vacated (overflow entry retained for reach-from-anywhere). Crash-Cart leaves the NOW dashboard and becomes a BUILD subtab after Rack Map, rendered as a launch card that enters the existing full-screen mode — crashcart_toggle/exit/pickRack unchanged; exit lifts the overlay to reveal the subtab beneath, so no extra wiring. Net: NOW stays a row of launchers (HW REF opens a sheet like its neighbors), Crash-Cart sits with the rack-work tools in BUILD. Three stamps at v1.6.74."
+  "prevVersion": "phantom-v1.6.74",
+  "notes": "HW Matrix GB300 refresh — Phase 1 (structural fix, no new fault content). The GB200/300 filter chip now surfaces the 105 universal physical-fault cards (m:'B') alongside the 22 Blackwell cards (m:'G') instead of hiding them — AUS-01 runs GB300 NVL72, and the universal optics/fiber/FEC/IB/NVLink/power/LED guidance was being dropped from the closest-platform view. Two edits in hwMatrix_render: filter GB200 branch now admits 'B' as well as 'G'; modelTag else-branch relabeled 'H100/H200' -> 'UNIVERSAL' so platform-agnostic faults stop reading as Hopper-only. No card data changed; H100/H200 chips unchanged (already admitted 'B'). Phase 2 (GB300-specific content, needs domain sign-off) and the GB300 chip remain parked. v1.6.69-74 features all intact; three stamps at v1.6.75."
 }

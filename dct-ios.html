@@ -10188,7 +10188,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.6.74';
+const PHANTOM_APP_VERSION = 'phantom-v1.6.75';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -19946,7 +19946,7 @@ function hwMatrix_render() {
     if (_hwm_model !== 'all') {
       if (_hwm_model === 'H100'  && e.m !== 'H' && e.m !== 'B') return false;
       if (_hwm_model === 'H200'  && e.m !== 'X' && e.m !== 'B') return false;
-      if (_hwm_model === 'GB200' && e.m !== 'G') return false;
+      if (_hwm_model === 'GB200' && e.m !== 'G' && e.m !== 'B') return false;
     }
     if (_hwm_cat !== 'all' && item.cat !== _hwm_cat) return false;
     if (!q) return true;
@@ -19960,7 +19960,7 @@ function hwMatrix_render() {
   }
   list.innerHTML = results.map(function(item) {
     var e = item.entry;
-    var modelTag = e.m === 'H' ? 'H100' : e.m === 'X' ? 'H200' : e.m === 'G' ? 'GB200/300' : 'H100/H200';
+    var modelTag = e.m === 'H' ? 'H100' : e.m === 'X' ? 'H200' : e.m === 'G' ? 'GB200/300' : 'UNIVERSAL';
     return '<div class="hwm-entry cat-' + item.cat + '" onclick="this.classList.toggle(\'hwm-open\')">' +
       '<div class="hwm-fault">' +
         '<span class="hwm-model-tag">' + escHtml(modelTag) + '</span>' +
