@@ -10188,7 +10188,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.6.72';
+const PHANTOM_APP_VERSION = 'phantom-v1.6.73';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -34503,49 +34503,52 @@ function pf(f,el){
 // Lookup is case-insensitive and matches BOTH rack.id AND rack.name so a
 // scan of "L-04" works whether the EDP imported it as id="l-04", name="L-04",
 // or any combination.
-function rackViewer_request(rackId, silent) {
-  if (!rackId) return;
-  var input = document.getElementById('rack-viewer-input');
-  var target = document.getElementById('rack-viewer-target');
+// ━━━ SHARED RACK RESOLVER (v1.6.73) ━━━
+// One lookup feeding both Rack Map surfaces. Previously rackViewer_request
+// (BUILD ops-tab, #rack-viewer-target, view-only) and rmSearch_request (POWER
+// pw-rm, #rm-elevation-area, authoring) were ~90 hand-maintained duplicate
+// lines walking the SAME four stores in the SAME priority order — the drift
+// that caused the old Master dual-path bug. The search ladder is now shared;
+// each surface's distinct tail rides in opts. ZERO change to which racks
+// resolve or how they render.
+//   opts = { inputId, targetId, legendId|null, setCurrent:bool, softFail:fn,
+//            reentry:fn, toastName:fn(rack)->str, clearLvm:bool }
+function _rackResolve(rawQuery, silent, opts) {
+  if (!rawQuery) return;
+  var input  = document.getElementById(opts.inputId);
+  var target = document.getElementById(opts.targetId);
+  var legend = opts.legendId ? document.getElementById(opts.legendId) : null;
   if (!target) return;
-  var query = String(rackId).trim();
+  var query = String(rawQuery).trim();
   if (!query) return;
   var qLower = query.toLowerCase();
 
-  // Search standalone rack store (manually added via + RACK)
+  // 1) standalone store (manually added via + RACK)
   var rack = null;
   try {
     var standaloneRacks = (typeof loadRacks === 'function') ? loadRacks() : [];
     for (var i = 0; i < standaloneRacks.length; i++) {
       var r = standaloneRacks[i];
-      var rid = String(r.id || '').toLowerCase();
-      var rname = String(r.name || '').toLowerCase();
-      if (rid === qLower || rname === qLower) { rack = r; break; }
+      if (String(r.id || '').toLowerCase() === qLower || String(r.name || '').toLowerCase() === qLower) { rack = r; break; }
     }
   } catch(_){}
 
-  // If not found in standalone, scope to ACTIVE deployment first
-  var rv_activeDep = null;
+  // 2) ACTIVE deployment
+  var activeDep = null;
   if (!rack) {
     try {
-      rv_activeDep = (typeof deploy_getActive === 'function') ? deploy_getActive() : null;
-      if (rv_activeDep && rv_activeDep.id && typeof deploy_loadRacks === 'function') {
-        var rvActiveDepRacks = deploy_loadRacks(rv_activeDep.id) || [];
-        for (var jra = 0; jra < rvActiveDepRacks.length; jra++) {
-          var rvdra = rvActiveDepRacks[jra];
-          var rvdraid    = String(rvdra.id || '').toLowerCase();
-          var rvdraname  = String(rvdra.name || '').toLowerCase();
-          var rvdrarid   = String(rvdra.rackId || '').toLowerCase();
-          if (rvdraid === qLower || rvdraname === qLower || rvdrarid === qLower) {
-            rack = rvdra;
-            break;
-          }
+      activeDep = (typeof deploy_getActive === 'function') ? deploy_getActive() : null;
+      if (activeDep && activeDep.id && typeof deploy_loadRacks === 'function') {
+        var aRacks = deploy_loadRacks(activeDep.id) || [];
+        for (var ja = 0; ja < aRacks.length; ja++) {
+          var dra = aRacks[ja];
+          if (String(dra.id || '').toLowerCase() === qLower || String(dra.name || '').toLowerCase() === qLower || String(dra.rackId || '').toLowerCase() === qLower) { rack = dra; break; }
         }
       }
     } catch(_){}
   }
 
-  // If still not found, look in OTHER deployments — confirm before cross-loading
+  // 3) OTHER deployments — confirm before cross-loading
   if (!rack) {
     try {
       if (typeof deploy_loadAll === 'function' && typeof deploy_loadRacks === 'function') {
@@ -34554,19 +34557,13 @@ function rackViewer_request(rackId, silent) {
           for (var d = 0; d < allDeps.length && !rack; d++) {
             var dep = allDeps[d];
             if (!dep || !dep.id) continue;
-            if (rv_activeDep && dep.id === rv_activeDep.id) continue;
+            if (activeDep && dep.id === activeDep.id) continue;
             var depRacks = deploy_loadRacks(dep.id) || [];
             for (var j = 0; j < depRacks.length; j++) {
               var dr = depRacks[j];
-              var drid    = String(dr.id || '').toLowerCase();
-              var drname  = String(dr.name || '').toLowerCase();
-              var drrid   = String(dr.rackId || '').toLowerCase();
-              if (drid === qLower || drname === qLower || drrid === qLower) {
+              if (String(dr.id || '').toLowerCase() === qLower || String(dr.name || '').toLowerCase() === qLower || String(dr.rackId || '').toLowerCase() === qLower) {
                 if (silent) return;
-                if (rv_activeDep) {
-                  rmConfirm_show(query, dr, dep, rv_activeDep, rackViewer_request);
-                  return;
-                }
+                if (activeDep) { rmConfirm_show(query, dr, dep, activeDep, opts.reentry); return; }
                 rack = dr;
                 break;
               }
@@ -34577,14 +34574,13 @@ function rackViewer_request(rackId, silent) {
     } catch(_){}
   }
 
-  // -- Master fall-through (Step 1 bridge) --------------------------------
-  // Legacy stores missed. On an explicit submit (not mid-type), consult the
-  // loaded Master and render via the existing elevation engine. View-only:
-  // Master racks are not drag-editable (no backing store to persist reorders).
+  // 4) Master fall-through — view-only; currentRackId never set (no backing
+  //    store for a Master cab, so no save/edit path can mutate it).
   if (!rack && !silent && typeof master_findRack === 'function') {
     var mHit = master_findRack(query);
     if (mHit && typeof master_renderHit === 'function') {
       var kind = master_renderHit(mHit, target);
+      if (legend) legend.style.display = 'flex';
       try { if (typeof RACK_VIEWER_LAST_KEY !== 'undefined') safeStore(RACK_VIEWER_LAST_KEY, String(mHit.id)); } catch (_) {}
       if (input) input.value = '';
       if (typeof haptic === 'function') haptic([8]);
@@ -34594,35 +34590,48 @@ function rackViewer_request(rackId, silent) {
     }
   }
 
+  // 5) miss — silent on debounced auto-search; soft-fail on explicit submit
   if (!rack) {
-    // Silent mode (called from debounced auto-search while user is still typing):
-    // do nothing on miss. Only the explicit submit paths (form/Enter) render soft-fail.
     if (silent) return;
-    rackViewer_softFail(query);
-    // NOTE: do NOT clear input.value here — user may want to correct their typing
+    opts.softFail(query);
     return;
   }
+
+  // hit — render through the shared elevation engine
   if (typeof renderElevation === 'function') {
-    target.innerHTML = ''; // dispose previous render before building new
+    target.innerHTML = '';
     renderElevation(rack, target);
     _rmRenderHeaderInArea(rack, target);
     if (typeof initRackDrag === 'function') setTimeout(initRackDrag, 50);
   } else {
     target.innerHTML = '<div style="padding:20px;color:var(--slate);font-family:var(--mono);font-size:11px">Rack render engine unavailable.</div>';
   }
-  // Phase 2: remember last-viewed rack ID so user picks up where they left off.
-  // We persist the human-readable name (rackId/name), not the synthetic .id.
+  if (opts.setCurrent) currentRackId = rack.id;
+  if (legend) legend.style.display = 'flex';
+
+  // persist last-viewed (human-readable key; re-resolved on restore, so the
+  // exact string stored does not affect which rack comes back)
   try {
-    var lastKey = (rack.rackId || rack.name || rack.id || '').toString();
-    if (lastKey) safeStore(RACK_VIEWER_LAST_KEY, lastKey);
+    var lastKey = (rack.name && String(rack.name).trim()) || (rack.rackId && String(rack.rackId).trim()) || rack.id;
+    if (lastKey) safeStore(RACK_VIEWER_LAST_KEY, String(lastKey));
   } catch(_){}
+
+  if (opts.clearLvm) { var lvm0 = document.getElementById('rm-last-viewed-mount'); if (lvm0) lvm0.innerHTML = ''; }
+
   if (input) input.value = '';
-  // Silent mode (auto-restore on tab entry) suppresses the success toast.
-  // Only explicit user actions get audible feedback.
   if (!silent) {
     if (typeof haptic === 'function') haptic([8]);
-    if (typeof phantomToast === 'function') phantomToast('Loaded ' + (rack.name || rack.id), 'ok');
+    if (typeof phantomToast === 'function') phantomToast('Loaded ' + opts.toastName(rack), 'ok');
   }
+}
+
+// BUILD ops-tab Rack Map — scan-first viewer, no edit chrome (currentRackId NOT set).
+function rackViewer_request(rackId, silent) {
+  return _rackResolve(rackId, silent, {
+    inputId: 'rack-viewer-input', targetId: 'rack-viewer-target', legendId: null,
+    setCurrent: false, softFail: rackViewer_softFail, reentry: rackViewer_request,
+    toastName: function(rack) { return rack.name || rack.id; }, clearLvm: false
+  });
 }
 
 function rackViewer_clear() {
@@ -34743,14 +34752,14 @@ function renderRackMap() {
     if (lvm3) lvm3.innerHTML = '';
     try {
       var key = (current.name && current.name.trim()) || (current.rackId && current.rackId.trim()) || current.id;
-      if (key) safeStore('phantom_rm_last', key);
+      if (key) safeStore(RACK_VIEWER_LAST_KEY, key);
     } catch(e) {}
     return;
   }
 
   // No active selection — try last-viewed (silent, graceful fallback)
   var lastKey = null;
-  try { lastKey = localStorage.getItem('phantom_rm_last'); } catch(e) {}
+  try { lastKey = localStorage.getItem(RACK_VIEWER_LAST_KEY); } catch(e) {}
   if (lastKey) {
     rmSearch_request(lastKey, true);
     if (currentRackId) return; // last-viewed resolved, render handled
@@ -34979,131 +34988,16 @@ function _rmRenderHeaderInArea(rack, area) {
 }
 
 // ── Search request — searches standalone + deployment racks ──
+// POWER pw-rm Rack Map — authoring surface: sets currentRackId (drives +RACK /
+// drag-edit / saveRack), shows the legend, clears the last-viewed mount, and
+// toasts via _rmDisplayName.
 function rmSearch_request(query, silent) {
-  if (!query) return;
-  var input = document.getElementById('rm-search-input');
-  var area = document.getElementById('rm-elevation-area');
-  var legend = document.getElementById('rm-legend');
-  if (!area) return;
-  var qLower = String(query).trim().toLowerCase();
-  if (!qLower) return;
-
-  // Search standalone rack store (manually added via + RACK)
-  var rack = null;
-  try {
-    var standaloneRacks = (typeof loadRacks === 'function') ? loadRacks() : [];
-    for (var i = 0; i < standaloneRacks.length; i++) {
-      var r = standaloneRacks[i];
-      var rid = String(r.id || '').toLowerCase();
-      var rname = String(r.name || '').toLowerCase();
-      if (rid === qLower || rname === qLower) { rack = r; break; }
-    }
-  } catch(_){}
-
-  // If not found in standalone, scope to ACTIVE deployment first
-  var activeDep_search = null;
-  if (!rack) {
-    try {
-      activeDep_search = (typeof deploy_getActive === 'function') ? deploy_getActive() : null;
-      if (activeDep_search && activeDep_search.id && typeof deploy_loadRacks === 'function') {
-        var activeDepRacks = deploy_loadRacks(activeDep_search.id) || [];
-        for (var ja = 0; ja < activeDepRacks.length; ja++) {
-          var dra = activeDepRacks[ja];
-          var draid    = String(dra.id || '').toLowerCase();
-          var draname  = String(dra.name || '').toLowerCase();
-          var drarid   = String(dra.rackId || '').toLowerCase();
-          if (draid === qLower || draname === qLower || drarid === qLower) {
-            rack = dra;
-            break;
-          }
-        }
-      }
-    } catch(_){}
-  }
-
-  // If still not found, look in OTHER deployments — confirm before cross-loading
-  if (!rack) {
-    try {
-      if (typeof deploy_loadAll === 'function' && typeof deploy_loadRacks === 'function') {
-        var allDeps = deploy_loadAll();
-        if (Array.isArray(allDeps) && allDeps.length > 0) {
-          for (var d = 0; d < allDeps.length && !rack; d++) {
-            var dep = allDeps[d];
-            if (!dep || !dep.id) continue;
-            if (activeDep_search && dep.id === activeDep_search.id) continue; // already searched
-            var depRacks = deploy_loadRacks(dep.id) || [];
-            for (var j = 0; j < depRacks.length; j++) {
-              var dr = depRacks[j];
-              var drid    = String(dr.id || '').toLowerCase();
-              var drname  = String(dr.name || '').toLowerCase();
-              var drrid   = String(dr.rackId || '').toLowerCase();
-              if (drid === qLower || drname === qLower || drrid === qLower) {
-                if (silent) return; // debounced auto-search: don't pop modal
-                if (activeDep_search) {
-                  rmConfirm_show(query, dr, dep, activeDep_search, rmSearch_request);
-                  return;
-                }
-                rack = dr;
-                break;
-              }
-            }
-          }
-        }
-      }
-    } catch(_){}
-  }
-
-  // -- Master fall-through (Step 1 bridge) -- view-only; see fn#1 note.
-  // currentRackId deliberately NOT set: a Master cab has no backing entry in
-  // loadRacks(), so leaving currentRackId null prevents any downstream
-  // save/edit path from trying to mutate a rack that isn't in the store.
-  if (!rack && !silent && typeof master_findRack === 'function') {
-    var mHit2 = master_findRack(query);
-    if (mHit2 && typeof master_renderHit === 'function') {
-      var kind2 = master_renderHit(mHit2, area);
-      if (legend) legend.style.display = 'flex';
-      try { safeStore('phantom_rm_last', String(mHit2.id)); } catch (_) {}
-      if (input) input.value = '';
-      if (typeof haptic === 'function') haptic([8]);
-      var lbl2 = kind2 === 'cabling' ? ' \u00b7 Cabling' : kind2 === 'nodata' ? ' \u00b7 Cabling (no data)' : ' \u00b7 Master';
-      if (typeof phantomToast === 'function') phantomToast('Loaded ' + mHit2.id + lbl2, 'ok');
-      return;
-    }
-  }
-
-  if (!rack) {
-    if (silent) return; // debounced auto-search: silent on miss
-    rmSearch_softFail(query);
-    return;
-  }
-
-  if (typeof renderElevation === 'function') {
-    area.innerHTML = '';
-    renderElevation(rack, area);
-    _rmRenderHeaderInArea(rack, area);
-    if (typeof initRackDrag === 'function') setTimeout(initRackDrag, 50);
-  }
-  currentRackId = rack.id;
-  if (legend) legend.style.display = 'flex';
-
-  // Persist last-viewed (human-readable key)
-  try {
-    var lastKey = (rack.name && String(rack.name).trim()) || (rack.rackId && String(rack.rackId).trim()) || rack.id;
-    if (lastKey) safeStore('phantom_rm_last', String(lastKey));
-  } catch(_){}
-
-  // Header in the elevation area replaces the small "Loaded" chip — clear it
-  var lvm0 = document.getElementById('rm-last-viewed-mount');
-  if (lvm0) lvm0.innerHTML = '';
-
-  if (input) input.value = '';
-  if (!silent) {
-    if (typeof haptic === 'function') haptic([8]);
-    if (typeof phantomToast === 'function') {
-      var d = _rmDisplayName(rack);
-      phantomToast('Loaded ' + d.text, 'ok');
-    }
-  }
+  return _rackResolve(query, silent, {
+    inputId: 'rm-search-input', targetId: 'rm-elevation-area', legendId: 'rm-legend',
+    setCurrent: true, softFail: rmSearch_softFail, reentry: rmSearch_request,
+    toastName: function(rack) { return (typeof _rmDisplayName === 'function') ? _rmDisplayName(rack).text : (rack.name || rack.id); },
+    clearLvm: true
+  });
 }
 
 function rmSearch_clear() {
@@ -35122,7 +35016,7 @@ function rmSearch_clear() {
   if (legend) legend.style.display = 'none';
   if (lvm) lvm.innerHTML = '';
   currentRackId = null;
-  try { localStorage.removeItem('phantom_rm_last'); } catch(_){}
+  try { localStorage.removeItem(RACK_VIEWER_LAST_KEY); } catch(_){}
 }
 
 function rmSearch_softFail(query) {
@@ -37127,8 +37021,8 @@ const OPTIC_INV_KEY = 'phantom_optic_inventory';
 
 // v1.6.49 dedup: pull these three keys out of inline string literals so the
 // data model is greppable from one place. Active read/write keys only; the
-// 6 cleanup-only / dev-only direct-string keys (gt_lessons, phantom_seen_boot,
-// phantom_force_lead_v1, phantom_identity, phantom_rm_last, __phantom_health)
+// 5 cleanup-only / dev-only direct-string keys (gt_lessons, phantom_seen_boot,
+// phantom_force_lead_v1, phantom_identity, __phantom_health)
 // stay inline — naming a one-shot removeItem call is cosmetic.
 const BURNDOWN_KEY        = 'dct_burndown_v1';
 const HANDOFF_NOTES_KEY   = 'phantom_handoff_notes';
