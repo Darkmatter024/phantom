@@ -10188,7 +10188,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.6.75';
+const PHANTOM_APP_VERSION = 'phantom-v1.6.76';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -24797,7 +24797,8 @@ async function phantom_parseMaster(arrayBuffer, options) {
 // Master load (file picker) — opens picker, parses, stashes site. Also callable: window.master_loadFromPicker()
 // Returns a Promise<Site|null> that resolves once the user selects a file (or null on cancel).
 // Side effect: stashes result at window._lastPhantomMaster for inspection.
-window.master_loadFromPicker = function master_loadFromPicker() {
+window.master_loadFromPicker = function master_loadFromPicker(opts) {
+  opts = opts || {};
   return new Promise(function(resolve, reject) {
     var input = null;
     try {
@@ -24819,6 +24820,13 @@ window.master_loadFromPicker = function master_loadFromPicker() {
           resolve(null);
           return;
         }
+        // v1.6.76: destructive-replace guard + parsing UI run AFTER selection, so
+        // input.click() (below) stays inside the tap gesture (iOS requirement).
+        if (typeof opts.preCommit === 'function') {
+          var _proceed = await opts.preCommit();
+          if (!_proceed) { try { input.remove(); } catch (_) {} resolve(null); return; }
+        }
+        if (typeof opts.onParseStart === 'function') { try { opts.onParseStart(); } catch (_) {} }
         var file = input.files[0];
         try { console.info('PHANTOM Master: reading ' + file.name + ' (' + (file.size / 1024 / 1024).toFixed(2) + ' MB)'); } catch (_) {}
         var ab = await file.arrayBuffer();
@@ -24969,20 +24977,25 @@ window.phantomConfirmAsk = phantomConfirmAsk;
 // window._lastPhantomMaster. We just show inline "Parsing…" status,
 // then re-render on completion.
 async function master_loadFile() {
-  // v1.6.71: re-importing over an already-loaded Master is destructive — gate it
-  // behind the device Lead PIN. First load (nothing loaded yet) stays open, and
-  // master_onReplaceTap clears before calling here, so it never double-prompts.
-  try {
-    var _m = window._lastPhantomMaster;
-    var _loaded = !!(_m && _m.racksByCab && Object.keys(_m.racksByCab).length);
-    if (_loaded && typeof deviceLead_requireForMaster === 'function' && !(await deviceLead_requireForMaster())) return null;
-  } catch (_) {}
+  // v1.6.76: the destructive-replace PIN gate moved out of here (it used to run
+  // BEFORE the picker). Opening the OS file picker needs input.click() to fire
+  // synchronously inside the tap gesture; awaiting the gate first spent the
+  // gesture and iOS Safari silently refused to open the picker. The gate now runs
+  // as a post-selection preCommit hook (see master_loadFromPicker) — protection
+  // unchanged, only its timing moved to after the file is chosen.
+  var _m = window._lastPhantomMaster;
+  var _loaded = !!(_m && _m.racksByCab && Object.keys(_m.racksByCab).length);
   var emptyEl = document.getElementById('master-empty-state');
-  if (emptyEl) master_renderEmpty(emptyEl, { status: 'Parsing…' });
   try {
-    var site = await window.master_loadFromPicker();
+    var site = await window.master_loadFromPicker({
+      preCommit: _loaded ? function() {
+        return (typeof deviceLead_requireForMaster === 'function')
+          ? deviceLead_requireForMaster() : Promise.resolve(true);
+      } : null,
+      onParseStart: function() { if (emptyEl) master_renderEmpty(emptyEl, { status: 'Parsing…' }); }
+    });
     if (!site) {
-      master_render(); // user cancelled — repaint plain empty
+      master_render(); // user cancelled or declined the gate — repaint plain empty
       return null;
     }
     master_render();
@@ -25707,31 +25720,51 @@ function master_onHostnameTap(hostname) {
 window.master_onHostnameTap = master_onHostnameTap;
 
 async function master_onReplaceTap() {
-  // v1.6.71: replacing a loaded Master is destructive — gate behind the device
-  // Lead PIN if one is set (option C: no PIN → the confirm below is the guard).
-  if (typeof deviceLead_requireForMaster === 'function' && !(await deviceLead_requireForMaster())) return;
+  // v1.6.76: open the picker synchronously on tap (iOS needs input.click() inside
+  // the gesture), then run the destructive-replace guard + clear in a post-selection
+  // preCommit hook. Same protection as v1.6.71 (PIN gate if set, confirm if not).
+  // The loaded Master is no longer cleared until a new file is chosen AND the guard
+  // passes — so cancelling the picker now leaves the current Master intact.
   var m = window._lastPhantomMaster || {};
   var racks = (m.racksByCab && typeof m.racksByCab === 'object') ? m.racksByCab : {};
   var n = Object.keys(racks).length;
   var siteCode = m.siteCode || '—';
-  var ok = await phantomConfirmAsk({
-    title: 'Replace loaded Master?',
-    body:  'This will clear the currently loaded Master (' + siteCode + ', ' + n + ' racks) and prompt for a new file. This cannot be undone for the current session.',
-    confirmLabel: 'Replace',
-    cancelLabel:  'Cancel',
-    destructive:  true
-  });
-  if (!ok) return;
-  try { PHANTOM_MASTER_STORE.clear(); } catch (_) {}
-  window._lastPhantomMaster = undefined;
-  window._masterQueryState = {
-    currentInput: '', normalizedInput: '', suggestions: [],
-    activeCabId: null, lastCopiedAt: 0
-  };
-  master_render();
-  // The whole point of Replace is to load a new one — open the picker
-  // immediately, don't make the tech tap the CTA again.
-  master_loadFile();
+  var emptyEl = document.getElementById('master-empty-state');
+  try {
+    var site = await window.master_loadFromPicker({
+      preCommit: async function() {
+        // PIN gate (if a device Lead PIN is set)
+        if (typeof deviceLead_requireForMaster === 'function' && !(await deviceLead_requireForMaster())) return false;
+        // No-PIN devices: the destructive confirm is the guard (v1.6.71 option C)
+        if (typeof deviceLead_hasPin !== 'function' || !deviceLead_hasPin()) {
+          var ok = await phantomConfirmAsk({
+            title: 'Replace loaded Master?',
+            body:  'This will clear the currently loaded Master (' + siteCode + ', ' + n + ' racks) and load the file you just selected. This cannot be undone for the current session.',
+            confirmLabel: 'Replace',
+            cancelLabel:  'Cancel',
+            destructive:  true
+          });
+          if (!ok) return false;
+        }
+        // Guard passed — clear the old Master right before the new one commits
+        try { PHANTOM_MASTER_STORE.clear(); } catch (_) {}
+        window._lastPhantomMaster = undefined;
+        window._masterQueryState = {
+          currentInput: '', normalizedInput: '', suggestions: [],
+          activeCabId: null, lastCopiedAt: 0
+        };
+        return true;
+      },
+      onParseStart: function() { if (emptyEl) master_renderEmpty(emptyEl, { status: 'Parsing…' }); }
+    });
+    master_render();
+    return site;
+  } catch (err) {
+    var msg = (err && (err.message || String(err))) || 'Parse failed';
+    if (emptyEl) master_renderEmpty(emptyEl, { error: msg });
+    if (typeof phantomToast === 'function') phantomToast('Master parse failed: ' + String(msg).slice(0, 80), 'error');
+    return null;
+  }
 }
 window.master_onReplaceTap = master_onReplaceTap;
 
