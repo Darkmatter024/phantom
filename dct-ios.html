@@ -10188,7 +10188,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.6.77';
+const PHANTOM_APP_VERSION = 'phantom-v1.6.78';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -25496,6 +25496,7 @@ function master_renderLoaded(container) {
   var m     = window._lastPhantomMaster || {};
   var racks = (m.racksByCab && typeof m.racksByCab === 'object') ? m.racksByCab : {};
   var totalRacks = Object.keys(racks).length;
+  var sampleCab = (typeof master_sampleCab === 'function') ? master_sampleCab(racks) : 'dh1:001';
   var siteCode = master_escHtml(m.siteCode || '—');
   // Prefer the persisted savedAt; fall back to ingestedAt for fresh
   // in-session parses that haven't been written to localStorage yet.
@@ -25518,7 +25519,7 @@ function master_renderLoaded(container) {
             '<input type="text" id="master-search-input" class="master-search-input"' +
               ' inputmode="text" autocapitalize="off" autocorrect="off" autocomplete="off"' +
               ' spellcheck="false" maxlength="64"' +
-              ' placeholder="Cabinet ID (e.g. dh1:001)"' +
+              ' placeholder="Cabinet ID (e.g. ' + master_escAttr(sampleCab) + ')"' +
               ' aria-label="Cabinet ID search"' +
               ' oninput="master_onInput(event)"' +
               ' value="' + master_escHtml(st.currentInput) + '">' +
@@ -25557,7 +25558,9 @@ function master_renderResults() {
   }
   var rv = (st.resultView === 'elevation') ? 'elevation' : 'list';
   if (!norm) {
-    html = '<div class="master-results" id="master-results"></div>';
+    html = '<div class="master-results" id="master-results">' +
+           ((typeof master_namespaceHtml === 'function') ? master_namespaceHtml(racks) : '') +
+           '</div>';
   } else if (exactHit) {
     html = resultBlock(norm, rv);
   } else if (st.suggestions && st.suggestions.length === 1) {
@@ -25577,6 +25580,58 @@ function master_renderResults() {
   }
   region.innerHTML = html;
 }
+
+// ── Master namespace hint (v1.6.78): read the loaded map's prefixes/ranges so a
+// tech never has to crack open the Master to learn the rack naming convention. ──
+function master_sampleCab(racks) {
+  try {
+    var keys = Object.keys(racks || {});
+    if (!keys.length) return 'dh1:001';
+    keys.sort();
+    return keys[0];
+  } catch(_) { return 'dh1:001'; }
+}
+function master_namespaceHtml(racks) {
+  try {
+    var keys = Object.keys(racks || {});
+    if (!keys.length) return '';
+    var groups = {};
+    keys.forEach(function(k) {
+      var ci = k.indexOf(':');
+      var prefix = ci >= 0 ? k.slice(0, ci) : k;
+      var n = ci >= 0 ? parseInt(k.slice(ci + 1), 10) : NaN;
+      var g = groups[prefix] || (groups[prefix] = { count:0, minN:Infinity, maxN:-Infinity, minKey:k, maxKey:k });
+      g.count++;
+      if (!isNaN(n)) {
+        if (n < g.minN) { g.minN = n; g.minKey = k; }
+        if (n > g.maxN) { g.maxN = n; g.maxKey = k; }
+      }
+    });
+    var prefixes = Object.keys(groups).sort();
+    var rows = prefixes.map(function(p) {
+      var g = groups[p];
+      var range = (g.minKey === g.maxKey)
+        ? master_escHtml(g.minKey)
+        : (master_escHtml(g.minKey) + ' – ' + master_escHtml(g.maxKey));
+      return '<button type="button" class="master-suggestion" onclick="master_onPrefixTap(\'' + master_escAttr(p) + '\')">' +
+               '<strong>' + master_escHtml(p) + '</strong> · ' + g.count + ' rack' + (g.count === 1 ? '' : 's') + ' · ' + range +
+             '</button>';
+    }).join('');
+    return '<div class="master-suggestions" id="master-namespace" style="margin-top:4px">' +
+             '<div style="font-family:var(--mono);font-size:var(--fs-caption,10px);letter-spacing:1px;color:var(--slate);padding:2px 2px 8px">IN THIS MASTER · TAP A PREFIX</div>' +
+             rows +
+           '</div>';
+  } catch(_) { return ''; }
+}
+function master_onPrefixTap(prefix) {
+  var input = document.getElementById('master-search-input');
+  var val = String(prefix || '') + ':';
+  if (input) { input.value = val; try { input.focus(); input.setSelectionRange(val.length, val.length); } catch(_){} }
+  var st = window._masterQueryState;
+  if (st) { st.currentInput = val; st.normalizedInput = (typeof master_normalize === 'function') ? master_normalize(val) : val; }
+  if (typeof master_runFilter === 'function') master_runFilter();
+}
+window.master_onPrefixTap = master_onPrefixTap;
 
 function master_render() {
   // v1.6.46: ensure profile section is hidden when re-entering file mode
@@ -42649,6 +42704,75 @@ var ScanDispatch = (function() {
     return null;
   }
 
+  // ── Metal Match (v1.6.78): serial/hostname identity vs the loaded Master ──
+  // Lazy, generation-gated index over racksByCab hosts. Authors nothing — it only
+  // reports what the Master already contains. Persists a compact copy so it survives
+  // a reload even if the full Master blob did not.
+  var _mmIndex = null;
+  var MM_INDEX_KEY = 'phantom_audit_index_v1';
+
+  function _mmMasterHash() {
+    try { var m = window._lastPhantomMaster; return (m && (m.sourceFileHash || m.savedAt)) ? String(m.sourceFileHash || m.savedAt) : null; } catch(_) { return null; }
+  }
+  function _mmBuildFromRacks(racks) {
+    var byKey = {}, serials = 0, count = 0;
+    Object.keys(racks).forEach(function(cab) {
+      var hosts = (racks[cab] && racks[cab].hosts) || [];
+      hosts.forEach(function(h) {
+        count++;
+        var rec = { cab: cab, loc: h.locCabRu || cab, model: h.model || '', dns: h.dns || '' };
+        if (h.serial) { byKey[String(h.serial).toUpperCase().trim()] = rec; serials++; }
+        if (h.dns)    { byKey[String(h.dns).toUpperCase().trim()] = rec; }
+      });
+    });
+    return { byKey: byKey, count: count, serialCount: serials };
+  }
+  function _mmEnsureIndex() {
+    var hash = _mmMasterHash();
+    if (_mmIndex && _mmIndex.builtFor === hash) return _mmIndex;
+    try {
+      var m = window._lastPhantomMaster;
+      if (m && m.racksByCab && Object.keys(m.racksByCab).length) {
+        var built = _mmBuildFromRacks(m.racksByCab);
+        _mmIndex = { byKey: built.byKey, count: built.count, serialCount: built.serialCount, builtFor: hash };
+        try { if (typeof safeStore === 'function') safeStore(MM_INDEX_KEY, JSON.stringify({ v:1, hash:hash, byKey:built.byKey, serialCount:built.serialCount })); } catch(_){}
+        return _mmIndex;
+      }
+    } catch(_){}
+    try {
+      var saved = (typeof safeParse === 'function') ? safeParse(localStorage.getItem(MM_INDEX_KEY), null) : null;
+      if (saved && saved.byKey) { _mmIndex = { byKey: saved.byKey, count: Object.keys(saved.byKey).length, serialCount: saved.serialCount || 0, builtFor: saved.hash || null }; return _mmIndex; }
+    } catch(_){}
+    _mmIndex = { byKey:{}, count:0, serialCount:0, builtFor: hash };
+    return _mmIndex;
+  }
+  function _metalMatch(raw) {
+    var idx = _mmEnsureIndex();
+    if (!idx || idx.serialCount === 0) return { status: 'no-serials' }; // Master carries no serials — can't verify
+    var key = String(raw || '').toUpperCase().trim();
+    if (!key) return null;
+    var hit = idx.byKey[key];
+    if (hit) {
+      try {
+        var coll = _loadCollection();
+        var seen = coll.some(function(e){ return e.mm && e.mm.status === 'found' && String(e.value || '').toUpperCase().trim() === key; });
+        if (seen) return { status:'dup', detail: hit.model || hit.loc };
+      } catch(_){}
+      var det = (hit.loc || '') + (hit.model ? (' · ' + hit.model) : '');
+      return { status:'found', detail: det };
+    }
+    return { status:'unknown' };
+  }
+  function _mmChip(mm) {
+    if (!mm || !mm.status) return '';
+    var c = mm.status === 'found' ? 'var(--green)' : mm.status === 'dup' ? 'var(--cyan)' : mm.status === 'unknown' ? 'var(--gold)' : '';
+    if (!c) return '';
+    var label = mm.status === 'found' ? ('✓ ' + (mm.detail || 'IN MASTER'))
+              : mm.status === 'dup' ? 'DUP'
+              : '? NOT IN MASTER';
+    return '<span style="font-family:var(--mono);font-size:var(--fs-caption,10px);color:' + c + ';border:1px solid ' + c + ';border-radius:5px;padding:1px 6px;margin-left:6px;white-space:nowrap">' + escHtml(label) + '</span>';
+  }
+
   // ── Public: dispatch — classify + route ──
   function dispatch(value) {
     var raw = String(value || '').trim();
@@ -42684,16 +42808,18 @@ var ScanDispatch = (function() {
     var displayValue = (best && best.type === 'switch' && best.payload && best.payload.switchName)
       ? best.payload.switchName : raw;
 
-    _collect(displayValue, tag);
+    var mm = (tag === 'asset') ? _metalMatch(raw) : null;
+    _collect(displayValue, tag, mm);
   }
 
-  function _collect(value, tag) {
+  function _collect(value, tag, mm) {
     var entry = {
       id: 'scn_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
       value: value,
       type: tag,
       ts: Date.now()
     };
+    if (mm && mm.status) entry.mm = mm;
     _appendCollection(entry);
     renderCollection();
     if (typeof phantomToast === 'function') {
@@ -42760,7 +42886,7 @@ var ScanDispatch = (function() {
       var tag = e.type || 'unknown';
       html += '<div class="scan-coll-row" data-id="' + safeId + '">' +
         '<button class="scan-coll-tag tag-' + tag + '" onclick="ScanDispatch._retagPrompt(\'' + safeId + '\')" aria-label="Re-tag entry">' + escHtml(tag.toUpperCase()) + '</button>' +
-        '<span class="scan-coll-value">' + escHtml(e.value || '') + '</span>' +
+        '<span class="scan-coll-value">' + escHtml(e.value || '') + '</span>' + _mmChip(e.mm) +
         '<span class="scan-coll-time">' + when + '</span>' +
         '<button class="scan-coll-delete" onclick="ScanDispatch._deleteEntry(\'' + safeId + '\')" aria-label="Delete entry">✕</button>' +
         '</div>';
