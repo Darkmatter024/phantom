@@ -10188,7 +10188,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.6.76';
+const PHANTOM_APP_VERSION = 'phantom-v1.6.77';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -13392,6 +13392,22 @@ if (typeof window !== 'undefined') {
       <div class="rm-device-sub" id="rm-device-sub"></div>
       <div class="rm-device-fields" id="rm-device-fields"></div>
       <button class="rm-close-btn pt-btn pt-btn-ghost" onclick="closeRmDevice()">Close</button>
+    </div>
+  </div>
+
+  <!-- VENDOR AUDIT dock (v1.6.77) — reuses rm-device-sheet chrome; same docked thumb-zone -->
+  <div id="audit-dock" class="rm-device-sheet" onclick="if(event.target===this)auditMode_exit()">
+    <div class="rm-device-inner">
+      <div class="rm-device-handle"></div>
+      <div class="rm-device-name" id="audit-dock-head">VENDOR AUDIT</div>
+      <div class="rm-device-sub" id="audit-dock-body"></div>
+      <div id="audit-dock-btns" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+        <button class="pt-btn pt-btn-secondary" type="button" style="flex:1;min-width:64px;color:var(--green)" onclick="auditMode_mark('pass')">✓ PASS</button>
+        <button class="pt-btn pt-btn-secondary" type="button" style="flex:1;min-width:64px;color:var(--red)" onclick="auditMode_mark('fail')">✗ FAIL</button>
+        <button class="pt-btn pt-btn-secondary" type="button" style="flex:1;min-width:64px;color:var(--red)" onclick="auditMode_mark('flag')">⚑ FLAG</button>
+        <button class="pt-btn pt-btn-secondary" type="button" style="flex:1;min-width:64px;color:var(--gold)" onclick="auditMode_mark('skip')">— SKIP</button>
+      </div>
+      <button class="rm-close-btn pt-btn pt-btn-ghost" onclick="auditMode_exit()">Exit Audit</button>
     </div>
   </div>
 
@@ -35031,6 +35047,133 @@ function _rmRenderHeaderInArea(rack, area) {
     '<h2 class="rm-rack-header-id' + (d.unnamed ? ' unnamed' : '') + '">' + escHtml(d.text) + '</h2>' +
     '<div class="rm-rack-header-meta">' + meta.join(' · ') + '</div>';
   area.insertBefore(header, area.firstChild);
+  if (typeof auditMode_injectLaunch === 'function') { try { auditMode_injectLaunch(rack, area); } catch(_){} }
+}
+
+// ━━━ VENDOR AUDIT WALK (v1.6.77) — in-place audit mode over the RACK MAP elevation ━━━
+// Decorates the .rm-slot nodes renderElevation already produced; no second list,
+// no lookup, no re-render. Cursor + Pass/Fail/Flag/Skip driven by the docked bar
+// (reuses rm-device-sheet chrome). Per-rack state memoized in localStorage; status
+// pips persist after exit so the elevation doubles as a validation dashboard.
+var AUDIT_WALK_KEY = 'phantom_audit_walk_v1';
+var _auditWalk = { active:false, area:null, rack:null, slots:[], cursor:0, results:{}, rackKey:null };
+
+function _auditWalk_loadAll() { return safeParse(localStorage.getItem(AUDIT_WALK_KEY), {}) || {}; }
+function _auditWalk_saveCurrent() {
+  if (!_auditWalk.rackKey) return;
+  var all = _auditWalk_loadAll();
+  all[_auditWalk.rackKey] = {
+    schemaVersion: 1, rackKey: _auditWalk.rackKey, slotSig: _auditWalk.slots.length,
+    cursor: _auditWalk.cursor, updatedAt: Date.now(), results: _auditWalk.results
+  };
+  if (typeof safeStore === 'function') safeStore(AUDIT_WALK_KEY, JSON.stringify(all));
+}
+
+// Expected occupant for a slot element, read straight from its bound dev.
+function _auditWalk_devForSlot(el, rack) {
+  var idx = parseInt(el.getAttribute('data-slot-idx'), 10);
+  var slots = (rack && rack.slots) || [];
+  return (!isNaN(idx) && slots[idx]) ? slots[idx] : null;
+}
+function _auditWalk_keyForSlot(el, i, rack) {
+  var dev = _auditWalk_devForSlot(el, rack);
+  return dev ? String(dev.uStart) : ('i' + i);
+}
+
+// Status PIP — inset left border, persists after exit (separate from cursor outline).
+function _auditWalk_pip(el, status) {
+  var c = status === 'pass' ? 'var(--green)'
+        : (status === 'fail' || status === 'flag') ? 'var(--red)'
+        : status === 'skip' ? 'var(--gold)' : '';
+  el.style.boxShadow = c ? ('inset 5px 0 0 0 ' + c) : '';
+}
+
+// Inject the launch button into a freshly-rendered rack header (idempotent).
+function auditMode_injectLaunch(rack, area) {
+  if (!rack || !area) return;
+  var hdr = area.querySelector('.rm-rack-header');
+  if (!hdr || hdr.querySelector('.audit-launch-btn')) return;
+  if (!area.querySelectorAll('.rm-slot[data-slot-idx]').length) return;
+  var btn = document.createElement('button');
+  btn.className = 'audit-launch-btn pt-btn pt-btn-secondary';
+  btn.type = 'button';
+  btn.style.marginTop = '10px';
+  btn.style.color = 'var(--cyan-bright)';
+  btn.textContent = '▶  START VENDOR AUDIT';
+  btn.onclick = function() { auditMode_enter(area, rack); };
+  hdr.appendChild(btn);
+}
+
+function auditMode_enter(area, rack) {
+  if (!area || !rack) return;
+  var devSlots = Array.prototype.slice.call(area.querySelectorAll('.rm-slot[data-slot-idx]'));
+  if (!devSlots.length) return;
+  _auditWalk.active = true; _auditWalk.area = area; _auditWalk.rack = rack; _auditWalk.slots = devSlots;
+  _auditWalk.rackKey = String(rack.id || rack.name || 'rack');
+  var saved = _auditWalk_loadAll()[_auditWalk.rackKey];
+  _auditWalk.results = (saved && saved.slotSig === devSlots.length && saved.results) ? saved.results : {};
+  var firstOpen = -1;
+  devSlots.forEach(function(el, i) {
+    var st = _auditWalk.results[_auditWalk_keyForSlot(el, i, rack)];
+    if (st) _auditWalk_pip(el, st);
+    else if (firstOpen < 0) firstOpen = i;
+  });
+  _auditWalk.cursor = firstOpen < 0 ? devSlots.length : firstOpen;
+  var dock = document.getElementById('audit-dock');
+  if (dock) dock.classList.add('visible');
+  _auditWalk_focusCursor();
+}
+
+function _auditWalk_focusCursor() {
+  _auditWalk.slots.forEach(function(el){ el.style.outline = ''; });
+  if (_auditWalk.cursor >= _auditWalk.slots.length) { _auditWalk_renderDock(true); return; }
+  var el = _auditWalk.slots[_auditWalk.cursor];
+  el.style.outline = '2px solid var(--cyan)';
+  el.style.outlineOffset = '-1px';
+  try { el.scrollIntoView({ block:'center', behavior:'smooth' }); } catch(_){}
+  _auditWalk_renderDock(false);
+}
+
+function auditMode_mark(status) {
+  if (!_auditWalk.active || _auditWalk.cursor >= _auditWalk.slots.length) return;
+  var el = _auditWalk.slots[_auditWalk.cursor];
+  _auditWalk.results[_auditWalk_keyForSlot(el, _auditWalk.cursor, _auditWalk.rack)] = status;
+  _auditWalk_pip(el, status);
+  _auditWalk_saveCurrent();
+  if (status === 'flag' && typeof blocker_quick === 'function') { try { blocker_quick(); } catch(_){} }
+  _auditWalk.cursor++;
+  _auditWalk_focusCursor();
+  if (typeof haptic === 'function') { try { haptic([6]); } catch(_){} }
+}
+
+function auditMode_exit() {
+  _auditWalk.slots.forEach(function(el){ el.style.outline = ''; }); // pips kept
+  _auditWalk.active = false;
+  var dock = document.getElementById('audit-dock');
+  if (dock) dock.classList.remove('visible');
+}
+
+function _auditWalk_renderDock(done) {
+  var head = document.getElementById('audit-dock-head');
+  var body = document.getElementById('audit-dock-body');
+  var btns = document.getElementById('audit-dock-btns');
+  var total = _auditWalk.slots.length;
+  if (done) {
+    var flagged = 0, failed = 0, graded = 0;
+    Object.keys(_auditWalk.results).forEach(function(k){ graded++; if(_auditWalk.results[k]==='flag') flagged++; if(_auditWalk.results[k]==='fail') failed++; });
+    if (head) head.textContent = 'AUDIT COMPLETE · ' + total + ' devices';
+    if (body) body.innerHTML = '<div style="font-family:var(--mono);font-size:var(--fs-body);color:var(--slate)">' +
+      graded + ' graded · ' + failed + ' failed · ' + flagged + ' flagged</div>';
+    if (btns) btns.style.display = 'none';
+    return;
+  }
+  var dev = _auditWalk_devForSlot(_auditWalk.slots[_auditWalk.cursor], _auditWalk.rack) || {};
+  if (head) head.textContent = 'VENDOR AUDIT · ' + (_auditWalk.cursor + 1) + ' / ' + total;
+  if (body) body.innerHTML =
+    '<div style="font-family:var(--mono);font-size:var(--fs-caption);color:var(--slate);letter-spacing:1px">EXPECTED · U' + escHtml(String(dev.uStart || '?')) + '</div>' +
+    '<div style="font-family:var(--mono);font-size:var(--fs-body);color:var(--cyan-bright);font-weight:600;margin-top:2px">' + escHtml(dev.model || dev.name || '—') + '</div>' +
+    (dev.serial ? '<div style="font-family:var(--mono);font-size:var(--fs-caption);color:var(--slate);margin-top:2px">SN ' + escHtml(dev.serial) + '</div>' : '');
+  if (btns) btns.style.display = '';
 }
 
 // ── Search request — searches standalone + deployment racks ──
