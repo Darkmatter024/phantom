@@ -10188,7 +10188,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.6.78';
+const PHANTOM_APP_VERSION = 'phantom-v1.6.79';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -34712,6 +34712,40 @@ function _rackResolve(rawQuery, silent, opts) {
     if (silent) return;
     opts.softFail(query);
     return;
+  }
+
+  // ── RESOLVE bridge (v1.6.79): a deployment rack pulls authoritative truth from the
+  //    loaded Master when the cab ids match EXACTLY. Opportunistic + safe — exact match
+  //    only (master_findRack has no fuzzy branch), never guesses a rack, and only
+  //    overrides when the Master cab actually has hardware (hosts). On any miss it falls
+  //    straight through to the deployment render below. ──
+  if (rack && rack.deploymentId && typeof master_findRack === 'function' && typeof master_renderHit === 'function') {
+    var _mq = (rack.rackId && String(rack.rackId).trim()) || (rack.name && String(rack.name).trim()) || rack.id;
+    var _mHit = _mq ? master_findRack(_mq) : null;
+    if (_mHit && _mHit.hosts && _mHit.hosts.length > 0) {
+      master_renderHit(_mHit, target);
+      try {
+        var _hdr = target.querySelector('.rm-rack-header');
+        if (_hdr && !_hdr.querySelector('.resolve-tag')) {
+          var _depName = '';
+          try { var _d = (typeof deploy_getById === 'function') ? deploy_getById(rack.deploymentId) : null; _depName = (_d && _d.name) ? _d.name : ''; } catch(_){}
+          var _tag = document.createElement('div');
+          _tag.className = 'resolve-tag';
+          _tag.style.cssText = 'margin-top:6px;font-family:var(--mono);font-size:var(--fs-caption,10px);letter-spacing:1px;color:var(--green);border:1px solid var(--green);border-radius:5px;padding:2px 8px;display:inline-block';
+          _tag.textContent = 'MASTER TRUTH' + (_depName ? (' \u00b7 from ' + _depName) : '');
+          _hdr.appendChild(_tag);
+        }
+      } catch(_){}
+      if (opts.setCurrent) currentRackId = rack.id;
+      if (legend) legend.style.display = 'flex';
+      try { var _lk = (rack.name && String(rack.name).trim()) || (rack.rackId && String(rack.rackId).trim()) || rack.id; if (_lk) safeStore(RACK_VIEWER_LAST_KEY, String(_lk)); } catch(_){}
+      if (input) input.value = '';
+      if (!silent) {
+        if (typeof haptic === 'function') haptic([8]);
+        if (typeof phantomToast === 'function') phantomToast('Loaded ' + _mHit.id + ' \u00b7 Master truth', 'ok');
+      }
+      return;
+    }
   }
 
   // hit — render through the shared elevation engine
