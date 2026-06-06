@@ -10188,7 +10188,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.6.79';
+const PHANTOM_APP_VERSION = 'phantom-v1.6.80';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -10197,8 +10197,12 @@ const PHANTOM_APP_VERSION = 'phantom-v1.6.79';
 // it on DOMContentLoaded once the boot DOM is parsed.
 document.addEventListener('DOMContentLoaded', function() {
   try {
+    var _prof = (typeof siteProfile_load === 'function') ? siteProfile_load() : null;
+    var _site = _prof ? (_prof.facilityName || _prof.facilityId || '') : '';
     var be = document.querySelector('.boot-eyebrow');
-    if (be) be.textContent = 'CoreWeave · AUS-01 · ' + PHANTOM_APP_VERSION.replace('phantom-', '');
+    if (be) be.textContent = (_site ? _site + ' \u00b7 ' : '') + PHANTOM_APP_VERSION.replace('phantom-', '');
+    var loc = document.querySelector('.app-loc');
+    if (loc) loc.textContent = _site || '';
   } catch (_) {}
 });
 // Poll interval for reg.update() while app is in foreground. 10 min.
@@ -10668,7 +10672,7 @@ if (typeof window !== 'undefined') {
 <div id="boot">
   <canvas id="bootCanvas" style="position:absolute;inset:0;pointer-events:none;z-index:1"></canvas>
   <div class="boot-content"><svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><linearGradient id="biGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5cf2ff"/><stop offset="0.55" stop-color="#7da6ff"/><stop offset="1" stop-color="#b06bff"/></linearGradient></defs></svg>
-    <div class="boot-eyebrow">CoreWeave · AUS-01 · v1.4.2</div>
+    <div class="boot-eyebrow">PHANTOM</div>
     <div class="boot-logo">PHANTOM</div>
     <div class="boot-tagline">Field Intelligence System</div>
     <div class="boot-items">
@@ -10913,7 +10917,7 @@ if (typeof window !== 'undefined') {
         <button id="nav-back-btn" class="nav-back-btn" onclick="nav_back()" aria-label="Back" style="display:none">‹</button>
         <div class="header-left-text">
           <div class="app-logo" id="appLogoTap">PHANTOM</div>
-          <div class="app-loc">CoreWeave · AUS-01</div>
+          <div class="app-loc"></div>
         </div>
       </div>
       <div class="header-right">
@@ -15059,7 +15063,7 @@ function shiftReport_generate() {
   // Header
   html += '<div class="hdr">';
   html += '  <h1>SHIFT REPORT</h1>';
-  html += '  <div class="hdr-sub">' + escHtml(dep.name) + ' · ' + escHtml(profile.facilityId || 'AUS-01') + ' · ' + escHtml(profile.facilityName || '') + '</div>';
+  html += '  <div class="hdr-sub">' + escHtml(dep.name) + (profile.facilityId ? ' · ' + escHtml(profile.facilityId) : '') + (profile.facilityName ? ' · ' + escHtml(profile.facilityName) : '') + '</div>';
   html += '</div>';
 
   // Meta block
@@ -18720,8 +18724,8 @@ function deploy_generateRackQR(deployId, rackId) {
 // `id` maps to an OPTIC_DB key — drives both Optic Selector STEP 1 buttons
 // and AI context block.
 var SITE_PROFILE_DEFAULTS = {
-  facilityId:           'AUS-01',
-  facilityName:         'CoreWeave Austin',
+  facilityId:           '',
+  facilityName:         '',
   platforms: [
     { id: 'mlnx-msn4700', display: 'MLNX MSN4700',  role: 'spine' },
     { id: 'mlnx-msn3700', display: 'MLNX MSN3700',  role: 'leaf' },
@@ -18812,21 +18816,6 @@ function firstRun_show() {
   if (!inner || !ov) return;
   var p = siteProfile_load();
 
-  // Read-only "what the AI will be told" summary, grouped by role.
-  var byRole = {};
-  (p.platforms || []).forEach(function(pl) {
-    var r = pl.role || 'other';
-    (byRole[r] = byRole[r] || []).push(pl.display || pl.id);
-  });
-  var roleOrder  = ['spine','leaf','mgmt','ib-fabric','gpu','other'];
-  var roleLabels = { spine:'Spine', leaf:'Leaf', mgmt:'Mgmt', 'ib-fabric':'IB fabric', gpu:'GPU', other:'Other' };
-  var rows = '';
-  roleOrder.forEach(function(r) {
-    if (byRole[r]) rows += '<div style="display:flex;gap:8px;padding:5px 0;font-family:var(--mono);font-size:12px;line-height:1.4">'
-      + '<span style="color:var(--slate,#8194ab);min-width:62px">' + roleLabels[r] + '</span>'
-      + '<span style="color:var(--white)">' + escHtml(byRole[r].join(', ')) + '</span></div>';
-  });
-
   var fieldCss = 'width:100%;box-sizing:border-box;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.18);'
     + 'border-radius:10px;padding:14px;color:var(--white);font-family:var(--raj);font-size:17px;-webkit-appearance:none;outline:none';
   var labelCss = 'font-family:var(--mono);font-size:11px;letter-spacing:1.5px;color:var(--cyan);margin:18px 0 7px';
@@ -18834,19 +18823,16 @@ function firstRun_show() {
   inner.innerHTML =
     '<div style="padding:26px 0 4px">'
     +   '<div style="font-family:var(--mono);font-size:11px;letter-spacing:2px;color:var(--violet-bright,#b58cff);margin-bottom:8px">PHANTOM // SET UP THIS DEVICE</div>'
-    +   '<div style="font-family:var(--raj);font-weight:700;font-size:26px;color:var(--white);line-height:1.1">' + escHtml(p.facilityId || 'Site') + '</div>'
-    +   '<div style="font-family:var(--raj);font-size:15px;color:var(--slate,#8194ab)">' + escHtml(p.facilityName || '') + '</div>'
+    +   '<div style="font-family:var(--raj);font-weight:700;font-size:26px;color:var(--white);line-height:1.1">' + (p.facilityId ? escHtml(p.facilityId) : 'New device') + '</div>'
+    +   '<div style="font-family:var(--raj);font-size:15px;color:var(--slate,#8194ab)">' + escHtml(p.facilityName || 'Tell PHANTOM where this device is working.') + '</div>'
     + '</div>'
     + '<div style="' + labelCss + '">YOUR NAME</div>'
     + '<input id="fr-operator" type="text" autocapitalize="words" autocomplete="name" spellcheck="false" placeholder="e.g. J. Hamilton" style="' + fieldCss + '" value="' + escHtml(p.operator || '') + '">'
     + '<div style="font-family:var(--mono);font-size:11px;color:var(--slate,#8194ab);margin-top:6px">Used on your sign-offs and handoffs.</div>'
-    + '<div style="' + labelCss + '">CONFIRM THE SITE</div>'
-    + '<div style="background:rgba(92,242,255,0.04);border:1px solid rgba(92,242,255,0.15);border-radius:12px;padding:12px 14px">'
-    +   '<div style="font-family:var(--mono);font-size:10px;letter-spacing:1.5px;color:var(--slate,#8194ab);margin-bottom:6px">PHANTOM TELLS THE AI THIS IS YOUR SITE</div>'
-    +   rows
-    +   '<div style="display:flex;gap:8px;padding:6px 0 0;margin-top:6px;border-top:1px solid rgba(255,255,255,0.08);font-family:var(--mono);font-size:12px;line-height:1.4">'
-    +     '<span style="color:var(--slate,#8194ab);min-width:62px">Optics</span><span style="color:var(--white)">' + escHtml(p.standardOptics || '\u2014') + '</span></div>'
-    + '</div>'
+    + '<div style="' + labelCss + '">SITE</div>'
+    + '<input id="fr-facilityId" type="text" autocapitalize="characters" spellcheck="false" placeholder="Site code (e.g. AUS-01)" style="' + fieldCss + ';margin-bottom:10px" value="' + escHtml(p.facilityId || '') + '">'
+    + '<input id="fr-facilityName" type="text" autocapitalize="words" spellcheck="false" placeholder="Facility name (e.g. CoreWeave Austin)" style="' + fieldCss + '" value="' + escHtml(p.facilityName || '') + '">'
+    + '<div style="font-family:var(--mono);font-size:11px;color:var(--slate,#8194ab);margin-top:8px;line-height:1.5">Hardware \u2014 switches, GPUs, optics \u2014 fills in from the Master you load. PHANTOM doesn\'t assume your gear.</div>'
     + '<div style="' + labelCss + '">FLOOR DETAILS <span style="color:var(--slate,#8194ab);letter-spacing:0;text-transform:none">\u2014 optional, fill when you are on the floor</span></div>'
     + '<input id="fr-rackNaming" type="text" autocapitalize="characters" spellcheck="false" placeholder="Rack naming convention" style="' + fieldCss + ';margin-bottom:10px" value="' + escHtml(p.rackNamingConvention || '') + '">'
     + '<input id="fr-pdu" type="text" autocapitalize="characters" spellcheck="false" placeholder="PDU type" style="' + fieldCss + '" value="' + escHtml(p.pduType || '') + '">'
@@ -18864,10 +18850,20 @@ function firstRun_confirm() {
     if (nameEl) nameEl.focus();
     return;
   }
+  var siteEl = document.getElementById('fr-facilityId');
+  var site   = siteEl ? siteEl.value.trim() : '';
+  if (!site) {
+    if (typeof phantomToast === 'function') phantomToast('Enter your site first', 'error');
+    if (siteEl) siteEl.focus();
+    return;
+  }
+  var facNameEl = document.getElementById('fr-facilityName');
   var rackEl = document.getElementById('fr-rackNaming');
   var pduEl  = document.getElementById('fr-pdu');
   var p = siteProfile_load();
-  p.operator = name;
+  p.operator   = name;
+  p.facilityId = site;
+  if (facNameEl) p.facilityName = facNameEl.value.trim();
   if (rackEl && rackEl.value.trim()) p.rackNamingConvention = rackEl.value.trim();
   if (pduEl  && pduEl.value.trim())  p.pduType              = pduEl.value.trim();
   p.confirmedAt = Date.now();
@@ -18875,6 +18871,10 @@ function firstRun_confirm() {
     if (typeof haptic === 'function') haptic([10, 30, 10]);
     var ov = document.getElementById('fr-overlay');
     if (ov) ov.classList.remove('show');
+    try {
+      var _label = p.facilityName || p.facilityId || '';
+      var _loc = document.querySelector('.app-loc'); if (_loc) _loc.textContent = _label;
+    } catch (_) {}
     if (typeof firstRun_renderChip === 'function') firstRun_renderChip();
     if (typeof phantomToast === 'function') phantomToast('Device ready \u2014 ' + (p.facilityId || 'site') + ' confirmed', 'ok');
   } else {
