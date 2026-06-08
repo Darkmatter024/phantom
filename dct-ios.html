@@ -10188,7 +10188,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.6.81';
+const PHANTOM_APP_VERSION = 'phantom-v1.6.82';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -25267,6 +25267,7 @@ function master_renderHit(mHit, container) {
     container.innerHTML = '';
     renderElevation(ev, container);
     if (typeof _rmRenderHeaderInArea === 'function') _rmRenderHeaderInArea(ev, container);
+    window._rmConnHit = mHit;   // v1.6.82: device-connections lookup reads cablesOut/In from here
     return 'elevation';
   }
   var nCables = (mHit.cablesOut ? mHit.cablesOut.length : 0) +
@@ -35448,7 +35449,46 @@ function openRmDevice(dev) {
     fields.innerHTML = '<div style="font-family:var(--raj);font-size: var(--fs-body);color:var(--slate);padding:8px 0;">No additional details saved.</div>';
   }
 
+  _rmRenderConnections(dev);
   document.getElementById('rm-device-sheet').classList.add('visible');
+}
+
+// v1.6.82 — DEVICE CONNECTIONS. Read-only "where does this device land, on what ports"
+// pulled from the loaded Master's cable edges (window._rmConnHit, set by master_renderHit).
+// Exact DNS match on the tapped device's name (= host dns) — never fuzzy, so a stale hit or
+// an unrelated rack simply yields no matches and the section is omitted. Reference/lookup
+// only; this is not cabling execution.
+function _rmRenderConnections(dev) {
+  var prev = document.getElementById('rm-device-conn');
+  if (prev && prev.parentNode) prev.parentNode.removeChild(prev);
+  var hit = window._rmConnHit;
+  if (!hit || !dev || !dev.name) return;
+  var name = String(dev.name);
+  var out = (hit.cablesOut || []).filter(function(c) { return c && c.aDns === name; });
+  var inn = (hit.cablesIn  || []).filter(function(c) { return c && c.zDns === name; });
+  if (out.length === 0 && inn.length === 0) return;
+  var CAP = (typeof MASTER_CAP_CABLES === 'number') ? MASTER_CAP_CABLES : 50;
+  function row(localPort, arrow, farDns, farPort, optic) {
+    return '<div style="display:flex;gap:8px;padding:6px 0;border-top:1px solid rgba(255,255,255,0.06);font-family:var(--mono);font-size:var(--fs-caption,11px);line-height:1.4">' +
+      '<span style="color:var(--cyan);min-width:52px">' + escHtml(localPort || '\u2014') + '</span>' +
+      '<span style="color:var(--slate,#8194ab)">' + arrow + '</span>' +
+      '<span style="color:var(--white);flex:1">' + escHtml((farDns || '\u2014') + (farPort ? ' : ' + farPort : '')) + '</span>' +
+      (optic ? '<span style="color:var(--slate,#8194ab)">' + escHtml(optic) + '</span>' : '') +
+      '</div>';
+  }
+  var shownOut = out.slice(0, CAP), shownIn = inn.slice(0, CAP), rowsHtml = '';
+  shownOut.forEach(function(c) { rowsHtml += row(c.aPort, '\u2192', c.zDns, c.zPort, c.aOptic); });
+  shownIn.forEach(function(c)  { rowsHtml += row(c.zPort, '\u2190', c.aDns, c.aPort, c.zOptic); });
+  var extra = (out.length - shownOut.length) + (inn.length - shownIn.length);
+  var block = document.createElement('div');
+  block.id = 'rm-device-conn';
+  block.style.cssText = 'margin-top:16px';
+  block.innerHTML =
+    '<div style="font-family:var(--mono);font-size:var(--fs-caption,11px);letter-spacing:1.5px;color:var(--cyan);margin-bottom:4px">CONNECTIONS \u00b7 ' + (out.length + inn.length) + '</div>' +
+    rowsHtml +
+    (extra > 0 ? '<div style="font-family:var(--mono);font-size:var(--fs-caption,11px);color:var(--slate,#8194ab);padding-top:6px">+' + extra + ' more</div>' : '');
+  var fields = document.getElementById('rm-device-fields');
+  if (fields && fields.parentNode) fields.parentNode.appendChild(block);
 }
 
 function closeRmDevice() {
