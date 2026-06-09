@@ -10188,7 +10188,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.6.82';
+const PHANTOM_APP_VERSION = 'phantom-v1.6.83';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -15109,6 +15109,26 @@ function shiftReport_generate() {
     html += '<table><thead><tr><th>Type</th><th>Required</th><th>Dispensed</th><th>Installed</th><th>Remaining</th></tr></thead><tbody>';
     optics.slice(0, 20).forEach(function(o) {
       html += '<tr><td>' + escHtml(o.opticType || '') + '</td><td>' + (o.required || 0) + '</td><td>' + (o.dispensed || 0) + '</td><td>' + (o.installed || 0) + '</td><td>' + (o.remaining || 0) + '</td></tr>';
+    });
+    html += '</tbody></table>';
+  }
+
+  // Floor Validation — Vendor Audit Walk rollup (closes the dead end: walk results now reach the report)
+  var auditRollup = (typeof _auditWalk_rollup === 'function') ? _auditWalk_rollup(racks) : { racksAudited:0, perRack:[], totals:{pass:0,fail:0,flag:0,skip:0,marked:0,slots:0} };
+  if (auditRollup.racksAudited) {
+    var aw = auditRollup.totals;
+    html += '<h2>Floor Validation — Vendor Audit</h2>';
+    html += '<div class="kpi-row">';
+    html += '  <div class="kpi"><div class="kpi-label">Racks Audited</div><div class="kpi-val">' + auditRollup.racksAudited + '</div><div class="kpi-sub">' + aw.marked + ' of ' + aw.slots + ' slots checked</div></div>';
+    html += '  <div class="kpi"><div class="kpi-label">Pass</div><div class="kpi-val">' + aw.pass + '</div></div>';
+    html += '  <div class="kpi"><div class="kpi-label">Fail</div><div class="kpi-val">' + aw.fail + '</div></div>';
+    html += '  <div class="kpi"><div class="kpi-label">Flag / Skip</div><div class="kpi-val">' + aw.flag + ' / ' + aw.skip + '</div></div>';
+    html += '</div>';
+    html += '<table><thead><tr><th>Rack</th><th>Pass</th><th>Fail</th><th>Flag</th><th>Skip</th><th>Verified</th></tr></thead><tbody>';
+    auditRollup.perRack.forEach(function(r) {
+      var pct = r.slots ? Math.round((r.pass / r.slots) * 100) : 0;
+      var rb = (r.fail || r.flag) ? 'badge-red' : 'badge-green';
+      html += '<tr><td><span class="badge ' + rb + '">' + escHtml(r.rack) + '</span></td><td>' + r.pass + '</td><td>' + r.fail + '</td><td>' + r.flag + '</td><td>' + r.skip + '</td><td>' + pct + '% (' + r.marked + '/' + r.slots + ')</td></tr>';
     });
     html += '</tbody></table>';
   }
@@ -35154,6 +35174,32 @@ var AUDIT_WALK_KEY = 'phantom_audit_walk_v1';
 var _auditWalk = { active:false, area:null, rack:null, slots:[], cursor:0, results:{}, rackKey:null };
 
 function _auditWalk_loadAll() { return safeParse(localStorage.getItem(AUDIT_WALK_KEY), {}) || {}; }
+
+// Roll Vendor Audit Walk results (phantom_audit_walk_v1) up for a set of racks, so the
+// shift report + handoff can surface them instead of letting the walk dead-end on the
+// elevation. Matches each rack to its walk entry by id / rackId / name (the keys
+// auditMode_enter writes). Returns per-rack tallies + session totals.
+function _auditWalk_rollup(racks) {
+  var all = _auditWalk_loadAll();
+  var out = { perRack: [], totals: { pass:0, fail:0, flag:0, skip:0, marked:0, slots:0 }, racksAudited: 0 };
+  (racks || []).forEach(function(r) {
+    if (!r) return;
+    var entry = null, cands = [r.id, r.rackId, r.name];
+    for (var c = 0; c < cands.length && !entry; c++) {
+      if (cands[c] != null && all[String(cands[c])]) entry = all[String(cands[c])];
+    }
+    if (!entry || !entry.results) return;
+    var t = { pass:0, fail:0, flag:0, skip:0 };
+    Object.keys(entry.results).forEach(function(k) { var s = entry.results[k]; if (t[s] != null) t[s]++; });
+    var marked = t.pass + t.fail + t.flag + t.skip;
+    if (!marked) return;
+    var slots = entry.slotSig || marked;
+    out.perRack.push({ rack: String(r.rackId || r.name || r.id), pass:t.pass, fail:t.fail, flag:t.flag, skip:t.skip, marked:marked, slots:slots });
+    out.totals.pass += t.pass; out.totals.fail += t.fail; out.totals.flag += t.flag; out.totals.skip += t.skip;
+    out.totals.marked += marked; out.totals.slots += slots; out.racksAudited++;
+  });
+  return out;
+}
 function _auditWalk_saveCurrent() {
   if (!_auditWalk.rackKey) return;
   var all = _auditWalk_loadAll();
@@ -39452,7 +39498,14 @@ function phantomHandoffExport() {
     type: 'PHANTOM Shift Handoff',
     notes: notes,
     openBurndown: jobs,
-    recentGhostEcho: ghost
+    recentGhostEcho: ghost,
+    vendorAudit: (function() {
+      try {
+        var a = (typeof deploy_getActive === 'function') ? deploy_getActive() : null;
+        var rk = (a && a.id && typeof deploy_loadRacks === 'function') ? deploy_loadRacks(a.id) : [];
+        return (typeof _auditWalk_rollup === 'function') ? _auditWalk_rollup(rk) : null;
+      } catch (_) { return null; }
+    })()
   };
   downloadJSON(report, 'phantom-handoff');
 }
