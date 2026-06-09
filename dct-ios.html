@@ -10188,7 +10188,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.6.83';
+const PHANTOM_APP_VERSION = 'phantom-v1.6.84';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -20039,7 +20039,10 @@ function btPrint_openById(id) {
 }
 
 function btPrint_open(faultEntry) {
-  _btp.fault = faultEntry;
+  _btp.fault = faultEntry; _btp.asset = null;
+  // Reset reused preview-row key labels to fault mode (asset mode repoints them).
+  var kc0 = document.querySelector('#btp-prev-cause .btp-prev-key');  if (kc0) kc0.textContent = 'CAUSE:';
+  var ka0 = document.querySelector('#btp-prev-action .btp-prev-key'); if (ka0) ka0.textContent = 'ACTION:';
   var display = document.getElementById('btp-fault-display');
   var nobt = document.getElementById('btp-no-bt');
   if (display) display.textContent = faultEntry.f;
@@ -20071,12 +20074,46 @@ function btPrint_open(faultEntry) {
   document.getElementById('bt-print-sheet').classList.add('visible');
 }
 
+// v1.6.84 — Deployment Labeling. Asset-label entry into the same Tactical Print (BLE) modal,
+// fed from a Master-bound device. Reuses the preview rows (repointed to LOC / model+serial)
+// and the scan/connect/execute flow verbatim; only the ZPL builder differs.
+function btPrint_openAsset(dev, ctx) {
+  dev = dev || {}; ctx = ctx || {};
+  _btp.asset = { dev: dev, ctx: ctx }; _btp.fault = null;
+  var display = document.getElementById('btp-fault-display');
+  var nobt = document.getElementById('btp-no-bt');
+  var host = (dev.name || dev.hostname || 'ASSET') + '';
+  if (display) display.textContent = host;
+  try {
+    var now = new Date();
+    var ts = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' +
+      String(now.getDate()).padStart(2,'0') + ' ' + String(now.getHours()).padStart(2,'0') + ':' +
+      String(now.getMinutes()).padStart(2,'0');
+    var u   = (dev.uStart != null) ? ('U' + dev.uStart) : '';
+    var loc = ((ctx.cab ? ctx.cab + ' ' : '') + u).trim() || '—';
+    var serialRaw = (dev.serial || '') + '';
+    var line3 = 'MODEL: ' + ((dev.model || '—') + '') + (serialRaw ? '  SN: ' + serialRaw : '');
+    var code = ((serialRaw || dev.name || dev.hostname || 'ASSET') + '').toUpperCase().replace(/[^A-Z0-9\-_.]/g,'').substring(0,12) || 'ASSET';
+    // Repoint the reused preview rows for asset mode.
+    var kc = document.querySelector('#btp-prev-cause .btp-prev-key');  if (kc) kc.textContent = 'LOC:';
+    var ka = document.querySelector('#btp-prev-action .btp-prev-key'); if (ka) ka.textContent = '';
+    var elF = document.getElementById('btp-prev-fault');     if (elF) elF.textContent = host.toUpperCase().substring(0,30);
+    var elC = document.getElementById('btp-prev-cause-val'); if (elC) elC.textContent = loc.substring(0,40);
+    var elA = document.getElementById('btp-prev-action-val');if (elA) elA.textContent = line3.substring(0,40);
+    var elT = document.getElementById('btp-prev-ts');        if (elT) elT.textContent = 'PHANTOM // ' + ts;
+    var elI = document.getElementById('btp-prev-id');        if (elI) elI.textContent = code;
+  } catch(_) {}
+  if (nobt) nobt.style.display = navigator.bluetooth ? 'none' : 'block';
+  btPrint_setState('idle');
+  document.getElementById('bt-print-sheet').classList.add('visible');
+}
+
 function btPrint_close() {
   document.getElementById('bt-print-sheet').classList.remove('visible');
   if (_btp.device && _btp.device.gatt && _btp.device.gatt.connected) {
     try { _btp.device.gatt.disconnect(); } catch(e) {}
   }
-  _btp.device = null; _btp.server = null; _btp.char = null;
+  _btp.device = null; _btp.server = null; _btp.char = null; _btp.asset = null;
   btPrint_setState('idle');
 }
 
@@ -20185,10 +20222,10 @@ async function btPrint_connect() {
 }
 
 async function btPrint_execute() {
-  if (!_btp.char || !_btp.fault) return;
+  if (!_btp.char || (!_btp.fault && !_btp.asset)) return;
   btPrint_setState('printing');
   try {
-    var zpl = zpl_faultLabel(_btp.fault);
+    var zpl = _btp.asset ? zpl_assetLabel(_btp.asset.dev, _btp.asset.ctx) : zpl_faultLabel(_btp.fault);
     var bytes = new TextEncoder().encode(zpl);
     // Chunk into BLE MTU-safe writes (Zebra Link-OS: ≤ 200 bytes)
     for (var i = 0; i < bytes.length; i += 200) {
@@ -20229,6 +20266,38 @@ function zpl_faultLabel(fault) {
     '^FO575,18^BY2,3,88',
     '^BCN,88,N,N^FD' + id + '^FS',
     // PHANTOM Link QR — bottom-right corner, model 2, magnification 3, ECC level Q
+    '^FO660,140^BQN,2,3,Q,7^FDQA,' + qrPayload + '^FS',
+    '^XZ'
+  ].join('\n');
+}
+
+// ZPL generator — 2" × 1" ASSET label (mirrors zpl_faultLabel). Hostname (large) | Location
+// + Model/Serial (small) | Code128 barcode (serial if present, else hostname/DNS — so the
+// printed label re-scans back into PhantomScanner / Metal Match) | PHANTOM Link QR.
+function zpl_assetLabel(dev, ctx) {
+  dev = dev || {}; ctx = ctx || {};
+  var now = new Date();
+  var ts = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' +
+    String(now.getDate()).padStart(2,'0') + ' ' + String(now.getHours()).padStart(2,'0') + ':' +
+    String(now.getMinutes()).padStart(2,'0');
+  var host = ((dev.name || dev.hostname || 'ASSET') + '').toUpperCase().substring(0,30);
+  var u    = (dev.uStart != null) ? ('U' + dev.uStart) : '';
+  var loc  = ((ctx.cab ? ctx.cab + ' ' : '') + u).trim() || '—';
+  var serialRaw = (dev.serial || '') + '';
+  var line3 = 'MODEL: ' + (((dev.model || '') + '').substring(0,24) || '—') + (serialRaw ? '  SN: ' + serialRaw.substring(0,16) : '');
+  // Barcode value: serial if present, else hostname/DNS — never blank, so it always
+  // re-scans into Metal Match / PhantomScanner.
+  var code = ((serialRaw || dev.name || dev.hostname || 'ASSET') + '').toUpperCase().replace(/[^A-Z0-9\-_.]/g,'').substring(0,20) || 'ASSET';
+  var qrPayload = JSON.stringify({ h: host, loc: loc, s: serialRaw.substring(0,24) });
+  return [
+    '^XA','^PW812','^LL406',
+    '^FO20,18^A0N,38,34^FD' + host + '^FS',
+    '^FO20,64^A0N,22,20^FDLOC: ' + loc.substring(0,40) + '^FS',
+    '^FO20,94^A0N,22,20^FD' + line3.substring(0,40) + '^FS',
+    '^FO20,126^GB772,2,2^FS',
+    '^FO20,136^A0N,20,18^FDPHANTOM // ' + ts + '^FS',
+    '^FO560,18^BY2,3,88',
+    '^BCN,88,N,N^FD' + code + '^FS',
     '^FO660,140^BQN,2,3,Q,7^FDQA,' + qrPayload + '^FS',
     '^XZ'
   ].join('\n');
@@ -35496,6 +35565,28 @@ function openRmDevice(dev) {
   }
 
   _rmRenderConnections(dev);
+
+  // v1.6.84 — Deployment Labeling: print an asset label for this device through the
+  // existing Tactical Print (BLE) pipeline. Cab context comes from the rendered Master hit.
+  (function() {
+    var prev = document.getElementById('rm-device-print');
+    if (prev && prev.parentNode) prev.parentNode.removeChild(prev);
+    var hit = window._rmConnHit;
+    var ctx = { cab: (hit && (hit.id || hit.cab)) ? String(hit.id || hit.cab) : '' };
+    var wrap = document.createElement('div');
+    wrap.id = 'rm-device-print';
+    wrap.style.cssText = 'margin-top:16px';
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'pt-btn pt-btn-secondary';
+    btn.style.cssText = 'width:100%;color:var(--cyan-bright)';
+    btn.innerHTML = '▷  PRINT ASSET LABEL';
+    btn.onclick = function() { if (typeof btPrint_openAsset === 'function') btPrint_openAsset(dev, ctx); };
+    wrap.appendChild(btn);
+    var fields = document.getElementById('rm-device-fields');
+    if (fields && fields.parentNode) fields.parentNode.appendChild(wrap);
+  })();
+
   document.getElementById('rm-device-sheet').classList.add('visible');
 }
 
