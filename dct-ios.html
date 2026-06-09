@@ -10188,7 +10188,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.6.84';
+const PHANTOM_APP_VERSION = 'phantom-v1.6.85';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -38920,6 +38920,183 @@ document.addEventListener('visibilitychange', () => {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // OPTIC AUDIT ENGINE
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ━━━ THREE-DOCUMENT OVERSIGHT PASS (v1.6.85) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// Day-0 safety net: reconcile the loaded Master (PHANTOM_MASTER_STORE.racksByCab —
+// what's installed), the BOM (IndexedDB bom_items linked to the active deployment —
+// what was ordered), and the EDP optic ledger (what the plan requires). Flags optic
+// shortages, hardware count mismatches, and phantom assets BEFORE sign-off.
+// Aggregate count-reconcile by normalized MODEL / OPTIC TYPE — NOT per-serial (the
+// three sources share no unit-level key). Chunked (yields to the event loop) + cached
+// by source hash. Read-only over all three; one-tap "Log Discrepancy" feeds the pipe.
+var RECONCILE_KEY = 'phantom_reconcile_v1';
+var _reconcile = { running:false, last:null };
+function _rec_norm(s){ return String(s==null?'':s).toUpperCase().replace(/[^A-Z0-9]/g,''); }
+function _rec_yield(){ return new Promise(function(r){ setTimeout(r,0); }); }
+var _REC_OPTIC_RE = /QSFP|OSFP|SFP|SR4|LR4|DR4|FR4|ER4|AOC|DAC|TRANSCEIV|OPTIC|100G|200G|400G|800G/i;
+
+async function reconcile_run(force){
+  if (_reconcile.running) return { ok:false, reason:'Reconcile already running.' };
+  var dep = (typeof deploy_getActive === 'function') ? deploy_getActive() : null;
+  if (!dep) return { ok:false, reason:'No active deployment.' };
+  var master = (typeof PHANTOM_MASTER_STORE !== 'undefined') ? PHANTOM_MASTER_STORE.load() : null;
+  var bomDeps = [];
+  try { if (typeof bom_dep_listByPhantomDeployment === 'function') bomDeps = await bom_dep_listByPhantomDeployment(dep.id) || []; } catch(_){ bomDeps = []; }
+  var have = { master: !!(master && master.racksByCab), bom: bomDeps.length > 0, edp: !!dep.edpParsed };
+  var bomRev = bomDeps.map(function(b){ return (b && (b.revisionHash || b.hash || b.id)) || ''; }).join(',');
+  var cacheKey = dep.id + '|' + ((master && master.sourceFileHash) || '') + '|' + (dep.edpHash || '') + '|' + bomRev;
+  if (!force){
+    var cached = safeParse(localStorage.getItem(RECONCILE_KEY), null);
+    if (cached && cached.cacheKey === cacheKey){ _reconcile.last = cached; return { ok:true, cached:true, result: cached }; }
+  }
+  _reconcile.running = true;
+  try {
+    // ---- projections (chunked; counts only, raw rows discarded) ----
+    var masterModel = {}, hostCount = 0;
+    if (have.master){
+      var cabKeys = Object.keys(master.racksByCab);
+      for (var ci=0; ci<cabKeys.length; ci++){
+        var cab = master.racksByCab[cabKeys[ci]];
+        var hosts = (cab && cab.hosts) || [];
+        for (var hi=0; hi<hosts.length; hi++){
+          var h = hosts[hi]; if (!h) continue; hostCount++;
+          var m = _rec_norm(h.model); if (m) masterModel[m] = (masterModel[m]||0) + 1;
+        }
+        if (ci % 40 === 39) await _rec_yield();
+      }
+    }
+    var bomModel = {}, bomOptic = {};
+    for (var bd=0; bd<bomDeps.length; bd++){
+      var items = [];
+      try { if (typeof bom_item_listByDep === 'function') items = await bom_item_listByDep(bomDeps[bd].id) || []; } catch(_){ items = []; }
+      for (var ii=0; ii<items.length; ii++){
+        var it = items[ii]; if (!it) continue;
+        var label = (it.part_no || it.cw_sku || it.description || '') + '';
+        var key = _rec_norm(label); if (!key) continue;
+        var q = Number(it.qty) || 0;
+        if (_REC_OPTIC_RE.test(label) || /optic|transceiv/i.test(it.type||'')) bomOptic[key] = (bomOptic[key]||0) + q;
+        else bomModel[key] = (bomModel[key]||0) + q;
+        if (ii % 1000 === 999) await _rec_yield();
+      }
+    }
+    var ledger = (typeof deploy_loadOptics === 'function') ? (deploy_loadOptics(dep.id) || []) : [];
+    // ---- diff ----
+    var findings = [];
+    function bomLooseMatch(map, nt){ if (map[nt]!=null) return {q:map[nt],conf:'high'}; var k=Object.keys(map).find(function(x){return x.indexOf(nt)>-1||nt.indexOf(x)>-1;}); return k?{q:map[k],conf:'review'}:null; }
+    // (A) Optics — 3-way: EDP required (ledger) vs BOM ordered vs Master installed
+    ledger.forEach(function(o){
+      var nt = _rec_norm(o.opticType); if (!nt) return;
+      var req = Number(o.required)||0, inst = Number(o.installed)||0;
+      var bm = bomLooseMatch(bomOptic, nt); var ordered = bm ? bm.q : 0; var conf = bm ? bm.conf : 'high';
+      if (req > 0 && ordered < req){
+        findings.push({ kind:'OPTIC', sev:'high', conf:conf, scope:o.opticType, label:o.opticType, edp:req, bom:ordered, master:inst,
+          message:'Optic short — ' + o.opticType + ': EDP requires ' + req + ', BOM ordered ' + ordered + (inst?(' , installed ' + inst):'') + ' (short ' + (req-ordered) + ').' });
+      } else if (req > 0 && inst > req){
+        findings.push({ kind:'OPTIC', sev:'med', conf:'high', scope:o.opticType, label:o.opticType, edp:req, bom:ordered, master:inst,
+          message:'Optic over-install — ' + o.opticType + ': ' + inst + ' installed vs ' + req + ' required.' });
+      }
+    });
+    // (B) Hardware models — BOM ordered vs Master installed
+    if (have.master && have.bom){
+      Object.keys(bomModel).forEach(function(k){
+        var ordered = bomModel[k]; var mm = bomLooseMatch(masterModel, k); var installed = mm ? mm.q : 0; var conf = mm ? mm.conf : 'high';
+        if (installed === 0) findings.push({ kind:'HW', sev:'med', conf:conf, scope:k, label:k, edp:null, bom:ordered, master:0, message:'In BOM, not in Master — ' + k + ': ' + ordered + ' ordered, none installed.' });
+        else if (ordered > installed) findings.push({ kind:'HW', sev:'med', conf:conf, scope:k, label:k, edp:null, bom:ordered, master:installed, message:'Short install — ' + k + ': ' + ordered + ' ordered, ' + installed + ' installed.' });
+      });
+      Object.keys(masterModel).forEach(function(k){
+        if (!bomLooseMatch(bomModel, k)) findings.push({ kind:'HW', sev:'med', conf:'review', scope:k, label:k, edp:null, bom:0, master:masterModel[k], message:'Phantom asset — ' + k + ': ' + masterModel[k] + ' in Master, not in BOM.' });
+      });
+    }
+    findings.sort(function(a,b){ return (a.sev==='high'?0:1) - (b.sev==='high'?0:1); });
+    var result = {
+      cacheKey: cacheKey, ts: Date.now(), deploymentId: dep.id, have: have, hostCount: hostCount,
+      totals: { optic: findings.filter(function(f){return f.kind==='OPTIC';}).length,
+                hw: findings.filter(function(f){return f.kind==='HW';}).length,
+                review: findings.filter(function(f){return f.conf==='review';}).length },
+      findings: findings.slice(0, 200)
+    };
+    try { safeStore(RECONCILE_KEY, JSON.stringify(result)); } catch(_){}
+    _reconcile.last = result;
+    return { ok:true, cached:false, result: result };
+  } finally { _reconcile.running = false; }
+}
+
+// One-tap: turn a finding into a discrepancy (category 'reconcile') + audit event.
+function reconcile_logDiscrepancy(idx){
+  var res = _reconcile.last; if (!res || !res.findings || !res.findings[idx]) return;
+  var f = res.findings[idx];
+  var depId = res.deploymentId;
+  var prof = (typeof siteProfile_load === 'function') ? (siteProfile_load() || {}) : {};
+  var rec = {
+    id: 'disc_rec_' + Date.now() + '_' + Math.floor(performance.now()),
+    deploymentId: depId, ts: Date.now(), loggedBy: (prof.buildLead || 'Reconcile'),
+    category: 'reconcile', severity: (f.sev === 'high' ? 'high' : 'med'),
+    rackId: '', expected: f.edp != null ? ('EDP ' + f.edp) : ('BOM ' + (f.bom||0)),
+    actual: (f.master != null ? ('Master ' + f.master) : '') + (f.bom != null && f.edp != null ? (' · BOM ' + f.bom) : ''),
+    note: f.message + (f.conf === 'review' ? ' [REVIEW — fuzzy SKU match]' : ''),
+    photo: null, status: 'open', resolution: ''
+  };
+  try {
+    var all = (typeof discLog_loadAll === 'function') ? discLog_loadAll() : [];
+    if (!Array.isArray(all)) all = [];
+    all.push(rec);
+    if (typeof discLog_saveAll === 'function') discLog_saveAll(all);
+    if (typeof deploy_logAudit === 'function') deploy_logAudit(depId, 'DISCREPANCY_LOGGED', 'discrepancy', rec.id, f.message);
+    if (typeof phantomToast === 'function') phantomToast('Logged to discrepancies', 'ok');
+    if (typeof haptic === 'function') haptic([8,30,8]);
+    f._logged = true;
+    var panel = document.getElementById('reconcile-panel'); if (panel) reconcile_render(panel);
+  } catch(e){ if (typeof phantomToast === 'function') phantomToast('Log failed: ' + (e.message||e), 'error'); }
+}
+
+async function reconcile_runUI(){
+  var panel = document.getElementById('reconcile-panel'); if (!panel) return;
+  panel.querySelector('#reconcile-body') && (panel.querySelector('#reconcile-body').innerHTML = '<div class="skeleton-grid"><div class="skeleton-line"></div><div class="skeleton-line"></div><div class="skeleton-line"></div></div>');
+  var r = await reconcile_run(true);
+  if (!r.ok && typeof phantomToast === 'function') phantomToast(r.reason || 'Reconcile unavailable', 'warn');
+  reconcile_render(panel);
+}
+
+function reconcile_render(mount){
+  if (!mount) return;
+  if (!_reconcile.last){ var c = safeParse(localStorage.getItem(RECONCILE_KEY), null); if (c) _reconcile.last = c; }
+  var res = _reconcile.last;
+  var head = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">' +
+    '<div style="font-family:var(--orb);font-size:var(--fs-micro);letter-spacing:2px;color:var(--violet)">▣ DOCUMENT RECONCILE</div>' +
+    '<button class="pt-btn pt-btn-secondary" style="margin-left:auto;width:auto;padding:8px 14px;color:var(--cyan-bright)" onclick="reconcile_runUI()">▶ RUN</button></div>';
+  var body = '<div id="reconcile-body">';
+  if (!res){
+    body += '<div style="font-family:var(--raj);font-size:var(--fs-body);color:var(--slate);padding:6px 0">Cross-checks the loaded Master, BOM, and EDP for optic shortages, count mismatches, and phantom assets. Tap RUN.</div>';
+  } else {
+    var t = res.totals || {}; var miss = (res.have.master?'':'Master ') + (res.have.bom?'':'BOM ') + (res.have.edp?'':'EDP ');
+    body += '<div class="kpi-row" style="margin:0 0 10px">' +
+      '<div class="kpi"><div class="kpi-label">Optics</div><div class="kpi-val" style="color:' + (t.optic?'var(--red)':'var(--green-neon,#39ff14)') + '">' + (t.optic||0) + '</div></div>' +
+      '<div class="kpi"><div class="kpi-label">Hardware</div><div class="kpi-val" style="color:' + (t.hw?'var(--gold)':'var(--green-neon,#39ff14)') + '">' + (t.hw||0) + '</div></div>' +
+      '<div class="kpi"><div class="kpi-label">Review</div><div class="kpi-val">' + (t.review||0) + '</div></div></div>';
+    if (miss.trim()) body += '<div style="font-family:var(--mono);font-size:var(--fs-caption);color:var(--slate);margin-bottom:8px">Not loaded: ' + miss.trim() + ' — reconciled what was available.</div>';
+    if (!res.findings.length){
+      body += '<div style="font-family:var(--raj);font-size:var(--fs-body);color:var(--green-neon,#39ff14);padding:6px 0">✓ No mismatches found across the loaded documents.</div>';
+    } else {
+      res.findings.forEach(function(f, i){
+        var bcls = f.sev==='high' ? 'badge-red' : 'badge-gold';
+        var verb = f.message.split(' — ')[0];
+        body += '<div class="card" style="margin-bottom:8px">' +
+          '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">' +
+            '<span class="badge ' + bcls + '">' + escHtml(verb) + '</span>' +
+            (f.conf==='review' ? '<span class="badge badge-violet">REVIEW</span>' : '') +
+            '<span style="font-family:var(--mono);font-size:var(--fs-caption);color:var(--white);flex:1">' + escHtml(f.label) + '</span></div>' +
+          '<div style="font-family:var(--raj);font-size:var(--fs-caption);color:var(--slate);margin-bottom:6px">' + escHtml(f.message) + '</div>' +
+          (f._logged
+            ? '<div style="font-family:var(--mono);font-size:var(--fs-caption);color:var(--green-neon,#39ff14)">✓ LOGGED</div>'
+            : '<button class="pt-btn pt-btn-ghost" style="width:auto;padding:8px 12px;font-size:var(--fs-caption)" onclick="reconcile_logDiscrepancy(' + i + ')">↳ LOG DISCREPANCY</button>') +
+          '</div>';
+      });
+    }
+    body += '<div style="font-family:var(--mono);font-size:var(--fs-caption);color:var(--slate);margin-top:6px">' + (res.hostCount||0) + ' Master hosts · count-reconcile by model / optic type (not per-serial)</div>';
+  }
+  body += '</div>';
+  mount.innerHTML = '<div style="background:var(--surf-1);border:1px solid rgba(155,89,255,0.2);border-radius:12px;padding:14px 16px;margin-bottom:14px">' + head + body + '</div>';
+}
+
 const AUDIT = (() => {
   const KEY = 'phantom_audits_v1';
   const ACTIVE_AUDIT_KEY = 'phantom_active_audit';
@@ -38932,7 +39109,7 @@ const AUDIT = (() => {
 
   function renderList(container) {
     const audits = load();
-    let html = '<div class="sh">Optic Audits</div>';
+    let html = '<div id="reconcile-panel"></div><div class="sh">Optic Audits</div>';
     html += '<div style="display:flex;gap:8px;margin-bottom:14px">';
     html += '<button class="pt-btn pt-btn-secondary" style="flex:1" onclick="AUDIT.showNewForm()">＋ NEW AUDIT</button>';
     html += '</div>';
@@ -38963,6 +39140,8 @@ const AUDIT = (() => {
       });
     }
     container.innerHTML = html;
+    // v1.6.85 — mount the Three-Document Oversight (reconcile) panel above the audit list.
+    if (typeof reconcile_render === 'function') { try { reconcile_render(document.getElementById('reconcile-panel')); } catch(_){} }
   }
 
   function showNewForm() { document.getElementById('audit-new-form').style.display = ''; }
