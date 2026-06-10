@@ -10254,11 +10254,66 @@ body.has-resume-banner #boot {
   .pwr-topo .src{animation:pwrsrcpulse 1.8s ease-in-out infinite;transform-box:fill-box;transform-origin:center;}
   @keyframes pwrsrcpulse{0%,100%{filter:drop-shadow(0 0 2px #34d2f2);}50%{filter:drop-shadow(0 0 7px #34d2f2);}}
   @media (prefers-reduced-motion: reduce){.pwr-topo .flow use{animation:none;opacity:0;}.pwr-topo .node circle{animation:none;}.pwr-topo .src{animation:none;}}
+
+  /* ━━━ MASTER-SCOPE front door (v1.6.88 · Ship 1) ━━━━━━━━━━━━━━━━━━━━
+     New Master-scope deployment path; renders into #ops-content like
+     deploy_showIngest. Rule 1 (zero horizontal overflow): every box is
+     width:100% + box-sizing:border-box, flex children carry min-width:0,
+     and long cab/locode ids ellipsis-truncate rather than push width. */
+  .msc-wrap { width:100%; box-sizing:border-box; }
+  .msc-tally { position:sticky; top:0; z-index:5; display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+    width:100%; box-sizing:border-box; padding:10px 12px; margin-bottom:12px;
+    background:var(--hud-glass-soft,rgba(11,16,28,0.92)); border:1px solid var(--hud-edge-cyan,rgba(92,242,255,0.30));
+    border-radius:10px; -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); }
+  .msc-tally-stat { font-family:var(--mono); font-size:var(--fs-caption,11px); letter-spacing:1px; color:var(--slate-readable,#b4c2d0); }
+  .msc-tally-stat b { font-family:var(--raj); font-weight:700; font-size:15px; color:#5cf2ff; }
+  .msc-fidelity { width:100%; box-sizing:border-box; display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+    padding:9px 12px; margin-bottom:12px; border-radius:8px;
+    background:rgba(255,214,10,0.08); border:1px solid rgba(255,214,10,0.35);
+    font-family:var(--mono); font-size:var(--fs-caption,11px); line-height:1.45; color:var(--gold,#ffd60a); }
+  .msc-group { width:100%; box-sizing:border-box; border:1px solid rgba(92,242,255,0.14); border-radius:10px;
+    margin-bottom:10px; overflow:hidden; background:rgba(11,16,28,0.50); }
+  .msc-group-hd { display:flex; align-items:center; gap:10px; width:100%; box-sizing:border-box;
+    min-height:var(--tap-m,44px); padding:10px 12px; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  .msc-group-hd:active { background:rgba(92,242,255,0.05); }
+  .msc-group-chev { flex:0 0 auto; color:var(--slate); font-size:11px; transition:transform 0.15s; }
+  .msc-group.collapsed .msc-group-chev { transform:rotate(-90deg); }
+  .msc-group-row { flex:1 1 auto; min-width:0; }
+  .msc-group-name { font-family:var(--raj); font-weight:700; font-size:15px; color:var(--white);
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .msc-group-sub { font-family:var(--mono); font-size:10px; letter-spacing:1px; color:var(--slate);
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .msc-group-all { flex:0 0 auto; font-family:var(--orb); font-size:10px; letter-spacing:1px; color:#5cf2ff;
+    border:1px solid rgba(92,242,255,0.35); border-radius:6px; padding:7px 9px; background:transparent;
+    cursor:pointer; min-height:32px; -webkit-tap-highlight-color:transparent; }
+  .msc-group.collapsed .msc-group-body { display:none; }
+  .msc-cab { display:flex; align-items:center; gap:10px; width:100%; box-sizing:border-box;
+    min-height:var(--tap-m,44px); padding:8px 12px; border-top:1px solid rgba(92,242,255,0.08);
+    cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  .msc-cab:active { background:rgba(92,242,255,0.04); }
+  .msc-cab.sel { background:rgba(92,242,255,0.08); }
+  .msc-check { flex:0 0 auto; width:20px; height:20px; border-radius:5px; border:1.5px solid rgba(92,242,255,0.40);
+    display:flex; align-items:center; justify-content:center; font-size:13px; line-height:1; color:#04070b; background:transparent; }
+  .msc-cab.sel .msc-check { background:#5cf2ff; border-color:#5cf2ff; }
+  .msc-check > span { opacity:0; }
+  .msc-cab.sel .msc-check > span { opacity:1; }
+  .msc-cab-id { flex:1 1 auto; min-width:0; font-family:var(--raj); font-weight:700; font-size:14px;
+    color:var(--slate-readable,#b4c2d0); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .msc-cab.sel .msc-cab-id { color:var(--white); }
+  .msc-cab-meta { flex:0 0 auto; font-family:var(--mono); font-size:10px; letter-spacing:0.5px; color:var(--slate); }
+  /* Scroll runway so the last cab row clears the sticky footer (footer is the
+     last child of .msc-wrap, so the runway must sit BEFORE it — padding on the
+     wrap would land below the footer and just leave a gap at max scroll). */
+  .msc-foot-pad { flex:0 0 auto; height:64px; }
+  .msc-actions { position:sticky; bottom:0; z-index:5; display:flex; gap:8px; width:100%; box-sizing:border-box;
+    padding:12px 0 calc(14px + env(safe-area-inset-bottom)); margin-top:8px;
+    background:rgba(5,7,11,0.92); -webkit-backdrop-filter:var(--blur-sheet); backdrop-filter:var(--blur-sheet);
+    border-top:1px solid rgba(92,242,255,0.20); }
 </style>
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.6.87';
+const PHANTOM_APP_VERSION = 'phantom-v1.6.88';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -21988,8 +22043,13 @@ function deploy_showList(container) {
   html += '<button class="pt-btn pt-btn-ghost" style="flex-shrink:0;width:auto;padding:12px;white-space:nowrap" aria-label="Command Center" onclick="deploy_showCommandCenter(document.getElementById(\'ops-content\'))">' + _ico.grid('#5cf2ff', 14) + '</button>';
   html += '<button class="pt-btn pt-btn-ghost" style="flex-shrink:0;width:auto;padding:12px;white-space:nowrap" aria-label="Rack Map" onclick="showOpsTab(\'rackmap\')">' + _ico.server('#5cf2ff', 14) + '</button>';
   html += '<button class="pt-btn pt-btn-secondary" style="flex-shrink:0;width:auto;padding:12px 14px;clip-path:none;font-size: var(--fs-caption);white-space:nowrap" onclick="intake_open()" aria-label="Intake — drop EDP, parse package">＋ INTAKE</button>';
-  html += '<button class="pt-btn pt-btn-primary" style="flex-shrink:0;width:auto;padding:12px 20px;clip-path:none;white-space:nowrap" onclick="deploy_showIngest()">＋ NEW</button>';
+  html += '<button class="pt-btn pt-btn-ghost" style="flex-shrink:0;width:auto;padding:12px 14px;font-size: var(--fs-caption);white-space:nowrap" onclick="deploy_showIngest()" aria-label="New deployment from EDP paste (advanced)">＋ EDP</button>';
   html += '</div>';
+
+  // ── Ship 1 (v1.6.88): Master-scope front door — the new PRIMARY entry.
+  //    The Master is the source of truth / front door; the EDP path is demoted
+  //    to the ＋ EDP / ＋ INTAKE buttons above (still fully reachable, untouched).
+  html += '<button class="pt-btn pt-btn-primary" style="width:100%;box-sizing:border-box;padding:16px 18px;margin-bottom:14px;clip-path:none;display:flex;align-items:center;justify-content:center;gap:10px;white-space:nowrap" onclick="mscope_open()" aria-label="New deployment from Master — scope by cab">' + _ico.server('#04070b', 16) + ' NEW DEPLOYMENT FROM MASTER</button>';
 
   // ── Unread handoff banner ──
   var allHandoffs = handoff_loadAll();
@@ -22010,7 +22070,8 @@ function deploy_showList(container) {
   if (deploys.length === 0) {
     html += '<div class="sop-empty" style="padding:24px 20px">';
     html += PHANTOM_EMPTY_SVG.deploy;
-    html += '<button class="pt-btn pt-btn-secondary" onclick="deploy_showIngest()" style="margin-top:20px;width:auto;padding:12px 28px">＋ &nbsp;New Deployment</button>';
+    html += '<div style="font-family:var(--mono);font-size:12px;color:var(--slate-readable,#b4c2d0);margin-top:8px">Start from the Master above, or paste an EDP.</div>';
+    html += '<button class="pt-btn pt-btn-ghost" onclick="deploy_showIngest()" style="margin-top:12px;width:auto;padding:10px 20px;font-size: var(--fs-caption)">＋ &nbsp;Paste EDP (advanced)</button>';
     html += '</div>';
   } else {
     deploys.sort(function(a,b) { return b.updated - a.updated; });
@@ -24737,6 +24798,77 @@ var PHANTOM_MASTER_STORE = {
 // Hidden console helper for John's test workflow. Not wired to any UI.
 window.phantom_clearMaster = function() { return PHANTOM_MASTER_STORE.clear(); };
 
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// PHANTOM_JOBSNAP_STORE — Ship 1 (v1.6.88) · Master-scope deployment snapshot.
+//
+// The SNAPSHOT decision, materialized. When the operator confirms a cab
+// selection in the Master front door, the chosen cabs' Master data is FROZEN
+// into this store as the job's source of truth — independent of
+// PHANTOM_MASTER_STORE (which may be cab-only or quota-evicted) and immune to
+// later Master re-loads/clears. Manual re-sync only, per the locked pivot.
+//
+// lz-string-compressed, scoped to selected cabs (NOT the whole site) so the
+// payload stays well under the storage budget. Ship 1 holds a single 'pending'
+// staged snapshot; Ship 2 routes it into the seeder + QA/Reconcile engine.
+// Mirrors PHANTOM_MASTER_STORE's save/load/clear contract + quota handling.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+var PHANTOM_JOBSNAP_STORE = {
+  KEY: 'phantom_jobsnap_v1',
+  save: function(snapshot) {
+    try {
+      if (!snapshot || !snapshot.cabs || typeof snapshot.cabs !== 'object') return false;
+      if (Object.keys(snapshot.cabs).length === 0) return false; // never persist a content-empty snapshot
+      var payload = Object.assign({}, snapshot, { schemaVersion: 1 });
+      var compressed = LZString.compressToUTF16(JSON.stringify(payload));
+      localStorage.setItem(this.KEY, compressed);
+      console.log('PHANTOM_JOBSNAP_STORE saved:', compressed.length, 'UTF-16 chars (~' +
+                  Math.round(compressed.length * 2 / 1024) + ' KB) · ' +
+                  (payload.selectedCabIds || []).length + ' cabs');
+      return true;
+    } catch (e) {
+      var isQuota = e && (
+        e.name === 'QuotaExceededError' ||
+        e.name === 'NS_ERROR_DOM_QUOTA_REACHED' ||
+        e.code === 22 || e.code === 1014 ||
+        /quota/i.test(e.message || '')
+      );
+      if (isQuota) {
+        console.warn('PHANTOM: job snapshot too large for offline storage on this device.');
+      } else {
+        console.warn('PHANTOM_JOBSNAP_STORE save failed:', e);
+      }
+      return false;
+    }
+  },
+  // No Ship-1 caller — this is the designated read path for the Ship-2 seeder.
+  load: function() {
+    try {
+      var raw = localStorage.getItem(this.KEY);
+      if (raw === null) return null;
+      var json = LZString.decompressFromUTF16(raw);
+      if (!json) {
+        console.warn('PHANTOM_JOBSNAP_STORE: decompression returned empty, ignoring stored payload');
+        return null;
+      }
+      var payload = JSON.parse(json);
+      if (!payload || payload.schemaVersion !== 1) {
+        console.warn('PHANTOM_JOBSNAP_STORE: schema mismatch (expected 1, got ' + (payload && payload.schemaVersion) + '), ignoring');
+        return null;
+      }
+      return payload;
+    } catch (e) {
+      console.warn('PHANTOM_JOBSNAP_STORE load failed:', e);
+      return null;
+    }
+  },
+  clear: function() {
+    try { localStorage.removeItem(this.KEY); } catch (e) {}
+  }
+};
+
+// Console helper — mirrors window.phantom_clearMaster. Not wired to any UI.
+window.phantom_clearJobSnap = function() { return PHANTOM_JOBSNAP_STORE.clear(); };
+
 async function phantom_parseMaster(arrayBuffer, options) {
   options = options || {};
   var chunkSize = options.chunkSize || 5000;
@@ -25037,6 +25169,317 @@ window.master_loadFromPicker = function master_loadFromPicker(opts) {
 // ═══════════════════════════════════════════════════════════════════════════
 // END PHANTOM MASTER PARSE
 // ═══════════════════════════════════════════════════════════════════════════
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// MASTER-SCOPE FRONT DOOR — Ship 1 (v1.6.88)
+//
+// The new deployment path: the Master is the source of truth AND the front
+// door. Load (or reuse) a Master → group its cabs by Row/Locode → multi-select
+// the exact Cab IDs this team owns → freeze a scoped snapshot into
+// PHANTOM_JOBSNAP_STORE. Ship 1 STOPS at staging that snapshot: it does NOT
+// create or seed a live deployment, and it does NOT touch the EDP path
+// (deploy_parseEDP_local / deploy_create / the intake + hash gates stay intact).
+// Ship 2 routes the staged snapshot into the rack-seeder + QA/Reconcile engine.
+//
+// Reads ONLY window._lastPhantomMaster.racksByCab. Writes ONLY
+// PHANTOM_JOBSNAP_STORE. No existing store, renderer, or gate is mutated.
+// All markup is width-capped per Rule 1 (zero horizontal overflow).
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+var _mscopeState = { selected: null, counts: null, totalCabs: 0, siteRef: null };
+
+function mscope_escHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function(ch) {
+    return ch === '&' ? '&amp;' : ch === '<' ? '&lt;' : ch === '>' ? '&gt;' : ch === '"' ? '&quot;' : '&#39;';
+  });
+}
+function mscope_escAttr(s) { return mscope_escHtml(s); }
+
+// The live in-memory Master, if usable. A fresh parse is full fidelity; a
+// restoredFromStorage object may carry cab-level data only.
+function mscope_master() {
+  var m = window._lastPhantomMaster;
+  if (m && m.racksByCab && typeof m.racksByCab === 'object' && Object.keys(m.racksByCab).length > 0) return m;
+  return null;
+}
+
+// Group racksByCab into rows. Row = cabId segment before the first ':'
+// (e.g. 't9' in 't9:001'); locode is the explicit per-cab field. Cabs sort
+// naturally within each row; rows sort alpha-numerically.
+function mscope_groupByRow(m) {
+  var racks = (m && m.racksByCab) ? m.racksByCab : {};
+  var byRow = {};
+  Object.keys(racks).forEach(function(cabId) {
+    var rack = racks[cabId] || {};
+    var row = String(cabId).split(':')[0] || '—';
+    if (!byRow[row]) byRow[row] = { row: row, locode: rack.locode || '', cabs: [] };
+    if (!byRow[row].locode && rack.locode) byRow[row].locode = rack.locode;
+    byRow[row].cabs.push({
+      cabId: cabId,
+      locode: rack.locode || '',
+      hosts: (rack.hosts || []).length,
+      cables: (rack.cablesOut || []).length + (rack.cablesIn || []).length
+    });
+  });
+  return Object.keys(byRow).sort(function(a, b) {
+    return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+  }).map(function(r) {
+    byRow[r].cabs.sort(function(a, b) {
+      return String(a.cabId).localeCompare(String(b.cabId), undefined, { numeric: true, sensitivity: 'base' });
+    });
+    return byRow[r];
+  });
+}
+
+// Entry point — the new primary CTA from deploy_showList. Honors "Master
+// required": with no usable Master, prompts a load instead of an empty picker.
+function mscope_open() {
+  var c = document.getElementById('ops-content');
+  if (!c) return;
+  if (typeof nav_push === 'function') nav_push({ p: 'sop', o: 'deploy', d: 'mscope' });
+  var omniBar = document.getElementById('omni-bar');
+  if (omniBar) omniBar.classList.add('omni-inactive');
+  _mscopeState.selected = {};
+  var m = mscope_master();
+  if (!m) { mscope_renderLoadPrompt(c); return; }
+  mscope_render(c, m);
+}
+
+function mscope_loadMaster() {
+  if (typeof master_loadFromPicker !== 'function') { phantomToast('Master loader unavailable', 'error'); return; }
+  master_loadFromPicker({}).then(function(site) {
+    if (!site) return; // user cancelled the picker
+    var c = document.getElementById('ops-content');
+    if (!c) return;
+    _mscopeState.selected = {};
+    mscope_render(c, site);
+  }).catch(function(err) {
+    try { console.error('mscope_loadMaster:', err); } catch (_) {}
+    phantomToast('Master load failed — check the file', 'error');
+  });
+}
+
+function mscope_tallyInner(selCabs, selHosts, selCables, totalCabs) {
+  return '<span class="msc-tally-stat"><b>' + selCabs + '</b> / ' + totalCabs + ' cabs</span>' +
+         '<span class="msc-tally-stat" style="margin-left:auto"><b>' + selHosts + '</b> hosts</span>' +
+         '<span class="msc-tally-stat"><b>' + selCables + '</b> cables</span>';
+}
+
+function mscope_renderLoadPrompt(c) {
+  var html = '<div class="msc-wrap">';
+  html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">';
+  html += '<button class="pt-btn pt-btn-ghost" style="width:auto;padding:10px 16px" onclick="nav_back()">‹ Back</button>';
+  html += '<div style="flex:1;min-width:0"><div style="font-family:var(--orb);font-size:var(--fs-micro);letter-spacing:3px;color:var(--cyan);text-transform:uppercase">NEW DEPLOYMENT</div>';
+  html += '<div style="font-family:var(--raj);font-size:16px;font-weight:700;color:var(--white)">From Master</div></div></div>';
+  html += '<div class="sop-empty" style="padding:28px 20px;text-align:center">';
+  html += '<div style="font-family:var(--raj);font-size:16px;font-weight:700;color:var(--white);margin-bottom:8px">No Master loaded</div>';
+  html += '<div style="font-family:var(--mono);font-size:12px;color:var(--slate-readable,#b4c2d0);line-height:1.5;margin-bottom:22px">The Master is the front door. Load the engineering Master to scope this deployment by cab.</div>';
+  html += '<button class="pt-btn pt-btn-primary" style="width:auto;padding:14px 28px" onclick="mscope_loadMaster()">LOAD MASTER</button>';
+  html += '</div></div>';
+  c.innerHTML = html;
+}
+
+function mscope_render(c, m) {
+  if (!_mscopeState.selected) _mscopeState.selected = {};
+  var groups = mscope_groupByRow(m);
+  var totalCabs = 0, totalHosts = 0, totalCables = 0;
+  var counts = {};
+  groups.forEach(function(g) {
+    g.cabs.forEach(function(cb) {
+      totalCabs++; totalHosts += cb.hosts; totalCables += cb.cables;
+      counts[cb.cabId] = { hosts: cb.hosts, cables: cb.cables };
+    });
+  });
+  _mscopeState.counts = counts;
+  _mscopeState.totalCabs = totalCabs;
+  _mscopeState.siteRef = m;
+  var restored = !!(m && m.restoredFromStorage);
+
+  var html = '<div class="msc-wrap">';
+  html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">';
+  html += '<button class="pt-btn pt-btn-ghost" style="width:auto;padding:10px 16px" onclick="nav_back()">‹ Back</button>';
+  html += '<div style="flex:1;min-width:0">';
+  html += '<div style="font-family:var(--orb);font-size:var(--fs-micro);letter-spacing:3px;color:var(--cyan);text-transform:uppercase">NEW DEPLOYMENT · FROM MASTER</div>';
+  html += '<div style="font-family:var(--raj);font-size:16px;font-weight:700;color:var(--white);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + mscope_escHtml(m.siteName || m.siteCode || 'Master') + '</div>';
+  html += '</div></div>';
+
+  html += '<div class="msc-tally" id="msc-tally">' + mscope_tallyInner(0, 0, 0, totalCabs) + '</div>';
+
+  if (restored && totalHosts === 0 && totalCables === 0) {
+    html += '<div class="msc-fidelity">';
+    html += '<span style="flex:1 1 auto;min-width:0">Restored Master is cab-only (host/cable data is not kept in storage). Snapshot will carry cabs only — re-load the source file for full host/cable fidelity.</span>';
+    html += '<button class="msc-group-all" style="flex:0 0 auto" onclick="mscope_loadMaster()">RE-LOAD</button>';
+    html += '</div>';
+  }
+
+  if (totalCabs === 0) {
+    html += '<div class="sop-empty" style="padding:24px 20px"><div style="font-family:var(--mono);font-size:12px;color:var(--slate-readable,#b4c2d0)">This Master has no cabs to scope.</div></div></div>';
+    c.innerHTML = html;
+    return;
+  }
+
+  groups.forEach(function(g) {
+    html += '<div class="msc-group">';
+    html += '<div class="msc-group-hd" onclick="mscope_toggleGroup(this)">';
+    html += '<span class="msc-group-chev">▾</span>';
+    html += '<div class="msc-group-row">';
+    html += '<div class="msc-group-name">ROW ' + mscope_escHtml(g.row) + '</div>';
+    html += '<div class="msc-group-sub">' + (g.locode ? mscope_escHtml(g.locode) + ' · ' : '') + g.cabs.length + ' cab' + (g.cabs.length === 1 ? '' : 's') + '</div>';
+    html += '</div>';
+    html += '<button class="msc-group-all" onclick="event.stopPropagation();mscope_toggleRow(this)">ALL</button>';
+    html += '</div>';
+    html += '<div class="msc-group-body">';
+    g.cabs.forEach(function(cb) {
+      html += '<div class="msc-cab" data-cab="' + mscope_escAttr(cb.cabId) + '" onclick="mscope_toggleCab(this)">';
+      html += '<span class="msc-check"><span>✓</span></span>';
+      html += '<span class="msc-cab-id">' + mscope_escHtml(cb.cabId) + '</span>';
+      html += '<span class="msc-cab-meta">' + cb.hosts + 'h · ' + cb.cables + 'c</span>';
+      html += '</div>';
+    });
+    html += '</div></div>';
+  });
+
+  html += '<div class="msc-foot-pad" aria-hidden="true"></div>';
+  html += '<div class="msc-actions">';
+  html += '<button class="pt-btn pt-btn-ghost" style="flex:0 0 auto;width:auto;padding:14px 16px" onclick="nav_back()">Cancel</button>';
+  html += '<button class="pt-btn pt-btn-primary" id="msc-confirm-btn" disabled style="flex:1 1 0%;width:0;min-width:0;padding:14px 12px;opacity:0.5;white-space:nowrap" onclick="mscope_confirm()">STAGE SCOPE SNAPSHOT</button>';
+  html += '</div>';
+
+  html += '</div>';
+  c.innerHTML = html;
+}
+
+function mscope_toggleGroup(hdEl) {
+  var g = hdEl && hdEl.parentElement;
+  if (g) g.classList.toggle('collapsed');
+}
+
+function mscope_toggleCab(el) {
+  if (!el) return;
+  if (!_mscopeState.selected) _mscopeState.selected = {};
+  var cabId = el.getAttribute('data-cab');
+  var now = !_mscopeState.selected[cabId];
+  _mscopeState.selected[cabId] = now;
+  el.classList.toggle('sel', now);
+  mscope_updateTally();
+}
+
+function mscope_toggleRow(btnEl) {
+  var group = (btnEl && btnEl.closest) ? btnEl.closest('.msc-group') : null;
+  if (!group) return;
+  if (!_mscopeState.selected) _mscopeState.selected = {};
+  var cabEls = group.querySelectorAll('.msc-cab');
+  var anyUnsel = false, i;
+  for (i = 0; i < cabEls.length; i++) {
+    if (!_mscopeState.selected[cabEls[i].getAttribute('data-cab')]) { anyUnsel = true; break; }
+  }
+  for (i = 0; i < cabEls.length; i++) {
+    var cid = cabEls[i].getAttribute('data-cab');
+    _mscopeState.selected[cid] = anyUnsel;
+    cabEls[i].classList.toggle('sel', anyUnsel);
+  }
+  mscope_updateTally();
+}
+
+function mscope_updateTally() {
+  var sel = _mscopeState.selected || {};
+  var counts = _mscopeState.counts || {};
+  var nCabs = 0, nHosts = 0, nCables = 0;
+  Object.keys(sel).forEach(function(cabId) {
+    if (!sel[cabId]) return;
+    nCabs++;
+    var cc = counts[cabId] || { hosts: 0, cables: 0 };
+    nHosts += cc.hosts; nCables += cc.cables;
+  });
+  var t = document.getElementById('msc-tally');
+  if (t) t.innerHTML = mscope_tallyInner(nCabs, nHosts, nCables, _mscopeState.totalCabs || 0);
+  var btn = document.getElementById('msc-confirm-btn');
+  if (btn) { btn.disabled = (nCabs === 0); btn.style.opacity = (nCabs === 0) ? '0.5' : '1'; }
+}
+
+// Freeze the selected cabs' Master data into PHANTOM_JOBSNAP_STORE — the
+// SNAPSHOT decision. Scoped to selection (not the whole site). Ship 1
+// terminal: stages the snapshot, does NOT create or seed a deployment.
+function mscope_confirm() {
+  var sel = _mscopeState.selected || {};
+  var ids = Object.keys(sel).filter(function(k) { return sel[k]; });
+  if (ids.length === 0) { phantomToast('Select at least one cab', 'warn'); return; }
+  var m = _mscopeState.siteRef || window._lastPhantomMaster;
+  if (!m || !m.racksByCab) { phantomToast('Master no longer in memory — re-load it', 'error'); return; }
+  ids.sort(function(a, b) { return String(a).localeCompare(String(b), undefined, { numeric: true, sensitivity: 'base' }); });
+
+  // Capture ONLY cabs that actually exist in the confirm-time Master. A selected
+  // id can go missing if the Master was swapped mid-selection, so selectedCabIds
+  // and stats are built from what we actually froze (capturedIds) — never from
+  // the raw selection — keeping the snapshot internally consistent for the Ship 2
+  // seeder, which keys off selectedCabIds.
+  var cabs = {}, capturedIds = [], nHosts = 0, nCables = 0;
+  ids.forEach(function(cabId) {
+    var src = m.racksByCab[cabId];
+    if (!src) return;
+    // Shallow array copies (.slice): the PERSISTED snapshot is a full deep copy
+    // (JSON.stringify in the store) and the live Master is replaced-not-mutated,
+    // so sharing host/cable object refs in-memory is safe. Revisit if Ship 2 ever
+    // mutates loaded host/cable objects in place rather than replacing the Master.
+    var hosts = (src.hosts || []).slice();
+    var cablesOut = (src.cablesOut || []).slice();
+    var cablesIn = (src.cablesIn || []).slice();
+    nHosts += hosts.length; nCables += cablesOut.length + cablesIn.length;
+    cabs[cabId] = { cabId: src.cabId || cabId, locode: src.locode || '', hosts: hosts, cablesOut: cablesOut, cablesIn: cablesIn };
+    capturedIds.push(cabId);
+  });
+
+  if (capturedIds.length === 0) {
+    phantomToast('None of the selected cabs are in the loaded Master — re-load it', 'error');
+    return;
+  }
+
+  var snapshot = {
+    schemaVersion: 1,
+    stagedAt: new Date().toISOString(),
+    siteCode: m.siteCode || null,
+    siteName: m.siteName || m.siteCode || null,
+    sourceFileHash: (m.stats && m.stats.sourceFileHash) || m.sourceFileHash || null,
+    sourceRestored: !!m.restoredFromStorage,
+    selectedCabIds: capturedIds,
+    stats: { cabs: capturedIds.length, hosts: nHosts, cables: nCables },
+    cabs: cabs
+  };
+
+  if (!PHANTOM_JOBSNAP_STORE.save(snapshot)) {
+    phantomToast('Snapshot too large or storage full — narrow scope or export backup', 'error');
+    return;
+  }
+  if (typeof haptic === 'function') haptic([10, 40, 10]);
+  phantomToast('Scope staged · ' + capturedIds.length + ' cab' + (capturedIds.length === 1 ? '' : 's') + ' snapshotted', 'ok');
+  mscope_renderStaged(document.getElementById('ops-content'), snapshot);
+
+  // ───────────────────────────────────────────────────────────────────────
+  // SHIP 2 HOOK: route this staged snapshot (PHANTOM_JOBSNAP_STORE,
+  // 'phantom_jobsnap_v1') → a snapshot→Rack-Map seeder, and feed the same
+  // scope into the QA/Reconcile engine as the Engineering-Master side of the
+  // Vendor-EDP cross-check. Intentionally NOT wired in Ship 1.
+  // ───────────────────────────────────────────────────────────────────────
+}
+
+function mscope_renderStaged(c, snapshot) {
+  if (!c) return;
+  var html = '<div class="msc-wrap">';
+  html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">';
+  html += '<button class="pt-btn pt-btn-ghost" style="width:auto;padding:10px 16px" onclick="nav_back()">‹ Back</button>';
+  html += '<div style="flex:1;min-width:0"><div style="font-family:var(--orb);font-size:var(--fs-micro);letter-spacing:3px;color:var(--green,#30d158);text-transform:uppercase">SCOPE STAGED</div>';
+  html += '<div style="font-family:var(--raj);font-size:16px;font-weight:700;color:var(--white)">Snapshot frozen</div></div></div>';
+  html += '<div style="background:rgba(48,209,88,0.08);border:1px solid rgba(48,209,88,0.35);border-radius:10px;padding:16px;margin-bottom:14px">';
+  html += '<div style="font-family:var(--mono);font-size:12px;color:var(--slate-readable,#b4c2d0);line-height:1.6">';
+  html += '<div style="font-family:var(--raj);font-weight:700;font-size:15px;color:#5cf2ff;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + mscope_escHtml(snapshot.siteName || snapshot.siteCode || 'Master') + '</div>';
+  html += '<div>' + snapshot.stats.cabs + ' cabs · ' + snapshot.stats.hosts + ' hosts · ' + snapshot.stats.cables + ' cables</div>';
+  html += '<div style="color:var(--slate);margin-top:6px">Staged ' + mscope_escHtml(snapshot.stagedAt) + '</div>';
+  html += '</div></div>';
+  html += '<div style="font-family:var(--mono);font-size:11px;color:var(--slate);line-height:1.6;margin-bottom:16px">Scope snapshot is frozen and saved offline. Seeding it into a working Rack Map + QA reconcile arrives next ship.</div>';
+  html += '<button class="pt-btn pt-btn-secondary" style="width:auto;padding:12px 24px" onclick="deploy_showList(document.getElementById(\'ops-content\'))">Done</button>';
+  html += '</div>';
+  c.innerHTML = html;
+}
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // MASTER TAB — Site Reference query spine (v1.6.30, Step 2)
