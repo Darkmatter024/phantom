@@ -1778,6 +1778,76 @@ mark { background:var(--cyan-subtle); color:var(--cyan); padding:0 2px; border-r
 .v-warn{color:var(--gold);text-shadow:0 0 8px rgba(255,214,10,0.3)}
 .v-crit{color:var(--red);text-shadow:0 0 8px rgba(255,45,85,0.35)}
 .v-n{color:var(--white)}
+
+/* ━━━ HUD KPI TILES + CRITICAL SALIENCE + NOW NAV DOT (v1.6.87) ━━━━━━━━━━━━━
+   Promotes kpi/badge — previously defined ONLY inside the print/PDF export
+   strings — to live dark-app CSS so DOCUMENT RECONCILE / PRE-FLIGHT render as
+   framed HUD tiles, adds a 3-tier loudness ladder (crit/warn/ok) so NO-GO
+   punches through the void, and a cross-tab severity dot on the NOW tab.
+   Existing tokens only, pitch-black preserved, no new deps. */
+.kpi-row { display:flex; gap:10px; margin:0 0 10px; }
+.kpi {
+  flex:1 1 0; min-width:0;
+  background:var(--hud-glass-soft);
+  border:var(--hud-edge-cyan);
+  border-radius:var(--hud-r8);
+  padding:10px 12px;
+  box-shadow:var(--surf-inset);
+}
+.kpi-label {
+  font-family:var(--mono); font-size:var(--fs-micro);
+  letter-spacing:var(--hud-track-wide); text-transform:uppercase;
+  color:var(--hud-slate-1); margin-bottom:3px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.kpi-val {
+  font-family:var(--mono); font-size:var(--fs-hero); font-weight:700;
+  line-height:1.1; letter-spacing:var(--hud-track-tight);
+  font-variant-numeric:tabular-nums; color:var(--cyan);
+}
+.kpi-val.kpi-ok   { color:var(--green-neon); text-shadow:0 0 8px rgba(57,255,20,0.28); }
+.kpi-val.kpi-warn { color:var(--gold);       text-shadow:0 0 8px rgba(255,214,10,0.45); }
+.kpi-val.kpi-crit {
+  color:var(--red);
+  text-shadow:0 0 10px rgba(255,69,58,0.60), 0 0 3px rgba(255,69,58,0.35);
+  animation:critBreath var(--hud-dur-pulse,2s) ease-in-out infinite;
+}
+@keyframes critBreath {
+  0%,100% { text-shadow:0 0 8px rgba(255,69,58,0.45), 0 0 2px rgba(255,69,58,0.30); }
+  50%     { text-shadow:0 0 17px rgba(255,69,58,0.78), 0 0 4px rgba(255,69,58,0.42); }
+}
+/* NO-GO finding card — red rail + crit edge + faint tint (STATIC; bounded so
+   200 findings never animate at once — the breathing count is the magnet). */
+.card.card-nogo {
+  border:1px solid var(--hud-edge-crit);
+  border-left:3px solid var(--red);
+  background:rgba(255,69,58,0.05);
+}
+/* NOW-tab cross-tab severity dot. pointer-events:none keeps the 44px tap
+   target; purpose-built --red pulse (NOT vaPulse — that bakes in off-palette
+   pink + an expanding ring). */
+.tn-dot {
+  position:absolute; top:4px; left:calc(50% + 6px);
+  width:8px; height:8px; border-radius:50%;
+  pointer-events:none; z-index:3; display:none;
+}
+.tn-dot[data-sev="crit"] {
+  display:block; background:var(--red);
+  box-shadow:0 0 9px rgba(255,69,58,0.85), 0 0 3px rgba(255,69,58,0.60);
+  animation:nowDotPulse var(--hud-dur-pulse,2s) ease-in-out infinite;
+}
+.tn-dot[data-sev="warn"] {
+  display:block; background:var(--hud-hazard);
+  box-shadow:0 0 8px rgba(255,179,0,0.65);
+}
+@keyframes nowDotPulse {
+  0%,100% { opacity:0.55; }
+  50%     { opacity:1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .kpi-val.kpi-crit { animation:none; }
+  .tn-dot[data-sev="crit"] { animation:none; opacity:1; }
+}
 .spin {
   display:inline-block; width:13px; height:13px;
   border:2px solid var(--cyan-subtle); border-top-color:var(--cyan);
@@ -10188,7 +10258,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.6.86';
+const PHANTOM_APP_VERSION = 'phantom-v1.6.87';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -13471,6 +13541,7 @@ if (typeof window !== 'undefined') {
   <nav class="tab-nav">
     <div class="tn-capsule" id="tn-capsule" data-color="red"></div>
     <div class="tn-item active" onclick="showPage('triage',this)" aria-label="Now">
+      <span class="tn-dot" id="now-tn-dot"></span>
       <div class="tn-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ff2d55" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="M8 12h1.6l1-2.4 1.6 4.8 1-2.4h2" stroke-width="1.4"/><circle cx="12" cy="17" r="0.8" fill="#ff2d55" stroke="none"/></svg></div>
       <div class="tn-label">Now</div>
     </div>
@@ -15740,6 +15811,7 @@ function showPageSafe(pageId, sourceTabId, opsTab) {
 }
 
 function showPage(id, tnEl, opsTab) {
+  if (typeof nowDot_update === 'function') { try { nowDot_update(); } catch(_){} }
   wakeLock_release();
   PhantomScanner.close();
   document.querySelectorAll('.page').forEach(p => {
@@ -39069,20 +39141,20 @@ function reconcile_render(mount){
   } else {
     var t = res.totals || {}; var miss = (res.have.master?'':'Master ') + (res.have.bom?'':'BOM ') + (res.have.edp?'':'EDP ');
     body += '<div class="kpi-row" style="margin:0 0 10px">' +
-      '<div class="kpi"><div class="kpi-label">Optics</div><div class="kpi-val" style="color:' + (t.optic?'var(--red)':'var(--green-neon,#39ff14)') + '">' + (t.optic||0) + '</div></div>' +
-      '<div class="kpi"><div class="kpi-label">Hardware</div><div class="kpi-val" style="color:' + (t.hw?'var(--gold)':'var(--green-neon,#39ff14)') + '">' + (t.hw||0) + '</div></div>' +
+      '<div class="kpi"><div class="kpi-label">Optics</div><div class="kpi-val ' + (t.optic?'kpi-crit':'kpi-ok') + '">' + (t.optic||0) + '</div></div>' +
+      '<div class="kpi"><div class="kpi-label">Hardware</div><div class="kpi-val ' + (t.hw?'kpi-warn':'kpi-ok') + '">' + (t.hw||0) + '</div></div>' +
       '<div class="kpi"><div class="kpi-label">Review</div><div class="kpi-val">' + (t.review||0) + '</div></div></div>';
     if (miss.trim()) body += '<div style="font-family:var(--mono);font-size:var(--fs-caption);color:var(--slate);margin-bottom:8px">Not loaded: ' + miss.trim() + ' — reconciled what was available.</div>';
     if (!res.findings.length){
       body += '<div style="font-family:var(--raj);font-size:var(--fs-body);color:var(--green-neon,#39ff14);padding:6px 0">✓ No mismatches found across the loaded documents.</div>';
     } else {
       res.findings.forEach(function(f, i){
-        var bcls = f.sev==='high' ? 'badge-red' : 'badge-gold';
+        var bcls = f.sev==='high' ? 'b-red' : 'b-gold';
         var verb = f.message.split(' — ')[0];
         body += '<div class="card" style="margin-bottom:8px">' +
           '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">' +
             '<span class="badge ' + bcls + '">' + escHtml(verb) + '</span>' +
-            (f.conf==='review' ? '<span class="badge badge-violet">REVIEW</span>' : '') +
+            (f.conf==='review' ? '<span class="badge b-mag">REVIEW</span>' : '') +
             '<span style="font-family:var(--mono);font-size:var(--fs-caption);color:var(--white);flex:1">' + escHtml(f.label) + '</span></div>' +
           '<div style="font-family:var(--raj);font-size:var(--fs-caption);color:var(--slate);margin-bottom:6px">' + escHtml(f.message) + '</div>' +
           (f._logged
@@ -39266,6 +39338,7 @@ async function preflight_runUI(){
   var r = await preflight_run(true);
   if (!r.ok && typeof phantomToast === 'function') phantomToast(r.reason || 'Pre-Flight unavailable', 'warn');
   preflight_render(panel);
+  if (typeof nowDot_update === 'function') { try { nowDot_update(); } catch(_){} }
 }
 
 function preflight_render(mount){
@@ -39282,17 +39355,17 @@ function preflight_render(mount){
     var t = res.totals || {};
     var miss = (res.have.master ? '' : 'Master ') + (res.have.edp ? '' : 'EDP ');
     body += '<div class="kpi-row" style="margin:0 0 10px">' +
-      '<div class="kpi"><div class="kpi-label">NO-GO</div><div class="kpi-val" style="color:' + (t.nogo ? 'var(--red)' : 'var(--green-neon,#39ff14)') + '">' + (t.nogo || 0) + '</div></div>' +
-      '<div class="kpi"><div class="kpi-label">Advisory</div><div class="kpi-val" style="color:' + (t.advisory ? 'var(--gold)' : 'var(--green-neon,#39ff14)') + '">' + (t.advisory || 0) + '</div></div>' +
-      '<div class="kpi"><div class="kpi-label">Needs-U</div><div class="kpi-val" style="color:var(--slate)">' + (t.needsU || 0) + '</div></div></div>';
+      '<div class="kpi"><div class="kpi-label">NO-GO</div><div class="kpi-val ' + (t.nogo ? 'kpi-crit' : 'kpi-ok') + '">' + (t.nogo || 0) + '</div></div>' +
+      '<div class="kpi"><div class="kpi-label">Advisory</div><div class="kpi-val ' + (t.advisory ? 'kpi-warn' : 'kpi-ok') + '">' + (t.advisory || 0) + '</div></div>' +
+      '<div class="kpi"><div class="kpi-label">Needs-U</div><div class="kpi-val">' + (t.needsU || 0) + '</div></div></div>';
     if (miss.trim()) body += '<div style="font-family:var(--mono);font-size:var(--fs-caption);color:var(--slate);margin-bottom:8px">Not loaded: ' + miss.trim() + '— linted what was available.</div>';
     if (!res.findings.length){
       body += '<div style="font-family:var(--raj);font-size:var(--fs-body);color:var(--green-neon,#39ff14);padding:6px 0">✓ Plan clear — no collisions or double-books. Cleared to pull / stack.</div>';
     } else {
       res.findings.forEach(function(f, i){
-        body += '<div class="card" style="margin-bottom:8px">' +
+        body += '<div class="card' + (f.advisory ? '' : ' card-nogo') + '" style="margin-bottom:8px">' +
           '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">' +
-            '<span class="badge ' + (f.advisory ? 'badge-gold' : 'badge-red') + '">' + (f.advisory ? 'ADVISORY' : 'NO-GO') + '</span>' +
+            '<span class="badge ' + (f.advisory ? 'b-gold' : 'b-red') + '">' + (f.advisory ? 'ADVISORY' : 'NO-GO') + '</span>' +
             '<span style="font-family:var(--mono);font-size:var(--fs-caption);color:var(--white);flex:1">' + escHtml(f.rackId || f.label || '') + '</span></div>' +
           '<div style="font-family:var(--raj);font-size:var(--fs-caption);color:var(--slate);margin-bottom:6px">' + escHtml(f.message) + '</div>' +
           (f._logged
@@ -39306,6 +39379,33 @@ function preflight_render(mount){
   body += '</div>';
   mount.innerHTML = '<div style="background:var(--surf-1);border:1px solid rgba(92,242,255,0.22);border-radius:12px;padding:14px 16px;margin-bottom:14px">' + head + body + '</div>';
 }
+
+// NOW-tab cross-tab severity dot (v1.6.87). Crit when the active deployment has
+// blockers, a cached PRE-FLIGHT NO-GO (for that same deployment), or a failed
+// review verdict; warn on advisories. Cheap localStorage reads, safe no-op until
+// the nav exists. Fired from showPage (every nav) + preflight_runUI.
+function nowDot_update(){
+  var el = document.getElementById('now-tn-dot'); if (!el) return;
+  var sev = '';
+  try {
+    var dep = (typeof deploy_getActive === 'function') ? deploy_getActive() : null;
+    if (dep){
+      var blockers = (typeof deploy_countBlockers === 'function') ? (deploy_countBlockers(dep.id) || 0) : 0;
+      var fail = (dep.reviewVerdict === 'fail');
+      var nogo = 0, adv = 0;
+      try {
+        var pf = (typeof _preflight !== 'undefined' && _preflight.last) ? _preflight.last
+               : safeParse(localStorage.getItem('phantom_preflight_v1'), null);
+        if (pf && pf.deploymentId === dep.id && pf.totals){ nogo = pf.totals.nogo || 0; adv = pf.totals.advisory || 0; }
+      } catch(_){}
+      if (blockers > 0 || nogo > 0 || fail) sev = 'crit';
+      else if (adv > 0) sev = 'warn';
+    }
+  } catch(_){ sev = ''; }
+  if (sev){ el.setAttribute('data-sev', sev); }
+  else { el.removeAttribute('data-sev'); }
+}
+window.nowDot_update = nowDot_update;
 
 const AUDIT = (() => {
   const KEY = 'phantom_audits_v1';
