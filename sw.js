@@ -29,7 +29,7 @@
 
 // v1.6.66: HTML navigations are now network-first (see fetch handler) so the
 // live landing always wins online; cache bumped to evict any poisoned root.
-const CACHE_VERSION = 'phantom-v1.6.89';
+const CACHE_VERSION = 'phantom-v1.6.90';
 
 // Assets to precache on install. Keep this minimal — single-file PWA means
 // most of PHANTOM is in dct-ios.html itself.

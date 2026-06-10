@@ -10313,7 +10313,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.6.89';
+const PHANTOM_APP_VERSION = 'phantom-v1.6.90';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -15695,6 +15695,8 @@ function nav_restore(state) {
         deploy_showOpticLedger(d.substring(13));
       } else if (d.indexOf('acceptance:') === 0 && typeof deploy_showAcceptance === 'function') {
         deploy_showAcceptance(d.substring(11));
+      } else if (d.indexOf('vendoredp:') === 0 && typeof vendorEdp_open === 'function') {
+        vendorEdp_open(d.substring(10));
       } else if (d.indexOf('tombstone:') === 0 && typeof deploy_showTombstone === 'function') {
         deploy_showTombstone(d.substring(10));
       } else if (d.indexOf('sop:') === 0 && typeof openSopDetail === 'function') {
@@ -27385,6 +27387,12 @@ function deploy_showDetail(id) {
   html += '<button class="pt-btn pt-btn-ghost" style="flex:1;color:var(--gold);border-color:rgba(255,214,10,0.25)" onclick="handoff_showGenerator(\'' + dep.id + '\')">' + _ico.swap('#ffd60a', 13) + ' HANDOFF</button>';
   html += '<button class="pt-btn pt-btn-ghost" style="flex:1" onclick="deploy_showAuditLog(\'' + dep.id + '\')">' + _ico.clipboard('#5cf2ff', 13) + ' HISTORY</button>';
   html += '</div>';
+
+  // Ship 2 Part B — Vendor-EDP cross-check (Master-scoped deployments only). The
+  //   architect plan is never touched; findings surface in DOCUMENT RECONCILE.
+  if (dep.scope && dep.scope.source === 'master') {
+    html += '<button class="pt-btn pt-btn-secondary" style="width:100%;color:var(--violet);border-color:rgba(155,89,255,0.35)" onclick="vendorEdp_open(\'' + dep.id + '\')">' + _ico.clipboard('#9b59ff', 13) + ' &nbsp;' + (dep.vendorEdpParsed ? 'VENDOR EDP ✓ — RE-CHECK / REPLACE' : 'ATTACH VENDOR EDP') + '</button>';
+  }
 
   // Row 2.5 — Close Out (export-and-purge lifecycle). Lead-only. Disabled
   // on active builds (user must pause first to prevent mid-work data loss).
@@ -39598,7 +39606,64 @@ var RECONCILE_KEY = 'phantom_reconcile_v1';
 var _reconcile = { running:false, last:null };
 function _rec_norm(s){ return String(s==null?'':s).toUpperCase().replace(/[^A-Z0-9]/g,''); }
 function _rec_yield(){ return new Promise(function(r){ setTimeout(r,0); }); }
+// Ship 2 Part B: rank vendor findings ahead of bulk optic/HW so the 200-cap (and
+// the rendered list) can never evict a vendor finding out from under its KPI count.
+function _rec_rank(f){
+  if (f && f.kind==='VENDOR' && !f.advisory) return 0; // hard vendor (model / U-position / missing)
+  if (f && f.sev==='high') return 1;                   // optic short etc.
+  if (f && f.kind==='VENDOR') return 2;                 // vendor advisory (U-span / no-match)
+  if (f && f.sev==='med') return 3;                     // bulk HW count mismatches
+  return 4;
+}
 var _REC_OPTIC_RE = /QSFP|OSFP|SFP|SR4|LR4|DR4|FR4|ER4|AOC|DAC|TRANSCEIV|OPTIC|100G|200G|400G|800G/i;
+
+// ── Ship 2 Part B: Vendor-EDP cross-check (EDP as AUDITOR) ─────────────────
+// Compares an attached vendor as-built (dep.vendorEdpParsed, a deploy_parseEDP_local
+// result) against the FROZEN Engineering-Master snapshot (dep.edpParsed.racks) —
+// NEVER the live Master (which may be absent for a frozen Master-scoped deploy:
+// the freeze invariant). Match cabs by _rec_norm(rack name). Per matched cab:
+// uStart is AUTHORITATIVE (from locCabRu) so model/position disagreements are HARD;
+// U-span (height) is INFERRED (master_nodeHeightU) so it is ADVISORY. Unmatched
+// vendor racks surface explicitly so a rack-id-convention divergence is visible,
+// not a silent zero-findings run. Host-less snapshot cabs are 'no data', not a miss.
+function _rec_vendorCrossCheck(dep){
+  var out = [];
+  if (!dep || !dep.vendorEdpParsed || !dep.edpParsed || !Array.isArray(dep.edpParsed.racks)) return out;
+  var vRacks = Array.isArray(dep.vendorEdpParsed.racks) ? dep.vendorEdpParsed.racks : [];
+  var snapByRack = {};
+  dep.edpParsed.racks.forEach(function(r){
+    var key = _rec_norm(r.name || r.rackId); if (!key) return;
+    var byU = {}; (r.slots||[]).forEach(function(s){ if (s && s.uStart != null) byU[s.uStart] = s; });
+    snapByRack[key] = { name:(r.name||r.rackId||''), byU:byU, count:(r.slots||[]).length };
+  });
+  function V(rackId, advisory, sev, msg){
+    out.push({ kind:'VENDOR', advisory:advisory, sev:sev, conf:(advisory?'review':'high'),
+      rackId:rackId, scope:rackId, label:'VENDOR≠MASTER · ' + rackId, message:msg });
+  }
+  vRacks.forEach(function(vr){
+    if (!vr) return;
+    var rid = vr.name || vr.rackId || '';
+    var vkey = _rec_norm(rid); if (!vkey) return;
+    var snap = snapByRack[vkey];
+    if (!snap){ V(rid, true, 'low', 'No matching cab — vendor rack ' + rid + ' has no cab in the Master snapshot (check rack-id convention).'); return; }
+    if (snap.count === 0) return; // host-less snapshot cab — no data to compare, skip
+    var vU = {};
+    (vr.slots||[]).forEach(function(vs){
+      if (!vs || vs.uStart == null) return;
+      vU[vs.uStart] = true;
+      var ms = snap.byU[vs.uStart];
+      if (!ms){ V(rid, false, 'high', 'U-position — ' + rid + ' U' + vs.uStart + ': vendor has ' + (vs.model||vs.name||'a device') + ', Master snapshot is empty at that U.'); return; }
+      var vm = _rec_norm(vs.model), mm = _rec_norm(ms.model);
+      if (vm && mm && vm !== mm){ V(rid, false, 'high', 'Model mismatch — ' + rid + ' U' + vs.uStart + ': vendor ' + (vs.model||'?') + ' vs Master ' + (ms.model||'?') + '.'); return; }
+      var vEnd = (vs.uEnd!=null?vs.uEnd:vs.uStart), mEnd = (ms.uEnd!=null?ms.uEnd:ms.uStart);
+      if (vEnd !== mEnd){ V(rid, true, 'low', 'U-span differs (advisory) — ' + rid + ' U' + vs.uStart + ': vendor spans to U' + vEnd + ', Master (inferred height) to U' + mEnd + '.'); }
+    });
+    Object.keys(snap.byU).forEach(function(u){
+      if (!vU[u]){ var ms = snap.byU[u]; V(rid, false, 'med', 'Missing in vendor doc — ' + rid + ' U' + u + ': Master plans ' + (ms.model||ms.name||'a device') + ', vendor doc has nothing at that U.'); }
+    });
+  });
+  return out;
+}
 
 async function reconcile_run(force){
   if (_reconcile.running) return { ok:false, reason:'Reconcile already running.' };
@@ -39609,7 +39674,7 @@ async function reconcile_run(force){
   try { if (typeof bom_dep_listByPhantomDeployment === 'function') bomDeps = await bom_dep_listByPhantomDeployment(dep.id) || []; } catch(_){ bomDeps = []; }
   var have = { master: !!(master && master.racksByCab), bom: bomDeps.length > 0, edp: !!dep.edpParsed };
   var bomRev = bomDeps.map(function(b){ return (b && (b.revisionHash || b.hash || b.id)) || ''; }).join(',');
-  var cacheKey = dep.id + '|' + ((master && master.sourceFileHash) || '') + '|' + (dep.edpHash || '') + '|' + bomRev;
+  var cacheKey = dep.id + '|' + ((master && master.sourceFileHash) || '') + '|' + (dep.edpHash || '') + '|' + bomRev + '|' + (dep.vendorEdpAttachedAt || '');
   if (!force){
     var cached = safeParse(localStorage.getItem(RECONCILE_KEY), null);
     if (cached && cached.cacheKey === cacheKey){ _reconcile.last = cached; return { ok:true, cached:true, result: cached }; }
@@ -39672,12 +39737,17 @@ async function reconcile_run(force){
         if (!bomLooseMatch(bomModel, k)) findings.push({ kind:'HW', sev:'med', conf:'review', scope:k, label:k, edp:null, bom:0, master:masterModel[k], message:'Phantom asset — ' + k + ': ' + masterModel[k] + ' in Master, not in BOM.' });
       });
     }
-    findings.sort(function(a,b){ return (a.sev==='high'?0:1) - (b.sev==='high'?0:1); });
+    // (C) Vendor-EDP cross-check (Ship 2 Part B) — vendor as-built vs the FROZEN
+    //     Master snapshot (dep.edpParsed.racks), never the live Master.
+    if (dep.vendorEdpParsed) { Array.prototype.push.apply(findings, _rec_vendorCrossCheck(dep)); }
+    findings.sort(function(a,b){ return _rec_rank(a) - _rec_rank(b); });
     var result = {
       cacheKey: cacheKey, ts: Date.now(), deploymentId: dep.id, have: have, hostCount: hostCount,
       totals: { optic: findings.filter(function(f){return f.kind==='OPTIC';}).length,
                 hw: findings.filter(function(f){return f.kind==='HW';}).length,
-                review: findings.filter(function(f){return f.conf==='review';}).length },
+                review: findings.filter(function(f){return f.conf==='review' && f.kind!=='VENDOR';}).length,
+                vendor: findings.filter(function(f){return f.kind==='VENDOR';}).length,
+                vendorHard: findings.filter(function(f){return f.kind==='VENDOR' && !f.advisory;}).length },
       findings: findings.slice(0, 200)
     };
     try { safeStore(RECONCILE_KEY, JSON.stringify(result)); } catch(_){}
@@ -39695,10 +39765,10 @@ function reconcile_logDiscrepancy(idx){
   var rec = {
     id: 'disc_rec_' + Date.now() + '_' + Math.floor(performance.now()),
     deploymentId: depId, ts: Date.now(), loggedBy: (prof.buildLead || 'Reconcile'),
-    category: 'reconcile', severity: (f.sev === 'high' ? 'high' : 'med'),
-    rackId: '', expected: f.edp != null ? ('EDP ' + f.edp) : ('BOM ' + (f.bom||0)),
-    actual: (f.master != null ? ('Master ' + f.master) : '') + (f.bom != null && f.edp != null ? (' · BOM ' + f.bom) : ''),
-    note: f.message + (f.conf === 'review' ? ' [REVIEW — fuzzy SKU match]' : ''),
+    category: 'reconcile', severity: (f.advisory ? 'low' : (f.sev === 'high' ? 'high' : 'med')),
+    rackId: f.rackId || '', expected: f.edp != null ? ('EDP ' + f.edp) : (f.kind === 'VENDOR' ? 'Master snapshot' : ('BOM ' + (f.bom||0))),
+    actual: (f.kind === 'VENDOR' ? 'Vendor as-built' : ((f.master != null ? ('Master ' + f.master) : '') + (f.bom != null && f.edp != null ? (' · BOM ' + f.bom) : ''))),
+    note: f.message + (f.kind === 'VENDOR' ? ' [VENDOR≠MASTER]' : '') + (f.advisory ? ' [ADVISORY]' : '') + (f.conf === 'review' && f.kind !== 'VENDOR' ? ' [REVIEW — fuzzy SKU match]' : ''),
     photo: null, status: 'open', resolution: ''
   };
   try {
@@ -39737,19 +39807,22 @@ function reconcile_render(mount){
     body += '<div class="kpi-row" style="margin:0 0 10px">' +
       '<div class="kpi"><div class="kpi-label">Optics</div><div class="kpi-val ' + (t.optic?'kpi-crit':'kpi-ok') + '">' + (t.optic||0) + '</div></div>' +
       '<div class="kpi"><div class="kpi-label">Hardware</div><div class="kpi-val ' + (t.hw?'kpi-warn':'kpi-ok') + '">' + (t.hw||0) + '</div></div>' +
+      '<div class="kpi"><div class="kpi-label">Vendor</div><div class="kpi-val ' + (t.vendorHard?'kpi-crit':(t.vendor?'kpi-warn':'kpi-ok')) + '">' + (t.vendor||0) + '</div></div>' +
       '<div class="kpi"><div class="kpi-label">Review</div><div class="kpi-val">' + (t.review||0) + '</div></div></div>';
     if (miss.trim()) body += '<div style="font-family:var(--mono);font-size:var(--fs-caption);color:var(--slate);margin-bottom:8px">Not loaded: ' + miss.trim() + ' — reconciled what was available.</div>';
     if (!res.findings.length){
       body += '<div style="font-family:var(--raj);font-size:var(--fs-body);color:var(--green-neon,#39ff14);padding:6px 0">✓ No mismatches found across the loaded documents.</div>';
     } else {
       res.findings.forEach(function(f, i){
-        var bcls = f.sev==='high' ? 'b-red' : 'b-gold';
+        var bcls = (f.sev==='high' && !f.advisory) ? 'b-red' : 'b-gold';
         var verb = f.message.split(' — ')[0];
         body += '<div class="card" style="margin-bottom:8px">' +
-          '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">' +
+          '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">' +
             '<span class="badge ' + bcls + '">' + escHtml(verb) + '</span>' +
-            (f.conf==='review' ? '<span class="badge b-mag">REVIEW</span>' : '') +
-            '<span style="font-family:var(--mono);font-size:var(--fs-caption);color:var(--white);flex:1">' + escHtml(f.label) + '</span></div>' +
+            (f.kind==='VENDOR' ? '<span class="badge b-mag">VENDOR≠MASTER</span>' : '') +
+            (f.advisory ? '<span class="badge b-gold">ADVISORY</span>' : '') +
+            (f.conf==='review' && f.kind!=='VENDOR' ? '<span class="badge b-mag">REVIEW</span>' : '') +
+            '<span style="font-family:var(--mono);font-size:var(--fs-caption);color:var(--white);flex:1;min-width:0">' + escHtml(f.label) + '</span></div>' +
           '<div style="font-family:var(--raj);font-size:var(--fs-caption);color:var(--slate);margin-bottom:6px">' + escHtml(f.message) + '</div>' +
           (f._logged
             ? '<div style="font-family:var(--mono);font-size:var(--fs-caption);color:var(--green-neon,#39ff14)">✓ LOGGED</div>'
@@ -39761,6 +39834,58 @@ function reconcile_render(mount){
   }
   body += '</div>';
   mount.innerHTML = '<div style="background:var(--surf-1);border:1px solid rgba(155,89,255,0.2);border-radius:12px;padding:14px 16px;margin-bottom:14px">' + head + body + '</div>';
+}
+
+// ── Ship 2 Part B: Vendor-EDP attach (Auditor role) ───────────────────────
+// Paste a vendor as-built EDP onto an EXISTING Master-scoped deployment as
+// dep.vendorEdpParsed (via deploy_parseEDP_local). NEVER touches dep.edpParsed
+// and NEVER creates a deployment. After attach, jump to the Reconcile panel
+// where the VENDOR≠MASTER cross-check renders.
+function vendorEdp_open(depId){
+  var c = document.getElementById('ops-content'); if (!c) return;
+  var dep = (typeof deploy_getById === 'function') ? deploy_getById(depId) : null;
+  if (!dep) { phantomToast('Deployment not found', 'error'); return; }
+  if (typeof nav_push === 'function') nav_push({ p:'sop', o:'deploy', d:'vendoredp:' + depId });
+  var has = !!dep.vendorEdpParsed;
+  var html = '<div style="max-width:100%;box-sizing:border-box">';
+  html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">';
+  html += '<button class="pt-btn pt-btn-ghost" style="width:auto;padding:10px 16px" onclick="nav_back()">‹ Back</button>';
+  html += '<div style="flex:1;min-width:0"><div style="font-family:var(--orb);font-size:var(--fs-micro);letter-spacing:3px;color:var(--violet);text-transform:uppercase">VENDOR EDP · AUDITOR</div>';
+  html += '<div style="font-family:var(--raj);font-size:16px;font-weight:700;color:var(--white);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escHtml(dep.name || 'Deployment') + '</div></div></div>';
+  html += '<div style="font-family:var(--mono);font-size:var(--fs-caption);color:var(--slate-readable,#b4c2d0);line-height:1.55;margin-bottom:14px">Paste the VENDOR as-built EDP. It is cross-checked against this deployment’s frozen Master snapshot and never changes the plan. Findings surface in DOCUMENT RECONCILE as VENDOR≠MASTER.</div>';
+  if (has) html += '<div style="font-family:var(--mono);font-size:var(--fs-caption);color:var(--gold,#ffd60a);margin-bottom:10px">A vendor EDP is already attached — pasting replaces it.</div>';
+  html += '<textarea id="vendor-edp-input" rows="8" placeholder="Paste vendor EDP content here…" style="width:100%;box-sizing:border-box;background:rgba(0,0,0,0.35);border:1px solid rgba(155,89,255,0.25);border-radius:8px;color:var(--white);font-family:var(--mono);font-size:11px;padding:10px 12px;outline:none;resize:vertical"></textarea>';
+  html += '<div style="display:flex;gap:8px;margin-top:12px">';
+  html += '<button class="pt-btn pt-btn-ghost" onclick="importFileToInput(\'vendor-edp-input\')" style="flex:0 0 auto;width:auto;padding:14px 16px;font-size:var(--fs-caption)">' + _ico.file('#9b59ff', 13) + ' FILE</button>';
+  html += '<button class="pt-btn pt-btn-primary" style="flex:1 1 0%;width:0;min-width:0;padding:14px 12px;white-space:nowrap" onclick="vendorEdp_attach(\'' + depId + '\')">ATTACH &amp; CROSS-CHECK</button>';
+  html += '</div></div>';
+  c.innerHTML = html;
+}
+
+function vendorEdp_attach(depId){
+  var el = document.getElementById('vendor-edp-input');
+  var raw = el ? (el.value || '').trim() : '';
+  if (!raw) { phantomToast('Paste the vendor EDP first', 'warn'); return; }
+  if (raw.indexOf('Reading file:') === 0) { phantomToast('File still loading — wait a moment', 'warn'); return; }
+  var parsed = (typeof deploy_parseEDP_local === 'function') ? deploy_parseEDP_local(raw) : null;
+  if (!parsed || !Array.isArray(parsed.racks) || !parsed.racks.length) {
+    phantomToast('Could not parse a vendor EDP from that paste — check the format', 'error'); return;
+  }
+  var deploys = deploy_loadAll();
+  var idx = deploys.findIndex(function(d){ return d.id === depId; });
+  if (idx === -1) { phantomToast('Deployment not found', 'error'); return; }
+  deploys[idx].vendorEdpParsed = parsed;            // Auditor side — NEVER touch edpParsed
+  deploys[idx].vendorEdpAttachedAt = Date.now();    // busts the reconcile cacheKey
+  deploys[idx].updated = Date.now();
+  if (!deploy_saveAll(deploys)) { phantomToast('Storage full — vendor EDP not saved', 'error'); return; }
+  if (typeof deploy_setActive === 'function') deploy_setActive(depId);                  // reconcile_run reads deploy_getActive()
+  if (typeof activeContext_setDeployment === 'function') activeContext_setDeployment(depId);
+  if (typeof deploy_logAudit === 'function') deploy_logAudit(depId, 'VENDOR_EDP_ATTACHED', 'deployment', depId, parsed.racks.length + ' vendor racks');
+  if (typeof haptic === 'function') haptic([10,40,10]);
+  phantomToast('Vendor EDP attached · running cross-check', 'ok');
+  // UX (locked decision): jump to the Reconcile panel and run the cross-check.
+  if (typeof showOpsTab === 'function') showOpsTab('audits');
+  setTimeout(function(){ if (typeof reconcile_runUI === 'function') reconcile_runUI(); }, 120);
 }
 
 // ━━━ PRE-FLIGHT LINTER (v1.6.86) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
