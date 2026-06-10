@@ -10188,7 +10188,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.6.85';
+const PHANTOM_APP_VERSION = 'phantom-v1.6.86';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -39097,6 +39097,216 @@ function reconcile_render(mount){
   mount.innerHTML = '<div style="background:var(--surf-1);border:1px solid rgba(155,89,255,0.2);border-radius:12px;padding:14px 16px;margin-bottom:14px">' + head + body + '</div>';
 }
 
+// ━━━ PRE-FLIGHT LINTER (v1.6.86) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// Desk-side plan linter run BEFORE the irreversible floor act (pull / dress /
+// stack). Pure derivation from already-parsed EDP slots + Master cables — zero
+// new field entry. HARD NO-GO: U-collision, chassis-won't-fit, double-booked
+// port. ADVISORY (never blocks): optic + speed mismatch. EXCEPTION: blank-U
+// slots surfaced as "needs-U", never audited. Sibling of DOCUMENT RECONCILE:
+// reuses _rec_norm/_rec_yield, the discrepancy ledger + deploy_logAudit, and
+// the same card/kpi tokens (no new CSS). Cached like phantom_reconcile_v1.
+var PREFLIGHT_KEY = 'phantom_preflight_v1';
+var _preflight = { running:false, last:null };
+var _PF_SPEED_RE = /(\d{2,3})G\b/i;
+
+function _pf_rackOf(loc){
+  if (!loc) return '';
+  if (typeof _phantom_master_rackOf === 'function'){ var r = _phantom_master_rackOf(String(loc).toLowerCase()); if (r) return r; }
+  var p = String(loc).split(':');
+  return p.length >= 2 ? (p[0] + ':' + p[1]) : String(loc);
+}
+function _pf_speed(s){ var m = _PF_SPEED_RE.exec(String(s||'')); return m ? m[1] : ''; }
+function _pf_collectCables(master){
+  if (!master) return [];
+  if (Array.isArray(master.cables) && master.cables.length) return master.cables;
+  var out = [], rb = master.racksByCab;
+  if (rb && typeof rb === 'object'){
+    Object.keys(rb).forEach(function(k){ var c = rb[k] && rb[k].cablesOut; if (Array.isArray(c)) out = out.concat(c); });
+  }
+  return out;
+}
+
+async function preflight_run(force){
+  if (_preflight.running) return { ok:false, reason:'Pre-Flight already running.' };
+  var dep = (typeof deploy_getActive === 'function') ? deploy_getActive() : null;
+  if (!dep) return { ok:false, reason:'No active deployment.' };
+  var master = (typeof window !== 'undefined' && window._lastPhantomMaster) ? window._lastPhantomMaster
+             : ((typeof PHANTOM_MASTER_STORE !== 'undefined') ? PHANTOM_MASTER_STORE.load() : null);
+  var racks = (dep.edpParsed && Array.isArray(dep.edpParsed.racks)) ? dep.edpParsed.racks : [];
+  var masterHash = (master && (master.sourceFileHash || (master.stats && master.stats.sourceFileHash))) || '';
+  var cacheKey = dep.id + '|' + masterHash + '|' + (dep.edpHash || '');
+  if (!force){
+    var cached = safeParse(localStorage.getItem(PREFLIGHT_KEY), null);
+    if (cached && cached.cacheKey === cacheKey){ _preflight.last = cached; return { ok:true, cached:true, result: cached }; }
+  }
+  _preflight.running = true;
+  try {
+    var findings = [], needsU = [];
+    var have = { master: !!(master && (master.racksByCab || master.cables)), edp: racks.length > 0 };
+
+    // ── (A) RACK GEOMETRY — U-collision + chassis-won't-fit (EDP slots only) ──
+    for (var ri = 0; ri < racks.length; ri++){
+      var rk = racks[ri];
+      var rname = rk.name || ('rack ' + (ri + 1));
+      var totalU = (typeof rk.totalU === 'number' && rk.totalU > 0) ? rk.totalU : 42;
+      var slots = Array.isArray(rk.slots) ? rk.slots : [];
+      var occ = {};
+      for (var si = 0; si < slots.length; si++){
+        var sl = slots[si];
+        var us = parseInt(sl.uStart, 10), ue = parseInt(sl.uEnd, 10);
+        var label = sl.name || sl.model || sl.type || ('slot ' + (si + 1));
+        if (!(us >= 1)){ needsU.push({ rack: rname, label: label }); continue; } // EDP blank-U → exception, skip
+        if (!(ue >= us)) ue = us;
+        if (ue > totalU){
+          findings.push({ kind:'RACK', sev:'high', advisory:false, rackId:rname, label:label,
+            expected:'≤ U' + totalU, actual:'U' + us + '-' + ue,
+            message:'Chassis won’t fit — ' + rname + ': ' + label + ' spans U' + us + '-' + ue + ' but rack is ' + totalU + 'U.' });
+        }
+        for (var u = us; u <= ue; u++){
+          if (occ[u] != null && occ[u] !== si){
+            var other = slots[occ[u]];
+            var olabel = (other && (other.name || other.model || other.type)) || ('slot ' + (occ[u] + 1));
+            findings.push({ kind:'RACK', sev:'high', advisory:false, rackId:rname, label:'U' + u,
+              expected:'1 device @ U' + u, actual:label + ' + ' + olabel,
+              message:'U-collision — ' + rname + ' U' + u + ': ' + label + ' overlaps ' + olabel + '.' });
+          } else { occ[u] = si; }
+        }
+      }
+      if (ri % 40 === 39) await _rec_yield();
+    }
+
+    // ── (B) CABLE PLAN — double-booked port (hard) + optic/speed (advisory) ──
+    var cables = _pf_collectCables(master);
+    var portMap = {};
+    function noteEnd(dns, port, loc){
+      var nd = _rec_norm(dns), np = _rec_norm(port);
+      if (!nd || !np) return null;
+      var pk = nd + '::' + np;
+      var e = portMap[pk]; if (!e){ e = portMap[pk] = { fars:{}, loc:loc, dns:dns, port:port }; }
+      return e;
+    }
+    for (var ci = 0; ci < cables.length; ci++){
+      var cb = cables[ci];
+      var ea = noteEnd(cb.aDns, cb.aPort, cb.aLoc);
+      if (ea){ ea.fars[_rec_norm(cb.zDns) + '::' + _rec_norm(cb.zPort)] = 1; }
+      var ez = noteEnd(cb.zDns, cb.zPort, cb.zLoc);
+      if (ez){ ez.fars[_rec_norm(cb.aDns) + '::' + _rec_norm(cb.aPort)] = 1; }
+      var ao = _rec_norm(cb.aOptic), zo = _rec_norm(cb.zOptic);
+      if (ao && zo && ao !== zo){
+        findings.push({ kind:'CABLE', sev:'med', advisory:true, rackId:_pf_rackOf(cb.aLoc), label:(cb.cable || 'cable'),
+          expected:'A optic = Z optic', actual:(cb.aOptic || '?') + ' / ' + (cb.zOptic || '?'),
+          message:'Optic mismatch — ' + (cb.aDns || cb.aLoc || '?') + ' ' + (cb.aOptic || '?') + ' vs ' + (cb.zDns || cb.zLoc || '?') + ' ' + (cb.zOptic || '?') + '.' });
+      } else {
+        var asp = _pf_speed(cb.aOptic) || _pf_speed(cb.aModel);
+        var zsp = _pf_speed(cb.zOptic) || _pf_speed(cb.zModel);
+        if (asp && zsp && asp !== zsp){
+          findings.push({ kind:'CABLE', sev:'low', advisory:true, rackId:_pf_rackOf(cb.aLoc), label:(cb.cable || 'cable'),
+            expected:'matched speed', actual:asp + 'G / ' + zsp + 'G',
+            message:'Speed mismatch — ' + (cb.aDns || '?') + ' ' + asp + 'G vs ' + (cb.zDns || '?') + ' ' + zsp + 'G.' });
+        }
+      }
+      if (ci % 2000 === 1999) await _rec_yield();
+    }
+    Object.keys(portMap).forEach(function(pk){
+      var e = portMap[pk], fars = Object.keys(e.fars);
+      if (fars.length > 1){
+        findings.push({ kind:'CABLE', sev:'high', advisory:false, rackId:_pf_rackOf(e.loc), label:(e.dns || '') + ' ' + (e.port || ''),
+          expected:'1 far-end', actual:fars.length + ' far-ends',
+          message:'Double-booked port — ' + (e.dns || '?') + ' ' + (e.port || '?') + ' assigned to ' + fars.length + ' endpoints.' });
+      }
+    });
+
+    // ── aggregate (hard NO-GO first, advisory last) ──
+    findings.sort(function(a, b){ var rank = function(f){ return f.advisory ? 2 : (f.sev === 'high' ? 0 : 1); }; return rank(a) - rank(b); });
+    var noGo = findings.filter(function(f){ return !f.advisory; }).length;
+    var adv = findings.filter(function(f){ return f.advisory; }).length;
+    var result = {
+      cacheKey: cacheKey, ts: Date.now(), deploymentId: dep.id, have: have,
+      cableCount: cables.length, rackCount: racks.length,
+      totals: { nogo: noGo, advisory: adv, needsU: needsU.length },
+      needsU: needsU.slice(0, 50),
+      findings: findings.slice(0, 200)
+    };
+    try { safeStore(PREFLIGHT_KEY, JSON.stringify(result)); } catch(_){}
+    _preflight.last = result;
+    return { ok:true, cached:false, result: result };
+  } finally { _preflight.running = false; }
+}
+
+function preflight_logDiscrepancy(idx){
+  var res = _preflight.last; if (!res || !res.findings || !res.findings[idx]) return;
+  var f = res.findings[idx], depId = res.deploymentId;
+  var prof = (typeof siteProfile_load === 'function') ? (siteProfile_load() || {}) : {};
+  var rec = {
+    id: 'disc_pf_' + Date.now() + '_' + Math.floor((typeof performance !== 'undefined' && performance.now) ? performance.now() : 0),
+    deploymentId: depId, ts: Date.now(), loggedBy: (prof.buildLead || 'Pre-Flight'),
+    category: (f.kind === 'CABLE' ? 'fiber' : 'rack'),
+    severity: (f.advisory ? 'low' : (f.sev === 'high' ? 'high' : 'med')),
+    rackId: f.rackId || '', expected: f.expected || '', actual: f.actual || '',
+    note: f.message + (f.advisory ? ' [ADVISORY]' : ''),
+    photo: null, status: 'open', resolution: ''
+  };
+  try {
+    var all = (typeof discLog_loadAll === 'function') ? discLog_loadAll() : [];
+    if (!Array.isArray(all)) all = [];
+    all.push(rec);
+    if (typeof discLog_saveAll === 'function') discLog_saveAll(all);
+    if (typeof deploy_logAudit === 'function') deploy_logAudit(depId, 'DISCREPANCY_LOGGED', 'discrepancy', rec.id, f.message);
+    if (typeof phantomToast === 'function') phantomToast('Logged to discrepancies', 'ok');
+    if (typeof haptic === 'function') haptic([8, 30, 8]);
+    f._logged = true;
+    var panel = document.getElementById('preflight-panel'); if (panel) preflight_render(panel);
+  } catch(e){ if (typeof phantomToast === 'function') phantomToast('Log failed: ' + (e.message || e), 'error'); }
+}
+
+async function preflight_runUI(){
+  var panel = document.getElementById('preflight-panel'); if (!panel) return;
+  var body = panel.querySelector('#preflight-body');
+  if (body) body.innerHTML = '<div class="skeleton-grid"><div class="skeleton-line"></div><div class="skeleton-line"></div><div class="skeleton-line"></div></div>';
+  var r = await preflight_run(true);
+  if (!r.ok && typeof phantomToast === 'function') phantomToast(r.reason || 'Pre-Flight unavailable', 'warn');
+  preflight_render(panel);
+}
+
+function preflight_render(mount){
+  if (!mount) return;
+  if (!_preflight.last){ var c = safeParse(localStorage.getItem(PREFLIGHT_KEY), null); if (c) _preflight.last = c; }
+  var res = _preflight.last;
+  var head = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">' +
+    '<div style="font-family:var(--orb);font-size:var(--fs-micro);letter-spacing:2px;color:var(--cyan-bright,#5cf2ff)">✈ PRE-FLIGHT</div>' +
+    '<button class="pt-btn pt-btn-secondary" style="margin-left:auto;width:auto;padding:8px 14px;color:var(--cyan-bright)" onclick="preflight_runUI()">▶ RUN</button></div>';
+  var body = '<div id="preflight-body">';
+  if (!res){
+    body += '<div style="font-family:var(--raj);font-size:var(--fs-body);color:var(--slate);padding:6px 0">Pre-pull / pre-stack plan check: U-collisions and chassis-won’t-fit (EDP geometry), double-booked ports (Master), with optic/speed advisories. Tap RUN before you pull or stack.</div>';
+  } else {
+    var t = res.totals || {};
+    var miss = (res.have.master ? '' : 'Master ') + (res.have.edp ? '' : 'EDP ');
+    body += '<div class="kpi-row" style="margin:0 0 10px">' +
+      '<div class="kpi"><div class="kpi-label">NO-GO</div><div class="kpi-val" style="color:' + (t.nogo ? 'var(--red)' : 'var(--green-neon,#39ff14)') + '">' + (t.nogo || 0) + '</div></div>' +
+      '<div class="kpi"><div class="kpi-label">Advisory</div><div class="kpi-val" style="color:' + (t.advisory ? 'var(--gold)' : 'var(--green-neon,#39ff14)') + '">' + (t.advisory || 0) + '</div></div>' +
+      '<div class="kpi"><div class="kpi-label">Needs-U</div><div class="kpi-val" style="color:var(--slate)">' + (t.needsU || 0) + '</div></div></div>';
+    if (miss.trim()) body += '<div style="font-family:var(--mono);font-size:var(--fs-caption);color:var(--slate);margin-bottom:8px">Not loaded: ' + miss.trim() + '— linted what was available.</div>';
+    if (!res.findings.length){
+      body += '<div style="font-family:var(--raj);font-size:var(--fs-body);color:var(--green-neon,#39ff14);padding:6px 0">✓ Plan clear — no collisions or double-books. Cleared to pull / stack.</div>';
+    } else {
+      res.findings.forEach(function(f, i){
+        body += '<div class="card" style="margin-bottom:8px">' +
+          '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">' +
+            '<span class="badge ' + (f.advisory ? 'badge-gold' : 'badge-red') + '">' + (f.advisory ? 'ADVISORY' : 'NO-GO') + '</span>' +
+            '<span style="font-family:var(--mono);font-size:var(--fs-caption);color:var(--white);flex:1">' + escHtml(f.rackId || f.label || '') + '</span></div>' +
+          '<div style="font-family:var(--raj);font-size:var(--fs-caption);color:var(--slate);margin-bottom:6px">' + escHtml(f.message) + '</div>' +
+          (f._logged
+            ? '<div style="font-family:var(--mono);font-size:var(--fs-caption);color:var(--green-neon,#39ff14)">✓ LOGGED</div>'
+            : '<button class="pt-btn pt-btn-ghost" style="width:auto;padding:8px 12px;font-size:var(--fs-caption)" onclick="preflight_logDiscrepancy(' + i + ')">↳ LOG DISCREPANCY</button>') +
+          '</div>';
+      });
+    }
+    body += '<div style="font-family:var(--mono);font-size:var(--fs-caption);color:var(--slate);margin-top:6px">' + (res.cableCount || 0) + ' cables · ' + (res.rackCount || 0) + ' EDP racks · geometry + port-map (pre-pull)</div>';
+  }
+  body += '</div>';
+  mount.innerHTML = '<div style="background:var(--surf-1);border:1px solid rgba(92,242,255,0.22);border-radius:12px;padding:14px 16px;margin-bottom:14px">' + head + body + '</div>';
+}
+
 const AUDIT = (() => {
   const KEY = 'phantom_audits_v1';
   const ACTIVE_AUDIT_KEY = 'phantom_active_audit';
@@ -39109,7 +39319,7 @@ const AUDIT = (() => {
 
   function renderList(container) {
     const audits = load();
-    let html = '<div id="reconcile-panel"></div><div class="sh">Optic Audits</div>';
+    let html = '<div id="preflight-panel"></div><div id="reconcile-panel"></div><div class="sh">Optic Audits</div>';
     html += '<div style="display:flex;gap:8px;margin-bottom:14px">';
     html += '<button class="pt-btn pt-btn-secondary" style="flex:1" onclick="AUDIT.showNewForm()">＋ NEW AUDIT</button>';
     html += '</div>';
@@ -39142,6 +39352,8 @@ const AUDIT = (() => {
     container.innerHTML = html;
     // v1.6.85 — mount the Three-Document Oversight (reconcile) panel above the audit list.
     if (typeof reconcile_render === 'function') { try { reconcile_render(document.getElementById('reconcile-panel')); } catch(_){} }
+    // v1.6.86 — mount the PRE-FLIGHT linter panel above the reconcile panel.
+    if (typeof preflight_render === 'function') { try { preflight_render(document.getElementById('preflight-panel')); } catch(_){} }
   }
 
   function showNewForm() { document.getElementById('audit-new-form').style.display = ''; }
