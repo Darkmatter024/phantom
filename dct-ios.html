@@ -10313,7 +10313,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.6.91';
+const PHANTOM_APP_VERSION = 'phantom-v1.6.92';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -17614,35 +17614,46 @@ function today_render() {
     return;
   }
 
-  // Aggregate across all active deployments
+  // ── Coherence (v1.6.92): the whole TODAY panel tracks ONE deployment — the same one
+  // the ACTIVE BUILD card shows. Resolve deploy_getActive() first; if it's unset or not
+  // an active build, fall back to the most-recently-updated active deployment ("current").
+  var mostRecentDeploy = null;
+  var mostRecentTs = -1;
+  active.forEach(function(dep) {
+    var ts = dep.updatedAt || dep.createdAt || 0;
+    if (ts > mostRecentTs) { mostRecentTs = ts; mostRecentDeploy = dep; }
+  });
+  var headlineDep = (typeof deploy_getActive === 'function') ? deploy_getActive() : null;
+  if (headlineDep && active.some(function(d) { return d.id === headlineDep.id; })) {
+    mostRecentDeploy = headlineDep;   // active build wins over most-recent
+  }
+
+  // Counts + bar + ring + rail + blockers + next-action all read this single deployment.
   var totalRacks = 0, racksComplete = 0, racksBlocked = 0, racksInProgress = 0;
   var blockerCards = [];
-  var mostRecentDeploy = null;
-  var mostRecentTs = 0;
-
-  active.forEach(function(dep) {
+  if (mostRecentDeploy) {
     var rollup;
-    try { rollup = deploy_computeDeployRollup(dep.id); }
+    try { rollup = deploy_computeDeployRollup(mostRecentDeploy.id); }
     catch(e) { rollup = null; }
 
     if (rollup) {
-      totalRacks      += rollup.racks ? rollup.racks.length : 0;
-      racksComplete   += rollup.racksComplete || 0;
-      racksBlocked    += rollup.racksBlocked || 0;
-      racksInProgress += rollup.racksInProg || 0;
+      totalRacks      = rollup.racks ? rollup.racks.length : 0;
+      racksComplete   = rollup.racksComplete || 0;
+      racksBlocked    = rollup.racksBlocked || 0;
+      racksInProgress = rollup.racksInProg || 0;
     }
 
-    // Find blocked racks in this deployment
+    // Blocked racks in this deployment → blocker cards
     try {
-      var racks  = deploy_loadRacks(dep.id);
-      var phases = deploy_loadPhases(dep.id);
+      var racks  = deploy_loadRacks(mostRecentDeploy.id);
+      var phases = deploy_loadPhases(mostRecentDeploy.id);
       racks.forEach(function(r) {
         var ru = deploy_computeRackRollup(r.id, phases);
         if (ru.isBlocked) {
           var blockedPhase = (ru.phases || []).find(function(p) { return p.status === 'blocked'; });
           blockerCards.push({
-            deployId: dep.id,
-            deployName: dep.name || 'Deployment',
+            deployId: mostRecentDeploy.id,
+            deployName: mostRecentDeploy.name || 'Deployment',
             rackId: r.id,
             rackLabel: r.rackId || r.name || 'rack',
             phaseType: blockedPhase ? blockedPhase.type : 'unknown',
@@ -17651,12 +17662,8 @@ function today_render() {
           });
         }
       });
-    } catch(e) { /* non-fatal per deploy */ }
-
-    // Track most recently updated deployment for context
-    var ts = dep.updatedAt || dep.createdAt || 0;
-    if (ts > mostRecentTs) { mostRecentTs = ts; mostRecentDeploy = dep; }
-  });
+    } catch(e) { /* non-fatal */ }
+  }
 
   // Build the dashboard HTML
   var html = '';
@@ -17727,13 +17734,13 @@ function today_render() {
       ringLabel = 'BLOCKED';
     } else if (pct >= 90) {
       ringColor = 'var(--green)';
-      ringLabel = 'CONFIDENCE';
+      ringLabel = 'COMPLETE';
     } else if (pct >= 50) {
       ringColor = 'var(--cyan)';
-      ringLabel = 'CONFIDENCE';
+      ringLabel = 'COMPLETE';
     } else {
       ringColor = 'var(--gold)';
-      ringLabel = 'CONFIDENCE';
+      ringLabel = 'COMPLETE';
     }
     var circumference = 226; // 2 * PI * 36
     var dashOffset = circumference - (circumference * pct / 100);
