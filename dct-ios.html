@@ -10313,7 +10313,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.6.88';
+const PHANTOM_APP_VERSION = 'phantom-v1.6.89';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -21619,6 +21619,7 @@ function deploy_seedRacksAndPhases(deployment) {
       room: sr.room || '',
       totalU: sr.totalU || 42,
       slots: sr.slots || [],
+      notes: sr.notes || '',
       powerCircuits: [],
       currentPhase: 'mechanical'
     });
@@ -22050,6 +22051,22 @@ function deploy_showList(container) {
   //    The Master is the source of truth / front door; the EDP path is demoted
   //    to the ＋ EDP / ＋ INTAKE buttons above (still fully reachable, untouched).
   html += '<button class="pt-btn pt-btn-primary" style="width:100%;box-sizing:border-box;padding:16px 18px;margin-bottom:14px;clip-path:none;display:flex;align-items:center;justify-content:center;gap:10px;white-space:nowrap" onclick="mscope_open()" aria-label="New deployment from Master — scope by cab">' + _ico.server('#04070b', 16) + ' NEW DEPLOYMENT FROM MASTER</button>';
+
+  // ── Ship 2: resume banner — a staged scope must never be strandable. If a
+  //    pending snapshot exists, offer CREATE / DISCARD above the deployment list.
+  var _jobsnap = (typeof PHANTOM_JOBSNAP_STORE !== 'undefined') ? PHANTOM_JOBSNAP_STORE.load() : null;
+  if (_jobsnap && _jobsnap.cabs && (_jobsnap.selectedCabIds || []).length) {
+    var _jsCabs = (_jobsnap.stats && _jobsnap.stats.cabs) || (_jobsnap.selectedCabIds || []).length;
+    html += '<div style="background:rgba(92,242,255,0.08);border:1px solid var(--cyan-border-lo,rgba(92,242,255,0.25));border-radius:var(--hud-r12,12px);padding:12px 14px;margin-bottom:14px">';
+    html += '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">';
+    html += '<span style="font-family:var(--orb);font-size:var(--fs-micro);letter-spacing:2px;color:var(--cyan)">STAGED SCOPE</span>';
+    html += '<span style="flex:1 1 auto;min-width:0;font-family:var(--mono);font-size:var(--fs-caption);color:var(--slate-readable,#b4c2d0);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + _jsCabs + ' cab' + (_jsCabs === 1 ? '' : 's') + ' · ' + escHtml(String(_jobsnap.siteCode || '—')) + ' · ' + escHtml(String(_jobsnap.stagedAt || '')) + '</span>';
+    html += '</div>';
+    html += '<div style="display:flex;gap:8px">';
+    html += '<button class="pt-btn pt-btn-primary" style="flex:1 1 0%;width:0;min-width:0;padding:11px 12px;white-space:nowrap" onclick="mscope_resumeStaged()">CREATE DEPLOYMENT</button>';
+    html += '<button class="pt-btn pt-btn-ghost" style="flex:0 0 auto;width:auto;padding:11px 14px" onclick="mscope_discardStaged()">Discard</button>';
+    html += '</div></div>';
+  }
 
   // ── Unread handoff banner ──
   var allHandoffs = handoff_loadAll();
@@ -25171,22 +25188,27 @@ window.master_loadFromPicker = function master_loadFromPicker(opts) {
 // ═══════════════════════════════════════════════════════════════════════════
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// MASTER-SCOPE FRONT DOOR — Ship 1 (v1.6.88)
+// MASTER-SCOPE FRONT DOOR — Ship 1 (v1.6.88) + Ship 2 Part A (v1.6.89)
 //
 // The new deployment path: the Master is the source of truth AND the front
 // door. Load (or reuse) a Master → group its cabs by Row/Locode → multi-select
 // the exact Cab IDs this team owns → freeze a scoped snapshot into
-// PHANTOM_JOBSNAP_STORE. Ship 1 STOPS at staging that snapshot: it does NOT
-// create or seed a live deployment, and it does NOT touch the EDP path
-// (deploy_parseEDP_local / deploy_create / the intake + hash gates stay intact).
-// Ship 2 routes the staged snapshot into the rack-seeder + QA/Reconcile engine.
+// PHANTOM_JOBSNAP_STORE (the PICKER reads window._lastPhantomMaster to BUILD the
+// snapshot). Ship 2 Part A then turns a staged snapshot into a LIVE deployment:
+// mscope_createDeployment seeds working racks via _deploy_create_postIntake and
+// clears the jobsnap on success. The EDP-as-architect path stays untouched and
+// reachable (deploy_parseEDP_local / deploy_create / intake + hash gates); Part B
+// (EDP→Reconcile vendor cross-check) is deferred to v1.6.90.
 //
-// Reads ONLY window._lastPhantomMaster.racksByCab. Writes ONLY
-// PHANTOM_JOBSNAP_STORE. No existing store, renderer, or gate is mutated.
-// All markup is width-capped per Rule 1 (zero horizontal overflow).
+// THE FREEZE INVARIANT: the SEEDER (mscope_buildRacksFromSnapshot →
+// master_rackToElevation → _deploy_create_postIntake) reads ONLY the staged
+// snapshot — NEVER window._lastPhantomMaster — so a deployment can be created
+// even after the Master is cleared or replaced. All markup is width-capped per
+// Rule 1 (zero horizontal overflow).
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 var _mscopeState = { selected: null, counts: null, totalCabs: 0, siteRef: null };
+var _mscopeCreating = false; // in-flight guard against gloved-hands double-tap on CREATE
 
 function mscope_escHtml(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, function(ch) {
@@ -25239,6 +25261,8 @@ function mscope_open() {
   if (typeof nav_push === 'function') nav_push({ p: 'sop', o: 'deploy', d: 'mscope' });
   var omniBar = document.getElementById('omni-bar');
   if (omniBar) omniBar.classList.add('omni-inactive');
+  // Ship 2: surface that a pending staged scope will be replaced on next confirm.
+  try { if (localStorage.getItem(PHANTOM_JOBSNAP_STORE.KEY)) phantomToast('A staged scope exists — re-staging replaces it', 'warn'); } catch (e) {}
   _mscopeState.selected = {};
   var m = mscope_master();
   if (!m) { mscope_renderLoadPrompt(c); return; }
@@ -25475,10 +25499,122 @@ function mscope_renderStaged(c, snapshot) {
   html += '<div>' + snapshot.stats.cabs + ' cabs · ' + snapshot.stats.hosts + ' hosts · ' + snapshot.stats.cables + ' cables</div>';
   html += '<div style="color:var(--slate);margin-top:6px">Staged ' + mscope_escHtml(snapshot.stagedAt) + '</div>';
   html += '</div></div>';
-  html += '<div style="font-family:var(--mono);font-size:11px;color:var(--slate);line-height:1.6;margin-bottom:16px">Scope snapshot is frozen and saved offline. Seeding it into a working Rack Map + QA reconcile arrives next ship.</div>';
-  html += '<button class="pt-btn pt-btn-secondary" style="width:auto;padding:12px 24px" onclick="deploy_showList(document.getElementById(\'ops-content\'))">Done</button>';
+  html += '<div style="font-family:var(--mono);font-size:11px;color:var(--slate);line-height:1.6;margin-bottom:16px">Frozen offline. Working racks seed FROM THIS SNAPSHOT — the live Master can be absent or replaced and this scope will not change.</div>';
+  html += '<label style="font-family:var(--mono);font-size:var(--fs-micro);letter-spacing:1.5px;color:var(--slate);display:block;margin-bottom:5px">DEPLOYMENT NAME</label>';
+  html += '<input class="sop-input" id="msc-dep-name" type="text" placeholder="' + mscope_escAttr((snapshot.siteCode || 'SITE') + ' Master scope') + '" autocomplete="off" value="' + mscope_escAttr(snapshot.siteName || snapshot.siteCode || '') + '">';
+  html += '<label style="font-family:var(--mono);font-size:var(--fs-micro);letter-spacing:1.5px;color:var(--slate);display:block;margin-bottom:5px;margin-top:12px">BUILD LEAD <span style="opacity:0.6">· optional</span></label>';
+  html += '<input class="sop-input" id="msc-dep-lead" type="text" placeholder="Lead DCT Operator" autocomplete="off">';
+  html += '<div style="display:flex;gap:8px;margin-top:16px">';
+  html += '<button class="pt-btn pt-btn-ghost" style="flex:0 0 auto;width:auto;padding:14px 16px" onclick="mscope_discardStaged()">Discard</button>';
+  html += '<button class="pt-btn pt-btn-primary" style="flex:1 1 0%;width:0;min-width:0;padding:14px 12px;white-space:nowrap" onclick="mscope_createDeployment()">CREATE DEPLOYMENT</button>';
+  html += '</div>';
   html += '</div>';
   c.innerHTML = html;
+}
+
+// ── Ship 2 (v1.6.89): staged snapshot → live deployment ───────────────────
+// Seeder is PURE COMPOSITION over existing parts: master_rackToElevation turns
+// each frozen cab into an elevation; we shape it as the EDP-style rack record
+// (name/room/totalU/slots) that deploy_seedRacksAndPhases already consumes, then
+// finalize through the proven _deploy_create_postIntake path. Reads ONLY the
+// snapshot — never window._lastPhantomMaster (that is the whole point of the
+// freeze: the Master may be absent or replaced at create time).
+function mscope_buildRacksFromSnapshot(snapshot) {
+  var ids = (snapshot && Array.isArray(snapshot.selectedCabIds)) ? snapshot.selectedCabIds : [];
+  var cabs = (snapshot && snapshot.cabs) ? snapshot.cabs : {};
+  var racks = [];
+  ids.forEach(function(cabId) {
+    var cab = cabs[cabId];
+    if (!cab) return; // capturedIds-consistent, but stay defensive
+    var elev = master_rackToElevation(cab, cabId);
+    var rack = {
+      name:   cabId,
+      room:   cab.locode || '',
+      totalU: elev.totalU,
+      slots:  elev.slots
+    };
+    // RU-less hosts: do NOT invent positions — surface them so they're not lost.
+    if (elev.unplaced && elev.unplaced.length) {
+      rack.notes = 'UNPLACED (' + elev.unplaced.length + '): ' + elev.unplaced.join(', ');
+    }
+    racks.push(rack);
+  });
+  return racks;
+}
+
+// Finalize: the staged snapshot becomes a live deployment, seeded FROM THE
+// SNAPSHOT. On the success path _deploy_create_postIntake clears the jobsnap
+// (consumed); on any failure the snapshot survives untouched (retry-safe).
+function mscope_createDeployment() {
+  if (_mscopeCreating) return; // re-entry guard — a fast double-tap must not create twice
+  var snapshot = PHANTOM_JOBSNAP_STORE.load();
+  if (!snapshot || !snapshot.cabs || !(snapshot.selectedCabIds || []).length) {
+    phantomToast('No staged scope to create from', 'warn');
+    return;
+  }
+  var nameEl = document.getElementById('msc-dep-name');
+  var leadEl = document.getElementById('msc-dep-lead');
+  var name = ((nameEl && nameEl.value) || '').trim();
+  var lead = ((leadEl && leadEl.value) || '').trim();
+  if (!name) {
+    if (nameEl) { nameEl.style.borderColor = 'var(--red)'; setTimeout(function() { nameEl.style.borderColor = ''; }, 1200); }
+    phantomToast('Enter a deployment name', 'warn');
+    return;
+  }
+
+  var racks = mscope_buildRacksFromSnapshot(snapshot);
+  if (!racks.length) { phantomToast('Snapshot has no seedable cabs', 'error'); return; }
+
+  var ids = snapshot.selectedCabIds || [];
+  // Provenance descriptor (stored as edpRaw) — human-readable, NOT an EDP doc.
+  var raw = 'MASTER SCOPE · ' + (snapshot.siteCode || 'UNKNOWN') + ' · ' + ids.length +
+            ' cab' + (ids.length === 1 ? '' : 's') + ': ' + ids.join(', ');
+  // Dedupe-safe synthetic hash — namespaced 'mscope_' so it can never collide
+  // with a real EDP content hash (which is hex from deploy_hash).
+  var hash = 'mscope_' + (snapshot.sourceFileHash || 'nohash') + '_' + (snapshot.stagedAt || '');
+  var scope = {
+    source: 'master',
+    sourceFileHash: snapshot.sourceFileHash || null,
+    siteCode: snapshot.siteCode || null,
+    selectedCabIds: ids,
+    stagedAt: snapshot.stagedAt || null,
+    snapshotConsumedAt: Date.now()
+  };
+
+  // Guard the whole create (the path is synchronous today since hash is
+  // precomputed, but flag + clear-on-settle future-proofs against any await
+  // creeping in before the jobsnap is consumed, and blocks the double-tap).
+  _mscopeCreating = true;
+  Promise.resolve(_deploy_create_postIntake({ racks: racks }, name, lead, raw, hash, scope))
+    .then(function() { _mscopeCreating = false; }, function() { _mscopeCreating = false; });
+}
+
+// Re-open the staged screen from a persisted pending snapshot (resume banner).
+function mscope_resumeStaged() {
+  var c = document.getElementById('ops-content');
+  if (!c) return;
+  var snapshot = PHANTOM_JOBSNAP_STORE.load();
+  if (!snapshot || !snapshot.cabs) { phantomToast('No staged scope found', 'warn'); deploy_showList(c); return; }
+  if (typeof nav_push === 'function') nav_push({ p: 'sop', o: 'deploy', d: 'mscope-staged' });
+  mscope_renderStaged(c, snapshot);
+}
+
+// Discard the pending snapshot (confirm → clear). A staged scope is never
+// strandable — this is the explicit off-ramp from the banner / staged screen.
+function mscope_discardStaged() {
+  phantomConfirmAsk({
+    title: 'Discard staged scope?',
+    body: 'The frozen snapshot will be cleared. You can re-stage from the Master at any time.',
+    confirmLabel: 'Discard',
+    cancelLabel: 'Keep',
+    destructive: true
+  }).then(function(ok) {
+    if (!ok) return;
+    try { PHANTOM_JOBSNAP_STORE.clear(); } catch (e) {}
+    phantomToast('Staged scope discarded', 'ok');
+    var c = document.getElementById('ops-content');
+    if (c) deploy_showList(c);
+  });
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -25805,7 +25941,9 @@ function master_rackToElevation(rack, cabId) {
       uEnd:   uEnd,
       name:   name,
       model:  (h && h.model) ? String(h.model) : '',
-      type:   master_hostType(h)
+      type:   master_hostType(h),
+      serial: (h && h.serial) ? String(h.serial) : '',
+      dns:    (h && h.dns) ? String(h.dns) : ''
     });
   });
   // Total rack height: honor an explicit value if the master carries one, else
@@ -26942,7 +27080,7 @@ async function deploy_create() {
   await _deploy_create_postIntake(_results, name, lead, raw, null);
 }
 
-async function _deploy_create_postIntake(_results, name, lead, raw, precomputedHash) {
+async function _deploy_create_postIntake(_results, name, lead, raw, precomputedHash, scope) {
   var hash = precomputedHash;
   if (!hash) {
 
@@ -26978,7 +27116,8 @@ async function _deploy_create_postIntake(_results, name, lead, raw, precomputedH
     edpRaw: raw,
     edpParsed: r,
     rackCount: rackCount,
-    phaseCount: 5
+    phaseCount: 5,
+    scope: scope || null
   };
 
   var deploys = deploy_loadAll();
@@ -27012,6 +27151,11 @@ async function _deploy_create_postIntake(_results, name, lead, raw, precomputedH
     return;
   }
 
+  // Ship 2: a Master-scoped create consumed its staged snapshot — clear it on
+  // the SUCCESS path only (the failure returns above leave it intact for retry).
+  if (scope && scope.source === 'master') {
+    try { PHANTOM_JOBSNAP_STORE.clear(); } catch (e) {}
+  }
   _deployIngestResults = null;
   // Creator is the build lead — activate lead session and prompt for PIN setup
   rbac_setLeadSession(deployment.id);
@@ -28288,6 +28432,13 @@ function deploy_showRackDetail(deployId, rackId) {
   html += '<div style="text-align:center"><div style="font-family:var(--orb);font-size:16px;font-weight:700;color:' + rackBadgeColor + '">' + rackPct + '%</div>';
   html += '<div style="font-family:var(--mono);font-size: var(--fs-micro);color:var(--slate);letter-spacing:1px">' + ru.phaseDone + '/5</div></div>';
   html += '</div>';
+
+  // Ship 2: rack-level notes (e.g. UNPLACED RU-less hosts from a Master-scoped
+  // seed) — surfaced so they are visible, not silently dropped. EDP racks carry
+  // notes:'' so this stays hidden for them.
+  if (rack.notes) {
+    html += '<div style="background:rgba(255,214,10,0.08);border:1px solid rgba(255,214,10,0.30);border-radius:8px;padding:9px 12px;margin-bottom:12px;font-family:var(--mono);font-size:var(--fs-caption);color:var(--gold,#ffd60a);line-height:1.45;word-break:break-word">' + escHtml(rack.notes) + '</div>';
+  }
 
   // ── Rack Navigation Strip ──
   html += '<div class="deploy-rack-nav" style="display:flex;gap: 8px;overflow-x:auto;margin-bottom:12px;padding-bottom:4px;scrollbar-width:none;-webkit-mask-image:linear-gradient(to right,black 85%,transparent 100%)">';
