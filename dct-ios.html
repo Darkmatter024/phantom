@@ -10313,7 +10313,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.6.94';
+const PHANTOM_APP_VERSION = 'phantom-v1.6.95';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -17593,6 +17593,27 @@ function burndown_renderCard(deployId, dep) {
   return h;
 }
 
+// v1.6.95: THE single resolver for "which deployment the NOW tab is about" — used so the
+// ACTIVE BUILD card and the TODAY panel can never resolve different records (the v1.6.92
+// coherence bug's new form: duplicate-named deployments + two independent resolvers).
+// Returns the active build (deploy_getActive) when it is a live active deployment, else the
+// most-recently-updated active deployment ("current"). null when no active deployments exist.
+function nowtab_resolveDep() {
+  var deploys = (typeof deploy_loadAll === 'function') ? deploy_loadAll() : [];
+  var active = deploys.filter(function(d) {
+    return d.status === 'active' || d.status === 'paused' || !d.status;
+  });
+  if (!active.length) return null;
+  var pick = active[0], ts = (active[0].updatedAt || active[0].createdAt || 0);
+  active.forEach(function(d) {
+    var t = d.updatedAt || d.createdAt || 0;
+    if (t > ts) { ts = t; pick = d; }
+  });
+  var act = (typeof deploy_getActive === 'function') ? deploy_getActive() : null;
+  if (act && active.some(function(d) { return d.id === act.id; })) pick = act;  // active build wins
+  return pick;
+}
+
 function today_render() {
   var el = document.getElementById('today-dashboard');
   if (!el) return;
@@ -17614,22 +17635,13 @@ function today_render() {
     return;
   }
 
-  // ── Coherence (v1.6.92): the whole TODAY panel tracks ONE deployment — the same one
-  // the ACTIVE BUILD card shows. Resolve deploy_getActive() first; if it's unset or not
-  // an active build, fall back to the most-recently-updated active deployment ("current").
-  var mostRecentDeploy = null;
-  var mostRecentTs = -1;
-  active.forEach(function(dep) {
-    var ts = dep.updatedAt || dep.createdAt || 0;
-    if (ts > mostRecentTs) { mostRecentTs = ts; mostRecentDeploy = dep; }
-  });
-  var headlineDep = (typeof deploy_getActive === 'function') ? deploy_getActive() : null;
-  if (headlineDep && active.some(function(d) { return d.id === headlineDep.id; })) {
-    mostRecentDeploy = headlineDep;   // active build wins over most-recent
-  }
+  // ── Coherence (v1.6.95): the ENTIRE NOW tab — ACTIVE BUILD card, TODAY panel, ring,
+  // rail, blockers — tracks ONE deployment from a single shared resolver, computed from
+  // ONE rollup, so the two headline cards can never show contradictory numbers.
+  var mostRecentDeploy = nowtab_resolveDep();
 
-  // Counts + bar + ring + rail + blockers + next-action all read this single deployment.
-  var totalRacks = 0, racksComplete = 0, racksBlocked = 0, racksInProgress = 0;
+  var totalRacks = 0, racksComplete = 0, racksBlocked = 0, racksInProgress = 0, pct = 0;
+  var phaseDone = 0, phaseTotal = 0;
   var blockerCards = [];
   if (mostRecentDeploy) {
     var rollup;
@@ -17641,6 +17653,14 @@ function today_render() {
       racksComplete   = rollup.racksComplete || 0;
       racksBlocked    = rollup.racksBlocked || 0;
       racksInProgress = rollup.racksInProg || 0;
+      pct             = rollup.pctOverall || 0;
+      // Phase-step summary for the completion card (cheap: sum the phaseAgg already built).
+      if (rollup.phaseAgg) {
+        Object.keys(rollup.phaseAgg).forEach(function(t) {
+          phaseDone  += rollup.phaseAgg[t].complete || 0;
+          phaseTotal += rollup.phaseAgg[t].total || 0;
+        });
+      }
     }
 
     // Blocked racks in this deployment → blocker cards
@@ -17668,33 +17688,33 @@ function today_render() {
   // Build the dashboard HTML
   var html = '';
 
-  // ── ACTIVE BUILD HERO (Cut 16) ──
-  // User's current focus — single resumable card pulled from activeContext.
-  // Distinct from the aggregate PULSE below. Tap resumes deployment or rack.
-  var ctx = (typeof activeContext_get === 'function') ? activeContext_get() : null;
-  if (ctx) {
-    var resumeAction = ctx.rack
-      ? "deploy_showRackDetail('" + ctx.deployment.id + "','" + ctx.rack.id + "')"
-      : "deploy_showDetail('" + ctx.deployment.id + "')";
-    var pctOf = ctx.rackCount > 0 ? Math.round((ctx.completeRacks / ctx.rackCount) * 100) : 0;
+  // ── ACTIVE BUILD HERO ──
+  // v1.6.95: resolved from the SAME nowtab_resolveDep() record + the SAME rollup counts as
+  // the TODAY panel below — the two can no longer contradict. Rack-level resume only when
+  // activeContext's rack belongs to THIS deployment; otherwise resume the deployment.
+  if (mostRecentDeploy) {
+    var _ac = (typeof activeContext_get === 'function') ? activeContext_get() : null;
+    var heroRack = (_ac && _ac.rack && _ac.deployment && _ac.deployment.id === mostRecentDeploy.id) ? _ac.rack : null;
+    var heroAction = heroRack
+      ? "deploy_showRackDetail('" + mostRecentDeploy.id + "','" + heroRack.id + "')"
+      : "deploy_showDetail('" + mostRecentDeploy.id + "')";
 
-    html += '<div style="background:radial-gradient(circle at 15% 0%, rgba(92,242,255,0.12), transparent 42%), linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px) 0 0/24px 24px, linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px) 0 0/24px 24px, linear-gradient(135deg, rgba(92,242,255,0.10), rgba(92,242,255,0.02));border:1px solid rgba(92,242,255,0.35);border-radius:var(--hud-r12);padding:14px 16px 12px 18px;margin-bottom:10px;cursor:pointer;position:relative;overflow:hidden" onclick="' + resumeAction + '">';
+    html += '<div style="background:radial-gradient(circle at 15% 0%, rgba(92,242,255,0.12), transparent 42%), linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px) 0 0/24px 24px, linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px) 0 0/24px 24px, linear-gradient(135deg, rgba(92,242,255,0.10), rgba(92,242,255,0.02));border:1px solid rgba(92,242,255,0.35);border-radius:var(--hud-r12);padding:14px 16px 12px 18px;margin-bottom:10px;cursor:pointer;position:relative;overflow:hidden" onclick="' + heroAction + '">';
     html += '<div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--cyan);box-shadow:0 0 12px var(--cyan-glow)"></div>';
     html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">';
     html += '<div style="font-family:var(--orb);font-size: var(--fs-micro);letter-spacing:3px;color:var(--cyan)">▼ ACTIVE BUILD</div>';
     html += '<div style="flex:1;height:1px;background:rgba(92,242,255,0.18)"></div>';
     html += '<div style="font-family:var(--mono);font-size: var(--fs-micro);color:var(--slate);letter-spacing:1.5px">TAP TO RESUME →</div>';
     html += '</div>';
-    html += '<div style="font-family:var(--raj);font-weight:700;font-size:16px;color:var(--white);margin-bottom:4px">' + escHtml(ctx.deployment.name || 'Unnamed') + '</div>';
-    if (ctx.rack) {
-      html += '<div style="font-family:var(--mono);font-size: var(--fs-caption);color:var(--cyan);letter-spacing:1px;margin-bottom:6px">RACK ' + escHtml(ctx.rack.id || '?') + (ctx.rack.platform ? ' · ' + escHtml(ctx.rack.platform) : '') + '</div>';
+    html += '<div style="font-family:var(--raj);font-weight:700;font-size:16px;color:var(--white);margin-bottom:4px">' + escHtml(mostRecentDeploy.name || 'Unnamed') + '</div>';
+    if (heroRack) {
+      html += '<div style="font-family:var(--mono);font-size: var(--fs-caption);color:var(--cyan);letter-spacing:1px;margin-bottom:6px">RACK ' + escHtml(heroRack.id || '?') + (heroRack.platform ? ' · ' + escHtml(heroRack.platform) : '') + '</div>';
     }
-    html += '<div style="font-family:var(--mono);font-size: var(--fs-caption);color:var(--slate);letter-spacing:1px">' + ctx.rackCount + ' racks · ' + ctx.completeRacks + ' done · ' + ctx.activeRacks + ' active' + (ctx.blockedRacks > 0 ? ' · <span style="color:var(--red)">' + ctx.blockedRacks + ' blocked</span>' : '') + ' · ' + pctOf + '%</div>';
+    html += '<div style="font-family:var(--mono);font-size: var(--fs-caption);color:var(--slate);letter-spacing:1px">' + totalRacks + ' racks · ' + racksComplete + ' done · ' + racksInProgress + ' active' + (racksBlocked > 0 ? ' · <span style="color:var(--red)">' + racksBlocked + ' blocked</span>' : '') + ' · ' + pct + '%</div>';
     html += '</div>';
   }
 
   // ── PULSE SECTION ──
-  var pct = totalRacks > 0 ? Math.round((racksComplete / totalRacks) * 100) : 0;
   var contextName = mostRecentDeploy ? (mostRecentDeploy.name || 'Deployment') : 'No active build';
   var contextSite = (mostRecentDeploy && mostRecentDeploy.siteId) ? mostRecentDeploy.siteId : phantom_siteLabel('SITE');
 
@@ -17724,39 +17744,47 @@ function today_render() {
 
   html += '</div>'; // end pulse card
 
-  // ── CONFIDENCE RING — real percentage, OMEGA-inspired visual ──
-  // SVG arc with stroke-dasharray. Color shifts based on completion state.
-  // Computed from real racksComplete / totalRacks. No fake numbers.
-  if (totalRacks > 0) {
+  // ── COMPLETION CARD (v1.6.95 redesign) — compact: ring LEFT, stat stack RIGHT.
+  // Same resolved deployment + same rollup as the cards above (no independent math).
+  // Does not render at all when there is no deployment (no hollow card).
+  if (mostRecentDeploy && totalRacks > 0) {
     var ringColor, ringLabel;
-    if (racksBlocked > 0) {
-      ringColor = 'var(--red)';
-      ringLabel = 'BLOCKED';
-    } else if (pct >= 90) {
-      ringColor = 'var(--green)';
-      ringLabel = 'COMPLETE';
-    } else if (pct >= 50) {
-      ringColor = 'var(--cyan)';
-      ringLabel = 'COMPLETE';
-    } else {
-      ringColor = 'var(--gold)';
-      ringLabel = 'COMPLETE';
-    }
-    var circumference = 226; // 2 * PI * 36
-    var dashOffset = circumference - (circumference * pct / 100);
+    if (racksBlocked > 0)      { ringColor = 'var(--red)';   ringLabel = 'BLOCKED'; }
+    else if (pct >= 90)        { ringColor = 'var(--green)'; ringLabel = 'COMPLETE'; }
+    else if (pct >= 50)        { ringColor = 'var(--cyan)';  ringLabel = 'COMPLETE'; }
+    else                       { ringColor = 'var(--gold)';  ringLabel = 'COMPLETE'; }
+    var circ = 175.9; // 2 * PI * 28
+    var dashOff = circ - (circ * pct / 100);
+    // Disambiguator — created date + last-4 of id so duplicate-named deployments are
+    // visually distinguishable at a glance (the bug's root cause).
+    var idTail    = mostRecentDeploy.id ? ('#' + String(mostRecentDeploy.id).slice(-4)) : '';
+    var createdStr = (mostRecentDeploy.createdAt && typeof formatDate === 'function') ? formatDate(mostRecentDeploy.createdAt) : '';
+    var disamb = [createdStr, idTail].filter(Boolean).join(' · ');
 
-    html += '<div style="background:linear-gradient(135deg,rgba(92,242,255,0.04),rgba(155,89,255,0.03));border:1px solid rgba(92,242,255,0.18);border-radius:var(--hud-r12);padding:16px;margin-bottom:10px;display:flex;align-items:center;justify-content:center;min-height:120px">';
-    html += '<div style="position:relative;width:96px;height:96px;display:flex;align-items:center;justify-content:center">';
-    html += '<svg width="96" height="96" viewBox="0 0 96 96" style="position:absolute;top:0;left:0;transform:rotate(-90deg)">';
-    // Background track
-    html += '<circle cx="48" cy="48" r="36" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="6"/>';
-    // Progress arc
-    html += '<circle cx="48" cy="48" r="36" fill="none" stroke="' + ringColor + '" stroke-width="6" stroke-linecap="round" stroke-dasharray="' + circumference + '" stroke-dashoffset="' + dashOffset.toFixed(1) + '" style="transition:stroke-dashoffset 0.6s ease,stroke 0.3s ease;filter:drop-shadow(0 0 8px ' + ringColor + ')"/>';
+    html += '<div style="background:linear-gradient(135deg,rgba(92,242,255,0.04),rgba(155,89,255,0.03));border:1px solid rgba(92,242,255,0.18);border-radius:var(--hud-r12);padding:12px 14px;margin-bottom:10px;display:flex;align-items:center;gap:16px">';
+    // Ring (left)
+    html += '<div style="position:relative;width:64px;height:64px;flex:0 0 64px;display:flex;align-items:center;justify-content:center">';
+    html += '<svg width="64" height="64" viewBox="0 0 64 64" style="position:absolute;top:0;left:0;transform:rotate(-90deg)">';
+    html += '<circle cx="32" cy="32" r="28" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="5"/>';
+    html += '<circle cx="32" cy="32" r="28" fill="none" stroke="' + ringColor + '" stroke-width="5" stroke-linecap="round" stroke-dasharray="' + circ + '" stroke-dashoffset="' + dashOff.toFixed(1) + '" style="transition:stroke-dashoffset 0.6s ease,stroke 0.3s ease;filter:drop-shadow(0 0 6px ' + ringColor + ')"/>';
     html += '</svg>';
-    html += '<div style="text-align:center;position:relative;z-index:1">';
-    html += '<div style="font-family:var(--orb);font-size:24px;font-weight:900;color:' + ringColor + ';line-height:1">' + pct + '</div>';
-    html += '<div style="font-family:var(--mono);font-size:8px;letter-spacing:1.5px;color:var(--slate);margin-top:3px">' + ringLabel + '</div>';
+    html += '<div style="text-align:center;position:relative;z-index:1;line-height:1">';
+    html += '<div style="font-family:var(--orb);font-size:19px;font-weight:900;color:' + ringColor + '">' + pct + '</div>';
+    html += '<div style="font-family:var(--mono);font-size:7px;letter-spacing:1px;color:var(--slate);margin-top:2px">' + ringLabel + '</div>';
     html += '</div>';
+    html += '</div>';
+    // Stat stack (right)
+    html += '<div style="flex:1;min-width:0">';
+    html += '<div style="display:flex;align-items:baseline;gap:8px;margin-bottom:5px">';
+    html += '<div style="font-family:var(--raj);font-weight:700;font-size:14px;color:var(--white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escHtml(mostRecentDeploy.name || 'Deployment') + '</div>';
+    if (disamb) html += '<div style="font-family:var(--mono);font-size:9px;color:var(--slate);letter-spacing:0.5px;white-space:nowrap;flex:0 0 auto">' + escHtml(disamb) + '</div>';
+    html += '</div>';
+    html += '<div style="font-family:var(--mono);font-size: var(--fs-caption);color:var(--slate);letter-spacing:0.5px"><span style="color:var(--green);font-weight:700">' + racksComplete + '</span> of <span style="color:var(--white);font-weight:700">' + totalRacks + '</span> racks done';
+    if (phaseTotal > 0) html += ' · <span style="color:var(--slate)">' + phaseDone + '/' + phaseTotal + ' phases</span>';
+    html += '</div>';
+    if (racksBlocked > 0) {
+      html += '<div style="margin-top:7px"><span class="badge b-red" style="font-size: var(--fs-micro);letter-spacing:1px"><span class="ico ico-md ico-warning"></span> ' + racksBlocked + ' BLOCKED</span></div>';
+    }
     html += '</div>';
     html += '</div>';
   }
