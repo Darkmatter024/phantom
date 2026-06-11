@@ -10313,7 +10313,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.6.93';
+const PHANTOM_APP_VERSION = 'phantom-v1.6.94';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -11328,7 +11328,7 @@ if (typeof window !== 'undefined') {
             <div class="wbar"><span class="ico ico-md ico-warning"></span> Verify polarity before pulling trunk. Replacing trunk in conduit is expensive.</div>
           </div>
         </div>
-        <div class="sh">HPC / CoreWeave Stack</div>
+        <div class="sh">HPC / GPU Compute Stack</div>
         <div class="card" onclick="toggleCard(this)">
           <div class="card-hdr"><div class="card-title">IB NDR / NVLink 5.0</div><div class="card-right"><div class="badge b-green">GB300</div><div class="chev">▶</div></div></div>
           <div class="card-body">
@@ -11770,7 +11770,7 @@ if (typeof window !== 'undefined') {
           </div>
           <div class="card-body">
             <div class="sh">Why This Matters</div>
-            <p>Plugging the wrong power cable into the wrong PDU is at best a non-event (it doesn't fit) and at worst a tripped breaker, popped fuse, or damaged equipment. At AUS-01 you'll see C13/C14 on most servers, C19/C20 on high-draw H100/H200 GPU compute and PDU outputs, and 208V 3-phase service to the rack PDUs. Know the family before you plug.</p>
+            <p>Plugging the wrong power cable into the wrong PDU is at best a non-event (it doesn't fit) and at worst a tripped breaker, popped fuse, or damaged equipment. Typically you'll see C13/C14 on most servers, C19/C20 on high-draw H100/H200 GPU compute and PDU outputs, and 208V 3-phase service to the rack PDUs — confirm your site's PDU spec. Know the family before you plug.</p>
             <div class="abar"><span class="ico ico-md ico-alert-red"></span> Never force a power connector. If it doesn't seat with light pressure, it's wrong. Forcing a C13 into a C19 socket is impossible; forcing a NEMA L6-20 into an L6-30 will damage the receptacle and may create an arc fault.</div>
 
             <div class="sh">IEC 60320 Family — Server &amp; PDU</div>
@@ -11804,7 +11804,7 @@ if (typeof window !== 'undefined') {
             <table class="dt">
               <tr><th>Color</th><th>Voltage</th><th>Common DC Spec</th></tr>
               <tr><td style="color:#5cf2ff">Blue</td><td>200–250V single-phase</td><td>16A / 32A — older PDU input</td></tr>
-              <tr><td style="color:var(--red)">Red</td><td>380–480V 3-phase</td><td>32A / 60A / 100A — GPU pod PDU input (415V at AUS-01)</td></tr>
+              <tr><td style="color:var(--red)">Red</td><td>380–480V 3-phase</td><td>32A / 60A / 100A — GPU pod PDU input (415V typical)</td></tr>
               <tr><td style="color:var(--gold)">Yellow</td><td>100–130V</td><td>Rare in DC — North American jobsite tools</td></tr>
             </table>
 
@@ -11832,11 +11832,11 @@ if (typeof window !== 'undefined') {
           </div>
           <div class="card-body">
             <div class="sh">Scope</div>
-            <p>This reference covers two specific platforms in the CoreWeave fleet: <strong>SYS-821GE-TNHR</strong> (HGX H100 8-GPU 8U) and <strong>AS-8125GS-TNHR</strong> (HGX H200 8-GPU 8U). LED conventions overlap heavily across both — differences are called out explicitly. Always cross-reference with current Supermicro docs for the firmware version on your specific node.</p>
+            <p>This reference covers two specific Supermicro HGX platforms: <strong>SYS-821GE-TNHR</strong> (HGX H100 8-GPU 8U) and <strong>AS-8125GS-TNHR</strong> (HGX H200 8-GPU 8U). LED conventions overlap heavily across both — differences are called out explicitly. Always cross-reference with current Supermicro docs for the firmware version on your specific node.</p>
             <div class="abar"><span class="ico ico-md ico-alert-red"></span> LED meanings can shift slightly between BMC firmware versions. This card is a starting point — never condemn or RMA hardware based on LED state alone. Confirm with IPMI sensor data, dmesg, and nvidia-smi before any destructive action.</div>
 
-            <div class="sh">Rack Position — CoreWeave AUS-01 Standard</div>
-            <p>At AUS-01, H100 and H200 nodes are placed two per rack at fixed U positions. Bottom-U reference convention (U number is the chassis's lowest occupied U).</p>
+            <div class="sh">Rack Position — Typical Site Convention</div>
+            <p>Typical placement: H100 and H200 nodes two per rack at fixed U positions — confirm your site's convention. Bottom-U reference convention (U number is the chassis's lowest occupied U).</p>
             <table class="dt">
               <tr><th>Position</th><th>Bottom U</th><th>Occupied U Range</th><th>Notes</th></tr>
               <tr><td>Lower node</td><td style="color:var(--cyan)">U12</td><td>U12 – U19</td><td>Reach from floor / typical kneeling height</td></tr>
@@ -12947,7 +12947,7 @@ if (typeof window !== 'undefined') {
               <tr><td>Wear strap over clothing</td><td>No skin contact = no ground path = useless</td></tr>
               <tr><td>Bond to painted rack surface</td><td>Paint is an insulator — no continuity</td></tr>
               <tr><td>Slide components on surfaces</td><td>Friction generates charge — lift, don't drag</td></tr>
-              <tr><td>Work in low humidity (&lt;30%)</td><td>Dry air = high static risk — Austin winters especially</td></tr>
+              <tr><td>Work in low humidity (&lt;30%)</td><td>Dry air = high static risk — dry winter months especially</td></tr>
               <tr><td>Remove from bag near powered gear</td><td>Induced charge from nearby PSUs</td></tr>
             </table>
 
@@ -13901,8 +13901,8 @@ const OPTIC_DB = {
     results: {
       dac:  { optic: 'MCP1660-W series (NVIDIA 400G DAC)', pn: 'NVIDIA MCP1660-W001E30 (1m) / W002E30 (2m) / W003E30 (3m)', fiber: 'Direct Attach Copper', connector: 'QSFP-DD both ends', dom: 'No DOM — passive copper', notes: 'Same-rack 400G connections. <span class="ico ico-md ico-warning"></span> VERIFY exact part numbers in NVIDIA cable matrix. 1m–3m typical.' },
       aoc:  { optic: 'MFS1S00-Vxxx (NVIDIA 400G AOC)', pn: 'NVIDIA MFS1S00-V003E / V005E / V010E / V015E / V020E', fiber: 'OM4 MMF (internal)', connector: 'QSFP-DD both ends', dom: 'Full DOM', notes: '3m–30m typical AOC lengths. <span class="ico ico-md ico-warning"></span> VERIFY part numbers in current price list.' },
-      sr:   { optic: 'MMA4Z00-NS400 (400G SR8 MMF)', pn: 'NVIDIA MMA4Z00-NS400', fiber: 'OM4 MMF', connector: 'QSFP-DD + MPO-12 APC', dom: 'Per-lane DOM (8 lanes × 50G PAM4)', notes: 'AUS-01 standard 400G MMF optic. 100m on OM4. MPO-12 APC connector — verify trunk polarity.', rxMin: -9.5, rxMax: 2.4, alarmLow: -11.5 },
-      dr:   { optic: 'MMS4X00-NS (400G DR4 SMF) — verify exact SKU', pn: 'NVIDIA OSFP/QSFP-DD DR series. <span class="ico ico-md ico-warning"></span> AUS-01 uses MMS4X00-NS but it is the 800G dual-port variant on OSFP — confirm which side is mapped to MSN4700 ports.', fiber: 'OS2 SMF', connector: 'QSFP-DD + MPO-12 APC', dom: 'Per-lane DOM', notes: '500m SMF. Common for inter-row spine-leaf runs.', rxMin: -8.5, rxMax: 0.5, alarmLow: -10.5 },
+      sr:   { optic: 'MMA4Z00-NS400 (400G SR8 MMF)', pn: 'NVIDIA MMA4Z00-NS400', fiber: 'OM4 MMF', connector: 'QSFP-DD + MPO-12 APC', dom: 'Per-lane DOM (8 lanes × 50G PAM4)', notes: 'Common 400G MMF optic — verify your site standard. 100m on OM4. MPO-12 APC connector — verify trunk polarity.', rxMin: -9.5, rxMax: 2.4, alarmLow: -11.5 },
+      dr:   { optic: 'MMS4X00-NS (400G DR4 SMF) — verify exact SKU', pn: 'NVIDIA OSFP/QSFP-DD DR series. <span class="ico ico-md ico-warning"></span> Commonly MMS4X00-NS, but it is the 800G dual-port variant on OSFP — confirm which side is mapped to MSN4700 ports.', fiber: 'OS2 SMF', connector: 'QSFP-DD + MPO-12 APC', dom: 'Per-lane DOM', notes: '500m SMF. Common for inter-row spine-leaf runs.', rxMin: -8.5, rxMax: 0.5, alarmLow: -10.5 },
       lr:   { optic: 'NVIDIA 400G LR4 QSFP-DD', pn: '<span class="ico ico-md ico-warning"></span> VERIFY current NVIDIA SKU — 400G LR4 OEM partner may be Coherent/Lumentum', fiber: 'OS2 SMF', connector: 'LC duplex', dom: 'Full DOM 4-lane WDM', notes: '10km CWDM4. Less common in single-site spine — used for cross-suite or DCI-light.', rxMin: -10.6, rxMax: 4.5, alarmLow: -14.4 },
       er:   { optic: '400G ER not standard NVIDIA SKU', pn: '<span class="ico ico-md ico-warning"></span> 400G ER4 is not a typical Mellanox/NVIDIA stock SKU. Verify with vendor for 40km use case.', fiber: 'OS2 SMF', connector: 'LC duplex', dom: 'Full DOM', notes: '40km on 400G is uncommon — DCI deployments typically use ZR coherent instead. <span class="ico ico-md ico-warning"></span> VERIFY availability.' },
       zr:   { optic: '400G ZR coherent (QSFP-DD)', pn: '<span class="ico ico-md ico-warning"></span> VERIFY MSN4700 supports coherent ZR — Spectrum-3 may require additional licensing or firmware. Reference NVIDIA QSFP-DD 400G ZR/ZR+ SKUs.', fiber: 'OS2 SMF', connector: 'LC duplex', dom: 'Full DOM + OSNR + wavelength', notes: '80km+ coherent. Spec verify required.' },
@@ -13951,8 +13951,8 @@ const OPTIC_DB = {
     results: {
       dac:  { optic: 'MMA1B00-Cxxx series (NDR OSFP DAC)', pn: 'NVIDIA MMA1B00-C001 (1m) / C002 (2m) / C003 (3m)', fiber: 'DAC Copper', connector: 'OSFP both ends', dom: 'No DOM — passive copper', notes: 'Same-rack NDR connections. DO NOT exceed 3m on passive DAC at NDR. <span class="ico ico-md ico-warning"></span> VERIFY current NVIDIA cable matrix — Quantum-X800 may require specific DAC firmware/labeling.' },
       aoc:  { optic: 'MFA1A00-Cxxx (NDR OSFP AOC)', pn: 'NVIDIA MFA1A00-C010 / C015 / C020 / C030 / C050', fiber: 'OM4 (internal)', connector: 'OSFP both ends', dom: 'Tx/Rx power, temp, voltage', notes: '10m–50m pre-terminated. Polarity fixed — label both ends at install. <span class="ico ico-md ico-warning"></span> VERIFY Quantum-X800 qualification for current AOC SKUs.' },
-      sr:   { optic: 'MMA4Z00-NS400 (NDR OSFP MMF)', pn: 'NVIDIA MMA4Z00-NS400', fiber: 'OM4 MMF', connector: 'OSFP + MPO-12 APC', dom: 'Full per-lane DOM', notes: 'AUS-01 standard 400G MMF NDR optic. Up to 50m on OM4 at NDR. <span class="ico ico-md ico-warning"></span> VERIFY Quantum-X800 firmware supports this OSFP variant at full distance.', rxMin: -9.5, rxMax: 2.4, alarmLow: -11.5 },
-      dr:   { optic: 'MMS4X00-NS (NDR OSFP SMF)', pn: 'NVIDIA MMS4X00-NS (800G dual-port — single side maps to NDR400)', fiber: 'OS2 SMF', connector: 'OSFP + MPO-12 APC', dom: 'Full per-lane DOM', notes: 'AUS-01 standard SMF NDR optic. 500m–2km SMF reach. <span class="ico ico-md ico-warning"></span> VERIFY OSFP DR mapping on Quantum-X800 firmware.', rxMin: -8.5, rxMax: 0.5, alarmLow: -10.5 },
+      sr:   { optic: 'MMA4Z00-NS400 (NDR OSFP MMF)', pn: 'NVIDIA MMA4Z00-NS400', fiber: 'OM4 MMF', connector: 'OSFP + MPO-12 APC', dom: 'Full per-lane DOM', notes: 'Common 400G MMF NDR optic — verify your site standard. Up to 50m on OM4 at NDR. <span class="ico ico-md ico-warning"></span> VERIFY Quantum-X800 firmware supports this OSFP variant at full distance.', rxMin: -9.5, rxMax: 2.4, alarmLow: -11.5 },
+      dr:   { optic: 'MMS4X00-NS (NDR OSFP SMF)', pn: 'NVIDIA MMS4X00-NS (800G dual-port — single side maps to NDR400)', fiber: 'OS2 SMF', connector: 'OSFP + MPO-12 APC', dom: 'Full per-lane DOM', notes: 'Common SMF NDR optic — verify your site standard. 500m–2km SMF reach. <span class="ico ico-md ico-warning"></span> VERIFY OSFP DR mapping on Quantum-X800 firmware.', rxMin: -8.5, rxMax: 0.5, alarmLow: -10.5 },
       lr:   { optic: 'Not standard for IB fabric', pn: 'N/A typical IB', fiber: 'N/A', connector: 'N/A', dom: 'N/A', notes: '<span class="ico ico-md ico-warning"></span> LR is not a typical InfiniBand use case. IB is designed for in-datacenter compute fabrics.' },
       er:   { optic: 'Not applicable', pn: 'N/A', fiber: 'N/A', connector: 'N/A', dom: 'N/A', notes: '<span class="ico ico-md ico-warning"></span> NDR/Quantum-X800 is not deployed at ER distances.' },
       zr:   { optic: 'Not applicable', pn: 'N/A', fiber: 'N/A', connector: 'N/A', dom: 'N/A', notes: '<span class="ico ico-md ico-warning"></span> NDR InfiniBand does not support coherent ZR/DWDM. For long-haul interconnect, Ethernet is the correct transport.' },
