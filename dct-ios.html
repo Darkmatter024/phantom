@@ -8350,6 +8350,18 @@ textarea.hud-input {
 
 /* ━━━ HW MATRIX SHEET ━━━ */
 #hw-matrix-sheet { display:none; position:fixed; inset:0; z-index:8900; background:rgba(0,0,0,0.82); backdrop-filter:var(--blur-sheet); -webkit-backdrop-filter:var(--blur-sheet); overflow-y:auto; -webkit-overflow-scrolling:touch; }
+/* ━━━ TROUBLESHOOT ASSISTANT (v1.6.98) — reuses .hwm-* shell + .hwm-entry cards ━━━ */
+#ta-sheet { display:none; position:fixed; inset:0; z-index:8900; background:rgba(0,0,0,0.82); backdrop-filter:var(--blur-sheet); -webkit-backdrop-filter:var(--blur-sheet); overflow-y:auto; -webkit-overflow-scrolling:touch; }
+.ta-blocker-note { margin:0 16px 10px; padding:9px 12px; background:rgba(255,45,85,0.08); border:1px solid rgba(255,45,85,0.28); border-radius:8px; font-family:var(--mono); font-size:var(--fs-caption); color:#ff9bb0; line-height:1.4; }
+.ta-echo-hdr { margin:4px 16px 6px; font-family:var(--orb); font-size:var(--fs-micro); letter-spacing:2px; color:var(--cyan); }
+.ta-echoes { margin:0 16px 10px; }
+.ta-echo { padding:8px 10px; margin-bottom:6px; background:rgba(92,242,255,0.04); border-left:2px solid var(--cyan); border-radius:6px; }
+.ta-echo-text { font-family:var(--mono); font-size:var(--fs-caption); color:var(--white); line-height:1.45; }
+.ta-echo-meta { font-family:var(--mono); font-size:var(--fs-micro); color:var(--slate); margin-top:4px; }
+.ta-foot { position:sticky; bottom:0; display:flex; gap:10px; padding:12px 16px calc(12px + env(safe-area-inset-bottom)); background:linear-gradient(180deg, rgba(0,0,0,0) 0%, var(--hud-surface-0) 35%); }
+.ta-foot-btn { flex:1; min-height:var(--tap-m); border-radius:10px; cursor:pointer; -webkit-appearance:none; font-family:var(--mono); font-size:var(--fs-caption); letter-spacing:1px; }
+.ta-foot-fix { background:linear-gradient(180deg, rgba(48,209,88,0.22), rgba(48,209,88,0.08)); border:1px solid rgba(48,209,88,0.5); color:var(--white); }
+.ta-foot-fix:active { transform:scale(0.98); }
 .hwm-inner { background:var(--hud-surface-0); max-width:520px; margin:0 auto; min-height:100%; padding:env(safe-area-inset-top,16px) 0 calc(env(safe-area-inset-bottom,0px) + 80px); }
 .hwm-hdr { display:flex; align-items:center; justify-content:space-between; padding:14px 16px 10px; border-bottom:1px solid rgba(180,194,208,0.12); position:sticky; top:0; background:var(--hud-surface-0); z-index:2; }
 .hwm-title { font-family:var(--mono); font-size:var(--fs-micro); letter-spacing:var(--hud-track-button); color:var(--cyan); text-transform:uppercase; }
@@ -10313,7 +10325,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.6.97';
+const PHANTOM_APP_VERSION = 'phantom-v1.6.98';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -13534,6 +13546,11 @@ if (typeof window !== 'undefined') {
       <div class="hwm-count" id="hwm-count"></div>
       <div class="hwm-list" id="hwm-list"></div>
     </div>
+  </div>
+
+  <!-- ━━━ TROUBLESHOOT ASSISTANT SHEET (v1.6.98) ━━━ -->
+  <div id="ta-sheet" role="dialog" aria-modal="true" aria-label="Troubleshoot Assistant">
+    <div class="hwm-inner" id="ta-inner"></div>
   </div>
 
   <!-- ━━━ TACTICAL PRINT — BLE Zebra/Brady fault label modal ━━━ -->
@@ -19995,6 +20012,28 @@ function hwMatrix_setCat(c) {
   hwMatrix_render();
 }
 
+// Render one flat matrix item ({cat, catLabel, entry}) as a fault card.
+// Shared by the hwMatrix reference sheet and the Troubleshoot Assistant sheet.
+function hwMatrix_entryHtml(item) {
+  var e = item.entry;
+  var modelTag = e.m === 'H' ? 'H100' : e.m === 'X' ? 'H200' : e.m === 'G' ? 'GB200/300' : 'UNIVERSAL';
+  return '<div class="hwm-entry cat-' + item.cat + '" onclick="this.classList.toggle(\'hwm-open\')">' +
+    '<div class="hwm-fault">' +
+      '<span class="hwm-model-tag">' + escHtml(modelTag) + '</span>' +
+      '<span class="hwm-fault-text">' + escHtml(e.f) + '</span>' +
+      '<span class="hwm-chevron">&#9658;</span>' +
+    '</div>' +
+    '<div class="hwm-section">INDICATORS</div>' +
+    '<ul class="hwm-indicators">' + e.ind.map(function(i) { return '<li>' + escHtml(i) + '</li>'; }).join('') + '</ul>' +
+    '<div class="hwm-section">ROOT CAUSE</div>' +
+    '<div class="hwm-cause">' + escHtml(e.cause) + '</div>' +
+    '<div class="hwm-section">ACTION</div>' +
+    '<div class="hwm-action">' + escHtml(e.action) + '</div>' +
+    (e.t ? '<div class="hwm-threshold">&#9654; ' + escHtml(e.t) + '</div>' : '') +
+    '<button class="hwm-print-btn" onclick="event.stopPropagation();btPrint_openById(\'' + e.id + '\')">&#9655; &nbsp;PRINT FAULT LABEL</button>' +
+    '</div>';
+}
+
 // ── HW Matrix: search + render ──
 function hwMatrix_render() {
   var list = document.getElementById('hwm-list');
@@ -20019,25 +20058,7 @@ function hwMatrix_render() {
     list.innerHTML = '<div class="hwm-empty">NO MATCH — TRY A DIFFERENT KEYWORD</div>';
     return;
   }
-  list.innerHTML = results.map(function(item) {
-    var e = item.entry;
-    var modelTag = e.m === 'H' ? 'H100' : e.m === 'X' ? 'H200' : e.m === 'G' ? 'GB200/300' : 'UNIVERSAL';
-    return '<div class="hwm-entry cat-' + item.cat + '" onclick="this.classList.toggle(\'hwm-open\')">' +
-      '<div class="hwm-fault">' +
-        '<span class="hwm-model-tag">' + escHtml(modelTag) + '</span>' +
-        '<span class="hwm-fault-text">' + escHtml(e.f) + '</span>' +
-        '<span class="hwm-chevron">&#9658;</span>' +
-      '</div>' +
-      '<div class="hwm-section">INDICATORS</div>' +
-      '<ul class="hwm-indicators">' + e.ind.map(function(i) { return '<li>' + escHtml(i) + '</li>'; }).join('') + '</ul>' +
-      '<div class="hwm-section">ROOT CAUSE</div>' +
-      '<div class="hwm-cause">' + escHtml(e.cause) + '</div>' +
-      '<div class="hwm-section">ACTION</div>' +
-      '<div class="hwm-action">' + escHtml(e.action) + '</div>' +
-      (e.t ? '<div class="hwm-threshold">&#9654; ' + escHtml(e.t) + '</div>' : '') +
-      '<button class="hwm-print-btn" onclick="event.stopPropagation();btPrint_openById(\'' + e.id + '\')">&#9655; &nbsp;PRINT FAULT LABEL</button>' +
-      '</div>';
-  }).join('');
+  list.innerHTML = results.map(hwMatrix_entryHtml).join('');
 }
 
 // ── HW Matrix: VA context builder ──
@@ -21397,6 +21418,177 @@ function ge_toggleBanner() {
   } else {
     body.style.display = 'none';
     chev.textContent = '▾';
+  }
+}
+
+
+// ─────────────────────────────────────────────────────────────────────
+// TROUBLESHOOT ASSISTANT (v1.6.98) — contextual front door over the HW Matrix.
+// Offline. Reads PHANTOM_HW_MATRIX._flat; reuses ge_* + deploy_advancePhase.
+// ─────────────────────────────────────────────────────────────────────
+var TA_PHASE_CATS = {
+  mechanical: ['liquid','led'],
+  power:      ['power','led'],
+  network:    ['transceiver','infiniband','nvlink'],
+  compute:    ['nvlink','led','liquid'],
+  validation: ['transceiver','infiniband','nvlink','power','led','liquid']
+};
+var TA_SHORTLIST_CAP = 8;
+
+// Map a ge_deriveHardwareType() result (e.g. "H100","GB300","QM9700","generic")
+// to a matrix platform bucket, or null when no platform filter should apply.
+function ta_platformFromHw(hwType) {
+  var h = String(hwType || '').toUpperCase();
+  if (h.indexOf('H100') !== -1) return 'H100';
+  if (h.indexOf('H200') !== -1) return 'H200';
+  if (h.indexOf('GB200') !== -1 || h.indexOf('GB300') !== -1) return 'GB';
+  return null;
+}
+
+// Does a matrix entry model code (m: B/H/X/G) apply to the platform bucket?
+function ta_modelMatches(m, platform) {
+  if (!platform) return true;
+  if (m === 'B') return true;
+  if (platform === 'H100') return m === 'H';
+  if (platform === 'H200') return m === 'X';
+  if (platform === 'GB')   return m === 'G';
+  return true;
+}
+
+// Ranked shortlist for a blocked phase + platform. Pure given flat.
+function ta_rank(flat, phaseType, platform) {
+  var cats = TA_PHASE_CATS[phaseType] || [];
+  var matches = [];
+  (flat || []).forEach(function(item, i) {
+    if (ta_modelMatches(item.entry.m, platform) && cats.indexOf(item.cat) !== -1) {
+      matches.push({ item: item, ord: cats.indexOf(item.cat), i: i });
+    }
+  });
+  matches.sort(function(a, b) { return (a.ord - b.ord) || (a.i - b.i); });
+  return matches.slice(0, TA_SHORTLIST_CAP).map(function(x) { return x.item; });
+}
+
+var _ta_ctx = null;   // { deployId, rackId, phaseId, phaseType, platform, hardwareType, blockerNote }
+var _ta_q = '';       // current search-widen query; '' = ranked shortlist mode
+
+function ta_open(deployId, rackId, phaseId) {
+  var dep = (typeof deploy_getById === 'function') ? deploy_getById(deployId) : null;
+  if (!dep) { phantomToast('Deployment not found', 'error'); return; }
+  var racks = deploy_loadRacks(deployId);
+  var rack = racks.find(function(r){ return r.id === rackId; });
+  if (!rack) { phantomToast('Rack not found', 'error'); return; }
+  var phases = deploy_loadPhases(deployId);
+  var phase = phases.find(function(p){ return p.id === phaseId; });
+  if (!phase) { phantomToast('Phase not found', 'error'); return; }
+  var hwType = (typeof ge_deriveHardwareType === 'function') ? ge_deriveHardwareType(rack) : 'generic';
+  _ta_ctx = {
+    deployId: deployId, rackId: rackId, phaseId: phaseId,
+    phaseType: phase.type,
+    platform: ta_platformFromHw(hwType),
+    hardwareType: hwType,
+    blockerNote: (phase.blockerNote || '')
+  };
+  _ta_q = '';
+  var sheet = document.getElementById('ta-sheet');
+  if (!sheet) return;
+  sheet.style.display = 'block';
+  document.body.style.overflow = 'hidden';
+  ta_render();
+}
+
+function ta_close() {
+  var sheet = document.getElementById('ta-sheet');
+  if (sheet) sheet.style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function ta_onSearch(v) {
+  _ta_q = (v || '').toLowerCase().trim();
+  ta_renderList();
+}
+
+// Build the static shell (header, blocker note, field echoes, search, list slot, footer).
+// The search input lives here and is NOT rebuilt on keystroke (ta_onSearch -> ta_renderList).
+function ta_render() {
+  var ctx = _ta_ctx; if (!ctx) return;
+  var inner = document.getElementById('ta-inner');
+  if (!inner) return;
+  var platLabel = ctx.platform || 'platform: unknown';
+  var phaseLabel = ((typeof DEPLOY_PHASE_LABELS_FULL === 'object' && DEPLOY_PHASE_LABELS_FULL[ctx.phaseType]) || ctx.phaseType).toUpperCase();
+  var html = '';
+  html += '<div class="hwm-hdr"><div>' +
+            '<div class="hwm-title">TROUBLESHOOT</div>' +
+            '<div class="hwm-subtitle">' + escHtml(ctx.rackId) + ' · ' + escHtml(platLabel) + ' · BLOCKED: ' + escHtml(phaseLabel) + '</div>' +
+          '</div>' +
+          '<button class="hwm-close" onclick="ta_close()" aria-label="Close troubleshooter">CLOSE</button></div>';
+  if (ctx.blockerNote) {
+    html += '<div class="ta-blocker-note">' + escHtml(ctx.blockerNote) + '</div>';
+  }
+  var echoes = (typeof ge_findQuirks === 'function') ? ge_findQuirks(ctx.hardwareType, ctx.phaseType) : [];
+  if (echoes && echoes.length) {
+    html += '<div class="ta-echo-hdr">FROM THE FIELD · ' + echoes.length + '</div><div class="ta-echoes">';
+    echoes.forEach(function(q) {
+      html += '<div class="ta-echo"><div class="ta-echo-text">' + escHtml(q.text || '') + '</div>' +
+              '<div class="ta-echo-meta">— ' + escHtml(q.author || 'Tech') + (q.ts ? ' · ' + formatDate(q.ts) : '') + '</div></div>';
+    });
+    html += '</div>';
+  }
+  html += '<div class="hwm-controls"><input class="hwm-search" id="ta-search" type="search" ' +
+          'placeholder="SEARCH FULL MATRIX — FAULT, INDICATOR, KEYWORD…" oninput="ta_onSearch(this.value)" ' +
+          'autocomplete="off" autocorrect="off" spellcheck="false"></div>';
+  html += '<div class="hwm-count" id="ta-count"></div>';
+  html += '<div class="hwm-list" id="ta-list"></div>';
+  html += '<div class="ta-foot"><button class="ta-foot-btn ta-foot-fix" onclick="ta_resolveUnblock()">✓ THIS FIXED IT — UNBLOCK</button></div>';
+  inner.innerHTML = html;
+  ta_renderList();
+}
+
+// Fill #ta-list: ranked shortlist when _ta_q is empty, else a full-matrix keyword search
+// (both platform + phase filters dropped — "widen" means the whole matrix).
+function ta_renderList() {
+  var ctx = _ta_ctx; if (!ctx) return;
+  var list = document.getElementById('ta-list');
+  var count = document.getElementById('ta-count');
+  if (!list) return;
+  var flat = (PHANTOM_HW_MATRIX && PHANTOM_HW_MATRIX._flat) ? PHANTOM_HW_MATRIX._flat : [];
+  var results, likely;
+  if (_ta_q) {
+    likely = false;
+    results = flat.filter(function(item) {
+      var e = item.entry;
+      var searchable = [e.f, e.cause, e.action, (e.t||''), e.ind.join(' ')].join(' ').toLowerCase();
+      return _ta_q.split(' ').every(function(w){ return w.length === 0 || searchable.indexOf(w) !== -1; });
+    });
+  } else {
+    likely = true;
+    results = ta_rank(flat, ctx.phaseType, ctx.platform);
+  }
+  if (count) count.textContent = results.length + (likely ? ' LIKELY' : ' MATCH') + (results.length === 1 ? '' : 'ES');
+  if (!results.length) {
+    list.innerHTML = '<div class="hwm-empty">' +
+      (_ta_q ? 'NO MATCH — TRY A DIFFERENT KEYWORD'
+             : 'No platform-specific matches — search the full matrix above.') +
+      '</div>';
+    return;
+  }
+  list.innerHTML = results.map(hwMatrix_entryHtml).join('');
+}
+
+// Act: "this fixed it" — unblock the phase, close, re-render rack detail, then
+// offer the optional Ghost Echo capture (existing modal). Skipping leaves the
+// phase unblocked. deploy_advancePhase is already double-tap debounced.
+function ta_resolveUnblock() {
+  var ctx = _ta_ctx; if (!ctx) return;
+  if (typeof deploy_advancePhase === 'function') {
+    deploy_advancePhase(ctx.phaseId, 'in_progress', ctx.deployId);
+  }
+  ta_close();
+  if (typeof deploy_showRackDetail === 'function') {
+    deploy_showRackDetail(ctx.deployId, ctx.rackId);
+  }
+  // Optional field-memory capture, layered on top of the refreshed rack detail.
+  if (typeof ge_openCaptureModal === 'function') {
+    ge_openCaptureModal(ctx.phaseId, ctx.deployId, ctx.rackId, ctx.phaseType, ctx.hardwareType);
   }
 }
 
@@ -27245,7 +27437,8 @@ function deploy_showRackDetail(deployId, rackId) {
       html += '<button class="pt-btn pt-btn-primary" style="flex:1;padding:10px;font-size: var(--fs-caption)" onclick="ge_onCompleteTap(\'' + ph.id + '\',\'' + deployId + '\',\'' + rackId + '\',\'' + ph.type + '\')">' + _ico.check('#32d74b', 12) + ' COMPLETE</button>';
       html += '<button class="pt-btn pt-btn-ghost" style="flex:0 0 auto;padding:10px 14px;font-size: var(--fs-caption);color:var(--red)" onclick="deploy_advancePhase(\'' + ph.id + '\',\'blocked\',\'' + deployId + '\');deploy_showRackDetail(\'' + deployId + '\',\'' + rackId + '\')">' + _ico.block('#ff2d55', 12) + ' BLOCK</button>';
     } else if (ph.status === 'blocked') {
-      html += '<button class="pt-btn pt-btn-secondary" style="flex:1;padding:10px;font-size: var(--fs-caption)" onclick="deploy_advancePhase(\'' + ph.id + '\',\'in_progress\',\'' + deployId + '\');deploy_showRackDetail(\'' + deployId + '\',\'' + rackId + '\')">' + _ico.refresh('#5cf2ff', 12) + ' UNBLOCK</button>';
+      html += '<button class="pt-btn pt-btn-primary" style="flex:1;padding:10px;font-size: var(--fs-caption)" onclick="ta_open(\'' + deployId + '\',\'' + rackId + '\',\'' + ph.id + '\')">🔧 TROUBLESHOOT</button>';
+      html += '<button class="pt-btn pt-btn-secondary" style="flex:0 0 auto;padding:10px 14px;font-size: var(--fs-caption)" onclick="deploy_advancePhase(\'' + ph.id + '\',\'in_progress\',\'' + deployId + '\');deploy_showRackDetail(\'' + deployId + '\',\'' + rackId + '\')">' + _ico.refresh('#5cf2ff', 12) + ' UNBLOCK</button>';
     } else if (ph.status === 'complete') {
       var ts = ph.signedOffAt ? formatDate(ph.signedOffAt) : '';
       html += '<div style="font-family:var(--mono);font-size: var(--fs-caption);color:var(--green);padding:8px 0">✓ Completed' + (ts ? ' · ' + ts : '') + '</div>';
