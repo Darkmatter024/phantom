@@ -5879,7 +5879,7 @@ textarea.hud-input {
   );
 }
 
-/* The 2 × 8 floor grid. AUS-01: L row top, R row bottom. */
+/* The 2 × 8 floor grid. Convention: L row top, R row bottom. */
 .br-grid {
   display: grid;
   grid-template-columns: repeat(8, 1fr);
@@ -10313,7 +10313,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.6.92';
+const PHANTOM_APP_VERSION = 'phantom-v1.6.93';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -13893,7 +13893,7 @@ const OPTIC_DB = {
     }
   },
   // ── MELLANOX MSN4700-WS2FC ──
-  // 32x 400G QSFP-DD Spectrum-3 spine/leaf Ethernet. The 400G workhorse at AUS-01.
+  // 32x 400G QSFP-DD Spectrum-3 spine/leaf Ethernet. The 400G workhorse for this fabric.
   // Source: public NVIDIA Mellanox SN4700 datasheet (Spectrum-3 ASIC, 12.8 Tbps total).
   'mlnx-msn4700': {
     cage: 'QSFP-DD', speed: '400GbE', platform: 'NVIDIA Mellanox MSN4700-WS2FC',
@@ -15061,7 +15061,7 @@ function shiftReport_generate() {
   }
 
   // Footer
-  html += '<div class="footnote">PHANTOM · CoreWeave · Generated from local deployment data · No external sources';
+  html += '<div class="footnote">PHANTOM' + ((profile.facilityName || profile.facilityId) ? ' · ' + escHtml(profile.facilityName || profile.facilityId) : '') + ' · Generated from local deployment data · No external sources';
   if (profile.lastUpdated) html += ' · Site profile updated ' + escHtml(fmtDate(profile.lastUpdated));
   html += '</div>';
 
@@ -17696,7 +17696,7 @@ function today_render() {
   // ── PULSE SECTION ──
   var pct = totalRacks > 0 ? Math.round((racksComplete / totalRacks) * 100) : 0;
   var contextName = mostRecentDeploy ? (mostRecentDeploy.name || 'Deployment') : 'No active build';
-  var contextSite = (mostRecentDeploy && mostRecentDeploy.siteId) ? mostRecentDeploy.siteId : 'AUS-01';
+  var contextSite = (mostRecentDeploy && mostRecentDeploy.siteId) ? mostRecentDeploy.siteId : phantom_siteLabel('SITE');
 
   html += '<div style="background:rgba(92,242,255,0.04);border:1px solid rgba(92,242,255,0.15);border-radius:var(--hud-r12);padding:12px 14px;margin-bottom:10px">';
   html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">';
@@ -18615,7 +18615,7 @@ function deploy_generateRackQR(deployId, rackId) {
   win.document.write('<div id="qr"></div>');
   win.document.write('<div class="lbl">' + escHtml(rack.rackId) + '</div>');
   win.document.write('<div class="sub">' + escHtml(dep.name) + '</div>');
-  win.document.write('<div class="sub" style="color:#aaa;font-size: var(--fs-caption);margin-top:2px">PHANTOM · CoreWeave AUS-01</div>');
+  win.document.write('<div class="sub" style="color:#aaa;font-size: var(--fs-caption);margin-top:2px">PHANTOM · ' + escHtml(phantom_siteLabel('Field Intelligence')) + '</div>');
   win.document.write('<div class="btn-row">');
   win.document.write('<button class="btn" onclick="window.print()">PRINT LABEL</button>');
   win.document.write('<button class="btn btn-close" onclick="window.close();setTimeout(function(){history.back()},100)">CLOSE</button>');
@@ -18626,25 +18626,30 @@ function deploy_generateRackQR(deployId, rackId) {
   haptic([8]);
 }
 
-// ━━━ STAGE 7: AUS-01 SITE PROFILE ━━━
-// Defaults sourced from US-AUS01 inventory data (May 2026).
+// ━━━ STAGE 7: SITE PROFILE ━━━
+// Defaults ship EMPTY (v1.6.93) — sites derive from a Master or enter via the editor.
 // Schema v2: `platforms` is a structured array (replaces v1 string-based
 // switchModels + gpuPlatform). Each entry has { id, display, role } where
 // `id` maps to an OPTIC_DB key — drives both Optic Selector STEP 1 buttons
 // and AI context block.
+// Canonical platform set — preserved ONLY for the opt-in AUS-01 migration branch
+// (John's device / an explicit site profile). Every other site starts empty and
+// derives its platforms from a loaded Master (site_derivePlatformsFromMaster).
+var AUS01_CANONICAL_PLATFORMS = [
+  { id: 'mlnx-msn4700', display: 'MLNX MSN4700',  role: 'spine' },
+  { id: 'mlnx-msn3700', display: 'MLNX MSN3700',  role: 'leaf' },
+  { id: 'mlnx-msn3420', display: 'MLNX MSN3420',  role: 'leaf' },
+  { id: 'mlnx-sn2201',  display: 'MLNX SN2201',   role: 'mgmt' },
+  { id: 'mlnx-qm9790',  display: 'MLNX QM9790 (X800)', role: 'ib-fabric' },
+  { id: 'h100-sxm5',    display: 'H100 SXM5',     role: 'gpu' },
+  { id: 'h200-sxm5',    display: 'H200 SXM5',     role: 'gpu' }
+];
+
 var SITE_PROFILE_DEFAULTS = {
   facilityId:           '',
   facilityName:         '',
-  platforms: [
-    { id: 'mlnx-msn4700', display: 'MLNX MSN4700',  role: 'spine' },
-    { id: 'mlnx-msn3700', display: 'MLNX MSN3700',  role: 'leaf' },
-    { id: 'mlnx-msn3420', display: 'MLNX MSN3420',  role: 'leaf' },
-    { id: 'mlnx-sn2201',  display: 'MLNX SN2201',   role: 'mgmt' },
-    { id: 'mlnx-qm9790',  display: 'MLNX QM9790 (X800)', role: 'ib-fabric' },
-    { id: 'h100-sxm5',    display: 'H100 SXM5',     role: 'gpu' },
-    { id: 'h200-sxm5',    display: 'H200 SXM5',     role: 'gpu' }
-  ],
-  standardOptics:       '400G MMF MMA4Z00-NS400, 800G MMF MMA4Z00-NS, 800G SMF MMS4X00-NS; CAT6 RJ-45 copper C6A-SDX-WH-{length}-B in 5/6/7/8/15/20/25/30 ft',
+  platforms:            [],   // de-baked (v1.6.93) — sites derive from a Master or enter via the editor
+  standardOptics:       '',   // de-baked (v1.6.93) — user-entered in the profile editor
   rackNamingConvention: '',  // TODO: capture when on floor
   pduType:              '',  // TODO: capture when on floor
   floorZones:           'L1 = top floor, U1 = lower floor; on-site Storage and RMA areas',
@@ -18672,7 +18677,7 @@ function siteProfile_migrateV1toV2(v1) {
   // others get empty (user must fill in via editor).
   if (!Array.isArray(v2.platforms)) {
     if ((v1.facilityId || '').toUpperCase() === 'AUS-01') {
-      v2.platforms = SITE_PROFILE_DEFAULTS.platforms.slice();
+      v2.platforms = AUS01_CANONICAL_PLATFORMS.slice();
     } else {
       v2.platforms = [];
     }
@@ -18712,8 +18717,65 @@ function siteProfile_save(profile) {
   return safeStore(SITE_PROFILE_KEY, JSON.stringify(profile));
 }
 
+// v1.6.93: profile-driven site label for rendered surfaces (print labels, report
+// footers, the Context panel). Neutral fallback when no profile is set — never a baked site code.
+function phantom_siteLabel(fallback) {
+  // NOTE: an explicit '' fallback is honored (returns '' when no profile) so callers
+  // can collapse an optional ' — {site}' segment; only a missing/undefined fallback
+  // floors to 'Field Intelligence'.
+  var floor = (fallback != null) ? fallback : 'Field Intelligence';
+  try {
+    var p = (typeof siteProfile_load === 'function') ? siteProfile_load() : null;
+    var s = p ? (p.facilityName || p.facilityId || '') : '';
+    return s || floor;
+  } catch (e) { return floor; }
+}
+
+// v1.6.93: derive the site's platform list from a loaded Master's host models when
+// the profile has none. De-baked sites get a real, data-driven platform summary
+// instead of baked site defaults. User-entered platforms ALWAYS win — this only
+// fills an empty or purely-derived list, every derived entry is marked source:'master',
+// and it runs only AFTER the first-run gate is confirmed (so it never auto-confirms a
+// fresh device by writing lastUpdated). Reads racksByCab[].hosts[].model (the only host
+// data that survives a Master restore).
+function site_derivePlatformsFromMaster() {
+  try {
+    if (typeof siteProfile_isConfirmed === 'function' && !siteProfile_isConfirmed()) return;
+    var master = (typeof window !== 'undefined') ? window._lastPhantomMaster : null;
+    if (!master || !master.racksByCab) return;
+    var prof = siteProfile_load();
+    if (!prof) return;
+    var existing = Array.isArray(prof.platforms) ? prof.platforms : [];
+    // User-entered platforms win: if any non-derived entry exists, leave it alone.
+    if (existing.some(function(p) { return p && p.source !== 'master'; })) return;
+
+    var seen = {};
+    Object.keys(master.racksByCab).forEach(function(cab) {
+      var rack = master.racksByCab[cab];
+      var hs = (rack && Array.isArray(rack.hosts)) ? rack.hosts : [];
+      hs.forEach(function(h) {
+        var model = (h && h.model) ? String(h.model).trim() : '';
+        if (!model) return;
+        var key = model.toUpperCase();
+        if (seen[key]) return;
+        var role = deploy_extractGpuType(model) ? 'gpu'
+                 : (deploy_classifyDevice(model) === 'switch' ? deploy_inferDeviceRole(model) : 'other');
+        seen[key] = { id: '', display: model, role: role, source: 'master' };
+      });
+    });
+    var derived = Object.keys(seen).map(function(k) { return seen[k]; });
+    if (derived.length === 0) return;
+    // Idempotent: skip the write if the derived list matches what's already stored.
+    if (existing.length === derived.length && existing.every(function(p, i) {
+      return p && derived[i] && p.display === derived[i].display && p.role === derived[i].role;
+    })) return;
+    prof.platforms = derived;
+    siteProfile_save(prof);
+  } catch (e) { if (typeof console !== 'undefined') console.warn('[site_derivePlatformsFromMaster]', e); }
+}
+
 // ━━━ FIRST-RUN CONFIRM GATE (v1.6.70) ━━━
-// A fresh device runs on baked AUS-01 defaults no human has verified — and
+// A fresh device runs on unconfirmed (now-empty) defaults no human has verified — and
 // getContextBlock() already feeds them to the AI as fact. This gate makes a
 // human confirm the site + identify themselves ONCE, then stamps confirmedAt
 // so it never fires again. Floor fields (rack naming, PDU) are optional here:
@@ -18739,8 +18801,8 @@ function firstRun_show() {
     + '<input id="fr-operator" type="text" autocapitalize="words" autocomplete="name" spellcheck="false" placeholder="e.g. J. Hamilton" style="' + fieldCss + '" value="' + escHtml(p.operator || '') + '">'
     + '<div style="font-family:var(--mono);font-size:11px;color:var(--slate,#8194ab);margin-top:6px">Used on your sign-offs and handoffs.</div>'
     + '<div style="' + labelCss + '">SITE</div>'
-    + '<input id="fr-facilityId" type="text" autocapitalize="characters" spellcheck="false" placeholder="Site code (e.g. AUS-01)" style="' + fieldCss + ';margin-bottom:10px" value="' + escHtml(p.facilityId || '') + '">'
-    + '<input id="fr-facilityName" type="text" autocapitalize="words" spellcheck="false" placeholder="Facility name (e.g. CoreWeave Austin)" style="' + fieldCss + '" value="' + escHtml(p.facilityName || '') + '">'
+    + '<input id="fr-facilityId" type="text" autocapitalize="characters" spellcheck="false" placeholder="Site code (e.g. DFW-07)" style="' + fieldCss + ';margin-bottom:10px" value="' + escHtml(p.facilityId || '') + '">'
+    + '<input id="fr-facilityName" type="text" autocapitalize="words" spellcheck="false" placeholder="Facility name (e.g. CoreWeave Dallas)" style="' + fieldCss + '" value="' + escHtml(p.facilityName || '') + '">'
     + '<div style="font-family:var(--mono);font-size:11px;color:var(--slate,#8194ab);margin-top:8px;line-height:1.5">Hardware \u2014 switches, GPUs, optics \u2014 fills in from the Master you load. PHANTOM doesn\'t assume your gear.</div>'
     + '<div style="' + labelCss + '">FLOOR DETAILS <span style="color:var(--slate,#8194ab);letter-spacing:0;text-transform:none">\u2014 optional, fill when you are on the floor</span></div>'
     + '<input id="fr-rackNaming" type="text" autocapitalize="characters" spellcheck="false" placeholder="Rack naming convention" style="' + fieldCss + ';margin-bottom:10px" value="' + escHtml(p.rackNamingConvention || '') + '">'
@@ -18791,7 +18853,7 @@ function firstRun_confirm() {
   }
 }
 
-// Compact "AUS-01 · {operator}" chip at the top of NOW — replaces the
+// Compact "{site} · {operator}" chip at the top of NOW — replaces the
 // buried-in-Master-overflow path to the profile editor with one tap.
 function firstRun_renderChip() {
   var el = document.getElementById('fr-chip');
@@ -18846,7 +18908,7 @@ function siteProfile_getContextBlock() {
   if (p.pduType)              lines.push('- PDU type: ' + p.pduType);
   if (p.buildLead)            lines.push('- Build lead: ' + p.buildLead);
   // Hard guard: if no GB300 in platforms, tell AI explicitly
-  var hasGB300 = (p.platforms || []).some(function(pl) { return (pl.id || '').indexOf('gb300') >= 0; });
+  var hasGB300 = (p.platforms || []).some(function(pl) { return ((pl.id || '') + ' ' + (pl.display || '')).toLowerCase().indexOf('gb300') >= 0; });
   if (!hasGB300) lines.push('Site does NOT run GB300 NVL72. Do not reference GB300 specs in answers unless the user explicitly brings it up.');
   lines.push('Use these facts when answering. Reference only the platforms listed above for site-specific recommendations.');
   return lines.join('\n');
@@ -20477,7 +20539,7 @@ function siteProfile_showEditor(container) {
 
   html += '<div style="display:flex;align-items:center;gap: 8px;margin-bottom:14px">';
   html += '<div style="flex:1"><div style="font-family:var(--orb);font-size:11px;letter-spacing:var(--hud-track-display);color:var(--cyan);text-transform:uppercase">SITE PROFILE</div>';
-  html += '<div style="font-family:var(--raj);font-size:16px;font-weight:700;color:var(--white)">AUS-01 Context</div></div>';
+  html += '<div style="font-family:var(--raj);font-size:16px;font-weight:700;color:var(--white)">' + escHtml(p.facilityId || 'Site') + ' Context</div></div>';
   if (isActive) html += '<span class="badge b-cyan" style="font-size: var(--fs-caption)">⚙ ACTIVE</span>';
   html += '</div>';
 
@@ -20486,8 +20548,8 @@ function siteProfile_showEditor(container) {
   html += '<div style="font-family:var(--raj);font-size:12px;color:var(--slate-readable)">This profile is automatically prepended to every AI prompt — AI Review, BOM Analyzer, and Voice Assistant. Keep it accurate to your current facility state.</div>';
   html += '</div>';
 
-  html += field('facilityId',           'FACILITY ID',              p.facilityId,           'AUS-01', false);
-  html += field('facilityName',         'FACILITY NAME',            p.facilityName,         'CoreWeave Austin', false);
+  html += field('facilityId',           'FACILITY ID',              p.facilityId,           'e.g. DFW-07', false);
+  html += field('facilityName',         'FACILITY NAME',            p.facilityName,         'e.g. CoreWeave Dallas', false);
 
   // ── PLATFORMS LIST (v2 schema — replaces v1 switchModels + gpuPlatform) ──
   // Initialize draft state from current profile, used by add/remove handlers below
@@ -20628,7 +20690,7 @@ function siteProfile_saveFromEditor() {
 }
 
 function siteProfile_resetToDefaults() {
-  if (!confirm('Reset site profile to AUS-01 defaults?')) return;
+  if (!confirm('Reset site profile? This clears all site fields — you will re-enter or re-derive them.')) return;
   localStorage.removeItem(SITE_PROFILE_KEY);
   _spEditorDraft = null; // force re-init from defaults on next render
   haptic([8]);
@@ -21006,7 +21068,7 @@ const DEPLOY_PHASE_COLORS = { mechanical: 'var(--gold)', power: 'var(--gold)', n
 //     trigger: "phase_complete",    // Phase 1: only one trigger exists
 //     text: "max 280 chars, retrospective field note",
 //     echoes: 0,                    // incremented via "saw this too" in Phase 2
-//     siteId: "AUS-01",
+//     siteId: "DFW-07",
 //     receivedVia: []               // provenance chain, populated in Phase 2 only
 //   }
 const GHOST_ECHO_KEY = 'phantom_ghost_echo_v1';
@@ -23482,8 +23544,10 @@ function _phantom_master_findSheet(wb, name) {
 // Wraps three methods over a single key 'phantom_master_v1'. The _v1 suffix
 // is the schema version — future schema changes use 'phantom_master_v2' etc.
 // Persisted payload contains schemaVersion, savedAt, sourceFileHash,
-// siteCode, racksByCab. Per Step 1.5 scope: hosts and cables are NOT
-// persisted; restored window._lastPhantomMaster carries racksByCab only.
+// siteCode, racksByCab. Per Step 1.5 scope: the top-level flat hosts[] and cables[]
+// arrays are NOT persisted; restored window._lastPhantomMaster carries racksByCab
+// only — BUT each rack's nested .hosts[] IS retained inside racksByCab, and
+// site_derivePlatformsFromMaster() relies on it for restore-time platform derivation.
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 var PHANTOM_MASTER_STORE = {
   KEY: 'phantom_master_v1',
@@ -23895,6 +23959,7 @@ window.master_loadFromPicker = function master_loadFromPicker(opts) {
           console.info('PHANTOM Master: result stashed at window._lastPhantomMaster');
         } catch (_) {}
         window._lastPhantomMaster = site;
+        try { if (typeof site_derivePlatformsFromMaster === 'function') site_derivePlatformsFromMaster(); } catch (_) {}
         try { input.remove(); } catch (_) {}
         resolve(site);
       } catch (err) {
@@ -24615,7 +24680,7 @@ function master_renderResultRows(rack, normCab) {
 }
 
 // -- MASTER -> rack elevation (reuses rackElevation_buildHtml) --------
-// AUS-01 runs 8U Supermicro HGX H100/H200 nodes. The master export carries
+// A site Master may run e.g. 8U Supermicro HGX H100/H200 nodes. The master export carries
 // each node's BOTTOM U (locCabRu) but not its height, so height is derived
 // here; the site profile will own this mapping later. 8U matches the floor.
 function master_nodeHeightU(host) {
@@ -27451,7 +27516,7 @@ function handoff_exportHTML(handoffId) {
     (h.notes ? '<h2>Notes from Outgoing Tech</h2><div class="notes">' + escHtml(h.notes) + '</div>' : '') +
     '<h2>Optic Snapshot</h2>' +
     '<table><thead><tr><th>Type</th><th>Required</th><th>Dispensed</th><th>Installed</th></tr></thead><tbody>' + opticRows + '</tbody></table>' +
-    '<div class="footer"><span>PHANTOM Field Intelligence System — CoreWeave AUS-01</span><span>Handoff — ' + escHtml(h.shiftDate) + '</span></div>' +
+    '<div class="footer"><span>PHANTOM Field Intelligence System' + (phantom_siteLabel('') ? ' — ' + escHtml(phantom_siteLabel('')) : '') + '</span><span>Handoff — ' + escHtml(h.shiftDate) + '</span></div>' +
     '</body></html>';
 
   var blob = new Blob([doc], { type: 'text/html' });
@@ -28357,7 +28422,7 @@ function deploy_exportReportHTML(deploymentId) {
     '</tr></thead><tbody>' + auditRows + '</tbody></table>' +
 
     '<div class="footer">' +
-      '<span>PHANTOM Field Intelligence System — CoreWeave AUS-01</span>' +
+      '<span>PHANTOM Field Intelligence System' + (phantom_siteLabel('') ? ' — ' + escHtml(phantom_siteLabel('')) : '') + '</span>' +
       '<span>Generated ' + generatedStr + '</span>' +
     '</div>' +
 
@@ -30916,7 +30981,7 @@ function _bomIngest_renderStepMetadata() {
 
   html += '<div style="' + fieldStyle + '">';
   html += '<label style="' + labelStyle + '">SITE CODE</label>';
-  html += '<input type="text" value="' + _bomIngest_esc(m.site_code) + '" placeholder="e.g. LZL01, AUS-01" style="' + inputStyle + '" oninput="bomIngest_updateMeta(\'site_code\', this.value)">';
+  html += '<input type="text" value="' + _bomIngest_esc(m.site_code) + '" placeholder="e.g. LZL01, DFW-07" style="' + inputStyle + '" oninput="bomIngest_updateMeta(\'site_code\', this.value)">';
   html += '</div>';
 
   html += '<div style="' + fieldStyle + '">';
@@ -35181,7 +35246,7 @@ const osState = { platform: null, distance: null };
 // ── DYNAMIC PLATFORM RENDERING (v1.6.11) ──
 // Reads siteProfile.platforms and populates STEP 1 chips. Only shows
 // platforms that are on YOUR site (per the site profile editor). If the
-// site profile has no platforms (e.g. fresh non-AUS-01 install), shows
+// site profile has no platforms (e.g. a fresh install), shows
 // a helpful empty state pointing to the editor.
 function opticSelector_renderPlatforms() {
   var host = document.getElementById('os-platform');
@@ -35204,7 +35269,10 @@ function opticSelector_renderPlatforms() {
     if (!OPTIC_DB[pl.id]) return;
     html += '<div class="os-chip" data-val="' + escHtml(pl.id) + '" onclick="osPick(\'platform\',this)">' + escHtml(pl.display || pl.id) + '</div>';
   });
-  host.innerHTML = html;
+  // v1.6.93: a de-baked site may have only Master-derived (id-less) platforms, all
+  // skipped above → html is empty though platforms.length > 0. Show guidance instead
+  // of a blank STEP 1 panel.
+  host.innerHTML = html || '<div style="font-family:var(--mono);font-size:11px;color:var(--slate);padding:14px;border:1px dashed rgba(138,175,191,0.30);border-radius:8px;text-align:center">No optic-mapped platforms for this site.<br><br>Master-derived platforms carry no optic data — add specific models in <strong>MASTER &rarr; PROFILE</strong>.</div>';
   // Restore selection if osState.platform is still valid
   if (typeof osState !== 'undefined' && osState.platform) {
     var sel = host.querySelector('.os-chip[data-val="' + osState.platform + '"]');
@@ -35547,9 +35615,9 @@ const VA = {
 // Safely get speechSynthesis
 try { VA.speechSynth = window.speechSynthesis || null; } catch(e) {}
 
-const VA_SYSTEM = `You are an expert data center technician assistant embedded in the DCT Field Ops app used at CoreWeave's AUS-01 facility. You answer questions from technicians on the floor — fast, direct, no fluff.
+const VA_SYSTEM = `You are an expert data center technician assistant embedded in the DCT Field Ops app, used by technicians on the data center floor. You answer questions fast, direct, no fluff.
 
-The facility runs: H100 SXM5 and H200 GPU nodes (air-cooled standard rack, no DLC), NVIDIA Quantum-2 QM9700 NDR InfiniBand switches, Arista 7050CX3/7060CX2/7800R3 Ethernet switches, ConnectX-7 NICs, BlueField-3 DPUs.
+The site's specific platforms, optics, racks, and conventions are provided in the SITE PROFILE and deployment context above — rely on that for facility-specific hardware. Do not assume hardware that isn't listed there.
 
 Answer rules:
 - Lead with the answer immediately. Never open with "great question" or preamble.
@@ -40938,7 +41006,7 @@ function _br_renderEmpty(dep, isLead) {
     return '<div class="br-empty">' +
       '<div class="br-empty-eyebrow">◉ BLAST RADIUS</div>' +
       '<div class="br-empty-headline">No topology configured</div>' +
-      '<div class="br-empty-sub">Ask your Build Lead to import the AUS-01 power map for this deployment.</div>' +
+      '<div class="br-empty-sub">Ask your Build Lead to import the site power map for this deployment.</div>' +
     '</div>';
   }
   var hint =
@@ -40949,7 +41017,7 @@ function _br_renderEmpty(dep, isLead) {
   return '<div class="br-empty">' +
     '<div class="br-empty-eyebrow">◉ BLAST RADIUS · LEAD MODE</div>' +
     '<div class="br-empty-headline">Import power topology</div>' +
-    '<div class="br-empty-sub">Paste the AUS-01 power map CSV. One row per rack. Saved to this deployment only.</div>' +
+    '<div class="br-empty-sub">Paste the site power map CSV. One row per rack. Saved to this deployment only.</div>' +
     '<div class="br-csv-area">' +
       '<div class="br-csv-label">CSV INPUT</div>' +
       '<textarea id="br-csv-input" class="br-csv-input" placeholder="rack_id,a_pdu,a_breaker,a_rpp,b_pdu,b_breaker,b_rpp,is_network" spellcheck="false" autocapitalize="off" autocorrect="off"></textarea>' +
@@ -41301,12 +41369,12 @@ setTimeout(actionStripe_syncLabel, 100);
 // CAGE NUT COMPASS — Phase 3 Gate 10
 // Visual cage-nut placement calculator. Pure DOM render.
 // Rail patterns are bundled with chassis size (1U / 2U / 4U)
-// per AUS-01 standards. State persists in localStorage.
+// per site rack-height standards. State persists in localStorage.
 // EIA-310 hole positions: top, mid, bot.
 // Highest U at top of DOM order = matches physical rack.
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 var COMPASS_KEY = 'phantom_compass_last';
-var COMPASS_RACK_HEIGHT = 48;          // U — AUS-01 standard
+var COMPASS_RACK_HEIGHT = 48;          // U — common rack height
 var COMPASS_CONTEXT_US = 2;            // Us shown above + below equipment span
 
 // Rail patterns. uOffset is rows above startU (0 = the start U itself).
@@ -41492,6 +41560,7 @@ compass_loadState();
     var loaded = PHANTOM_MASTER_STORE.load();
     if (!loaded) return;
     window._lastPhantomMaster = Object.assign({}, loaded, { restoredFromStorage: true });
+    try { if (typeof site_derivePlatformsFromMaster === 'function') site_derivePlatformsFromMaster(); } catch (_) {}
     console.log('PHANTOM: Master restored from localStorage',
                 '· siteCode=' + loaded.siteCode,
                 '· saved=' + loaded.savedAt);
@@ -42177,7 +42246,7 @@ var OpticScore = (function() {
 //   ScanDispatch.refreshContext()        — repaint top context strip
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 var ScanDispatch = (function() {
-  // ── Strict regex for rack IDs at AUS-01: L-NN or R-NN, no extra chars ──
+  // ── Strict regex for rack IDs (L-NN or R-NN convention), no extra chars ──
   var RACK_REGEX = /^[LR]-\d{2}$/i;
 
   // ── Public: open the scanner with the dispatch callback ──
