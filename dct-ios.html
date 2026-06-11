@@ -8362,6 +8362,64 @@ textarea.hud-input {
 .ta-foot-btn { flex:1; min-height:var(--tap-m); border-radius:10px; cursor:pointer; -webkit-appearance:none; font-family:var(--mono); font-size:var(--fs-caption); letter-spacing:1px; }
 .ta-foot-fix { background:linear-gradient(180deg, rgba(48,209,88,0.22), rgba(48,209,88,0.08)); border:1px solid rgba(48,209,88,0.5); color:var(--white); }
 .ta-foot-fix:active { transform:scale(0.98); }
+/* ━━━ HUD REDESIGN v1.6.99 — Skyline · Trace · Tiles (one bottom-up fill metaphor) ━━━ */
+.sky-card { background:linear-gradient(135deg,rgba(92,242,255,0.04),rgba(155,89,255,0.03)); border:1px solid rgba(92,242,255,0.18); border-radius:var(--hud-r12); padding:12px 14px; margin-bottom:10px; display:flex; align-items:stretch; gap:14px; }
+.sky-bars { flex:3 1 0; display:flex; align-items:flex-end; gap:2px; min-height:72px; min-width:0; }
+.sky-col { flex:1 1 0; min-width:5px; height:72px; display:flex; align-items:flex-end; justify-content:center; padding:0 1px; background:none; border:none; cursor:pointer; -webkit-appearance:none; -webkit-tap-highlight-color:transparent; }
+.sky-bar { position:relative; width:100%; max-width:34px; min-width:4px; height:100%; display:flex; align-items:flex-end; border:1px solid rgba(255,255,255,0.10); border-radius:3px 3px 0 0; overflow:hidden; background:rgba(255,255,255,0.02); }
+.sky-bar-fill { position:relative; width:100%; transition:height 0.5s ease; }
+.sky-bar.is-done .sky-bar-fill { background:var(--green); box-shadow:0 0 8px rgba(48,209,88,0.5); }
+.sky-bar.is-active .sky-bar-fill { background:var(--cyan); box-shadow:0 0 8px rgba(92,242,255,0.45); }
+.sky-bar.is-pending { border-style:dashed; }
+.sky-bar.is-pending .sky-bar-fill { background:rgba(180,194,208,0.18); }
+.sky-bar.is-blocked { border-color:var(--red); }
+.sky-bar.is-blocked .sky-bar-fill { background:var(--red); box-shadow:0 0 8px rgba(255,45,85,0.5); }
+.sky-bar.is-blocked::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:var(--red); box-shadow:0 0 6px var(--red); z-index:2; }
+.sky-bar.is-active .sky-bar-fill::after { content:''; position:absolute; left:0; right:0; top:0; height:2px; background:rgba(255,255,255,0.85); animation:skyScan 1.8s ease-in-out infinite; }
+@keyframes skyScan { 0%,100%{opacity:0.2} 50%{opacity:0.9} }
+.sky-readout { flex:2 1 0; min-width:0; display:flex; flex-direction:column; justify-content:center; }
+.sky-pct { font-family:var(--orb); font-weight:900; font-size:30px; line-height:1; }
+.sky-line { font-family:var(--mono); font-size:var(--fs-caption); color:var(--slate); letter-spacing:0.5px; margin-top:4px; }
+.sky-name { font-family:var(--raj); font-weight:700; font-size:13px; color:var(--white); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:4px; }
+.sky-disamb { font-family:var(--mono); font-size:9px; color:var(--slate); letter-spacing:0.5px; }
+.trace-run { display:flex; align-items:flex-start; margin-bottom:10px; }
+.trace-node-wrap { flex:1 1 0; min-width:0; display:flex; flex-direction:column; align-items:center; position:relative; }
+.trace-seg { position:absolute; top:9px; left:-50%; width:100%; height:2px; background:rgba(255,255,255,0.10); z-index:0; }
+.trace-seg.is-hot { background:var(--cyan); box-shadow:0 0 6px var(--cyan); }
+.trace-node-wrap:first-child .trace-seg { display:none; }
+.trace-node { position:relative; width:18px; height:18px; transform:rotate(45deg); border:2px solid rgba(255,255,255,0.18); background:rgba(255,255,255,0.04); border-radius:3px; z-index:1; cursor:pointer; }
+.trace-node.is-done { border-color:var(--green); background:var(--green); box-shadow:0 0 8px rgba(48,209,88,0.55); }
+.trace-node.is-active { border-color:var(--cyan); background:rgba(92,242,255,0.15); box-shadow:0 0 8px var(--cyan); animation:tracePulse 1.6s ease-in-out infinite; }
+.trace-node.is-blocked { border-color:var(--red); background:var(--red); box-shadow:0 0 8px rgba(255,45,85,0.55); }
+@keyframes tracePulse { 0%,100%{box-shadow:0 0 4px var(--cyan)} 50%{box-shadow:0 0 12px var(--cyan)} }
+.trace-label { max-width:100%; font-family:var(--mono); font-size:8px; letter-spacing:0.5px; color:var(--slate); margin-top:8px; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.trace-label.is-active { color:var(--white); }
+.trace-label.is-done { color:var(--green); }
+.tile-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(96px,120px)); gap:8px; justify-content:start; margin-bottom:10px; }
+.tile-rowhdr { grid-column:1 / -1; font-family:var(--mono); font-size:var(--fs-micro); letter-spacing:2px; color:var(--cyan); margin:6px 0 2px; }
+.tile { position:relative; aspect-ratio:1 / 1.6; min-height:var(--tap-xl); background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.10); border-radius:6px; padding:6px; cursor:pointer; -webkit-appearance:none; display:flex; flex-direction:column; overflow:hidden; -webkit-tap-highlight-color:transparent; }
+.tile-hdr { font-family:var(--mono); font-size:10px; font-weight:700; letter-spacing:0.5px; color:var(--white); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.tile-body { flex:1; margin:5px 0; border:1px solid rgba(255,255,255,0.08); border-radius:3px; background:rgba(0,0,0,0.25); display:flex; align-items:flex-end; overflow:hidden; }
+.tile-fill { width:100%; transition:height 0.5s ease; }
+.tile.is-done .tile-fill { background:var(--green); box-shadow:0 0 8px rgba(48,209,88,0.4); }
+.tile.is-active .tile-fill { background:var(--cyan); }
+.tile.is-pending .tile-fill { background:rgba(180,194,208,0.15); }
+.tile.is-blocked { border-color:var(--red); }
+.tile.is-blocked .tile-fill { background:var(--red); }
+.tile-flag { position:absolute; top:0; right:0; width:0; height:0; border-top:14px solid var(--red); border-left:14px solid transparent; }
+.tile-pips { display:flex; gap:3px; justify-content:center; margin-top:4px; }
+.tile-pip { width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,0.12); }
+.tile-pip.is-done { background:var(--green); }
+.tile-pip.is-active { background:var(--cyan); }
+.tile-pip.is-blocked { background:var(--red); }
+.tile-underline { height:2px; margin-top:5px; border-radius:1px; background:rgba(255,255,255,0.10); }
+.tile.is-done .tile-underline { background:var(--green); box-shadow:0 0 6px rgba(48,209,88,0.5); }
+.tile.is-active .tile-underline { background:var(--cyan); }
+.tile.is-blocked .tile-underline { background:var(--red); }
+@media (prefers-reduced-motion: reduce) {
+  .sky-bar.is-active .sky-bar-fill::after { animation:none; opacity:0.9; }
+  .trace-node.is-active { animation:none; box-shadow:0 0 10px var(--cyan); }
+}
 .hwm-inner { background:var(--hud-surface-0); max-width:520px; margin:0 auto; min-height:100%; padding:env(safe-area-inset-top,16px) 0 calc(env(safe-area-inset-bottom,0px) + 80px); }
 .hwm-hdr { display:flex; align-items:center; justify-content:space-between; padding:14px 16px 10px; border-bottom:1px solid rgba(180,194,208,0.12); position:sticky; top:0; background:var(--hud-surface-0); z-index:2; }
 .hwm-title { font-family:var(--mono); font-size:var(--fs-micro); letter-spacing:var(--hud-track-button); color:var(--cyan); text-transform:uppercase; }
@@ -10325,7 +10383,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.6.98';
+const PHANTOM_APP_VERSION = 'phantom-v1.6.99';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -17807,46 +17865,36 @@ function today_render() {
 
   html += '</div>'; // end pulse card
 
-  // ── COMPLETION CARD (v1.6.95 redesign) — compact: ring LEFT, stat stack RIGHT.
-  // Same resolved deployment + same rollup as the cards above (no independent math).
+  // ── RACK SKYLINE (v1.6.99) — replaces the completion ring. The deployment's racks
+  // as bottom-up fill bars (left ~60%) + the one big % + readout (right ~40%). Same
+  // resolved deployment + same rollup.rackRollups as the cards above (no new math).
   // Does not render at all when there is no deployment (no hollow card).
   if (mostRecentDeploy && totalRacks > 0) {
-    var ringColor, ringLabel;
-    if (racksBlocked > 0)      { ringColor = 'var(--red)';   ringLabel = 'BLOCKED'; }
-    else if (pct >= 90)        { ringColor = 'var(--green)'; ringLabel = 'COMPLETE'; }
-    else if (pct >= 50)        { ringColor = 'var(--cyan)';  ringLabel = 'COMPLETE'; }
-    else                       { ringColor = 'var(--gold)';  ringLabel = 'COMPLETE'; }
-    var circ = 175.9; // 2 * PI * 28
-    var dashOff = circ - (circ * pct / 100);
+    var skyRolls = (rollup && rollup.rackRollups) ? rollup.rackRollups : [];
+    var bigColor = racksBlocked > 0 ? 'var(--red)' : (pct >= 90 ? 'var(--green)' : 'var(--cyan)');
     // Disambiguator — created date + last-4 of id so duplicate-named deployments are
-    // visually distinguishable at a glance (the bug's root cause).
-    var idTail    = mostRecentDeploy.id ? ('#' + String(mostRecentDeploy.id).slice(-4)) : '';
+    // visually distinguishable at a glance (kept from v1.6.95).
+    var idTail     = mostRecentDeploy.id ? ('#' + String(mostRecentDeploy.id).slice(-4)) : '';
     var createdStr = (mostRecentDeploy.createdAt && typeof formatDate === 'function') ? formatDate(mostRecentDeploy.createdAt) : '';
-    var disamb = [createdStr, idTail].filter(Boolean).join(' · ');
+    var disamb     = [createdStr, idTail].filter(Boolean).join(' · ');
 
-    html += '<div style="background:linear-gradient(135deg,rgba(92,242,255,0.04),rgba(155,89,255,0.03));border:1px solid rgba(92,242,255,0.18);border-radius:var(--hud-r12);padding:12px 14px;margin-bottom:10px;display:flex;align-items:center;gap:16px">';
-    // Ring (left)
-    html += '<div style="position:relative;width:64px;height:64px;flex:0 0 64px;display:flex;align-items:center;justify-content:center">';
-    html += '<svg width="64" height="64" viewBox="0 0 64 64" style="position:absolute;top:0;left:0;transform:rotate(-90deg)">';
-    html += '<circle cx="32" cy="32" r="28" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="5"/>';
-    html += '<circle cx="32" cy="32" r="28" fill="none" stroke="' + ringColor + '" stroke-width="5" stroke-linecap="round" stroke-dasharray="' + circ + '" stroke-dashoffset="' + dashOff.toFixed(1) + '" style="transition:stroke-dashoffset 0.6s ease,stroke 0.3s ease;filter:drop-shadow(0 0 6px ' + ringColor + ')"/>';
-    html += '</svg>';
-    html += '<div style="text-align:center;position:relative;z-index:1;line-height:1">';
-    html += '<div style="font-family:var(--orb);font-size:19px;font-weight:900;color:' + ringColor + '">' + pct + '</div>';
-    html += '<div style="font-family:var(--mono);font-size:7px;letter-spacing:1px;color:var(--slate);margin-top:2px">' + ringLabel + '</div>';
+    html += '<div class="sky-card">';
+    // Skyline (left) — one tappable column per rack, bar fills bottom-up by phase %.
+    html += '<div class="sky-bars">';
+    skyRolls.forEach(function(rr) {
+      var f = hud_rackFill(rr.rollup);
+      html += '<button class="sky-col" onclick="deploy_showRackDetail(\'' + mostRecentDeploy.id + '\',\'' + rr.rack.id + '\')" aria-label="' + escHtml(rr.rack.rackId || rr.rack.id || 'rack') + ' ' + f.fill + '% (' + f.state + ')">' +
+                '<span class="sky-bar is-' + f.state + '"><span class="sky-bar-fill" style="height:' + f.fill + '%"></span></span>' +
+              '</button>';
+    });
     html += '</div>';
-    html += '</div>';
-    // Stat stack (right)
-    html += '<div style="flex:1;min-width:0">';
-    html += '<div style="display:flex;align-items:baseline;gap:8px;margin-bottom:5px">';
-    html += '<div style="font-family:var(--raj);font-weight:700;font-size:14px;color:var(--white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escHtml(mostRecentDeploy.name || 'Deployment') + '</div>';
-    if (disamb) html += '<div style="font-family:var(--mono);font-size:9px;color:var(--slate);letter-spacing:0.5px;white-space:nowrap;flex:0 0 auto">' + escHtml(disamb) + '</div>';
-    html += '</div>';
-    html += '<div style="font-family:var(--mono);font-size: var(--fs-caption);color:var(--slate);letter-spacing:0.5px"><span style="color:var(--green);font-weight:700">' + racksComplete + '</span> of <span style="color:var(--white);font-weight:700">' + totalRacks + '</span> racks done';
-    if (phaseTotal > 0) html += ' · <span style="color:var(--slate)">' + phaseDone + '/' + phaseTotal + ' phases</span>';
-    html += '</div>';
+    // Readout (right) — the ONE big number, then the confirmation lines.
+    html += '<div class="sky-readout">';
+    html += '<div class="sky-pct" style="color:' + bigColor + '">' + pct + '%</div>';
+    html += '<div class="sky-line"><span style="color:var(--green);font-weight:700">' + racksComplete + '</span> of <span style="color:var(--white);font-weight:700">' + totalRacks + '</span> racks done' + (phaseTotal > 0 ? ' · ' + phaseDone + '/' + phaseTotal + ' phases' : '') + '</div>';
+    html += '<div class="sky-name">' + escHtml(mostRecentDeploy.name || 'Deployment') + (disamb ? ' <span class="sky-disamb">' + escHtml(disamb) + '</span>' : '') + '</div>';
     if (racksBlocked > 0) {
-      html += '<div style="margin-top:7px"><span class="badge b-red" style="font-size: var(--fs-micro);letter-spacing:1px"><span class="ico ico-md ico-warning"></span> ' + racksBlocked + ' BLOCKED</span></div>';
+      html += '<div style="margin-top:6px"><span class="badge b-red" style="font-size: var(--fs-micro);letter-spacing:1px"><span class="ico ico-md ico-warning"></span> ' + racksBlocked + ' BLOCKED</span></div>';
     }
     html += '</div>';
     html += '</div>';
@@ -21679,6 +21727,24 @@ function deploy_computeDeployRollup(deployId) {
   };
   _deployDashCacheGen[deployId] = _deployRollupGen;
   return _deployDashCache[deployId];
+}
+
+// HUD REDESIGN (v1.6.99) — the ONE bottom-up fill metaphor shared by the NOW-card
+// skyline and the floor tiles. Maps a deploy_computeRackRollup result to a state +
+// fill% (pending gets an 8% visibility floor). No new math — reads the rollup only.
+function hud_rackFill(ru) {
+  if (!ru) return { state: 'pending', fill: 8 };
+  if (ru.isBlocked)              return { state: 'blocked', fill: Math.max(ru.pctComplete || 0, 8) };
+  if ((ru.pctComplete || 0) >= 100) return { state: 'done', fill: 100 };
+  if ((ru.pctComplete || 0) > 0)    return { state: 'active', fill: ru.pctComplete };
+  return { state: 'pending', fill: 8 };
+}
+// Phase status -> shared state-class fragment (pips, trace nodes).
+function hud_phaseClass(status) {
+  if (status === 'complete') return 'is-done';
+  if (status === 'in_progress') return 'is-active';
+  if (status === 'blocked') return 'is-blocked';
+  return '';
 }
 
 // ── Debounced Flush ──
@@ -26072,17 +26138,21 @@ function deploy_showDetail(id) {
   // ── Phase Pipeline Bar ──
   html += '<div style="background:var(--surf-1);border:1px solid var(--cyan-border-lo);border-radius:var(--hud-r12);padding:14px 16px;margin-bottom:10px">';
   html += '<div style="font-family:var(--orb);font-size: var(--fs-micro);letter-spacing:3px;color:var(--cyan);margin-bottom:10px;text-transform:uppercase">PHASE PIPELINE</div>';
-  html += '<div style="display:flex;gap:3px;margin-bottom:8px">';
-  var totalRacks = roll.racks.length || 1;
+  // ENERGIZED TRACE (v1.6.99) — 5 node ports on a conduit run; segment INTO a node
+  // energizes when that phase is reached. Same roll.phaseAgg, no new math.
+  html += '<div class="trace-run">';
   DEPLOY_PHASE_TYPES.forEach(function(type) {
     var agg = roll.phaseAgg[type];
-    var pct = agg.total ? Math.round((agg.complete / agg.total) * 100) : 0;
-    var barColor = pct === 100 ? 'var(--green)' : (agg.inProgress > 0 ? 'var(--cyan)' : (agg.blocked > 0 ? 'var(--red)' : 'rgba(255,255,255,0.08)'));
-    var bgFill = pct > 0 ? ('linear-gradient(to top, ' + barColor + ' ' + pct + '%, rgba(255,255,255,0.04) ' + pct + '%)') : 'rgba(255,255,255,0.04)';
-
-    html += '<div style="flex:1;text-align:center;padding:10px 2px 8px;background:' + bgFill + ';border:1px solid rgba(255,255,255,0.08);border-radius:6px;cursor:pointer;transition:border-color 0.2s" onclick="deploy_scrollToPhase(\'' + type + '\')">';
-    html += '<div style="font-family:var(--mono);font-size: var(--fs-micro);letter-spacing:1px;color:' + (pct === 100 ? 'var(--green)' : (agg.inProgress > 0 ? 'var(--white)' : 'var(--slate)')) + '">' + DEPLOY_PHASE_LABELS[type] + '</div>';
-    html += '<div style="font-family:var(--orb);font-size:12px;color:' + (pct === 100 ? 'var(--green)' : 'var(--white)') + ';margin-top:3px">' + agg.complete + '/' + agg.total + '</div>';
+    var complete = agg.total > 0 && agg.complete === agg.total;
+    var active = agg.inProgress > 0;
+    var blocked = agg.blocked > 0;
+    var nodeCls = complete ? 'is-done' : (blocked ? 'is-blocked' : (active ? 'is-active' : ''));
+    var segHot = (complete || active) ? 'is-hot' : '';
+    var lblCls = complete ? 'is-done' : (active ? 'is-active' : '');
+    html += '<div class="trace-node-wrap">';
+    html += '<div class="trace-seg ' + segHot + '"></div>';
+    html += '<div class="trace-node ' + nodeCls + '" onclick="deploy_scrollToPhase(\'' + type + '\')" aria-label="' + DEPLOY_PHASE_LABELS[type] + ' ' + agg.complete + ' of ' + agg.total + '"></div>';
+    html += '<div class="trace-label ' + lblCls + '">' + DEPLOY_PHASE_LABELS[type] + '</div>';
     html += '</div>';
   });
   html += '</div>';
@@ -26321,58 +26391,48 @@ function deploy_renderFloorMap(deployId) {
     mapEl.innerHTML = '<div style="text-align:center;padding:40px 20px;background:var(--surf-1);border:1px solid var(--cyan-border-lo);border-radius:var(--hud-r12)"><div style="font-family:var(--orb);font-size:var(--fs-micro);letter-spacing:2px;color:var(--slate);margin-bottom:8px">NO RACKS</div><div style="font-family:var(--mono);font-size:var(--fs-caption);color:var(--slate)">No rack data found for this deployment.</div></div>';
     return;
   }
-  // Sort by numeric ID for predictable layout
-  var sorted = racks.slice().sort(function(a, b) {
-    return _floorMap_extractNum(a.rackId) - _floorMap_extractNum(b.rackId);
-  });
   var allPhases = deploy_loadPhases(deployId);
-  var cols = _floorMap_calcCols(sorted.length);
-  var rows = Math.ceil(sorted.length / cols);
-
-  // Build per-rack tile data with rollup colors
-  var tiles = sorted.map(function(rack) {
-    var ru = deploy_computeRackRollup(rack.id, allPhases);
-    var color, bgColor, borderColor;
-    if (ru.pctComplete === 100) {
-      color = 'var(--green)'; bgColor = 'rgba(48,209,88,0.10)'; borderColor = 'rgba(48,209,88,0.40)';
-    } else if (ru.isBlocked) {
-      color = 'var(--red)'; bgColor = 'rgba(255,45,85,0.10)'; borderColor = 'rgba(255,45,85,0.40)';
-    } else if (ru.currentPhase && ru.currentPhase !== 'complete') {
-      color = 'var(--cyan)'; bgColor = 'rgba(92,242,255,0.08)'; borderColor = 'rgba(92,242,255,0.35)';
-    } else {
-      color = 'var(--slate)'; bgColor = 'rgba(255,255,255,0.03)'; borderColor = 'rgba(255,255,255,0.10)';
-    }
-    return { rack: rack, ru: ru, color: color, bgColor: bgColor, borderColor: borderColor };
+  // FLOOR TILES (v1.6.99) — fixed-proportion rack tiles, wrapped grid, grouped by row.
+  // Row = cab-ID segment before the first ':' (same rule as mscope_groupByRow). ONE rack
+  // = ONE normal tile (no inflation). Same rollup, same hud_rackFill metaphor as the skyline.
+  var byRow = {};
+  racks.forEach(function(rack) {
+    var rowKey = String(rack.rackId || rack.id || '').split(':')[0] || '—';
+    if (!byRow[rowKey]) byRow[rowKey] = [];
+    byRow[rowKey].push(rack);
+  });
+  var rowKeys = Object.keys(byRow).sort();
+  rowKeys.forEach(function(rk) {
+    byRow[rk].sort(function(a, b) { return _floorMap_extractNum(a.rackId) - _floorMap_extractNum(b.rackId); });
   });
 
   var html = '';
-  // Header: rack count + auto-layout disclosure
+  // Header: rack + row count (no auto-layout disclosure — the fixed-tile grid IS the layout).
   html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">';
-  html += '<div style="font-family:var(--mono);font-size:var(--fs-micro);letter-spacing:1.5px;color:var(--slate)">' + sorted.length + ' RACKS · ' + cols + '×' + rows + ' GRID</div>';
-  html += '<div style="font-family:var(--mono);font-size:9px;letter-spacing:1px;color:var(--slate);opacity:0.7">AUTO-LAYOUT</div>';
+  html += '<div style="font-family:var(--mono);font-size:var(--fs-micro);letter-spacing:1.5px;color:var(--slate)">' + racks.length + ' RACK' + (racks.length === 1 ? '' : 'S') + ' · ' + rowKeys.length + ' ROW' + (rowKeys.length === 1 ? '' : 'S') + '</div>';
   html += '</div>';
 
-  // The grid
-  html += '<div style="display:grid;grid-template-columns:repeat(' + cols + ',1fr);gap:6px;margin-bottom:12px">';
-  tiles.forEach(function(t) {
-    var pct = t.ru.pctComplete || 0;
-    html += '<button onclick="deploy_showRackDetail(\'' + deployId + '\',\'' + t.rack.id + '\')" style="position:relative;aspect-ratio:1;min-height:var(--tap-xl);background:' + t.bgColor + ';border:1px solid ' + t.borderColor + ';border-radius:6px;padding:4px 2px;cursor:pointer;-webkit-appearance:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;-webkit-tap-highlight-color:transparent" ontouchstart="this.style.opacity=\'0.7\'" ontouchend="this.style.opacity=\'1\'">';
-    // Rack label
-    html += '<div style="font-family:var(--mono);font-size:10px;font-weight:700;color:' + t.color + ';letter-spacing:0.5px;line-height:1">' + escHtml(t.rack.rackId) + '</div>';
-    // Percent
-    html += '<div style="font-family:var(--orb);font-size:9px;color:var(--slate);line-height:1">' + pct + '%</div>';
-    // Status dot
-    html += '<div style="width:6px;height:6px;border-radius:50%;background:' + t.color + ';box-shadow:0 0 4px ' + t.color + '"></div>';
-    html += '</button>';
+  // The grid — fixed-width tiles wrap; row headers span the full grid width.
+  html += '<div class="tile-grid">';
+  rowKeys.forEach(function(rk) {
+    html += '<div class="tile-rowhdr">ROW ' + escHtml(rk.toUpperCase()) + '</div>';
+    byRow[rk].forEach(function(rack) {
+      var ru = deploy_computeRackRollup(rack.id, allPhases);
+      var f = hud_rackFill(ru);
+      html += '<button class="tile is-' + f.state + '" onclick="deploy_showRackDetail(\'' + deployId + '\',\'' + rack.id + '\')" aria-label="' + escHtml(rack.rackId || rack.id || 'rack') + ' ' + f.fill + '% (' + f.state + ')" ontouchstart="this.style.opacity=\'0.7\'" ontouchend="this.style.opacity=\'1\'">';
+      if (f.state === 'blocked') html += '<span class="tile-flag"></span>';
+      html += '<div class="tile-hdr">' + escHtml(rack.rackId || rack.id || '?') + '</div>';
+      html += '<div class="tile-body"><div class="tile-fill" style="height:' + f.fill + '%"></div></div>';
+      html += '<div class="tile-pips">';
+      (ru.phases || []).forEach(function(p) {
+        html += '<span class="tile-pip ' + hud_phaseClass(p.status) + '"></span>';
+      });
+      html += '</div>';
+      html += '<div class="tile-underline"></div>';
+      html += '</button>';
+    });
   });
   html += '</div>';
-
-  // Cold aisle indicator between rows (visual cue for orientation)
-  if (rows >= 2) {
-    html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;padding:6px 10px;background:rgba(92,242,255,0.04);border:1px dashed rgba(92,242,255,0.2);border-radius:6px">';
-    html += '<div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--cyan);opacity:0.7">← COLD AISLE →</div>';
-    html += '</div>';
-  }
 
   // Legend
   html += '<div style="background:var(--surf-1);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:10px 12px">';
