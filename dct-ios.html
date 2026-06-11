@@ -10313,7 +10313,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.6.96';
+const PHANTOM_APP_VERSION = 'phantom-v1.6.97';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -27267,6 +27267,11 @@ function deploy_showRackDetail(deployId, rackId) {
       html += '<strong style="color:var(--white)">' + escHtml(slot.name || 'Unknown') + '</strong>';
       if (slot.model) html += ' · ' + escHtml(slot.model);
       if (slot.uStart != null) html += ' · U' + slot.uStart + (slot.uEnd && slot.uEnd !== slot.uStart ? '-' + slot.uEnd : '');
+      // v1.6.97: surface the asset tag (slot.serial) frozen at scope time — stored since
+      // Ship 2A but never rendered. dns is already the device name above, so only the TAG
+      // adds new info; long-press-selectable for a gloved copy. Legacy EDP slots (no serial)
+      // skip cleanly.
+      if (slot.serial) html += '<div style="margin-top:3px"><span style="color:var(--slate-readable,#7d90a0);letter-spacing:1px">TAG</span> <span style="color:#b4c2d0;-webkit-user-select:all;user-select:all">' + escHtml(slot.serial) + '</span></div>';
       html += '</div>';
     });
     html += '</div></details>';
