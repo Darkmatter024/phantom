@@ -10313,7 +10313,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.6.95';
+const PHANTOM_APP_VERSION = 'phantom-v1.6.96';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -17614,6 +17614,18 @@ function nowtab_resolveDep() {
   return pick;
 }
 
+// ── Guided Path (v1.6.96) — the scope nudge self-retires once a job exists, and is
+// dismissible for techs who never create deployments. ONE device-scoped flag, no wizard.
+function guided_scopeDismissed() {
+  try { return localStorage.getItem('phantom_guided_scope_dismissed_v1') === '1'; }
+  catch(_) { return false; }
+}
+function guided_dismissScope() {
+  try { localStorage.setItem('phantom_guided_scope_dismissed_v1', '1'); } catch(_) {}
+  if (typeof today_render === 'function') today_render();
+}
+window.guided_dismissScope = guided_dismissScope;
+
 function today_render() {
   var el = document.getElementById('today-dashboard');
   if (!el) return;
@@ -17624,12 +17636,35 @@ function today_render() {
     return d.status === 'active' || d.status === 'paused' || !d.status;
   });
 
-  // Empty state — no deployments yet
+  // Empty state — no active deployment. v1.6.96 GUIDED PATH surfaces exactly ONE
+  // state-gated nudge here (mutually exclusive, first match wins); every nudge
+  // self-retires once a job exists. No modal, no wizard — one line + one tap.
   if (active.length === 0) {
+    var _allDeploys = deploy_loadAll();
+    var _mRacks     = (window._lastPhantomMaster && window._lastPhantomMaster.racksByCab) || null;
+    var _masterLoaded = !!(_mRacks && typeof _mRacks === 'object' && Object.keys(_mRacks).length);
+    var _nudge;
+    if (_allDeploys.length === 0 && !_masterLoaded) {
+      // STATE 2 — profile set, no Master loaded. Route to the MASTER tab's picker.
+      _nudge =
+        '<div style="font-family:var(--raj);font-size: var(--fs-body);color:var(--white);margin-bottom:10px">Load your Master to begin.</div>' +
+        '<button class="pt-btn pt-btn-primary" style="width:auto;padding:11px 18px;clip-path:none" onclick="showPage(\'master\'); if(typeof master_loadFile===\'function\') master_loadFile();" aria-label="Load your Master file to begin">LOAD MASTER →</button>';
+    } else if (_allDeploys.length === 0 && _masterLoaded && !guided_scopeDismissed()) {
+      // STATE 3 — Master loaded, zero deployments ever. Dismissible spotlight on SCOPE A JOB.
+      _nudge =
+        '<div style="font-family:var(--raj);font-size: var(--fs-body);color:var(--white);margin-bottom:10px">Master loaded — scope your first job?</div>' +
+        '<div style="display:flex;gap:10px;align-items:center">' +
+          '<button class="pt-btn pt-btn-primary" style="width:auto;padding:11px 18px;clip-path:none" onclick="mscope_open()" aria-label="Scope your first deployment job">SCOPE A JOB →</button>' +
+          '<button type="button" onclick="guided_dismissScope()" style="background:none;border:none;color:var(--slate);font-family:var(--mono);font-size:var(--fs-caption);letter-spacing:1px;cursor:pointer;padding:8px;min-height:var(--tap-m)" aria-label="Dismiss this prompt">DISMISS</button>' +
+        '</div>';
+    } else {
+      // Veteran between jobs (completed deployments exist) or dismissed — neutral, no push.
+      _nudge = '<div style="font-family:var(--raj);font-size: var(--fs-body);color:var(--white)">No active deployments. Scope a job from the Master tab to see your build status here.</div>';
+    }
     el.innerHTML =
       '<div style="background:rgba(92,242,255,0.04);border:1px solid rgba(92,242,255,0.15);border-radius:var(--hud-r12);padding:14px 16px;margin-bottom:12px">' +
         '<div style="font-family:var(--mono);font-size: var(--fs-micro);letter-spacing:2px;color:var(--cyan);margin-bottom:6px">TODAY</div>' +
-        '<div style="font-family:var(--raj);font-size: var(--fs-body);color:var(--white)">No active deployments. Create one from the Deploy tab to see your build status here.</div>' +
+        _nudge +
       '</div>' +
       today_systemStatePane();
     return;
@@ -17695,6 +17730,17 @@ function today_render() {
   if (mostRecentDeploy) {
     var _ac = (typeof activeContext_get === 'function') ? activeContext_get() : null;
     var heroRack = (_ac && _ac.rack && _ac.deployment && _ac.deployment.id === mostRecentDeploy.id) ? _ac.rack : null;
+    // v1.6.96 STATE 5 — a freshly-created deployment (0%, no in-context rack) points the
+    // hero at its FIRST rack so the next tap STARTS the build (opens the Rack Map), not a
+    // detail screen. Reuses the existing hero next-action surface — no parallel system.
+    var heroStart = false;
+    if (!heroRack && pct === 0 && totalRacks > 0) {
+      try {
+        var _firstRacks = deploy_loadRacks(mostRecentDeploy.id);
+        if (_firstRacks && _firstRacks.length) { heroRack = _firstRacks[0]; heroStart = true; }
+      } catch(_) {}
+    }
+    var heroRackLabel = heroRack ? (heroRack.rackId || heroRack.name || heroRack.id || '?') : '';
     var heroAction = heroRack
       ? "deploy_showRackDetail('" + mostRecentDeploy.id + "','" + heroRack.id + "')"
       : "deploy_showDetail('" + mostRecentDeploy.id + "')";
@@ -17704,11 +17750,11 @@ function today_render() {
     html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">';
     html += '<div style="font-family:var(--orb);font-size: var(--fs-micro);letter-spacing:3px;color:var(--cyan)">▼ ACTIVE BUILD</div>';
     html += '<div style="flex:1;height:1px;background:rgba(92,242,255,0.18)"></div>';
-    html += '<div style="font-family:var(--mono);font-size: var(--fs-micro);color:var(--slate);letter-spacing:1.5px">TAP TO RESUME →</div>';
+    html += '<div style="font-family:var(--mono);font-size: var(--fs-micro);color:var(--slate);letter-spacing:1.5px">' + (heroStart ? 'START BUILD →' : 'TAP TO RESUME →') + '</div>';
     html += '</div>';
     html += '<div style="font-family:var(--raj);font-weight:700;font-size:16px;color:var(--white);margin-bottom:4px">' + escHtml(mostRecentDeploy.name || 'Unnamed') + '</div>';
     if (heroRack) {
-      html += '<div style="font-family:var(--mono);font-size: var(--fs-caption);color:var(--cyan);letter-spacing:1px;margin-bottom:6px">RACK ' + escHtml(heroRack.id || '?') + (heroRack.platform ? ' · ' + escHtml(heroRack.platform) : '') + '</div>';
+      html += '<div style="font-family:var(--mono);font-size: var(--fs-caption);color:var(--cyan);letter-spacing:1px;margin-bottom:6px">' + (heroStart ? 'START RACK ' : 'RACK ') + escHtml(heroRackLabel) + (heroRack.platform ? ' · ' + escHtml(heroRack.platform) : '') + '</div>';
     }
     html += '<div style="font-family:var(--mono);font-size: var(--fs-caption);color:var(--slate);letter-spacing:1px">' + totalRacks + ' racks · ' + racksComplete + ' done · ' + racksInProgress + ' active' + (racksBlocked > 0 ? ' · <span style="color:var(--red)">' + racksBlocked + ' blocked</span>' : '') + ' · ' + pct + '%</div>';
     html += '</div>';
@@ -25080,6 +25126,10 @@ function master_renderLoaded(container) {
               ' onclick="deviceLead_promptSetPin().then(function(ok){ if(ok &amp;&amp; typeof master_render===\'function\') master_render(); })"' +
               ' aria-label="Set or change the device Lead PIN that protects the Master">' +
               ((typeof deviceLead_hasPin === 'function' && deviceLead_hasPin()) ? 'PIN: ON' : 'Set PIN') + '</button>' +
+            // v1.6.96 — persistent SCOPE A JOB path: one tap from the loaded Master to mscope.
+            '<button type="button" class="master-banner-replace" style="margin-left:6px;color:var(--green)"' +
+              ' onclick="mscope_open()"' +
+              ' aria-label="Scope a deployment job from this Master">SCOPE A JOB</button>' +
           '</div>';
   html += '<div class="master-search-wrap">' +
             '<input type="text" id="master-search-input" class="master-search-input"' +
