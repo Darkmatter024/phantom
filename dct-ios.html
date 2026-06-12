@@ -10383,7 +10383,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.7.0';
+const PHANTOM_APP_VERSION = 'phantom-v1.7.1';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -17910,65 +17910,30 @@ function today_render() {
     } catch(e) { /* non-fatal */ }
   }
 
-  // ── RACK RAIL — real racks from active deployment, color-coded by status ──
-  // Reads from mostRecentDeploy. Horizontal scroll if many racks.
-  // Tap a rack chip → deploy_showRackDetail. No mock data.
-  if (mostRecentDeploy) {
-    try {
-      var railRacks = deploy_loadRacks(mostRecentDeploy.id) || [];
-      var railPhases = deploy_loadPhases(mostRecentDeploy.id) || [];
-      if (railRacks.length > 0) {
-        html += '<div style="background:rgba(92,242,255,0.03);border:1px solid rgba(92,242,255,0.12);border-radius:var(--hud-r12);padding:14px 16px;margin-bottom:10px">';
-        html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">';
-        html += '<div style="font-family:var(--mono);font-size:var(--fs-micro);letter-spacing:var(--hud-track-wide);color:var(--cyan)">RACK STATUS</div>';
-        html += '<div style="flex:1;height:1px;background:rgba(92,242,255,0.15)"></div>';
-        html += '<div style="font-family:var(--mono);font-size:var(--fs-caption);color:var(--slate);letter-spacing:1px">' + railRacks.length + ' TOTAL</div>';
-        html += '</div>';
-        html += '<div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;-webkit-mask-image:linear-gradient(to right,black 92%,transparent 100%)">';
-
-        railRacks.forEach(function(r) {
-          var ru;
-          try { ru = deploy_computeRackRollup(r.id, railPhases); }
-          catch(e) { ru = null; }
-
-          var rackLabel = escHtml(r.rackId || r.name || r.id || '?');
-          var stateText = 'QUEUED';
-          var stateColor = 'var(--slate)';
-          var bgTint = 'rgba(255,255,255,0.02)';
-          var borderColor = 'rgba(255,255,255,0.10)';
-
-          if (ru) {
-            if (ru.isBlocked) {
-              stateText = 'BLOCKED';
-              stateColor = 'var(--red)';
-              bgTint = 'rgba(255,45,85,0.08)';
-              borderColor = 'rgba(255,45,85,0.40)';
-            } else if (ru.currentPhase === 'complete') {
-              stateText = 'DONE';
-              stateColor = 'var(--green)';
-              bgTint = 'rgba(48,209,88,0.08)';
-              borderColor = 'rgba(48,209,88,0.35)';
-            } else if (ru.hasInProgress) {
-              stateText = 'ACTIVE';
-              stateColor = 'var(--gold)';
-              bgTint = 'rgba(255,214,10,0.08)';
-              borderColor = 'rgba(255,214,10,0.40)';
-            }
-          }
-
-          var tapAction = "deploy_showRackDetail('" + mostRecentDeploy.id + "','" + (r.id || '') + "')";
-          var pctBar = (ru && typeof ru.pctComplete === 'number') ? ru.pctComplete : 0;
-          html += '<div onclick="' + tapAction + '" style="flex:0 0 auto;min-width:74px;padding:12px 14px 10px 14px;background:' + bgTint + ';border:1px solid ' + borderColor + ';border-radius:var(--hud-r12);cursor:pointer;text-align:center;transition:transform 0.1s">';
-          html += '<div style="font-family:var(--mono);font-size:14px;font-weight:700;color:var(--white);letter-spacing:1px;margin-bottom:4px">' + rackLabel + '</div>';
-          html += '<div style="font-family:var(--mono);font-size:9px;color:' + stateColor + ';letter-spacing:1.4px;font-weight:700;margin-bottom:6px">' + stateText + '</div>';
-          html += '<div style="height:3px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden"><div style="height:100%;width:' + pctBar + '%;background:' + stateColor + ';transition:width 0.4s ease"></div></div>';
-          html += '</div>';
-        });
-
-        html += '</div></div>';
-      }
-    } catch (railErr) {
-      if (typeof console !== 'undefined') console.warn('[rack-rail] render skipped:', railErr);
+  // ── BLOCKED STRIP (v1.7.1) — the RACK STATUS rail was retired here: the skyline above
+  // already carries every rack's state and taps through to rack detail, so the full rail was
+  // redundant on the NOW tab. The ONE redundancy worth keeping is blockers — a red strip of
+  // ONLY the blocked racks, shown only when something is blocked. Reads the SAME
+  // rollup.rackRollups as the skyline (no re-load, no parallel math), so the two never disagree.
+  // Gate on the blocked SET derived from the same rollup the skyline uses — not the
+  // separately-counted racksBlocked (which counts complete-first) — so the strip is
+  // self-consistent and can never diverge from its own filter regardless of rollup counting.
+  if (mostRecentDeploy && rollup && rollup.rackRollups) {
+    var blockedRolls = rollup.rackRollups.filter(function(rr) { return rr.rollup && rr.rollup.isBlocked; });
+    if (blockedRolls.length) {
+      html += '<div style="background:rgba(255,45,85,0.06);border:1px solid rgba(255,45,85,0.30);border-radius:var(--hud-r12);padding:12px 14px;margin-bottom:10px">';
+      html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">';
+      html += '<div style="font-family:var(--mono);font-size:var(--fs-micro);letter-spacing:var(--hud-track-wide);color:var(--red)"><span class="ico ico-md ico-warning"></span> BLOCKED</div>';
+      html += '<div style="flex:1;height:1px;background:rgba(255,45,85,0.18)"></div>';
+      html += '<div style="font-family:var(--mono);font-size:var(--fs-caption);color:var(--slate);letter-spacing:1px">' + blockedRolls.length + '</div>';
+      html += '</div>';
+      html += '<div style="display:flex;gap:8px;flex-wrap:wrap">';
+      blockedRolls.forEach(function(rr) {
+        var rlabel = escHtml(rr.rack.rackId || rr.rack.name || rr.rack.id || '?');
+        html += '<button onclick="deploy_showRackDetail(\'' + mostRecentDeploy.id + '\',\'' + rr.rack.id + '\')" style="flex:0 0 auto;min-height:var(--tap-m);padding:8px 12px;background:rgba(255,45,85,0.10);border:1px solid rgba(255,45,85,0.45);border-radius:8px;cursor:pointer;-webkit-appearance:none;-webkit-tap-highlight-color:transparent;font-family:var(--mono);font-size:13px;font-weight:700;color:var(--white);letter-spacing:1px">' + rlabel + '</button>';
+      });
+      html += '</div>';
+      html += '</div>';
     }
   }
 
@@ -26385,18 +26350,9 @@ function _floorMap_extractNum(rackId) {
   return m ? parseInt(m[1], 10) : 999999;
 }
 
-// Determine grid columns based on rack count (matches typical row layouts)
-function _floorMap_calcCols(n) {
-  if (n <= 6) return n;        // 1 row of N
-  if (n <= 12) return Math.ceil(n / 2);  // 2 rows
-  if (n <= 24) return Math.ceil(n / 3);  // 3 rows
-  return Math.ceil(n / Math.ceil(n / 8)); // 4+ rows, ~8 per row max
-}
-
 function deploy_renderFloorMap(deployId) {
   var mapEl = document.getElementById('deploy-floor-map');
   if (!mapEl) return;
-  var dep = deploy_getById(deployId);
   var racks = deploy_loadRacks(deployId);
   if (!racks || !racks.length) {
     mapEl.innerHTML = '<div style="text-align:center;padding:40px 20px;background:var(--surf-1);border:1px solid var(--cyan-border-lo);border-radius:var(--hud-r12)"><div style="font-family:var(--orb);font-size:var(--fs-micro);letter-spacing:2px;color:var(--slate);margin-bottom:8px">NO RACKS</div><div style="font-family:var(--mono);font-size:var(--fs-caption);color:var(--slate)">No rack data found for this deployment.</div></div>';
