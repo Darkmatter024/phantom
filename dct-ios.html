@@ -8420,6 +8420,18 @@ textarea.hud-input {
   .sky-bar.is-active .sky-bar-fill::after { animation:none; opacity:0.9; }
   .trace-node.is-active { animation:none; box-shadow:0 0 10px var(--cyan); }
 }
+/* v1.7.2 — HORIZONTAL CHIP/TAB STRIP SCROLL LOCK. One pattern for every thin one-row
+   horizontal scroller: touch-action:pan-x makes a diagonal thumb-swipe scroll the strip
+   sideways (the vertical component falls through to the page) instead of bouncing/chaining,
+   and overscroll-behavior-x:contain stops horizontal overscroll from chaining to the page
+   or firing the iOS back-swipe. Applied to chip/tab strips ONLY — deliberately NOT to the
+   tall code blocks (.cli/.step-cmd) or #pdu-* diagrams, where pan-x would trap vertical
+   page-scroll through them. Covers #ops-tab-strip via its .subtab-strip class. */
+.subtab-strip, .sop-filter-row, .rm-rack-select, .rl-filters, .rl-recent-row,
+.mf-switcher, .hwm-model-row, .hwm-cat-row, .deploy-rack-nav {
+  touch-action: pan-x;
+  overscroll-behavior-x: contain;
+}
 .hwm-inner { background:var(--hud-surface-0); max-width:520px; margin:0 auto; min-height:100%; padding:env(safe-area-inset-top,16px) 0 calc(env(safe-area-inset-bottom,0px) + 80px); }
 .hwm-hdr { display:flex; align-items:center; justify-content:space-between; padding:14px 16px 10px; border-bottom:1px solid rgba(180,194,208,0.12); position:sticky; top:0; background:var(--hud-surface-0); z-index:2; }
 .hwm-title { font-family:var(--mono); font-size:var(--fs-micro); letter-spacing:var(--hud-track-button); color:var(--cyan); text-transform:uppercase; }
@@ -10383,7 +10395,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.7.1';
+const PHANTOM_APP_VERSION = 'phantom-v1.7.2';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
