@@ -10383,7 +10383,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.6.99';
+const PHANTOM_APP_VERSION = 'phantom-v1.7.0';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -18468,11 +18468,11 @@ function brief_markSeen() {
 
 function brief_generate() {
   try {
-    var deploys = deploy_loadAll().filter(function(d) { return d.status === 'active' || d.status === 'paused'; });
-    if (!deploys.length) return null;
-
-    deploys.sort(function(a, b) { return b.updated - a.updated; });
-    var dep = deploys[0];
+    // v1.7.0: resolve via the shared nowtab_resolveDep() (getActive-first, most-recent
+    // active fallback) so the Mission Brief greets with the SAME deployment the NOW tab
+    // shows — no more private resolution path (the pattern v1.6.95 outlawed). Counting
+    // stays on deploy_computeDeployRollup below (already shared).
+    var dep = (typeof nowtab_resolveDep === 'function') ? nowtab_resolveDep() : null;
     if (!dep || !dep.id) return null;
 
     var roll = deploy_computeDeployRollup(dep.id);
@@ -25787,6 +25787,12 @@ async function deploy_aiReview(deploymentId) {
   if (deploymentId) {
     var dep = deploy_getById(deploymentId);
     if (dep && dep.edpParsed) parsed = dep.edpParsed;
+    // v1.7.0: belt-and-suspenders — Master-scoped deployments have no parse to validate.
+    // The button is gated out of deploy_showDetail; this guards a stale-DOM invocation.
+    if (dep && dep.scope && dep.scope.source === 'master') {
+      phantomToast('AI Review is not applicable to Master-scoped deployments', 'warn');
+      return;
+    }
   }
   if (!parsed) { phantomToast('No parse results to review', 'warn'); return; }
 
@@ -26127,13 +26133,18 @@ function deploy_showDetail(id) {
     html += '</div>';
   }
 
-  // ── AI Review Button (dashboard) ──
-  html += '<div style="margin-bottom:10px">';
-  html += '<button class="pt-btn pt-btn-secondary" id="deploy-ai-review-btn" data-requires-net="1" onclick="deploy_aiReview(\'' + id + '\')" style="width:100%;padding:11px 12px;font-size: var(--fs-caption)">';
-  html += '<span class="ico ico-md ico-search"></span> &nbsp;AI REVIEW — Validate EDP Parse</button>';
-  var persistedTriage = deploy_renderReviewTriage(dep.id);
-  html += '<div id="deploy-ai-review-results" style="margin-top:8px">' + persistedTriage + '</div>';
-  html += '</div>';
+  // ── AI Review Button (dashboard) — legacy EDP deployments only ──
+  // v1.7.0: Master-scoped deployments have snapshot-derived racks from a deterministic
+  // spreadsheet read — there is no "parse" to validate, so this button (and its 90s AI
+  // call) is a semantic orphan there. Gate on !dep.scope (same key as the compat banner).
+  if (!dep.scope) {
+    html += '<div style="margin-bottom:10px">';
+    html += '<button class="pt-btn pt-btn-secondary" id="deploy-ai-review-btn" data-requires-net="1" onclick="deploy_aiReview(\'' + id + '\')" style="width:100%;padding:11px 12px;font-size: var(--fs-caption)">';
+    html += '<span class="ico ico-md ico-search"></span> &nbsp;AI REVIEW — Validate EDP Parse</button>';
+    var persistedTriage = deploy_renderReviewTriage(dep.id);
+    html += '<div id="deploy-ai-review-results" style="margin-top:8px">' + persistedTriage + '</div>';
+    html += '</div>';
+  }
 
   // ── Phase Pipeline Bar ──
   html += '<div style="background:var(--surf-1);border:1px solid var(--cyan-border-lo);border-radius:var(--hud-r12);padding:14px 16px;margin-bottom:10px">';
@@ -42216,13 +42227,24 @@ var OpticScore = (function() {
       if (!dep || !dep.edpParsed || !Array.isArray(dep.edpParsed.portMaps) || dep.edpParsed.portMaps.length === 0) {
         var idle = document.getElementById('osv-state-idle');
         if (idle) {
-          idle.innerHTML =
-            '<div class="osv-hint">' +
-              '<div class="osv-hint-eyebrow">No deployment loaded</div>' +
-              '<div class="osv-hint-title">Load an EDP first</div>' +
-              '<div class="osv-hint-detail">Verify needs a parsed EDP with port maps. Open BOM/EDP or use INTAKE to load one.</div>' +
-            '</div>' +
-            '<button class="osv-primary-btn" onclick="goOpsTab(\'deploy\')">→ Go to Deploy</button>';
+          if (dep && dep.scope && dep.scope.source === 'master') {
+            // v1.7.0: Master-scoped deployments never carry portMaps — point at the two
+            // real places the data lives instead of the hollow "load an EDP" prompt.
+            idle.innerHTML =
+              '<div class="osv-hint">' +
+                '<div class="osv-hint-eyebrow">Master-scoped deployment</div>' +
+                '<div class="osv-hint-title">No port maps here</div>' +
+                '<div class="osv-hint-detail">Port maps come from vendor EDPs — attach one under Reconcile, or see Device Connections for Master cabling.</div>' +
+              '</div>';
+          } else {
+            idle.innerHTML =
+              '<div class="osv-hint">' +
+                '<div class="osv-hint-eyebrow">No deployment loaded</div>' +
+                '<div class="osv-hint-title">Load an EDP first</div>' +
+                '<div class="osv-hint-detail">Verify needs a parsed EDP with port maps. Open BOM/EDP or use INTAKE to load one.</div>' +
+              '</div>' +
+              '<button class="osv-primary-btn" onclick="goOpsTab(\'deploy\')">→ Go to Deploy</button>';
+          }
         }
       }
       renderHistory();
