@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- PHANTOM maskable icon — ghost scaled into the central ~80% safe zone, dark bg full-bleed
+       (so the OS corner/circle mask reveals brand-dark, never transparency). No bottom rack
+       lines (they'd fall in the cropped margin). Filter-free; same tokens as icon.svg. -->
+  <defs>
+    <radialGradient id="bgGlow" cx="50%" cy="46%" r="42%">
+      <stop offset="0%"   stop-color="#b478ff" stop-opacity="0.28"/>
+      <stop offset="50%"  stop-color="#6a3a9e" stop-opacity="0.10"/>
+      <stop offset="100%" stop-color="#020408" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="ghostStroke" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#b478ff"/>
+      <stop offset="100%" stop-color="#9af6ff"/>
+    </linearGradient>
+    <linearGradient id="ghostFill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#13091f"/>
+      <stop offset="100%" stop-color="#04141a"/>
+    </linearGradient>
+    <radialGradient id="eyeGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"   stop-color="#9af6ff" stop-opacity="0.85"/>
+      <stop offset="40%"  stop-color="#9af6ff" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#9af6ff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect x="0" y="0" width="1024" height="1024" fill="#020408"/>
+  <rect x="0" y="0" width="1024" height="1024" fill="url(#bgGlow)"/>
+  <!-- ghost ~59% height, centered → fits the 80% maskable safe zone -->
+  <g transform="translate(152,140) scale(30)" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 2a8 8 0 0 0-8 8v12l3-3 2.5 2.5L12 19l2.5 2.5L17 19l3 3V10a8 8 0 0 0-8-8z"
+          fill="none" stroke="url(#ghostStroke)" stroke-width="1.55" opacity="0.32"/>
+    <path d="M12 2a8 8 0 0 0-8 8v12l3-3 2.5 2.5L12 19l2.5 2.5L17 19l3 3V10a8 8 0 0 0-8-8z"
+          fill="url(#ghostFill)" fill-opacity="0.72" stroke="url(#ghostStroke)" stroke-width="0.82"/>
+    <ellipse cx="9.3"  cy="10.3" rx="2.3" ry="2.9" fill="url(#eyeGlow)"/>
+    <ellipse cx="14.7" cy="10.3" rx="2.3" ry="2.9" fill="url(#eyeGlow)"/>
+    <ellipse cx="9.3"  cy="10.3" rx="1.18" ry="1.85" fill="#ccfbff"/>
+    <ellipse cx="14.7" cy="10.3" rx="1.18" ry="1.85" fill="#ccfbff"/>
+    <ellipse cx="12" cy="13.5" rx="0.64" ry="1.02" fill="#9af6ff" fill-opacity="0.85"/>
+  </g>
+</svg>
