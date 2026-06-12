@@ -10395,7 +10395,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.7.2';
+const PHANTOM_APP_VERSION = 'phantom-v1.7.3';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -26241,6 +26241,10 @@ function deploy_showDetail(id) {
   html += '<button class="pt-btn pt-btn-ghost" style="flex:1" onclick="deploy_showAuditLog(\'' + dep.id + '\')">' + _ico.clipboard('#5cf2ff', 13) + ' HISTORY</button>';
   html += '</div>';
 
+  // AS-BUILT export (v1.7.3) — always available (Master-scoped and legacy; the join just has
+  // fewer sources on legacy). Plan-vs-built-vs-verified truth out, on-device CSV.
+  html += '<button class="pt-btn pt-btn-secondary" style="width:100%;color:var(--cyan);border-color:rgba(92,242,255,0.3)" onclick="deploy_exportAsBuilt(\'' + dep.id + '\')">' + _ico.download('#5cf2ff', 13) + ' &nbsp;EXPORT AS-BUILT (CSV)</button>';
+
   // Ship 2 Part B — Vendor-EDP cross-check (Master-scoped deployments only). The
   //   architect plan is never touched; findings surface in DOCUMENT RECONCILE.
   if (dep.scope && dep.scope.source === 'master') {
@@ -29055,6 +29059,13 @@ function deploy_renderCloseOutModal() {
   }
   html += '</div>';
 
+  // AS-BUILT artifact (v1.7.3) — the "job done, hand off the truth" moment. Independent of the
+  // json/csv/both close-out archive + purge gating above; just emits the as-built CSV on demand.
+  html += '<div style="margin-bottom:12px">';
+  html += '<button onclick="deploy_exportAsBuilt(_closeOutState.deployId)" style="width:100%;background:rgba(92,242,255,0.10);border:1px solid var(--cyan);border-radius:8px;padding:11px;color:var(--cyan);font-family:var(--mono);font-size:11px;letter-spacing:1.5px;cursor:pointer;-webkit-appearance:none;min-height:var(--tap-s)">' + _ico.download('#5cf2ff', 13) + ' EXPORT AS-BUILT (CSV)</button>';
+  html += '<div style="font-family:var(--mono);font-size: var(--fs-caption);color:var(--slate);margin-top:4px;text-align:center;letter-spacing:0.5px">Captured plan-vs-built truth — separate from the close-out archive above.</div>';
+  html += '</div>';
+
   // STEP 3 — Confirm (checkbox + typed CLOSE)
   html += '<div style="margin-bottom:14px">';
   html += '<div style="font-family:var(--orb);font-size: var(--fs-micro);letter-spacing:2px;color:var(--cyan);margin-bottom:6px">STEP 3 — CONFIRM</div>';
@@ -29083,6 +29094,178 @@ function deploy_renderCloseOutModal() {
   html += '</button>';
 
   c.innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// AS-BUILT LOOP (v1.7.3) — plan vs built vs verified, exported as honest CSV.
+// PHANTOM consumes the Master but never produces truth; this closes the loop by
+// emitting captured reality (serials, scans, audit-walk verdicts, build state).
+// HONESTY-LOCKED: no value is ever synthesized, defaulted, or inferred into a
+// serial/verdict. Blank stays blank; UNVERIFIED means unverified. Derived, not
+// stored — a re-export recomputes. Reuses the shared rollup + downloadCSV/share.
+// ═══════════════════════════════════════════════════════════════════════════
+var ASBUILT_COLUMNS = ['site_code','deployment','exported_at','cab_id','ru','expected_model','expected_dns','planned_serial','scanned_serial','verdict','audit_walk','rack_status','phase_pct','completed_by','completed_at','notes'];
+
+function _asbuilt_norm(s) { return String(s == null ? '' : s).toUpperCase().trim(); }
+
+// RFC-4180 cell escape (mirrors deploy_buildCSV's csvEsc). null/undefined -> '' (never 'null').
+function _asbuilt_csvEsc(v) {
+  var s = (v == null) ? '' : String(v);
+  return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+
+// Asset scans (captured serials) from the flat scan collection, frozen mm verdict intact.
+// Read the raw localStorage key directly (the collection API is module-scoped).
+function _asbuilt_loadAssetScans() {
+  try {
+    var arr = safeParse(localStorage.getItem('phantom_scan_collection') || '[]', []);
+    return Array.isArray(arr) ? arr.filter(function(e) { return e && e.type === 'asset' && e.value; }) : [];
+  } catch (_) { return []; }
+}
+
+// Rack-level build state from the shared rollup + audit/signoff. completed_by/at come ONLY
+// from real signoff data; absent -> blank (never fabricated). Returns {status,pct,by,at,built}.
+function _asbuilt_rackBuild(rack, phases, audit) {
+  var ru = null;
+  try { ru = deploy_computeRackRollup(rack.id, phases); } catch (_) {}
+  var pct = ru ? (ru.pctComplete || 0) : 0;
+  var status = !ru ? 'PENDING'
+    : (ru.currentPhase === 'complete' ? 'COMPLETE'
+    : (ru.isBlocked ? 'BLOCKED'
+    : (pct > 0 ? 'IN_PROGRESS' : 'PENDING')));
+  var rackPhases = (phases || []).filter(function(p) { return p.rackId === rack.id; });
+  var phaseIds = {}; rackPhases.forEach(function(p) { phaseIds[p.id] = true; });
+  var maxAt = 0, byFromPhase = '';
+  rackPhases.forEach(function(p) {
+    if (p.signedOffAt && p.signedOffAt > maxAt) { maxAt = p.signedOffAt; byFromPhase = p.signedOffBy || byFromPhase; }
+  });
+  var by = '', latestTs = -1;
+  (audit || []).forEach(function(e) {
+    if (e && e.action === 'PHASE_COMPLETE' && e.entityType === 'phase' && phaseIds[e.entityId] && (e.ts || 0) >= latestTs) {
+      latestTs = e.ts || 0; by = e.actor || by;
+    }
+  });
+  if (!by) by = byFromPhase || '';
+  var at = maxAt ? new Date(maxAt).toISOString() : '';
+  return { status: status, pct: pct, by: by, at: at, built: status === 'COMPLETE' };
+}
+
+// Build the as-built table: { columns, rows }. One row per planned position + one per EXTRA.
+function deploy_buildAsBuilt(deployId) {
+  var dep = deploy_getById(deployId);
+  if (!dep) return null;
+  var racks   = deploy_loadRacks(deployId) || [];
+  var phases  = deploy_loadPhases(deployId) || [];
+  var audit   = deploy_loadAudit(deployId) || [];
+  var awAll   = (typeof _auditWalk_loadAll === 'function') ? _auditWalk_loadAll() : {};
+  var scans   = _asbuilt_loadAssetScans();
+
+  // Index scans by normalized value (collection is newest-first; first match wins).
+  var scanByVal = {};
+  scans.forEach(function(s) { var k = _asbuilt_norm(s.value); if (k && !scanByVal[k]) scanByVal[k] = s; });
+  var consumed = {};
+
+  var site       = dep.siteId || (typeof phantom_siteLabel === 'function' ? phantom_siteLabel('') : '') || '';
+  var deployName = dep.name || deployId;
+  var exportedAt = new Date().toISOString();
+  var rows = [];
+
+  racks.forEach(function(rack) {
+    var build = _asbuilt_rackBuild(rack, phases, audit);
+    // Audit-walk entry for this rack — match by id/rackId/name; trust ONLY if slotSig matches
+    // the current slot count (stale layouts are discarded, never guessed).
+    var awEntry = null, cands = [rack.id, rack.rackId, rack.name];
+    for (var c = 0; c < cands.length && !awEntry; c++) {
+      if (cands[c] != null && awAll[String(cands[c])]) awEntry = awAll[String(cands[c])];
+    }
+    var slots = rack.slots || [];
+    var awValid = !!(awEntry && awEntry.results && awEntry.slotSig === slots.length);
+
+    slots.forEach(function(slot) {
+      var plannedSerial = slot.serial ? String(slot.serial) : '';
+      var pNorm = _asbuilt_norm(plannedSerial);
+      // One physical scan binds to ONE position: if an earlier slot already consumed this
+      // serial (duplicate planned serial — a plan anomaly), don't re-credit it here. The
+      // later slot honestly falls to UNVERIFIED/MISSING rather than a second false VERIFIED.
+      var bound = (pNorm && !consumed[pNorm]) ? scanByVal[pNorm] : null;
+      var awVerdict = (awValid && slot.uStart != null) ? (awEntry.results[String(slot.uStart)] || '') : '';
+      var scannedSerial = '', verdict = '', noteParts = [];
+
+      if (bound) {
+        consumed[pNorm] = true;
+        scannedSerial = bound.value;
+        var mm = (bound.mm && bound.mm.status) || '';
+        if (mm === 'found' || mm === 'dup') { verdict = 'VERIFIED'; }
+        else if (mm === 'unknown') { verdict = 'MISMATCH'; }
+        else { verdict = 'UNVERIFIED'; }   // no-serials / unclassified — captured, Master can't confirm
+        if (mm) noteParts.push('mm:' + mm);
+      } else if (build.built) {
+        verdict = 'UNVERIFIED';            // built but no confirming serial scan
+      } else if (awVerdict) {
+        verdict = 'UNVERIFIED';            // inspected via audit walk, not serial-confirmed
+      } else {
+        verdict = 'MISSING';               // planned, zero evidence
+      }
+      if (slot.notes) noteParts.push(String(slot.notes));
+
+      rows.push([
+        site, deployName, exportedAt,
+        rack.rackId || rack.id || '',
+        (slot.uStart != null ? slot.uStart : ''),
+        slot.model || '',
+        slot.dns || '',
+        plannedSerial,
+        scannedSerial,
+        verdict,
+        awVerdict ? String(awVerdict).toUpperCase() : '',
+        build.status,
+        build.pct,
+        build.by,
+        build.at,
+        noteParts.join(' · ')
+      ]);
+    });
+  });
+
+  // EXTRA rows — captured asset scans that match no planned position (one per distinct serial).
+  scans.forEach(function(s) {
+    var k = _asbuilt_norm(s.value);
+    if (!k || consumed[k]) return;
+    consumed[k] = true;
+    var mm = (s.mm && s.mm.status) || '';
+    rows.push([
+      site, deployName, exportedAt,
+      '', '', '', '', '',
+      s.value,
+      'EXTRA',
+      '', '', '', '', '',
+      'mm:' + (mm || 'unclassified') + (s.mm && s.mm.detail ? (' · ' + s.mm.detail) : '')
+    ]);
+  });
+
+  return { columns: ASBUILT_COLUMNS, rows: rows };
+}
+
+// Serialize the as-built table to CSV (header + data rows; honest empty export = header only).
+function deploy_buildAsBuiltCSV(deployId) {
+  var data = deploy_buildAsBuilt(deployId);
+  if (!data) return null;
+  var lines = [ data.columns.map(_asbuilt_csvEsc).join(',') ];
+  data.rows.forEach(function(r) { lines.push(r.map(_asbuilt_csvEsc).join(',')); });
+  return lines.join('\r\n');
+}
+
+// Entry point — build + deliver via the shared downloadCSV/share path. 100% on-device.
+function deploy_exportAsBuilt(deployId) {
+  var dep = deploy_getById(deployId);
+  if (!dep) { if (typeof phantomToast === 'function') phantomToast('Deployment not found', 'error'); return; }
+  var csv = deploy_buildAsBuiltCSV(deployId);
+  if (csv == null) { if (typeof phantomToast === 'function') phantomToast('Could not build as-built export', 'error'); return; }
+  var siteSlug = String(dep.siteId || 'site').replace(/[^a-z0-9]/gi, '-').toLowerCase();
+  var depSlug  = String(dep.name || deployId).replace(/[^a-z0-9]/gi, '-').toLowerCase();
+  if (typeof downloadCSV === 'function') downloadCSV(csv, 'asbuilt-' + siteSlug + '-' + depSlug);
+  else { if (typeof phantomToast === 'function') phantomToast('Export unavailable on this device', 'error'); return; }
+  try { if (typeof deploy_logAudit === 'function') deploy_logAudit(deployId, 'ASBUILT_EXPORT', 'deployment', deployId, 'As-built CSV exported'); } catch (_) {}
 }
 
 // Surgical gate refresh — updates only the typed-input border, its label
