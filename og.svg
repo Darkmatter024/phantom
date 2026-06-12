@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
   <!-- PHANTOM link-preview card (manifest-og). The ONE asset where text is allowed (it's a
        social card, not an icon): ghost left, Audiowide PHANTOM wordmark with the brand
-       violet->cyan gradient right. Same ghost geometry + tokens as icon.svg. -->
+       violet->cyan gradient right. Same ghost geometry + tokens as the in-app .ico-ghost. -->
   <defs>
     <radialGradient id="ogGlow" cx="24%" cy="48%" r="55%">
       <stop offset="0%"   stop-color="#b478ff" stop-opacity="0.26"/>
