@@ -10397,11 +10397,199 @@ body.has-resume-banner #boot {
     padding:12px 0 calc(14px + env(safe-area-inset-bottom)); margin-top:8px;
     background:rgba(5,7,11,0.92); -webkit-backdrop-filter:var(--blur-sheet); backdrop-filter:var(--blur-sheet);
     border-top:1px solid rgba(92,242,255,0.20); }
+
+/* ══ PHANTOM globe landing (v1.7.6) — pl- namespaced, scoped to #boot ══ */
+/* ── PHANTOM globe landing (v7 transplant, pl- namespaced, scoped to #boot) ── */
+#boot { --pl-cyan:#4be1ff; --pl-violet:#9d6bff; --pl-magenta:#ff4bd8; --pl-green:#3ddc84; --pl-bg:#030308; --pl-panel:rgba(16,20,38,0.55); --pl-border:rgba(125,140,255,0.18); }
+#boot, #boot * { box-sizing:border-box; }
+#boot .boot-items:empty { display:none; }
+/* ── Header — matches original landing ── */
+  .pl-hdr {
+    text-align: center;
+    padding: calc(env(safe-area-inset-top, 0px) + 24px) 16px 0;
+    position: relative; z-index: 3;
+  }
+  .pl-hdr .pl-ver {
+    font-size: 10px; letter-spacing: 0.34em; margin-right: -0.34em;
+    color: #57e6c9; text-transform: uppercase;
+  }
+  .pl-hdr h1 {
+    margin-top: 10px;
+    font-family: 'PhantomBrand', -apple-system, sans-serif;
+    font-size: 44px; font-weight: 400;
+    letter-spacing: 0.06em; margin-right: -0.06em;
+    background: linear-gradient(90deg, var(--pl-cyan), var(--pl-violet) 52%, var(--pl-magenta));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    text-shadow: 0 0 34px rgba(120, 140, 255, 0.30);
+  }
+  .pl-hdr .pl-sub {
+    margin-top: 4px; font-size: 10px;
+    letter-spacing: 0.40em; margin-right: -0.40em;
+    color: #8b93c4; text-transform: uppercase;
+  }
+
+  /* ── Globe stage ── */
+  .pl-stage {
+    position: relative; width: 100%; height: 340px; overflow: hidden;
+    touch-action: pan-y;
+  }
+  canvas.pl-layer { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .pl-horizon {
+    position: absolute; left: 0; right: 0; bottom: -8px; height: 90px;
+    background: radial-gradient(60% 100% at 50% 100%, rgba(75,225,255,0.20), rgba(3,3,8,0) 70%);
+    pointer-events: none;
+  }
+
+  /* ── Two stats only ── */
+  .pl-stat { position: absolute; z-index: 2; pointer-events: none; transition: opacity 0.5s; }
+  .pl-stat .pl-lbl {
+    font-size: 9px; letter-spacing: 0.18em; color: #7d86b8; text-transform: uppercase;
+    display: flex; align-items: center; gap: 5px; margin-bottom: 3px;
+  }
+  .pl-stat .pl-val {
+    font-size: 19px; font-weight: 600; font-variant-numeric: tabular-nums;
+    color: var(--pl-cyan); text-shadow: 0 0 14px rgba(75,225,255,0.45);
+  }
+  .pl-stat.pl-right { text-align: right; }
+  .pl-stat.pl-right .pl-lbl { justify-content: flex-end; }
+  .pl-dot {
+    width: 5px; height: 5px; border-radius: 50%;
+    background: var(--pl-green); box-shadow: 0 0 6px var(--pl-green);
+    animation: pl-pulse 2.2s ease-in-out infinite;
+  }
+  @keyframes pl-pulse { 50% { opacity: 0.35; } }
+  .pl-s1 { top: 14px; left: 18px; }
+  .pl-s2 { top: 14px; right: 18px; }
+  .pl-s2 .pl-val { color: var(--pl-green); text-shadow: 0 0 14px rgba(61,220,132,0.45); }
+
+  .pl-hint {
+    position: absolute; bottom: 12px; left: 0; right: 0;
+    text-align: center; font-size: 9px; letter-spacing: 0.22em;
+    color: rgba(139,147,196,0.6); text-transform: uppercase;
+    pointer-events: none; transition: opacity 0.6s;
+  }
+
+  /* ── Status card — mirrors actual app rows ── */
+  .pl-card {
+    margin: 6px 16px 0; position: relative; z-index: 3;
+    border-radius: 14px;
+    background: var(--pl-panel); border: 1px solid var(--pl-border);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    transition: opacity 0.5s;
+  }
+  .pl-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 6px 12px;
+    border-bottom: 1px solid rgba(125,140,255,0.10);
+    min-height: 40px;
+  }
+  .pl-row:last-child { border-bottom: none; }
+  .pl-row .pl-ico { width: 17px; height: 17px; flex: 0 0 17px; }
+  .pl-row .pl-info { flex: 1; min-width: 0; }
+  .pl-row .pl-name { font-size: 12.5px; color: #dfe6ff; }
+  .pl-row .pl-name.pl-ge { color: var(--pl-cyan); }
+  .pl-row .pl-meta {
+    font-size: 8.5px; color: #7d86b8; margin-top: 1px;
+    letter-spacing: 0.04em; font-variant-numeric: tabular-nums;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .pl-row .pl-dot { flex: 0 0 auto; }
+  .pl-chip {
+    font-size: 8.5px; font-weight: 700; letter-spacing: 0.14em;
+    padding: 3px 9px; border-radius: 10px;
+    color: var(--pl-green); border: 1px solid rgba(61,220,132,0.5);
+    background: rgba(61,220,132,0.08);
+  }
+  .pl-chip.pl-active {
+    color: #ffb8ec; border: 1px solid rgba(255,75,216,0.55);
+    background: linear-gradient(90deg, rgba(157,107,255,0.15), rgba(255,75,216,0.15));
+  }
+
+  /* ── HOLD TO ENTER ── */
+  .pl-enterWrap {
+    display: flex; flex-direction: column; align-items: center;
+    margin-top: 16px; position: relative; z-index: 3;
+    transition: opacity 0.5s;
+  }
+  .pl-ring {
+    position: relative; width: 112px; height: 112px;
+    cursor: pointer; user-select: none; -webkit-user-select: none;
+    touch-action: none;
+  }
+  .pl-ring svg { position: absolute; inset: 0; transform: rotate(-90deg); }
+  .pl-ring .pl-track { fill: none; stroke: rgba(125,140,255,0.18); stroke-width: 3; }
+  .pl-ring .pl-spin { transform-origin: 56px 56px; will-change: transform; }
+  .pl-ring .pl-s1 { animation: pl-orbit 2.1s linear infinite; }
+  .pl-ring .pl-s2 { animation: pl-orbit 3.6s linear infinite reverse; }
+  .pl-ring .pl-s3 { animation: pl-orbit 5.2s linear infinite; }
+  .pl-ring.pl-charging .pl-s1 { animation-duration: 0.55s; }
+  .pl-ring.pl-charging .pl-s2 { animation-duration: 0.85s; }
+  .pl-ring.pl-charging .pl-s3 { animation-duration: 1.2s; }
+  .pl-ring .pl-arc { fill: none; stroke: url(#pl-sg); stroke-linecap: round; }
+  .pl-ring .pl-a1 { stroke-width: 3; stroke-dasharray: 91 235.7; opacity: 0.95; }
+  .pl-ring .pl-a2 { stroke-width: 2.2; stroke-dasharray: 52 237; opacity: 0.55; }
+  .pl-ring .pl-a3 { stroke-width: 1.6; stroke-dasharray: 28 223.3; opacity: 0.38; }
+  .pl-ring .pl-sat { fill: #fff; }
+  .pl-ring.pl-charging .pl-arc { opacity: 1; }
+  @keyframes pl-orbit { to { transform: rotate(360deg); } }
+  @keyframes pl-coreBreathe {
+    0%, 100% { box-shadow: 0 0 26px rgba(75,225,255,0.10), inset 0 0 22px rgba(75,225,255,0.05); }
+    50% { box-shadow: 0 0 42px rgba(157,107,255,0.30), inset 0 0 28px rgba(75,225,255,0.10); }
+  }
+  .pl-ring .pl-prog { fill: none; stroke: url(#pl-sg); stroke-width: 3.5; stroke-linecap: round; }
+  .pl-ring .pl-core {
+    position: absolute; inset: 10px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, rgba(40,50,90,0.9), rgba(8,10,24,0.95));
+    border: 1px solid rgba(125,140,255,0.25);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 4px;
+    animation: pl-coreBreathe 3.2s ease-in-out infinite;
+  }
+  .pl-ring.pl-charging .pl-core { animation-duration: 0.8s; }
+  .pl-ring .pl-pwr { font-size: 22px; color: var(--pl-cyan); text-shadow: 0 0 16px rgba(75,225,255,0.7); }
+  .pl-ring .pl-cap {
+    font-size: 8.5px; letter-spacing: 0.26em; margin-right: -0.26em;
+    color: #8b93c4; text-transform: uppercase;
+  }
+  .pl-enterWrap .pl-below {
+    margin-top: 10px; font-size: 10px; letter-spacing: 0.30em; margin-right: -0.30em;
+    color: #8b93c4; text-transform: uppercase;
+  }
+
+  /* ── Warp overlay ── */
+  .pl-flash {
+    position: fixed; inset: 0; z-index: 9;
+    background: radial-gradient(circle at 50% 38%, rgba(200,245,255,1), rgba(120,160,255,0.9) 40%, rgba(3,3,8,0.95) 75%);
+    opacity: 0; pointer-events: none; transition: none;
+  }
+  .pl-done {
+    position: fixed; inset: 0; z-index: 10;
+    display: none; flex-direction: column; align-items: center; justify-content: center;
+    gap: 12px; background: var(--pl-bg);
+  }
+  .pl-done .pl-big {
+    font-family: 'PhantomBrand', sans-serif; font-size: 22px;
+    background: linear-gradient(90deg, var(--pl-cyan), var(--pl-violet), var(--pl-magenta));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    letter-spacing: 0.10em;
+  }
+  .pl-done .pl-small { font-size: 10px; letter-spacing: 0.30em; color: #8b93c4; text-transform: uppercase; }
+  .pl-done .pl-green { color: var(--pl-green); font-size: 12px; letter-spacing: 0.22em; }
+
+  .pl-note {
+    margin: 26px 18px 0; padding: 12px 14px; border-radius: 12px;
+    border: 1px solid rgba(157,107,255,0.3);
+    background: linear-gradient(90deg, rgba(157,107,255,0.10), rgba(255,75,216,0.06));
+    font-size: 11px; color: #aab2dd; line-height: 1.5;
+  }
+  .pl-note b { color: var(--pl-cyan); letter-spacing: 0.08em; }
+
+@media (prefers-reduced-motion: reduce){ #boot .pl-ring .pl-spin, #boot .pl-dot, #boot .pl-core{ animation:none !important; } }
 </style>
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.7.5';
+const PHANTOM_APP_VERSION = 'phantom-v1.7.6';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -10719,242 +10907,562 @@ if (typeof window !== 'undefined') {
 
 <!-- ━━━ BOOT ━━━ -->
 <div id="boot">
-  <canvas id="bootCanvas" style="position:absolute;inset:0;pointer-events:none;z-index:1"></canvas>
-  <div class="boot-content"><svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><linearGradient id="biGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5cf2ff"/><stop offset="0.55" stop-color="#7da6ff"/><stop offset="1" stop-color="#b06bff"/></linearGradient></defs></svg>
-    <div class="boot-eyebrow">PHANTOM</div>
-    <div class="boot-logo">PHANTOM</div>
-    <div class="boot-tagline">Field Intelligence System</div>
-    <div class="boot-items">
-      <div class="boot-item"><svg class="bi-icon" viewBox="0 0 24 24"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="m2 12 10 5 10-5"/><path d="m2 17 10 5 10-5"/></svg><div class="boot-dot dot-ok"></div><span>EDP context</span><span class="boot-badge boot-badge-ok">READY</span></div>
-      <div class="boot-item"><svg class="bi-icon" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/><line x1="15.4" y1="6.5" x2="8.6" y2="10.5"/></svg><div class="boot-dot dot-ok"></div><span>Fiber + optics reference</span><span class="boot-badge boot-badge-ok">SYNCED</span></div>
-      <div class="boot-item"><svg class="bi-icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><line x1="12" y1="8.5" x2="12" y2="14.5"/><line x1="9" y1="11.5" x2="15" y2="11.5"/></svg><div class="boot-dot dot-ok"></div><span>Triage protocols</span><span class="boot-badge boot-badge-ok">READY</span></div>
-      <div class="boot-item active"><svg class="bi-icon" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7v12l2.4-1.9L11.8 21 14 19.1 16.4 21 19 18.9V9a7 7 0 0 0-7-7Z"/><circle cx="9.3" cy="10.5" r=".9"/><circle cx="14.7" cy="10.5" r=".9"/></svg><div class="boot-dot dot-sync"></div><span>Ghost Echo · Phantom</span><span class="boot-badge boot-badge-active">ACTIVE</span></div>
+<div class="pl-hdr">
+  <div class="pl-ver">PHANTOM</div>
+  <h1>PHANTOM</h1>
+  <div class="pl-sub">Field Intelligence System</div>
+</div>
+<div class="pl-stage" id="pl-stage">
+  <canvas id="pl-under" class="pl-layer"></canvas>
+  <canvas id="pl-gl" class="pl-layer"></canvas>
+  <div class="pl-horizon"></div>
+  <div class="pl-stat pl-s1 pl-fade"><div class="pl-lbl"><span class="pl-dot"></span>Global Status</div><div class="pl-val">ONLINE</div></div>
+  <div class="pl-stat pl-s2 pl-right pl-fade"><div class="pl-lbl">Offline Cache</div><div class="pl-val">100%</div></div>
+  <div class="pl-hint pl-fade" id="pl-hint">Drag to rotate</div>
+</div>
+<div class="pl-card pl-fade">
+  <div class="pl-row">
+    <svg class="pl-ico" viewBox="0 0 24 24" fill="none" stroke="#9d6bff" stroke-width="1.6"><path d="M12 3 2 8l10 5 10-5-10-5z"/><path d="M2 13l10 5 10-5"/></svg>
+    <div class="pl-info">
+      <div class="pl-name">Master context</div>
+      <div class="pl-meta">Single source of truth</div>
     </div>
-    <div class="pwr-topo">
-    <div class="lead">
-      <div class="ey">POWER TOPOLOGY</div>
-      <div class="rr">RACK ROW B</div>
-      <div class="ph">3 PHASE · 480V</div>
-      <div class="leg">
-        <div><span style="background:#34d2f2"></span>PWR A</div>
-        <div><span style="background:#a86bff"></span>PWR B</div>
-        <div><span style="background:#ff3da6"></span>PWR C</div>
-        <div><span style="background:#6b7a90"></span>NEUTRAL</div>
-      </div>
-    </div>
-    <div class="art">
-      <svg viewBox="0 0 400 178" fill="none" preserveAspectRatio="xMidYMid meet">
-        <defs>
-          <linearGradient id="pt-rkface" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stop-color="#0d1626"/><stop offset="1" stop-color="#060b14"/>
-          </linearGradient>
-          <linearGradient id="pt-rktop" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stop-color="#1b2942"/><stop offset="1" stop-color="#0d1626"/>
-          </linearGradient>
-          <linearGradient id="pt-cabCP" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0" stop-color="#34d2f2"/><stop offset="1" stop-color="#a86bff"/>
-          </linearGradient>
-          <linearGradient id="pt-cabPM" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0" stop-color="#a86bff"/><stop offset="1" stop-color="#ff3da6"/>
-          </linearGradient>
-          <radialGradient id="pt-cglow" cx="0.5" cy="0.5" r="0.5">
-            <stop offset="0" stop-color="rgba(52,210,242,0.9)"/><stop offset="1" stop-color="rgba(52,210,242,0)"/>
-          </radialGradient>
-
-          <!-- ===== reusable detailed side-rack (front-left at 0,0; ~47w x 98h) ===== -->
-          <g id="pt-srack">
-            <!-- 3D faces -->
-            <path d="M0 12 L7 5 L47 5 L40 12 Z" fill="url(#pt-rktop)" stroke="rgba(120,170,210,0.4)" stroke-width="0.6"/>
-            <path d="M40 12 L47 5 L47 96 L40 103 Z" fill="#0a1220" stroke="rgba(120,170,210,0.28)" stroke-width="0.5"/>
-            <rect x="0" y="12" width="40" height="91" fill="url(#pt-rkface)" stroke="rgba(120,170,210,0.5)" stroke-width="0.7"/>
-            <!-- header strip + status leds -->
-            <rect x="2" y="14" width="36" height="5" fill="rgba(120,170,210,0.14)"/>
-            <rect x="3.5" y="15.5" width="1.6" height="1.6" fill="#34d2f2"/>
-            <rect x="6.5" y="15.5" width="1.6" height="1.6" fill="#34d2f2"/>
-            <rect x="33" y="15.5" width="3.5" height="1.6" fill="rgba(120,170,210,0.5)"/>
-            <!-- mounting rails w/ holes -->
-            <g fill="rgba(120,170,210,0.32)">
-              <rect x="2.4" y="22" width="1.1" height="1.1"/><rect x="2.4" y="28" width="1.1" height="1.1"/><rect x="2.4" y="34" width="1.1" height="1.1"/><rect x="2.4" y="40" width="1.1" height="1.1"/><rect x="2.4" y="46" width="1.1" height="1.1"/><rect x="2.4" y="52" width="1.1" height="1.1"/><rect x="2.4" y="58" width="1.1" height="1.1"/><rect x="2.4" y="64" width="1.1" height="1.1"/><rect x="2.4" y="70" width="1.1" height="1.1"/><rect x="2.4" y="76" width="1.1" height="1.1"/><rect x="2.4" y="82" width="1.1" height="1.1"/><rect x="2.4" y="88" width="1.1" height="1.1"/><rect x="2.4" y="94" width="1.1" height="1.1"/>
-              <rect x="36.5" y="22" width="1.1" height="1.1"/><rect x="36.5" y="28" width="1.1" height="1.1"/><rect x="36.5" y="34" width="1.1" height="1.1"/><rect x="36.5" y="40" width="1.1" height="1.1"/><rect x="36.5" y="46" width="1.1" height="1.1"/><rect x="36.5" y="52" width="1.1" height="1.1"/><rect x="36.5" y="58" width="1.1" height="1.1"/><rect x="36.5" y="64" width="1.1" height="1.1"/><rect x="36.5" y="70" width="1.1" height="1.1"/><rect x="36.5" y="76" width="1.1" height="1.1"/><rect x="36.5" y="82" width="1.1" height="1.1"/><rect x="36.5" y="88" width="1.1" height="1.1"/><rect x="36.5" y="94" width="1.1" height="1.1"/>
-            </g>
-            <!-- modules -->
-            <g stroke="rgba(120,170,210,0.4)" stroke-width="0.55" fill="rgba(20,32,52,0.6)">
-              <rect x="5" y="22" width="30" height="6" rx="0.6"/>
-              <rect x="5" y="30" width="14" height="6" rx="0.6"/><rect x="21" y="30" width="14" height="6" rx="0.6"/>
-              <rect x="5" y="39" width="30" height="3.4" rx="0.5"/>
-              <rect x="5" y="45" width="30" height="10" rx="0.6"/>
-              <rect x="5" y="58" width="30" height="3.4" rx="0.5"/>
-              <rect x="5" y="64" width="13" height="9" rx="0.6"/><rect x="22" y="64" width="13" height="9" rx="0.6"/>
-              <rect x="5" y="76" width="30" height="6" rx="0.6"/>
-              <rect x="5" y="84" width="30" height="7" rx="0.6"/>
-              <rect x="5" y="93" width="30" height="6" rx="0.6"/>
-            </g>
-            <!-- blade fins (vertical) -->
-            <g stroke="rgba(120,170,210,0.5)" stroke-width="0.5">
-              <path d="M24 46.5v8M26.5 46.5v8M29 46.5v8M31.5 46.5v8M34 46.5v8"/>
-              <path d="M24 85v5M26.5 85v5M29 85v5M31.5 85v5M34 85v5"/>
-            </g>
-            <!-- accent leds -->
-            <g fill="#34d2f2"><rect x="6.5" y="23.5" width="1.6" height="1.6"/><rect x="6.5" y="65.5" width="1.6" height="1.6"/></g>
-            <rect x="6.5" y="77.5" width="1.6" height="1.6" fill="#a86bff"/>
-            <rect x="6.5" y="40" width="1.6" height="1.6" fill="#34d2f2"/>
-          </g>
-        </defs>
-
-        <!-- faint perspective floor -->
-        <g stroke="rgba(120,170,210,0.07)" stroke-width="0.5">
-          <path d="M40 170 L150 152"/><path d="M360 170 L250 152"/><path d="M70 164 H330"/>
-        </g>
-
-        <!-- ===== side racks: 2 left (one adjacent to center) + 4 right ===== -->
-        <use href="#pt-srack" x="50" y="14"/>
-        <use href="#pt-srack" x="96" y="14"/>
-        <use href="#pt-srack" x="196" y="14"/>
-        <use href="#pt-srack" x="240" y="14"/>
-        <use href="#pt-srack" x="284" y="14"/>
-        <use href="#pt-srack" x="328" y="14"/>
-        <!-- per-rack colored led overrides -->
-        <rect x="246.5" y="37.5" width="1.8" height="1.8" fill="#ff3da6"/>
-        <rect x="334.5" y="37.5" width="1.8" height="1.8" fill="#a86bff"/>
-        <rect x="102.5" y="51.5" width="1.8" height="1.8" fill="#a86bff"/>
-
-        <!-- ===== CENTER rack: taller, isolated, glowing cyan ===== -->
-        <g>
-          <ellipse cx="161" cy="132" rx="30" ry="7" fill="url(#pt-cglow)" opacity="0.5"/>
-          <path d="M140 18 L150 8 L194 8 L184 18 Z" fill="rgba(52,210,242,0.14)" stroke="#34d2f2" stroke-width="1"/>
-          <path d="M184 18 L194 8 L194 120 L184 130 Z" fill="rgba(10,24,38,0.8)" stroke="#34d2f2" stroke-width="0.8"/>
-          <rect x="140" y="18" width="44" height="112" fill="rgba(8,20,34,0.7)" stroke="#34d2f2" stroke-width="1.4"/>
-          <rect x="143" y="21" width="38" height="106" fill="none" stroke="rgba(52,210,242,0.3)" stroke-width="0.5"/>
-          <!-- labeled control unit near top -->
-          <rect x="145" y="26" width="34" height="13" rx="1" fill="rgba(52,210,242,0.22)" stroke="#34d2f2" stroke-width="0.8"/>
-          <rect x="147.5" y="29" width="6" height="7" rx="0.6" fill="#081422" stroke="#34d2f2" stroke-width="0.5"/>
-          <rect x="156" y="30" width="20" height="1.8" fill="#34d2f2"/>
-          <rect x="156" y="33.5" width="14" height="1.8" fill="rgba(52,210,242,0.6)"/>
-          <!-- cyan rails + holes -->
-          <g fill="rgba(52,210,242,0.5)">
-            <rect x="144" y="46" width="1.1" height="1.1"/><rect x="144" y="54" width="1.1" height="1.1"/><rect x="144" y="62" width="1.1" height="1.1"/><rect x="144" y="70" width="1.1" height="1.1"/><rect x="144" y="78" width="1.1" height="1.1"/><rect x="144" y="86" width="1.1" height="1.1"/><rect x="144" y="94" width="1.1" height="1.1"/><rect x="144" y="102" width="1.1" height="1.1"/><rect x="144" y="110" width="1.1" height="1.1"/>
-            <rect x="179" y="46" width="1.1" height="1.1"/><rect x="179" y="54" width="1.1" height="1.1"/><rect x="179" y="62" width="1.1" height="1.1"/><rect x="179" y="70" width="1.1" height="1.1"/><rect x="179" y="78" width="1.1" height="1.1"/><rect x="179" y="86" width="1.1" height="1.1"/><rect x="179" y="94" width="1.1" height="1.1"/><rect x="179" y="102" width="1.1" height="1.1"/><rect x="179" y="110" width="1.1" height="1.1"/>
-          </g>
-          <g stroke="rgba(52,210,242,0.45)" stroke-width="0.55" fill="rgba(12,36,56,0.5)">
-            <rect x="147" y="44" width="30" height="6" rx="0.6"/>
-            <rect x="147" y="52" width="30" height="3.4"/>
-            <rect x="147" y="58" width="14" height="8" rx="0.6"/><rect x="163" y="58" width="14" height="8" rx="0.6"/>
-            <rect x="147" y="69" width="30" height="3.4"/>
-            <rect x="147" y="75" width="30" height="9" rx="0.6"/>
-            <rect x="147" y="87" width="30" height="3.4"/>
-            <rect x="147" y="93" width="30" height="7" rx="0.6"/>
-            <rect x="147" y="103" width="30" height="6" rx="0.6"/>
-          </g>
-          <g stroke="rgba(52,210,242,0.6)" stroke-width="0.5"><path d="M166 75.5v9M168.5 75.5v9M171 75.5v9M173.5 75.5v9M176 75.5v9"/></g>
-          <circle cx="161" cy="130" r="2.6" fill="#34d2f2"/>
-        </g>
-
-        <!-- ===== realistic power routing: dual feed per rack -> bottom bus rail ===== -->
-        <!-- main busway (energized spine) -->
-        <path d="M40 162 H356" stroke="rgba(140,180,220,0.28)" stroke-width="1.2"/>
-        <path d="M40 162 H356" stroke="rgba(52,210,242,0.12)" stroke-width="3" stroke-linecap="round"/>
-
-        <!-- feeders: each rack drops TWO feeds (A/B redundant), phase-colored, straight down to a tap on the bus.
-             rack front centers: L1=70 L2=116 | CENTER=162 | R1=216 R2=260 R3=304 R4=348 -->
-        <!-- rack power inlets (PDU whips plug here) -->
-        <g class="inlet">
-          <g fill="rgba(8,16,28,0.95)" stroke="rgba(120,170,210,0.55)" stroke-width="0.6">
-            <rect x="59" y="114" width="22" height="5" rx="1"/>
-            <rect x="105" y="114" width="22" height="5" rx="1"/>
-            <rect x="205" y="114" width="22" height="5" rx="1"/>
-            <rect x="249" y="114" width="22" height="5" rx="1"/>
-            <rect x="293" y="114" width="22" height="5" rx="1"/>
-            <rect x="337" y="114" width="22" height="5" rx="1"/>
-          </g>
-          <!-- terminals, colored per feed -->
-          <g>
-            <circle cx="64" cy="116.5" r="1.4" fill="#34d2f2"/><circle cx="76" cy="116.5" r="1.4" fill="#a86bff"/>
-            <circle cx="110" cy="116.5" r="1.4" fill="#a86bff"/><circle cx="122" cy="116.5" r="1.4" fill="#34d2f2"/>
-            <circle cx="210" cy="116.5" r="1.4" fill="#a86bff"/><circle cx="222" cy="116.5" r="1.4" fill="#ff3da6"/>
-            <circle cx="254" cy="116.5" r="1.4" fill="#ff3da6"/><circle cx="266" cy="116.5" r="1.4" fill="#a86bff"/>
-            <circle cx="298" cy="116.5" r="1.4" fill="#34d2f2"/><circle cx="310" cy="116.5" r="1.4" fill="#ff3da6"/>
-            <circle cx="342" cy="116.5" r="1.4" fill="#a86bff"/><circle cx="354" cy="116.5" r="1.4" fill="#ff3da6"/>
-          </g>
-          <!-- center rack inlet -->
-          <rect x="155" y="131" width="14" height="5" rx="1" fill="rgba(8,16,28,0.95)" stroke="#34d2f2" stroke-width="0.7"/>
-          <circle cx="162" cy="133.5" r="1.6" fill="#34d2f2"/>
-        </g>
-
-        <g class="feed" fill="none" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round">
-          <!-- L1 (cyan A / purple B) -->
-          <path id="pt-f1" d="M64 119 V150 H56 V162"  stroke="#34d2f2"/>
-          <path id="pt-f2" d="M76 119 V145 H92 V162"  stroke="#a86bff"/>
-          <!-- L2 — adjacent to center (purple B / cyan A) -->
-          <path id="pt-f3" d="M110 119 V154 H120 V162" stroke="#a86bff"/>
-          <path id="pt-f4" d="M122 119 V148 H134 V162" stroke="#34d2f2"/>
-          <!-- CENTER trunk: distribution source feeding the bus both ways -->
-          <path id="pt-f5" d="M162 134 V162" stroke="#34d2f2" stroke-width="1.8"/>
-          <!-- R1 (purple B / magenta C) -->
-          <path id="pt-f6" d="M210 119 V152 H200 V162" stroke="#a86bff"/>
-          <path id="pt-f7" d="M222 119 V146 H236 V162" stroke="#ff3da6"/>
-          <!-- R2 (magenta C / purple B) -->
-          <path id="pt-f8" d="M254 119 V150 H246 V162" stroke="#ff3da6"/>
-          <path id="pt-f9" d="M266 119 V144 H280 V162" stroke="#a86bff"/>
-          <!-- R3 (cyan A / magenta C) -->
-          <path id="pt-f10" d="M298 119 V154 H290 V162" stroke="#34d2f2"/>
-          <path id="pt-f11" d="M310 119 V148 H324 V162" stroke="#ff3da6"/>
-          <!-- R4 (purple B / magenta C) -->
-          <path id="pt-f12" d="M342 119 V150 H334 V162" stroke="#a86bff"/>
-          <path id="pt-f13" d="M354 119 V145 H344 V162" stroke="#ff3da6"/>
-        </g>
-
-        <!-- animated current: pulses travel DOWN each feed into the bus (power delivery) -->
-        <g fill="none" stroke-linecap="round" class="flow">
-          <use href="#pt-f1"  stroke="#9af0ff" stroke-width="2.3" pathLength="100" stroke-dasharray="7 93" style="--d:2.4s;--g:.0s"/>
-          <use href="#pt-f2"  stroke="#c79bff" stroke-width="2.3" pathLength="100" stroke-dasharray="7 93" style="--d:2.7s;--g:.5s"/>
-          <use href="#pt-f3"  stroke="#c79bff" stroke-width="2.3" pathLength="100" stroke-dasharray="7 93" style="--d:2.2s;--g:.3s"/>
-          <use href="#pt-f4"  stroke="#9af0ff" stroke-width="2.3" pathLength="100" stroke-dasharray="7 93" style="--d:2.9s;--g:.8s"/>
-          <use href="#pt-f5"  stroke="#9af0ff" stroke-width="2.6" pathLength="100" stroke-dasharray="9 91" style="--d:1.8s;--g:.1s"/>
-          <use href="#pt-f6"  stroke="#c79bff" stroke-width="2.3" pathLength="100" stroke-dasharray="7 93" style="--d:2.5s;--g:.6s"/>
-          <use href="#pt-f7"  stroke="#ff8fcf" stroke-width="2.3" pathLength="100" stroke-dasharray="7 93" style="--d:3.0s;--g:1.0s"/>
-          <use href="#pt-f8"  stroke="#ff8fcf" stroke-width="2.3" pathLength="100" stroke-dasharray="7 93" style="--d:2.3s;--g:.4s"/>
-          <use href="#pt-f9"  stroke="#c79bff" stroke-width="2.3" pathLength="100" stroke-dasharray="7 93" style="--d:2.8s;--g:1.2s"/>
-          <use href="#pt-f10" stroke="#9af0ff" stroke-width="2.3" pathLength="100" stroke-dasharray="7 93" style="--d:2.6s;--g:.7s"/>
-          <use href="#pt-f11" stroke="#ff8fcf" stroke-width="2.3" pathLength="100" stroke-dasharray="7 93" style="--d:3.1s;--g:1.4s"/>
-          <use href="#pt-f12" stroke="#c79bff" stroke-width="2.3" pathLength="100" stroke-dasharray="7 93" style="--d:2.4s;--g:.9s"/>
-          <use href="#pt-f13" stroke="#ff8fcf" stroke-width="2.3" pathLength="100" stroke-dasharray="7 93" style="--d:2.7s;--g:1.5s"/>
-        </g>
-
-        <!-- bus taps (where feeds meet the busway) + the central source node -->
-        <g class="node">
-          <g fill="#34d2f2"><circle cx="56" cy="162" r="1.8"/><circle cx="134" cy="162" r="1.8"/><circle cx="290" cy="162" r="1.8"/></g>
-          <g fill="#a86bff" style="--nd:.6s"><circle cx="92" cy="162" r="1.8"/><circle cx="120" cy="162" r="1.8"/><circle cx="200" cy="162" r="1.8"/><circle cx="280" cy="162" r="1.8"/><circle cx="334" cy="162" r="1.8"/></g>
-          <g fill="#ff3da6" style="--nd:1.1s"><circle cx="236" cy="162" r="1.8"/><circle cx="246" cy="162" r="1.8"/><circle cx="324" cy="162" r="1.8"/><circle cx="344" cy="162" r="1.8"/></g>
-        </g>
-        <!-- central distribution source (brightest) -->
-        <circle cx="162" cy="162" r="3.4" fill="#34d2f2" class="src"/>
-        <circle cx="162" cy="130" r="2.4" fill="#34d2f2"/>
-
-        <!-- ===== far-right indicator dots ===== -->
-        <g fill="none" stroke="rgba(120,170,210,0.4)">
-          <circle cx="384" cy="34" r="3"/>
-          <circle cx="384" cy="52" r="3.6" fill="rgba(168,107,255,0.3)" stroke="#a86bff"/>
-          <circle cx="384" cy="70" r="3"/>
-          <circle cx="384" cy="88" r="3"/>
-          <circle cx="384" cy="106" r="3"/>
-        </g>
-      </svg>
-    </div>
+    <span class="pl-dot"></span>
+    <span class="pl-chip">READY</span>
   </div>
-    <div class="enter-wrap">
-      <div class="enter-circle" role="button" tabindex="0" aria-label="Enter PHANTOM" onclick="launch()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();launch();}">
-        <div class="enter-halo"></div>
-        <div class="enter-ticks"></div>
-        <div class="enter-ring"></div>
-        <div class="enter-disc">
-          <svg class="enter-glyph" viewBox="0 0 24 24"><path d="M12 3v9"/><path d="M18.4 7.6a9 9 0 1 1-12.8 0"/></svg>
-          <span class="enter-etxt">ENTER</span>
-        </div>
-      </div>
-      <div class="enter-cap">System Ready &middot; Tap to enter</div>
+  <div class="pl-row">
+    <svg class="pl-ico" viewBox="0 0 24 24" fill="none" stroke="#4be1ff" stroke-width="1.6"><path d="M3 12h4l2-6 4 12 2-6h6"/></svg>
+    <div class="pl-info">
+      <div class="pl-name">Troubleshoot Assistant</div>
+      <div class="pl-meta">HW matrix &middot; offline-capable</div>
     </div>
+    <span class="pl-dot"></span>
+    <span class="pl-chip">READY</span>
+  </div>
+  <div class="pl-row">
+    <svg class="pl-ico" viewBox="0 0 24 24" fill="none" stroke="#4be1ff" stroke-width="1.6"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="12" r="2.5"/><circle cx="6" cy="18" r="2.5"/><path d="M8.2 7.1l7.6 3.8M8.2 16.9l7.6-3.8"/></svg>
+    <div class="pl-info">
+      <div class="pl-name">Fiber + optics reference</div>
+      <div class="pl-meta">MPO / NDR optics</div>
+    </div>
+    <span class="pl-dot"></span>
+    <span class="pl-chip">SYNCED</span>
+  </div>
+  <div class="pl-row">
+    <svg class="pl-ico" viewBox="0 0 24 24" fill="none" stroke="#ff4bd8" stroke-width="1.6"><path d="M12 3a7 7 0 0 0-7 7v10l2.3-2 2.3 2 2.4-2 2.4 2 2.3-2 2.3 2V10a7 7 0 0 0-7-7z"/><circle cx="9.5" cy="10" r="1" fill="#ff4bd8"/><circle cx="14.5" cy="10" r="1" fill="#ff4bd8"/></svg>
+    <div class="pl-info">
+      <div class="pl-name pl-ge">Ghost Echo &middot; Phantom</div>
+      <div class="pl-meta">Tribal knowledge cache &middot; offline-native</div>
+    </div>
+    <span class="pl-chip pl-active">&#9679; ACTIVE</span>
   </div>
 </div>
+<div class="boot-items"></div>
+<div class="pl-enterWrap pl-fade">
+  <div class="pl-ring" id="pl-ring">
+    <svg viewBox="0 0 112 112">
+      <defs>
+        <linearGradient id="pl-sg" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#4be1ff"/>
+          <stop offset="50%" stop-color="#9d6bff"/>
+          <stop offset="100%" stop-color="#ff4bd8"/>
+        </linearGradient>
+      </defs>
+      <circle class="pl-track" cx="56" cy="56" r="50"/>
+      <g class="pl-spin pl-s1"><circle class="pl-arc pl-a1" cx="56" cy="56" r="52"/></g>
+      <g class="pl-spin pl-s2"><circle class="pl-arc pl-a2" cx="56" cy="56" r="46"/></g>
+      <g class="pl-spin pl-s3"><circle class="pl-arc pl-a3" cx="56" cy="56" r="40"/></g>
+      <g class="pl-spin pl-s1"><circle class="pl-sat" cx="56" cy="4" r="2"/></g>
+      <circle class="pl-prog" id="pl-prog" cx="56" cy="56" r="50"
+        stroke-dasharray="314.2" stroke-dashoffset="314.2"/>
+    </svg>
+    <div class="pl-core">
+      <div class="pl-pwr">&#9211;</div>
+      <div class="pl-cap" id="pl-cap">Enter</div>
+    </div>
+  </div>
+  <div class="pl-below">Hold to enter</div>
+</div>
+<div class="pl-flash" id="pl-flash"></div>
+<div class="pl-done" id="pl-done">
+  <div class="pl-small">Link established</div>
+  <div class="pl-big">AUS-01 &middot; AUSTIN</div>
+  <div class="pl-green">&#9679; H100 / H200 &middot; ONLINE</div>
+</div>
+
+</div>
+<script>
+
+(function () {
+  'use strict';
+
+  /* ════════ Real Earth data — Natural Earth, baked at build time ════════ */
+  var MASK_W = 720, MASK_H = 360;
+  var MASK_B64 = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACOf///wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAnz//5+AAAAAB8f/////8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPj//////4AHIfDf/////4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH////////4D7//////////+fAH4AAAAAAAAAAAAAAAAAAAAAAAMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADwPz/+////gD////////////8//+AAAAAAAAAAAAAAAAAAAAAAHwAAAAAAAAAAADAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP8Hf/x///gf////////////////gAAAAAAAAAAAAAAAAAAAGvgfh84AAAAAAAAA/8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//2fP///8D///////////////74AAAAAAAAAAALE4AAAAAADwPLYAAAAAAAAAAD/wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA///P8//7gAP//////////////zAAAAAAAAAH9PM/+AAAAAAAAAAAAAAAAAAAAADP/wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB8AAAf/9//+AAAf//////////////8AAAAAAAAAC/vwDAAAAAAAAAAAAAAAAAAAAAAAH/BwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH8cB/+////gD////////////////AAAAAAAAAAE///gAAAAAAAAAAAAAAAAAAAAAAAAAH/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAePgOp///+B////////////////+EAAAAAAAAAAIfw4AAAAAAAAAAAAAAAAAAAAAAAAAfwIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABPwABwA+AD3//AAH////////////////4gAAAAAAAAAAPgfwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAf4AABgAAABA/9gAAA////////////////6AAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAAAACAAAB/gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB/xgGAAAD/B////AAB///////////////6AAAAAAAAAAAAMAAAAAAAAAAAAAAAA/AAAAAAAAAAD/8AAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAfwPQPAG34A/wAAwAAA/6f/////////////iAAAAAAAAAAAAAAAAAAAAAAAAAAM/8AAAAAAAABwf///6AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM/+D+B/wAPwA/AAAAAAAP////////////4AAAAAAAAAAAAAAAAAAAAAAAAAH/4AAAAAAAAB//////7AAAAAAAR+/gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB///84Dw+f///4AAAAAAD////////////rAAAAAAAAAAAAAAAAAAAAAAAAA/wAAAAAAAAH///////+AAAAAAAD/7z6AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/gAAAAOP//vwAAAAAAA////////////YAAAAAAAAAAAAAAAAAAAAAAAAD/AAAAAAAAC////////wAAAAAAAAYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH/GAAAAAAAAAAAAAAAAAAAAf///////////wAAAAAAAAAAAAAAAAAAAAAAAAP4AAAAAAAAB///////8MAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD//wAADAP8P+B8AgAAAAAAAP/////////7/gAAAAAAAAAAAAAAAAAAAAAAAA/gAAAAAAAAXf//////myAAAAAAAAA8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH//nAArgHwf4Pz/f4AAAAAAH/////////ngAAAAAAAAAAAAAAAAAAAAAAAAB8AAAAOAAB/9//////w///4Af+AAAAGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/7+eM+Bn8cwfn/gAAAAAAAN/////////v8AAAAAAAAAAAAAAAAAAAAAAAAH4AAAA/ggJ//////////9/////AAAAwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAf/j//+/AP+MA/j/PfAAAAAAH//////////MAAAAAAAAAAAAAAAAAAAAAAAAH4AAAB/gg8P//////////////9gAAP/P8AAAAAAAAAAAAAAAAAAAAAAAAAAAAH+P///fgB8cA/3///IAAAAAHv/////////8AAAAAAAAAAAAAAAAAAAAAAAAf4AAAB/nv/l///////////////gQAH/z8AAAAAAAAAA+AAAAAADAAAAAAAAAABwA////gAB/AH5////wAAAAAv////////5+AAAAAAAAAAAAAAAAAAAAAAAAF8AAAP/nw/7///////////////g/+////4AAAAAAAADAAAAAAC//gAAAAAAAAAAD////wAB/gP/////3AAAABx///////94+AAAAAAAAAAAAAACa2AAAAAAAAfgAAH/j//9/////////////////////////gAAAAAAAAAAAAf///8AAAAAAEAAAH3///gB/4Af/9//+QAAABv////////OAAAAAAAAAAAAAAAN3/wAAAAAAAAGAAP/j//7/////////////////////////wAAAAAAAAAAAD//////+AAA7+I4A////+wYfgAHAYP//0AAAD9f////////gAAAAAAAAAAAAAb//+3AAAAAAAAB+AP/n////////////////////////////wAA5/+AAAAAAH///////+D+////wA//3/AfF8QH+CR//+AAAAA////////8AAAAAAAAAAAAAD/////6AAAAcAAAf8D/j///////////////////////////////g//+wAAAD////////////////+f8OAgfh+8D+AEf/gAAAAA////////wAAAAAAAAAAAAB5//////4AAAQDAOf/w/x9///////////////////////////9//////+AAAD////////////////8ABnAAeH/4v4AHH/9AAAAF///////AAAAAAAAAAAAAAFP///////ADwB+v/////x+///////////////////////////////////4AAAf///////////////+D4/+Ozf/8f8AfB//4AAAS//////AAAAAAAAAAAAAAAA////////4DgP///////x////////////////////////////////////8AAAP//////////////////f/////+/+AIA///AAA//////+AAAAAAAAAAAAAAAAf///////8Dg////////D////////////////////////////////////8+AAB//////////////////f//////+8AAD///4AAP/////8AAAAAAAAAAAAAAAH//////P/8B////////OP///////////////////////////////////v//wDwP////////////////////////yAAAf/5/gAAf////3gAAAMAHAAAAAAAAAL//////wPw7/////////////////////////////////////////////n//gf/////////////////////////PuAAAH/wfgAAO////4AAAAef/gAAAAAAAAf//4f//8AH//////////////////////////////////////////////gP4AH/////////////////////////+PAAf//8OAAAH///8AAAAAH//4AAAAAAAAP//gH//4AP//////////////////////////////////////////////ABwAH/P///////////////////////+f4A/f/+gAAACP//4AAAAAn//wAAAAAAAB///Af//8fP////////////////////////////////////////////28AAAAAAP///////////////////////8f+AID//gAAAB///oAAAAAD/+AAAAAAAAH///A////D//////////////////////////////////////////////4AAAAAAP//////////////////////vA/HgAB//4AAAB///4AAAAAAfgAAAAAAABf//+D///////////////////////////////////////////////////4AAAeAB///////////////////////+AEABgAfjwAAAA///wAAAAAAAAAAAAAAAD///wP///////////////////////////////////////////////////8AAAAA////////////////////////gAAcAAAJ8QAAAAf//AAAAAAAAAAAAAAAAH///A////////////////////////////////////////////////////eAAAAB////////////////////////AAAQI/cAfAAAAAH/+AAAAAAAAAAACAAAB///+Af//////////////////////////////////////////////z///8AAAAAD///////////////////////+AAAAI//AAAAAAAH/+AAAAAAAAAAAAAAAD///+Af////////////////////////////////////////////4Hz///AAAAAAB////8//////////////////8AAAAAf/gAAAAAAB/+AAAAAAAAAAAAAAAD///8Af////////////////////////////////////////////gOD//4AAAAAAAn///34f////////////////4AAAAAf/+AAAAAAAj+AAAAAAAAAAAAAAAD///+Af////////////////////////////////////////////AIP//gAAAAAAOf///n/B////////////////4AAAAAf/+QIAAAAABsAAAAAAAAAAAAAEAD////kP4D/////////////////////////////////////////8AA/kCAAAAAAAAA///PAAA3//////////////wAAAAAf/+AcAAAAAAAAAAAAAAAAAAAAAAC////wAAH/////////////////////////////////////////4AD4AAAAAAAAAAA//8MAAAD//////////////wAAAAA//+AeAAAAAAAAAAAAAAAAAAAAAAC/7//gB///////////////////////////////////////4CAD8APwAAAAAAAAAAAhb+AAAAA7/////////////6AAAAB//9h/AAAAAAAAAAAAAAAAAAAAAAB/j/8AB///////////////////////////////////////wAAAAAfkAAAAAAAAAAAAH8wAAAADf/////////////AAAAAf////AAAAAAAAAAAAAAAAAACeAAAeB/4AIf/////////////////////////////////////+AAAAAB/AAAAAAAAAAAAAHjgAAAACX/////////////gAAAAP////wAAAAAAAAAAAAAAAAAAcAAAAB/4QAf/////////////////////////////////////8AAAAAP/wAAAAAAAAAAAAeHAAAAADX/////////////gAAAAH////wAAAAAAAAAAAAAAAAAB/wAAAY/4gcf/////////////////////////////////////wAAAAAP/wAAAAAAAAAAAA4AAAAAAAx//////////////4AAAH////4AAAAAAAAAAAAAAAAAA/gAAB4f8A///////////////////////////////////////gAAAAA//wAAAAAAAAAAAHgAAAAAAAl//////////////8AAGH////4AAAAAAAAAAAAAAAAAAfgAAD8PwA///////////////////////////////////////AAAAAA//4AAAAAAAAAAA8AAAAAAAAGf//////////////gAAP////+AAAAAAAAAAAAAAAAABPwAADwsAA//////////////////////////////////////8AAAAAB//AAAAAAAAAAADIAAAAAAAAH////////////////gA/////+gAAAAAAAAAAAAAAAAEP4AABvhAA//////////////////////////////////////wAAAAAB//AAAAAAAAAAAcAAAAAAAAACD///////////////8H//////8AAAAAAAAAAAAAAAAfh4AABzABj//////////////////////////////////////BAAAAAB//ABAAAAAAAAAAAAAAAAAAAAD///////////////4H//////4AAAAAAAAAAAAAAAD/h+AAA8wP///////////////////////////////////////8UEAAAA/wAAAAAAAAAAIAAAAAAAAAACH///////////////8D//////PgAAAAAAAAAAAAAAD/A/AAB/9////////////////////////////////////////+eEAAAA/wAAAAAAAAABAAAAAAAAAAABBf//////////////8D///////wAAAAAAAAAAAAAAB/H/gB/////////////////////////////////////////////sAAAA/wAAAAAAAAAAAAAAAAAAAAAAhf//////////////8j///////wAAAAAAAAAAAAAAB/D/4H/////////////////////////////////////////////uAAAA+AAAAAAAABAAAAAAAAAAAAAAQH//////////////8B///////4AAAAAAAAAAAAAAH+H/4H/////////////////////////////////////////////8AAAAeAAAAAAABgAAAAAAAAAAAAAAAP///////////////j///////gAAAAAAAAAAAAAADgP/wP/////////////////////////////////////////////OAAAAcAAAAAAAAAAAAAAAAAAAAAAAAH///////////////3//////4wAAAAAAAAAAAAAAAAA/4/////////////////////////////////////////////+OAAAAYAAAAAAAAAAAAAAAAAAAAAAAAZ//////////////////////wwAAAAAAAAAAAAAAAAH8H/////////////////////////////////////////////+OAAAAgAAAAAAAAAAAAAAAAAAAAAAAAP////////////////////BPBgAAAAAAAAAAAAAAAASAH/////////////////////////////////////////////+PAAADAAAAAAAAAAAAAAAAAAAAAAAAADz//////////////////8DADQAAAAAAAAAAAAAAAAAAf/////////////////////////////////////////////+PAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8//////////////////wAwD7gAAAAAAAAAAAAAAAAH//////////////////////////////////////////////+MgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOf/////////////////P4AH/AAAAAAAAAAAAAAAABH//////////////////////////////////////////////8MAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEf////////////////+/4AP/gAAAAAAAAAAAAAAAH///////////////////////////////////////////////8IAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHf////////////////9/wAf+YAAAAAAAAAAAAAAAB///////////////////////////////////////////////4IAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADf//////////////////wAAEwAAAAAAAAAAAAAAAAP////////////+/////////////////////////////////wMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD///////////////////0CAAQAAAAAAAAAAAAAAAAP////////////x///8D////////////////////////////gOAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB////////////////9//5nAAAAAAAAAAAAAAAAAAAD//////////n+B///wD////////////////////////////AIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD////////////////////FAAAAAAAAAAAAAAAAAAAD////3/////A8D///AD///////////////////////////+AAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAD////////////////v//D8AAAAAAAAAAAAAAAAAAAD////H////+A/v//+Af///////////////////////////8AYAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAD//////////////////+fAAAAAAAAAAAAAAAAAAAAD////g////8AYH//8A////////////////////////////4AMAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAD//////////////////A4AAAAAAAAAAAAAAAAAAAAH//+fg////4AAA//8B////////////////////////////wAeIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/////////////////8AwAAAAAAAAAAAAAAAAAAAAH//4HwP///4AAAf/+A////////////////////////////gAfwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH/////////////////4AAAAAAAAAAAAAAAAAAAA////hgH8D///wAAAH/+Af//////////////////////////eAAf4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAH/////////////////wAAAAAAAAAAAAAAAAAAAA////AAL8A///wAAAB/+AH/////////////////////////+IAD/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH/////////////////wAAAAAAAAAAAAAAAAAAAAf///ABh+AP//wAAAB//AH/////////////////////////4AACGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/////////////////4AAAAAAAAAAAAAAAAAAAA////ABgfwH//wB+AB//gE/////////////////////////wAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD////////////////8AAAAAAAAAAAAAAAAAAAAAf//8AAAH4H//8H/wD//wAf////////////////////////gAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD////////////////8AAAAAAAAAAAAAAAAAAAAAf//wADgB+H/Tg//////4Cf/////////////////////z//gAADgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH////////////////wAAAAAAAAAAAAAAAAAAAAA///gABgA8n7h///////4H//////////////////////j/+AAADwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD////////////////wAAAAAAAAAAAAAAAAAAAAA///BgBgAIH8D///////4B/////////////////////+Hn4AAADwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD///////////////6gAAAAAAAAAAAAAAAAAAAAB//+AABgAMB+D///////4B/////////////////////8EB4AAADwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB///////////////7AAAAAAAAAAAAAAABAAAAAB///AAAAAIA8A///////wA/////////////////////gAB8AAAHgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA///////////////zAAAAAAAAAAAAAAAAAAAAAA//+AAAAAYATh///////wA/////////////////////wAD+AAAHAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP//////////////6AAAAAAAAAAAAAAAAEAAAAA//8AAAAfABcB///////wA/////////////////////8QAfAAAPAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAf//////////////4AAAAAAAAAAAAAAAAAAAAAA//wAAAQHAAcAf//////+A/////////////////////8+APgAAfAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP//////////////8AAAAAAAAAAAAAAAAAAAAAAB8gA9/8BAAAAfn6/////D//////////////////////4A/gAH+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP//////////////8AAAAAAAAAAAAAAAAAAAAAAAgAf//4AAAAABBw////////////////////////////gAfgIP+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH//////////////+AAAAAAAAAAAAAAAAAAAAAAAgB///8AAAAAAAA////////////////////////////AAfgAP/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD//////////////4AAAAAAAAAAAAAAAAAAAAAAA6H///8AAAB6AAw///////////////////////////+AAfgf/yAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB//////////////4AAAAAAAAAAAAAAAAAAAAAAB/////+AAAAAABg///////////////////////////8AAQA+5gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAf/////////////AAAAAAAAAAAAAAAAAAAAAAAB/////wAAAAAAAB////////////////////////////gAAjn4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD////////////8AAAAAAAAAAAAAAAAAAAAAAAH/////8AAAAAAAB////////////////////////////gAAUeQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB////////////4AAAAAAAAAAAAAAAAAAAAAAAf/////8AAAAAAAD////////////////////////////gAgfQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB////////////wAAAAAAAAAAAAAAAAAAAAIAA///////8AA4AAAD////////////////////////////wABPAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA////////////gAAAAAAAAAAAAAAAAAAAAAAB////////gD8AAAD////////////////////////////4AAGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAf///////////AAAAAAAAAAAAAAAAAAAAAAAB////////gD/wAAH////////////////////////////8AAeAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAcP/////////+AAAAAAAAAAAAAAAAAAAAAAAD////////4D//g+P////////////////////////////4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOP/////////+AAAAAAAAAAAAAAAAAAAAAAAD/////////D/////////////////////////////////4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOP//////+kP+AAAAAAAAAAAAAAAAAAAAAAAB///////////////////////////////////////////oAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHH/////0/gEfAAAAAAAAAAAAAAAAAAAAAAAD///////////////////h///////////////////////8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADz/////wDQAPAAAAAAAAAAAAAAAAAAAAAAAH/////////////+7////B///////////////////////8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABz/////gAAAHgAAAAAAAAAAAAAAAAAAAAgAP//////////////7////g///////////////////////4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEx////8AAAAHgAAAAAAAAAAAAAAAAAAAAIAf//////////////f////gf//////////////////////wAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAC4f///4AAAAPgAAAAAAAAAAAAAAAAAAAAAD///////////////h////wP//////////////////////gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB8f///4AAAAHwAAAAAAAAAAAAAAAAAAAAAH///////////////w////4D//////////////////////gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOP///4AAAADwAAAAAAAAAAAAAAAAAAAAAH///////////////w////8B0////////////////////+AACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGH///4AAAADwAAAAAAAAAAAAAAAAAAAAAf///////////////wf///8AA////////////////////+AAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH///8AAAABwAAAAAAAAAAAAAAAAAAAAAf///////////////4P///8gCf///////////////////+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADB///4AAAAAgAAAAAAAAAAAAAAAAAAAAA////////////////8P///+gGAOgf////////////////+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADg///4AAAAABAAAAAAAAAAAAAAAAAAAAA////////////////8P////geAAAP////////////////4MAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABwf//4AAAAAAgAAAAAAAAAAAAAAAAAAAB////////////////+H////wfAAAH////////////////wYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYP//4AAAAAAAAAAAAAAAAAAAAAAAAAAD////////////////+B//////wAAD////////////////g4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIH//wAAAAAAAAAAAAAAAAAAAAAAAAAAD////////////////+B//////8AAB///////////////+A4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD//wAAAA/4AQAAAAAAAAAAAAAAAAAAH/////////////////A//////+AAAH//////v///////wAwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB//wAAABj+AAAAAAAAAAAAAAAAAAAAH/////////////////g///////AAA/P/////z//////+AAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB//4AAAAIPgAAAAAAAAAAAAAAAAAAAP/////////////////w//////+AAAff////+D//////wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//4AA/AAB4AAAAAAAAAAAAAAAAAAAP/////////////////w//////8AAAPf////AD////+CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAB//8AB/AAA8AAAAAAAAAAAAAAAAAAAH/////////////////wf/////4AAAEP////AB////8CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB//8AB+AAAfwAAAAAAAAAAAAAAAAAAD/////////////////wP/////0AAAAP///+AA////4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwAAAAAAAAAAAAAAAB//+AB+AAAAHYAAAAAAAAAAAAAAAAAH/////////////////4D/////gAAAAf///wAAf///wHAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAAA///AD+AAAAD/AAAAAAAAAAAAAAAAAH/////////////////4D/////wAAAAP///wAAf///weAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP//AH+AAAAB/gAAAAAAAAAAAAAAAAD/////////////////4D/////AAAAAP///gAAP///geAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD//7/8AAB4P0jgAAAAAAAAAAAAAAAD/////////////////+B////+AAAAAP///AAAH///wAAAAeAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAf///8AAAAAAAIAAAAAAAAAAAAAAAD/////////////////+A////4AAAAAP//+AAAH///4AAAAcAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP///4AAAAAAAAAAAAAAAAAAAAAAAD//////////////////Af///wAAAAAP//4AAAH///8AAAAeAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB///4AAAAAAAAAAAAAAAAAAAAAAAH//////////////////Af//+AAAAAAH//4AAAHX//+AAAAeAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAf3/4AAAAAAAAMAAAAAAAAAAAAAAH//////////////////AP//4AAAAAAH//AAAAPH///AAAAcAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADB/7/AAAAAAAAAAAAAAAAAAAAAAH//////////////////gf//wAAAAAAH/+AAAAAH///gAAA4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA///AAAAAAAAAAAAAAAAAAAAgAP//////////////////gf//gAAAAAAD/8AAAAAD///wAAA4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAf//gAAAAAAAAAAAAAAAAAAAAAf//////////////////8P/4AAAAAAAD/8AAAAAD///wAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP//wAAAAAAAAAAAAAAAAAAAAAP//////////////////+P/wAAAAAAAB/8AAAAAD///wAAAZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//gAAAAAAAAAAAAAAAAAAAAAH///////////////////X+AAAAAAAAB/8AAAAAD///wAAAq4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAF/gAAAAAAEAAAAAAAAAAAAAAP///////////////////vgAAAAAAAAB/+AAAAABz//4AAAYQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB/gAAAAAAAAAAAAAAAAAAAAAP///////////////////2AAAAAAAAAA/8AAABABz//4AAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/gAAAwAAAAAAAAAAAAAAAAAH///////////////////4AAAAAAAAAA/8AAAAABwf/wAAAI2AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAfgAABgAAAAAAAAAAAAAAAAAB///////////////////wABAAAAAAAAf8AAABABwP/wAAACCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPAAAPHgAAAAAAAAAAAAAAAAD///////////////////4AfAAAAAAAAP8AAAAABgP/wAAADWAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHgAB//gAEAAAAAAAAAAAAAAAf//////////////////8f/AAAAAAAAP8AAAAADgP/AAAACgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPgAB/f/HkAAAAAAAAAAAAAAAf/////////////////////AAAAAAAAP4AAAAABAB4AAACAwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFwAB/P//4AAAAAAAAAAAAAAAH/////////////////////AAAAAAAAHyAAAAABAA4AAAEBIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA4PD/P//8AAAAAAAAAAAAAAAH////////////////////+AAAAAAAAH7AAAAABwAwAAAIAhAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAf5n////8AAAAAAAAAAAAAAAD////////////////////+AAAAAAAAHDAAAAADwAAAAAQADgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADh//////gAAAAAAAAAAAAAAD////////////////////8AAAAAAAADDgAAAAB4AAAAAAA/gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABx//////wAAAAAAAAAAAAAAB////////////////////8AAAAAAAAADgAAAAAwAAAAAACvgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAg//////4AAAAAAAAAAAAAAA////////////////////4AAAAAAAAADwAAAAAYAAAAAgCOgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAf/////8AAAAAAAAAAAAAAAf///////////////////wAAAAAAAAADwAAAAAOAAAABgAOAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAf/////+AAAAAAAAAAAAAAAH///8H//////////////wAAAAAAAAADgAAAAAPAAAADgAOAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAf///////AAAAAAAAAAAAAAD///AD//////////////wAAAAAAAAAAAAAAAAHgAAAD4ACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAf///////4AAAAAAAAAAAAAB/+8AB//////////////gAAAAAAAAAAAAAADwHwAAAH+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAf///////8AAAAAAAAAAAAAAeAAAB//////////////AAAAAAAAAAAAAAAB8H4AAAf4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAf///////+AAAAAAAAAAAAAAAAAAAA/////////////AAAAAAAAAAAAAAAA+H4AAA/wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP////////AAAAAAAAAAAAAAAAAAABf///////////+AAAAAAAAAAAAAAAAfD4AgB/gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAf////////AAAAAAAAAAAAAAAAAAAAP///////////8AAAAAAAAAAAAAAAAPh4AAD/gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/////////AAAAAAAAAAAAAAAAAAAAP///////////4AAAAAAAAAAAAAAABHx4AAf/wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB/////////gAAAAAAAAAAAAAAAAAAAP///////////gAAAAAAAAAAAAAAAAD48AA//wAACAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAD/////////wAAAAAAAAAAAAAAAAAAAf///////////AAAAAAAAAAAAAAAAAB+MAE//wAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/////////wAAAAAAAAAAAAAAAAAAAf//////////8AAAAAAAAAAAAAAAAAI/gAP//4IEGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/////////gAAAAAAAAAAAAAAAAAAAf//////////4AAAAAAAAAAAAAAAAAE/gAP//w/4GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/////////oAAAAAAAAAAAAAAAAAAAf//////////wAAAAAAAAAAAAAAAAAAfoAP//gAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGAAAf////////+eAAAAAAAAAAAAAAAAAAAf//////////gAAAAAAAAAAAAAAAAAAP4AP//hAAECAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAf/////////+wAAAAAAAAAAAAAAAAAA///////////AAAAAAAAAAAAAAAAAAAP4AH//hAgOB8QAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//////////98AAAAAAAAAAAAAAAAAA///////////AAAAAAAAAAAAAAAAAABH+AD//BuAAD8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//////////7/gAAAAAAAAAAAAAAAAAf/////////+AAAAAAAAAAAAAAAAAAAH+QD/+B8EAI8NgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA////////////gAAAAAAAAAAAAAAAAAf/////////8AAAAAAAAAAAAAAAAAAAT/AD/+D8AAAQH4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP///////////+AAAAAAAAAAAAAAAAAP/////////wAAAAAAAAAAAAAAAAAAAB/5D/+DsAAAuP/gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP////////////+AAAAAAAAAAAAAAAAH/////////wAAAAAAAAAAAAAAAAAAAB/wAN8DuAx4ff/4AAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//////////////gAAAAAAAAAAAAAAAD/////////wAAAAAAAAAAAAAAAAAAAA/wAAaBuAQEL///AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//////////////wAAAAAAAAAAAAAAAB/////////gAAAAAAAAAAAAAAAAAAAAfwAAABnAAAA///wAFAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB//////////////4AAAAAAAAAAAAAAAA/////////AAAAAAAAAAAAAAAAAAAAAHwAAABkAAAAH//4AGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA///////////////gAAAAAAAAAAAAAAA/////////QAAAAAAAAAAAAAAAAAAAADwAAABhAAAAB//8AMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA///////////////wAAAAAAAAAAAAAAA/////////AAAAAAAAAAAAAAAAAAAAAAQAAAAAAAASA//+H4EAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA///////////////wAAAAAAAAAAAAAAAf////////gAAAAAAAAAAAAAAAAAAAAAPAAAAAAAACAf//hgCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP//////////////wAAAAAAAAAAAAAAAf////////gAAAAAAAAAAAAAAAAAAAAAfhgAAAAAACAP//AABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH//////////////wAAAAAAAAAAAAAAAP////////gAAAAAAAAAAAAAAAAAAAAAH/4AAAAAAAAP//AAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH//////////////wAAAAAAAAAAAAAAAP////////gAAAAAAAAAAAAAAAAAAAAAAn/gAAAgCAA//PgAARAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD//////////////wAAAAAAAAAAAAAAAH////////gAAAAAAAAAAAAAAAAAAAAAAA/4AA8AAABz+DwAAMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD//////////////wAAAAAAAAAAAAAAAH////////gAAAAAAAAAAAAAAAAAAAAAAAAK48DwAAAB+B4AAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB//////////////gAAAAAAAAAAAAAAAP////////gAAAAAAAAAAAAAAAAAAAAAAAAAAAOAAAAAEA8gAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB//////////////AAAAAAAAAAAAAAAAP////////gAAAAAAAAAAAAAAAAAAAAAAAAABgcAAAAAAAfAAAMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//////////////AAAAAAAAAAAAAAAAH////////wAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAADwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/////////////8AAAAAAAAAAAAAAAAH////////4AAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAf////////////8AAAAAAAAAAAAAAAAD////////4AAAAAAAAAAAAAAAAAAAAAAAAAAAAACgAAMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP////////////4AAAAAAAAAAAAAAAAD////////4IAAAAAAAAAAAAAAAAAAAAAAAAAAAAMYAAMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP////////////wAAAAAAAAAAAAAAAAH////////4AAIAAAAAAAAAAAAAAAAAAAAAAAAAAC/0AcAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH////////////wAAAAAAAAAAAAAAAAP////////4AAIAAAAAAAAAAAAAAAAAAAAAAAAAAH/4AOAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH////////////AAAAAAAAAAAAAAAAAf////////4AAMAAAAAAAAAAAAAAAAAAAAAAAAAAP/wAeAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD////////////AAAAAAAAAAAAAAAAAf////////4AA8AAAAAAAAAAAAAAAAAAAAAAAAAAP/4AeAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD////////////AAAAAAAAAAAAAAAAAf////////4AA8AAAAAAAAAAAAAAAAAAAAAAAAA4f/0AeAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD////////////AAAAAAAAAAAAAAAAA/////////8AB8AAAAAAAAAAAAAAAAAAAAAAAAD8f/gAfwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA////////////AAAAAAAAAAAAAAAAA/////////4AD+AAAAAAAAAAAAAAAAAAAAAAAAD9//wAf4AAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAf///////////AAAAAAAAAAAAAAAAA/////////4AH6AAAAAAAAAAAAAAAAAAAAAAAAH///4Af4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH///////////AAAAAAAAAAAAAAAAA/////////wB/8AAAAAAAAAAAAAAAAAAAAAAAAX///+Af4AAAAAAAgAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB///////////AAAAAAAAAAAAAAAAA/////////gB/4AAAAAAAAAAAAAAAAAAAAAAABf////g/4AAAAAAAgAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAf//////////AAAAAAAAAAAAAAAAB////////8AD/4AAAAAAAAAAAAAAAAAAAAAAAD/////w/8AAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAP//////////AAAAAAAAAAAAAAAAB////////wAD/4AAAAAAAAAAAAAAAAAAAAAAAD///////8AAAAAAAAAAYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH/////////+AAAAAAAAAAAAAAAAA////////wAD/4AAAAAAAAAAAAAAAAAAAAAAAD///////+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH/////////+AAAAAAAAAAAAAAAAAf///////gAD/wAAAAAAAAAAAAAAAAAAAAAAAH///////+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH/////////+AAAAAAAAAAAAAAAAAf//////+AAB/wAAAAAAAAAAAAAAAAAAAAAAAH////////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/////////8AAAAAAAAAAAAAAAAAP//////4AAB/wAAAAAAAAAAAAAAAAAAAAAAAf////////gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/////////4AAAAAAAAAAAAAAAAAP//////4AAB/gAAQAAAAAAAAAAAAAAAAAAAD/////////4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/////////4AAAAAAAAAAAAAAAAAH//////8AAD/gAAAAAAAAAAAAAAAAAAAAAB//////////8AAAABCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/////////wAAAAAAAAAAAAAAAAAH//////8AAH/gAEAAAAAAAAAAAAAAAAAAAD//////////8AAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/////////wAAAAAAAAAAAAAAAAAD//////+AAH/AAAAAAAAAAAAAAAAAAAAAAP//////////+AAAAAYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/////////gAAAAAAAAAAAAAAAAAB//////+AAH/AAAAAAAAAAAAAAAAAAAAAAf//////////+AAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH/////////AAAAAAAAAAAAAAAAAAB//////+AAH/AAAAAAAAAAAAAAAAAAAAAB////////////wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH////////gAAAAAAAAAAAAAAAAAAB//////+AAH+AAAAAAAAAAAAAAAAAAAAAA////////////wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH///////+AAAAAAAAAAAAAAAAAAAB//////+AAH+AAAAAAAAAAAAAAAAAAAAAB////////////4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH///////wAAAAAAAAAAAAAAAAAAAB//////+AAH+AAAAAAAAAAAAAAAAAAAAAB////////////8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH///////gAAAAAAAAAAAAAAAAAAAB//////8AAD8AAAAAAAAAAAAAAAAAAAAAB////////////+gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH///////AAAAAAAAAAAAAAAAAAAAA//////gAABwAAAAAAAAAAAAAAAAAAAAAA////////////+gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH//////+AAAAAAAAAAAAAAAAAAAAA//////AAAAAAAAAAAAAAAAAAAAAAAAAAA/////////////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH//////+AAAAAAAAAAAAAAAAAAAAA//////AAAAAAAAAAAAAAAAAAAAAAAAAAC/////////////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP//////+AAAAAAAAAAAAAAAAAAAAA//////AAAAAAAAAAAAAAAAAAAAAAAAAAB/////////////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP//////+AAAAAAAAAAAAAAAAAAAAAf/////AAAAAAAAAAAAAAAAAAAAAAAAAAA/////////////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP//////+AAAAAAAAAAAAAAAAAAAAAf////+AAAAAAAAAAAAAAAAAAAAAAAAAAA/////////////gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP//////+AAAAAAAAAAAAAAAAAAAAAP////+AAAAAAAAAAAAAAAAAAAAAAAAAAAf////////////gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAf//////8AAAAAAAAAAAAAAAAAAAAAH////8AAAAAAAAAAAAAAAAAAAAAAAAAAAf////////////gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAf//////4AAAAAAAAAAAAAAAAAAAAAD////4AAAAAAAAAAAAAAAAAAAAAAAAAAAP////////////gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAf//////wAAAAAAAAAAAAAAAAAAAAAD////wAAAAAAAAAAAAAAAAAAAAAAAAAAAP////////////gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAf/////+wAAAAAAAAAAAAAAAAAAAAAB////wAAAAAAAAAAAAAAAAAAAAAAAAAAAP////////////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAf/////+AAAAAAAAAAAAAAAAAAAAAAB////gAAAAAAAAAAAAAAAAAAAAAAAAAAAP////////////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAf/////+AAAAAAAAAAAAAAAAAAAAAAA////AAAAAAAAAAAAAAAAAAAAAAAAAAAAH////////////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAf/////8AAAAAAAAAAAAAAAAAAAAAAA///+AAAAAAAAAAAAAAAAAAAAAAAAAAAAH////A///////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAf/////8AAAAAAAAAAAAAAAAAAAAAAAf//8AAAAAAAAAAAAAAAAAAAAAAAAAAAAH///4AH/////+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAf/////4AAAAAAAAAAAAAAAAAAAAAAA///wAAAAAAAAAAAAAAAAAAAAAAAAAAAAH//8AAD/////8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAf/////4AAAAAAAAAAAAAAAAAAAAAAA///gAAAAAAAAAAAAAAAAAAAAAAAAAAAAH//wAAB+////4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//////gAAAAAAAAAAAAAAAAAAAAAAAf/8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAP//gAAA9////4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA////7/gAAAAAAAAAAAAAAAAAAAAAAAPwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP+AAAAAZ////wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA////8eAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD4AAAAARf///wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB////+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAf///gAAAAAADAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB////+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGP///AAAAAAABgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH///AAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/////gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD///AAAAAAAAUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH/////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD///AAAAAAAAcAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH////+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB//+AAAAAAAAOYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH////8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAfvgAAAAAAAAf4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH////gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAfwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD///gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH///wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAfAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH///gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP///gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAOAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP//wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAf4AAAAAAAN8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAF//wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP4AAAAAAAfgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAL//+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHwAAAAAAAfAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAL//yAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHwAAAAAAA+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAb//wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAAAAAAAD4AAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD//gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD//gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAX//gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH/4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA3/4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAf//AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAX//AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB//wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABf/gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/AAA8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv+gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAF3gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADXgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGz4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAR8AAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAF/0AAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAsAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABcAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACcAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAATyAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADeAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACfoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/8AAAAAAAAAAAAAAD/gB/AAAAAH8wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJ8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAR/+AAAAAAAAAAAf/////j/4AA/wf///AAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA3wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP//8AAAAAAAA//////////H8f///////gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA///////AAAAAf////////////////////eAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAf////////wAAP//////////////////////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD6CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwAH/////////gAA////////////////////////2cAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8D/QAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB8Af/////////gAD//////////////////////////+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABA+f/gAAAAAAAAAAAAAAAAAAAAAAAAAIAAAAA/0f/////////AAP///////////////////////////wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADP/gAAAAAAAAAAAAAAAAAAAAIIAgIIQADAP///////////4Af////////////////////////////8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA4Pn/wAAAAAAAAAAAAAAAAAAhgAH/+//w5gP/////////////A/////////////////////////////+/8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB/n/8AAAAAAAAAAAAAAAAHHAAf/////////////////////+B////////////////////////////////gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB+/z/8AAAAAAAAAAAAAAAAf/////////////////////////4D/////////////////////////////////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAH9gAAAAAAAXj/+AAAAAAAAAAAAAAAAf/////////////////////////5P////////////////////////////////8AAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAEIAAAAAAH/+AAAAAAAAAAAAAAAT//////////////////////////z/////////////////////////////////8AAAAAAAAAAAAAAAAAAAAAAAAAAAAD/8b5+IAcDoD//zAAAAAAAAAAAAAAD///////////////////////////3////////////////////////////////8AAAAAAAAAAAAAAAAAAAAABB8AAAAAD3/////5/z////8AAAAAAAAAAAAAgD////////////////////////////////////////////////////////////wAAAAAAAAAAAAAAAAAAAAAAA8ADjAAAf////////////wAAAAAAAAAAAAAgA////////////////////////////////////////////////////////////AAAAAAAAAAAAAAAAAAADgAP8H//BgAAD////////////QAAAAAAAAAAAAAA////////////////////////////////////////////////////////////kAAAAAAAAAAAAAAAAAAP/////////+D/gf//////////8AAAAAAAAAAAAAAB///////////////////////////////////////////////////////////+AAAAAAAAAAAAAAAAAB//////////////////////////wAAAAAAAAAAAAA//////////////////////////////////////////////////////////////gAAAAAAAAAAAAAAAPv/////////////////////////gAAAAAAAAAAAAD///////////////////////////////////////////////////////////////gAAAAAAAAAAAAAADYH//////////////////////wAgAAAAAAAAAAAAB////////////////////////////////////////////////////////////////wAAAAAAAAAAAAP8EMH//////////////////////4AAAAAAAAAAAAAA/////////////////////////////////////////////////////////////////4EAAAAAAAAAAAf//f////////////////////////8AAAAAAAAAAAAH/////////////////////////////////////////////////////////////////8EAAAAAAAAAAAAH///////////////////////v+AAAAAAAAAH/wAA//////////////////////////////////////////////////////////////////+sAAAAAAAAAGAA////////////////////////g+AAB4AAAAAf+AAA/////////////////////////////////////////////////////////////////+4AAAAAAAAAAf4AAP//////////////////////+AAAeMAAAAAf/8AB8A///////////////////////////////////////////////////////////////4AAAAAAAAAAAAfAAAH///////////////////////8AADAAAAA//8AAAKAH/////////////////////////////////////////////////////////////wAAAAAAAAAAAAAAAB////////////////////////8AABAHgAf//gAAAA///////////////////////////////////////////////////////////////AAAAAAAAAAAAAAAAAP///////////////////////+A4AA/AB/4AAAAf////////////////////////////////////////////////////////////////4AAAAAAAAAAAAAD/////////////////////////////8AAAAAAAAf//////////////////////////////////////////////////////////////////4AAAAAAAAAAAAAAD/////////////////////////////gAAAAAAB////////////////////////////////////////////////////////////////////gAAAAAAAAAAAAAB/////////////////////////////AGAA//8H////////////////////////////////////////////////////////////////////wAAAAAAAAAAAAAH//////////////////////////////gA//////////////////////////////////////////////////////////////////////////4AAAAAAA/+AAD///////////////////////////////4P//////////////////////////////////////////////////////////////////////////+AAAAAAAA/////////////////////////////////////////////////////////////////////////////////////////////////////////////////+AAAAAAAP/////////////////////////////////////////////////////////////////////////////////////////////////////////////////+////AAA/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////";
+  var BORD_B64 = "As1oFTrNmBU3zdgVjcwXFifMiRboy9EWjcv+FkrLJxcUy1sXsMo6F0/KAhf2yUQXsMlwF0/JjBfsyI8X7cjIGe3IOxs/0rYMsdK9DDDTyAy+04QMotQ9DGjVPgy41T4MZdZnDIrWRAy91iQM+Nb4CxnXxAsy140LZtdvC7nXUQv416ALStiiC5DYegvC2DYL5dj7CiDZwgo22XwKUtlNCqDZLgrn2RgKztxeBfTchQUZ3aIF+duuBQfc4gUp3EcGqtxHBpzcbwZs3JwGR9y9BnTcvQZ03PYG0dz2Bi7d9QZD3TUGLd2mBi7d9QYZ3aIFTN2GBW7daQWZ3XQFtd06BeTdEgUQ3i0FHN5fBV7efAWG3nQFu96bBdTexwUD37YFMt/DBWPf3gWX3zcDod9xA5vftANS30YEHd83BO3eVASU3mIEyeFjA9ThGgOh4QMDlOHSAiPkmgTj44kEyeNXBKPjOgSF4xUEeePOA17jkwOR440DnuNfA7zjIAO04+YC5OO7AmXkxQKf5LgC5eRiAlXlZwKO5XMCoOUsAoLlwgGW5YABtuVMAYPlGgHC5eEA4OV9AI/i8f+d4qX/fuJk/xDi+/6Y4dT+W+F9/kjhOf4P4RD+5uBD/pTgRf6u4IL+1+S5+5/kqPtx5LP7eORL/CbkEPzO4xP8qONI/GXjTvx643n8Q+O2/BnjEP0040z9cONp/Wbjn/2H4/H9+eM1/kvkSP6z5FL+2OWO6pzlkeox5ZHqMeVw6zHlkuva5KLr6eOv67/j6evB4zTsfuMu7FvjUuxS47zsn+Po7L/jKO2z41rt6OOw7Q3kNO4C5G/uLuSC7vXju+4W5OXu6OML79Hjf+/545Pv6OMN8ADkc/Ab5MzwV+Tx8DjkUvE45K7xhOTv8YHkQ/K65KXyu+QB83LkwPOw5Cb0p+SH9Mrk4vQM5UD1UuV+9TXlpfVG5Wz2s+Wd9tXlBfct6cHyNekC80rpfPNl6eLzfeky9Knq8vWZ6pr1PupN9e/pPfV/6Uz1Gulo9X3pAPZu6Sz2B+lT9o3onfY76Kz2g+dP90fpHvhl6ef3Xulf98jpTPfx6V/3NOpE91Dqy/aB6qD2y+qe9svqZ/a96iz2qery9ajoRQNZ6AoDcujAAhzongIe6G8CR+gIAurpvgCa6cMATemXACLpfwDx6IQAs+izAKzo4QCT6BQBouhpAafougGS6PUBR+gIArTq5wB66vwAS+ryABnq3gAg6rYA6um+ANLroAGX60QBeOv6AFLr1AAi680A/uruALTq5wAZLSECFS3wAQ8tsAHfLLMBnCzFAZT9CxVJ/R8VC/0eFR/9VBUL/YkVeflPBeb5UgUc+mwFQ/pTBYP6YwVs+jAFFvpHBd/5LwVs+SMF4w2nDOMNagxSC7D0dQuS9FYLYvQNCzH01woH9IwKVPTBCpT09wq79CYLz/RSC7D0nfzOCpv8HApT+yEKVvshCfn6GAng+uUI8/pVCGv5VQic/LQKFP7BCT/7tgVE+3cFV/s+BX37IgWB+9wEpvrrBJn6vgSS+pAEYvp/BBf6UASB+9wElvu4BMH7wgQH/KAEQ/zDBG/8zwSR/J0EuvxzBKL8OQS+/BkEiPunAqX75ALS+xoDAfxJA7T8AQO5/LMCpPyHAuH8ZQIL/TsCBP0HAv38tAFKA28ONgM7DkYD3A0uA4oN8AJSDfkCBg1LA8sMigOKDLQD1wt9BPIMdwSlDEYEiAzjA0IM5QPuC7QD1wvUCVUMsAklDMAJ+gumCbwLxAlsC8QJCArECZgIqwF8B6sBlQZ0AVIGbAEVBhMBBQaLAPwFZgDZBSUA1QUlANUFHgCkBSsAdwVjADYFZgAFBdoA7wTXAKoE4v7zAbz+cQLW/uICAP82A+X+xANqAFECOQCzAjEA5QJHAD8DJQCyAyUA+wP7/y8EWgBMBE0AFwSPANcDkgClA6IAqwK7AGYC1wCqBB0ByARpAY4EaQGOBHAB5wSNARAFmwFJBSACawWFAkUFqgIgBd0CHgUMAzYFhQMDBbgDBQXzAzAFLgQtBYEENQXOBBgFHAVQBWcOmAjaDJgIVguYCMQJmAjNBe4I5gVTCAsGOQg2BvcHIQbMB/oFAQf1BX8GdQUgBkoFnQV0BXgFcwU3BbQFNQWqBQYFUAmmB1UJGQb+CCAG0QjWBbYImQWqCGMFnAgQBbUI8QTLCJAE8AhyBPgF5gLGBYECpgUhAqgF2QHXBaUBBQZOATIGLQE3BgABaATiAGkEagDXA2sAHAXjADAFgwB7BYwAaAUEAJgFyf+jBXv/lgU4/3cFCf8fBQ3/6gQ9/+IEEf+eBAX/ogSp/lUEcv5BBuMAdgZAAbEGdQH1BmQBNQdeAe4IWgQzCfEDIwmfA00JYwM7DqIFrw6NBc8O2AULD6sFRg/CBaMPrAX6D4QFQBBBBWkQBwWLEOYE2xB6BLYQRQSOC3r/4guP/+ILj/8KDFb/BAwb/1cJu/tWCWz7aAk9+2IJ9fqRCPb6jQi4+dAIZvkSCSj5Egko+WMJPvmkCTn5zAki+YcMj/VzDGL1OAxX9f0LjvUXDNb1PQz69XAM6PXeCRL5BQrC+DgKd/iqCgn41Qrb9/IKm/c/C4z3fwtf99ML8fktDM75XAy5+aEMmfnVDHn51Qz6+MEMtfi9DGr4wgwS+JkMwPcvDE/30wyO9YcMj/V5/FwQxvyEEN/8UxAa/VMQZf1cEIH9KhBT/Q8QUv3BDz39gw86/T8PH/39DkH94A4O/Z8OKwGXELcAihBGALgQav/PEEL/9hDgA3oVoANrFVUDeBVrAlITmgI4EyoDJhP3AuES6wKaEoQFABWbBc0UpAWOFLwFWRTeBfcTvwORErQDZhLhA1QSFARREhQEURJRBEMSvwRoEmUFKxKuB0MVKQg3FeEIORUUCS4VMQnjFEwJvRQQCYEULwlSFGMJzxMnCacTzAhUE+YIJxNxCFMTKQhFE/oHTxO/BzoTjAddE10HVhMvB4cT5QaNE5cGtxNSBrITDQbWE94F9xN/CZMW1AmlFgAKmRZWCnQWqQpzFu4KPBe2CvAW1AqTFqkKcxYCC/EVawvYFa4LyxUPDLMVGQyEFUIMKBVlDAMVqQzyFJ4MwRRODMUUUgyaFGsMWhSzAuQUrAJnFJMCQRRXAkEUaALYE2gC2BNcApUTXAKVE2sCUhNPCI8VuAh+FeQIbhXhCDkVOgjjFawIAhZUCfsVtgkFFvkJ6hVZCroVXQdWEzAHRBMSBygT2wYQE6AG/BKgBvwSogbMEqEI6hLYCM8SogifEnMIWxI2CBgS5gcFEqgHCRJbB+8R4wbzEZgGHhJlBkwSNQeYEOcGzxDCBvkQbgY0EScGghE8BqsRdQapEaQGqxH6BpsRPwecEW0HhhHQCC0ToQjqEiAI/hLoB+ESuQfUEn0HyxJOB7QS+gaoEqIGzBJ4BioSKQYQEvwF3RHWBcMRoQXDEVwFxhFmCtYSowqvEsMKhRL9CkkS9QryEQcLxREoCxMR7QodEaQKQhEvCioR/QkREWoJFhEdCSYR2ghHEdoIRxHKCAwR+wjhENQIwhDOCJYQ3wi0EgoJyhJICb8SiAm+ErcJphIjCr8SZgrWEmsMWhSpDG0ULw1yFG8NORReDQYUrg0BFNIN1RNPDp8Tmw6uE9kOgBMUD4ETpw9gE38PDhOWD9cSJQ+vEvIOkxLwCmkQmgp2EDQKVxAzCiUQ2AkbEJEJPhBBCSMQ9wgmEPAIaBC+CIgQ9wgmEJ4IExA2CPQPNApXEGQKPBBFCv4PNgj0DxQIzA/fB3oPOxA6EKYQPhAGEQ0QnA/4EPwP8hCPEOIQGBGyEGYRrxDDEZoQ4hFxECASWhA4EhYQ9BEQEKoRLRArC/oaHQu0GrYLchpZCyYazgu1GYoLXxnkCxQZvAvTGFAMjxgqDFwYzQsiGPcKohfUDUwMpA2GCycPCg1QD5AMvRK2C3oSvgsxEl4L+RKxC8ES5QvAEhsMsRJjDH0SrwwDEuYMvhFFDdURkw0HErUNABLwDb4RDg59EYUOEBWIDmgVmw6vFdQO8hXSDh4W5A5lFtsO1BaoDiMXnQ6WF0UO4BdBDukX7Q2/FIEGnhTHBlAUbAe2EGMG4hCDBvIQ3gYbEcQGqhHPBh0SuwZcEp8GixKwBtISGQcwE0YHUBRsBxEI/xqWCM4aMgmKGjUJ8BlWCckZ6hInC6MSJQuKElQLMRJeCxMUnwnZE6sJ5xUuCggWvAnVFbwJzBV7CbEVWQmTFQcJLhMgEvsSMBIFE2QSxhKmEnwSpBInEucSYBIzE5MStRP6EnsTBhPFE9UTMRRxFDQUTRXvE8QVxhMuFvATzBbyE0wXvxP2F9gTDxgHFG0XTBTNF30UGhiyFNIX9xQAGBkVdhk7FacZVBWhGnkV+xqjFa8bjRXOGyUVNhw+FbccHBWvHOUUDh3rFAkeSRXlHSoVZB7cFEQf3hN5HxMUAyDZE5Ig8xPKIOET+iCnE0AhlBNqIWkT6yF3EyAiOhO4G4MQghs4EMwbEhATHCsQihz3Dwkcrw+9G7gPhhvSD5sbABAVG+kP9RqpD8YacQ9yGnYPWBpKD6IaMg+3GugOfxqDDvwZmA6vGbYOSxl/DjcZLw7+GBEOrxgCDpoY1A1PGMcN6RftDX8agw7mGpYOKBuxDmQbrw5+G+YOqRsJD98b8g7yG88O6Rt7DhAcWg5gHHkOnhymDuMcng5KHZ4OWh+LEK4ePhCLHhcQCh4LEOUdyw97HdgPNh3FD9YclQ/IHGcPyBxnD+EcCw8+Hf4OSh2eDhUdzAxmHZsMBSYKC+kl0grxJZQKqiWmCiglYQosJSgK9CTUCe8kpAnDJFEJdSRoCXEkAAllJLQIMyScCGwi5Ar3Ie0KhiEECzUhMAvnIEQLxiB0C44gggspIMQL2R/iC68fyguxIqoK9CL0CiojDgtxI/YKpiP0CtIj2QoVJBMIDiRkCDMknAgFJgoLPyYSC2Em1wqMJr8KjyZyCosmIAosJswJICZWCYomZgmiJgoJ4Sb3CMQmpAgOJ34IOidsCIMniQgcJ/oHRyfbB00nnweQJ5oHeCcxB3on1wbjJxMHPCgEB5woIAfoKM8G7ihsBj8pFQY6KcAFGimTBbwoogU7KI8F+yc7BRIowwSGJ2AIxCdFCLUnuAjpJ8YI8imMBQkqSgX9KdIEVSmFBIEpSAQYKUEEwSgZBOknxggfKN8IbijeCNAo6gglKR8JVSn6CLEp5wihKa4I0CmFCDUqawjmJ24CxSdFAoMnOQJ8J2wCKieYAgwungG2La8BQy2vASAtPQH5LBoBxiyPAHUsegAWLJYA5iuNAKwrWgBsK2IAKytNAOcqhgDWKskARyJCE7EiUxNvI6kTByTYE14kuhPHJLgTCiWJE20lhhP+JW0TXyayEzcm7ROeJlUUDicrFGknIBTfJwYU8ie7E4AokRPeKKQTXSmxE8EpoxMjKnMTYCpAE7wqQRM6KzETlitKExosWhOsLKET6CyWEx0tdROULX0TizCZD9ww2Q9KMQ8QjzFWEL4xNhAVMjMQBTJnEKAykhDHMssQCDOQECMyFQ/qMfYOozHyDnwxxA5JMb8O0TCH/N0wVfwUN/z+Fje2/Rc3cPynBAj+0AQz/hQFIv5tB4YReAdaEagHNBGZBwUR+hJVEL8SLRCBEhoQPRJXEIsQiw5YEE0OIRA0DioQ6w0FEHINJw8KDf4NAA3JDLoN9wy9DRkNsA1FDbINggcAEasH4RDyB8IQkREdEMwR8Q/tEbYP+xF7DygSag8rEiUPBNAkEyDRJBNJ0iQTq9IkE9zTJBMD1SQTL9YkE1vXJBOv2CQTBdokE9TaJBP22ksTCNsUE23b/RLT2+0SNNzOEoXc2xIA3cESet3eEtjduhI63pMSi95yEtjeUhL63i4SIt8rEjvfBBJl3/cRwd+3EdbfXBHq3wURzd/KEJ7fkxCG32YQs99IEEDgfRCn4I0QKuG+EBPh+xBA4QsRouELEf7hCxEe4jIRlOKCEcHilBFZ45UREeSVETzksxFm5MIRieTwEajkPRL05IkSWeV/EoXlYxKF5doRxuWiEQEPCAfODs8GhQ6+BlsOXQYwDsoFqxIgA5AR9AEOEfABtRCpAXUQpwFaEIgBFRCIAe0PqgGRD4ABdA9WATEPXgEED2cBZg69ASAOvQH+Dd4BUA8s/sEOkP66Dsr+Tw2W/538zgqR/JgKU/yVCgX8fgqN+4AKbPsyCh77rQmT+kEJcvq3CEn6ighc+V4ITwT+FnsENxfOBHwX7wTxF68EJBipBKkY6gQHGU0FBRlwBS0ZTAVPGecF2xlLBkoajQaRGu0GkRoHB8kaxAe5GtMH+xoRCP8awA/4+3APvvsDD5f7xw6Z+6MOe/teDnn7yw2I+4ANgPvMDGX8+ww4/BUN4/vvDHf7Aw0k++MMAvvFDKX6+QyL+oANgPtkDTT7gA2y+scNk/rxDUv6+Q3K+c4NtfmvDXD5bg2u+WcN9Pl8DSP6Tg1k+vkMi/oLDF8BBQzqAA0MuQDnC54AwQtqAKwLPACmC+v/jgt6/+cLD/8CDNH+6wub/sQLZ/6fC0P+6ge5EBAI4hBCCNMQcwisEGoIiBD94w0H5eNGBwbkfQf947MHHxN1BB4T5QMeE7ED8RJ0A6sSIAPR5CL5tuTv+IPk1fikDYYLYw0yDPQNxwz+DQANFw42DU0OXA0QDogN4w2oDKkNcwypDVoM1A1NDPINyAz+DQANVAvAA4gL0wO4CwUEDAzLAz8M1QNxDB0EqAxUBJ8MkATDDLIE+QzCBO0MeAT5DDAELA0JBDYNtANVCV4Dlgl8A68J1QPLCQMEEwoRBFgKuwOXCsQD3wrAA0kNqQELDXsBxQx7AXQMZAE1DHoBCwxfAd8KwANRC6wDBg7NAXENzwFJDakB/g3eAf4NFgLKDScCQg03/MwMZfyADYD7ZA0I/EINN/wn/70NTf99DVP/QA11/9YMff+aDH3/mgz6/okMzf5kDJP+XAyP/hIMGv7qC/T9uAui/Z0LPv2OC538RAud/M4KXB2BDqYdUw7JHhcN8R7jDGge3Q3THmgNyR4XDdIj2QoiJOYKfSQwC/EkcAtEJVcLjCWBC7slQwuZJRkLBSYKC63pVQKd6fsBYenhAVTplgGA6U0B7OpAArjq6gHA6qUB5+pqAdbqPwGA6U0BrekVAerpvgDW6j8BzeoRAbTq5wC2EEUExRDqA+oQugMQEZYDVxIgA6sSIANaEIgBAhAWAQMQqv8/EFj/aB7dDTEesQ0QDfURcQ35EZ4N4RFmHZsMER1hDBIdGgyxHLYLchxQCwoc5wqWG+8KJxuGCmkbWQp0GwwKrBvaCcAbhAnkGoQJohpBCUfoCAIv6MYBv+egAXjnkQEL55IBweafAdvmfAHX5jkB5eb6ADrn8QD45sAAw+aFAHnmbgAX5kgA4OV9AH8Rgw+yEWsP3hFcDwYSIg8rEiUPkREdEAYRDRAGEQ0QDhG5D1gRoQ9/EYMPfxGDDzsRZw9aEfQOfRGFDn0RhQ5NEXQOthCbDosQiw6LEIsOGRB7DuMPfQ5wD1gOHg9XDukOag57Dk4OVQ4qDh8O/g0nDwoNYw6fDPQNxwxQD5AMdA5PDNgO6wumDrgLWg6rCxcOaAuoDXgLMRJeC3cRZgtdEC8MyA91DFAPkAxQFGwHfBXQB78VmAiRFd8IkRXfCFAU/AgqFGEJ6RftDcAXcA2lFygN0BcZDaYX4gzGF5IMzhdTDBoYQgwiGAIMxxenC8cXpwv5F3ILIRg2C4EYCguEGLIKsxiiCrwYdAorGEAKBhjMCX8agw40GpgO/BmYDvwZmA7/GdUOehkADxEZMQ/QGGAPXRilDywYDBCfFxoQbhd+EOcWsxCTFnkQPRZXEE4WJBDdFSMQSh2eDlwdgQ4iHXYO7xxkDnwcWA4RHEMO1hsXDu4b7Q35G7sNyBuRDbAbRw1RG0oNeBsIDTkb7wwOG7IMFBt2DO0aWgx7GlYMJho6DO4ZAgzrGa0LaRmDCyMZjAvTGIMLbxh0C8cXpwvIHGcPChxYD48beA8iG3EPLBuqD5kbmg+9G7gPICI6E9Qh9xKBIe4SfCGJEkQhXBJ+IH0SNiDKEQMgtBE9H4wRlx/eEFIfxBBaH4sQWh+LEBwfmhDqHr4QVh7IELAdyxD9HOoQxRzVELUcmhAQHL0QzxuuELgbgxC4G4MQfxtwEPsaKhDPGuMPjxoSEA8aFRD7GWcQyhlnENIZzBBaGRURrxgNETkY/hDaF1kRiBd+Ee0WxhHZFZQR3RUjEN0VIxCqFR4QZBVsECAViBCuFHQQghRSEPEd+w1oHt0Nrx/KC3AfnQtJHz8Lqh8aCwgg6QqKILAKFCGjCk0hcQqaIWcKEyJQCmYiUQpkIrkKsSKqCg4jcApNI4AKoiN5CvMjfAr6I7kK0iPZCmwi5AqpIvkKsSKqCjMknAj/IzsJ0yP7CJwjLgm7I2cJ6CNtCRYkwgncI9MJfyPRCSAj3wkXIyUK6CIpCpgiVQp1IhEKvSLcCX8itwmmIncJlSI7Cbgi8AjHIp4IhidgCDEnHwgcJ/oH4ibjB6gmtwdhJrMHNCZHBwomNQc6Jt0GeSaUBqImUgZ+JvsFcya2BbYmZwXBJi8FwCYABecmpQSwJkgEfybhA+knxggjKHgIUCgdCMwoHAjyKMUHsiiqB5YohwcNKUsHYSnVBqApfAbrKTcGBCrwBfIpjAXyKYwFmimxBWwpbAUaKZMFCDOQEKkKcxbZClwW4gosFgIL8RUCC/EVlgrKFVkKuhVrDFoUFQxUFPALDBRtCxEULgsXFLkKJxRKCj8U5QlHFJcJRRRhCSoUMQkmFFkKuhVjCo0VEQptFfoJNBWNCQ8VLAkPFREI/xpMCBkbvAjkGj4J6RqqCdEaCQr9GjoKRxvVCmgbVgtBGysL+horC/oafAsEGyYMLBtmCtYSwArvEgoL0BJgC7ESfgt/Eq8LOxKgCxsSZQseEk0LEhIhC9ARBwvFETQLshFjC8IRkAuxEdoIRxHfCGoRpwhgEWwIfREnCL4R5gcFEjYI9A8NCA0Q/gc4EG4IgRAcCG0QCwhaEOwHiBDXB6MQtgetEIoHfBC8CIgQbgiBEOoHuRCCBwARTwfgEEAHqRBtB4YRkwesEVsH7xHeBfcTsQXsE34F5RM2BdETyASjE+QEWxMXBUMTUAUYE1AFGBMsBeoSFwWcEu4EnxK+BKISdwSQEh4ElRLeA5YSvwORElQDrxLrApoSoAb8EnIGDxNDBgkT9QUoE5oF+BJQBRgTogbMEmIGoxJUBk0SVAZNEuoFOhK3BSMSZQUrEmUFKxJaBfoRcgXPERQEURLgAxcSlgMkEoED/BFRA/kRCAPmEdcC4hGsAvcR6wKaEqICkhJcAkESWgITEooCIxKsAvcRrAL3EcYCtRGjApcRvQJJEfMCPRFcApUTNwJZEzcCWRPgAYcTrQF/E2cBrhM4AdYTCgHYE2gC2BMxAvAT8QEcFJUBBxRLAQ8UFP7BCXv9wAmr/RAI2/1hBtb9DgZF/A0GD/z9Bdf76QWR+wUGYfvIBT/7tgX9+voFwPpEBn76XgZO+nwGFvp7Bub5ZQa0+W4GkvlOBrQD1wvVA34L2gNQC8gD/grQA9EKwwOaCswDWwqkAzEK3wPpCQYEhgk1BJgJhARqCbAEKwmwBCsJWQNtCDgCqAerAXwHqwF8BzwBcgc7AbEHDAHCB84A3ge2AA0IZf/nCBT+wQnNBe4IhgXJCE4FAAmwBCsJxAmYCMQJ0AdRCdAHUAmmB8EHZggyBiUJzQXuCO4IWgSvCEkEfAghBDQItAPWB4UDdQeLA2MHXwMvBzwDBAcVA4cG7wJdBgcD+AXmAvgF5gLoBUYDrgWBA3MFuwOJBeoDtwXgAwsG5gPUBUEE2AWEBNEFxgSqBQYFqgUGBYoF4ASKBeAEsgW5BKIFhQRNBTgEMwX4AyUFxAP7BGgDxgQ/A7YEDAOgBOQCUgSYAhoEwgK4A4UCbAMkAlID3QGB+9wEPPvfBNb66gSm+usE3fz9A8H80wPY/KoD8fxaA8L8QAPE/AEDtPwBA4P82wJU/PECMPxWAwH8SQMB/EkD5/toA9r7nwPE+8kDqPvtA1j77QMl+9gDCfumA9P6egMlANUF5f/UBZX/2QU4/7AF1/5kBaD+NgVv/kMFRf7mBPb9kwTd/UcE5P0NBOT9DQSj/fIDk/0cBGX9EwQG/fcD3fz9A9cAqgSRAIMEfABXBFoATAQCAE4E5f7EA6H+3gNy/toDIv7WA+T9DQQCAE4E1P9WBIj/TQTa/kgE2P4QBOX+xANpAY4EfAExBHMB7gNCAbADEAFTAxMBEwMNAXICQQbjADoGrQDrBcQAmgXfABwF4wAcBeMA1ATbAJcE6QBoBOIAaATiAMUD5ABNCWMDmQk3A88JDwMUCroCPQqPAlcKUwKhCisCsQoLAlAKAwIFCg4C0QntAYkJ/wEaCc0B7AjXAcEIkwF2CKYBLQiwAe0H1QGbB/cBZQfXAT4HpAE1B14BOw6iBSsOTAUCDuoExg24BJsNbARiDScERA2+A0QNvgNFDWQDAQ1DA98MCgMdDQMDUA3TAo8NkwLKDScCixDmBNQQ9gS2EEUEhxBPBFAQUQRGEIsEaBC6BIsQ5gQ+DaH/PQ0LAFoNNACLDXYAsA2/AIQNMQF4DWQBSQ2pAQsMXwGzC6EBnAvMAWQLtwE2C74B7gq5AbEKCwI1B14BLwciAREH7QD+Bq4A8QZWAPcGHQDkBtb/lwaF/2kGUv89BvH+QQae/u0FTv6yBQ/+hgU9/lAFPv4uBRj+FAUi/t8E8/3CBL39jgt6/20LIv9WC+T+Vgvk/nALt/52Cz7+dgs+/ogL4v1+C679kgt0/cwLPP0CDL78Agy+/FQLt/wdC2z8Mws//CILyfsVC2X7dgss+5oL0vpNC9P6JAsK+wALNfuzCkP7nAp3+18KWPsPCmb77gmT+64JnPt/CZr7Vwm7+1cJu/sqCcH77Aiy+6gIrPutCCP8jAhI/IQIhfyTCMH8fQgn/QMIJv3ZB0r9lgc0/X0H+vw2B+/80wbZ/K0GDf15Bmr9YQa0/ToFtv36BKv95wsP/7ILFf+TC9z+Vgvk/uILj/9zDJn/Pg2h/8wMZfyTDIP8VAyU/AIMvvz5DIv6ygs4+tML8fnTC/H5iAvk+U8LvPkfC5H5yAo/+ZAK/vhOCgf53gkS+RIJKPlaCP/4aAcN+SIHPfmNBTn5QgVf+QEFYvnGBFH5lQQ++b0JFPl2CQP5Ngnc+BAJBfl2COL4Kwjf+CgIe/fGB3f3xgdT9n8LX/fyChX3mArL9ncKiPZZCmL2Igpa9hEKK/bHCfT1dQn59UUJFfbqCAr20gja9aMIvPVxCI/1KQiF9RwI5fXhB0T2LwxP9/oLWfeoC173hwyP9X8Mu/VwDOj1cAzo9XkMe/ZfDML2LwxP9y7d9QZL3fwGb905BxndogUl3c8FXN3/BYndJQbg5X0AuuWsAH3lqQC65KsAvORtAPbkYwDf5EcApuQ2AKbk7f/S5Mn/4uSQ/7PkUv6z5FL+geSH/qPk7/5X5B7/G+QW/7/jDf914xn/OuOC/wzjnP/s4sv/qeL6/4/i8f9k4ggAM+IqAMLhKACp4VMAMuGKAMnlHveB5RH3WuWb9yTlC/hE5Wv4D+WW+ALl3vjR5CL5R+ke+OjocPiM6HL43edV+K3n/fer58f3g+dP96nq8vXb6gX2DevM9QvrfPW36kX1dOoc9QPqu/R96TL0feky9L7pPfQj6vDzr+qz8/3qe/M36zfzC+sI8yfrz/LR5CL5EOWO+eXk4vnq5Cn6EeVb+hPlsPoY5fb61+S5+zQFTAV4Bd4EawJSEzcCWRMGEiIPwhEvD48RXg8rEiUPoRJvD+QSWQ/BEicP/xLzDqb66wTt+e8EsfnnBHz51gTGB1P2xQfi9GwHr/Q2B6f0+Aa69MsGwvS6Buz0kgYI9WIG1vSD50/3Aedp99rmGPeg5mD3HeZ598nlHvfX5Ln7IeWw+1Xls/vD5fn79+Uf/HrmMPxw5uX7dOZ7++DmIvtQ5xH7eOfs+rvn2Prl57v6JOi8+l7onvpi6GX6d+gc+oDopvlA6aL5Melo+XPpJfmK6ef4eOmY+F3pbPhn6TP4Z+kz+KYdUw7DHQYO8R37DfEe4wzuHrAM7h6wDKYevgyvHpsMuR5xDNAeRwzQHkcMAR8nDAEfJwwtHwwMLR8MDFof9QtaH/ULrx/KC1YO0RFQDo8RICI6E2Ei/BK1IscSRCOhEokjURJjI9wRhyOxEf0joBGEJJIR/SRTETslSBFoJewQoyWxEBEmsxDgJpwQZSeqEMcnmxBbKF8Q1ChfEAEpQBB1KXUQFiqYEKwqnBAhK78QaSv1EK8rFhF/K14RsyueEewrlRFSLIERtiy2EU8t3RGYLR8S3i07Em8uSRK+Lj0Sby6nEh4uxxLSLaISby2xEjYtpRIdLc4SYy0xE5QtfROULX0TDC5XE5kulhPyLiwUKi9MFCkvhBTyLpsURC/NFMEv3xRFMOIU2zDEFDMxnxRwMToUljEPFLkx0hPeMXATjDJQEwIzCRMrM6sSwzOrEhk00hK/NPASijSWEmM0cRJBNAQS/jOiEYQztBEvM5ERSTM7ETozxRAHM8IQCDOQEOMN/gy5De0MWh2EDQAdkw3PHGgN8hwQDRUdzAwxHrENBx6JDZgdeg1aHYQN";
+
+  function b64ToBytes(b64) {
+    var bin = atob(b64), n = bin.length, out = new Uint8Array(n), i;
+    for (i = 0; i < n; i++) out[i] = bin.charCodeAt(i);
+    return out;
+  }
+  var MASK_BYTES = b64ToBytes(MASK_B64);
+  function isLand(row, col) {
+    var idx = row * MASK_W + col;
+    return (MASK_BYTES[idx >> 3] >> (7 - (idx & 7))) & 1;
+  }
+
+  function ll(lat, lon) {
+    var p = (90 - lat) * Math.PI / 180, t = (lon + 180) * Math.PI / 180;
+    return { x: Math.sin(p) * Math.cos(t), y: Math.cos(p), z: Math.sin(p) * Math.sin(t) };
+  }
+
+  var HUBS = [
+    ll(30.27, -97.74),  // AUS-01 Austin — home
+    ll(32.78, -96.80),  // Dallas
+    ll(1.35, 103.82),   // Singapore
+    ll(50.11, 8.68),    // Frankfurt
+    ll(35.68, 139.69),  // Tokyo
+    ll(51.51, -0.13),   // London
+    ll(-33.87, 151.21), // Sydney
+    ll(19.08, 72.88)    // Mumbai
+  ];
+  var ARCS = [[0,1],[0,3],[0,2],[1,4],[3,5],[2,6],[2,7],[3,7],[0,5]];
+  var ARC_LIFT = 0.16;
+
+  /* ════════ SPECTRUM palette — hard-locked ════════ */
+  function mix3(c1, c2, t) {
+    return [c1[0] + (c2[0] - c1[0]) * t, c1[1] + (c2[1] - c1[1]) * t, c1[2] + (c2[2] - c1[2]) * t];
+  }
+  var MAG = [1.00, 0.29, 0.85], VIO = [0.62, 0.43, 1.00], CYN = [0.29, 0.88, 1.00], TEA = [0.24, 0.86, 0.71];
+  var STOPS = [[-180, MAG], [-60, VIO], [30, CYN], [180, TEA]];
+  function landColor(q) {
+    var i, f;
+    if (q <= STOPS[0][0]) return STOPS[0][1];
+    for (i = 1; i < STOPS.length; i++) {
+      if (q <= STOPS[i][0]) {
+        f = (q - STOPS[i - 1][0]) / (STOPS[i][0] - STOPS[i - 1][0]);
+        return mix3(STOPS[i - 1][1], STOPS[i][1], f);
+      }
+    }
+    return STOPS[STOPS.length - 1][1];
+  }
+  var BORDER_COL = [0.78, 0.67, 1.00];
+
+  /* ════════ Canvas layers ════════ */
+  var stage = document.getElementById('pl-stage');
+  var under = document.getElementById('pl-under');
+  var uctx = under.getContext('2d');
+  var glc = document.getElementById('pl-gl');
+  var gl = glc.getContext('webgl', { alpha: true, antialias: false, premultipliedAlpha: false })
+        || glc.getContext('experimental-webgl', { alpha: true, antialias: false, premultipliedAlpha: false });
+
+  // ── v1.7.6 hardening (runs regardless of GL) ──
+  var REDUCED = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  try {
+    var _ve = document.querySelector('#boot .pl-ver');
+    if (_ve && typeof PHANTOM_APP_VERSION === 'string') _ve.textContent = PHANTOM_APP_VERSION.replace(/^phantom-/, '').toUpperCase();
+  } catch (_) {}
+  // WebGL context-loss safety (iOS memory pressure): preventDefault stops the permanent freeze;
+  // reload re-inits the engine. running/mode are var-hoisted, so these closures resolve them.
+  glc.addEventListener('webglcontextlost', function (e) { e.preventDefault(); running = false; }, false);
+  glc.addEventListener('webglcontextrestored', function () { if (mode !== 'warp' && mode !== 'done') { try { location.reload(); } catch (_) {} } }, false);
+
+  var W, H, CX, CY, R, DPR;
+
+  function drawUnderlay() {
+    uctx.clearRect(0, 0, W, H);
+    var i, sx, sy, sa;
+    for (i = 0; i < 140; i++) {
+      sx = (Math.sin(i * 127.1) * 0.5 + 0.5) * W;
+      sy = (Math.sin(i * 311.7) * 0.5 + 0.5) * H;
+      sa = 0.15 + (Math.sin(i * 74.3) * 0.5 + 0.5) * 0.45;
+      uctx.fillStyle = 'rgba(200,215,255,' + sa.toFixed(2) + ')';
+      uctx.fillRect(sx, sy, 1, 1);
+    }
+    var halo = uctx.createRadialGradient(CX, CY, R * 0.82, CX, CY, R * 1.5);
+    halo.addColorStop(0, 'rgba(75,160,255,0.16)');
+    halo.addColorStop(0.55, 'rgba(140,90,255,0.07)');
+    halo.addColorStop(1, 'rgba(0,0,0,0)');
+    uctx.fillStyle = halo;
+    uctx.beginPath(); uctx.arc(CX, CY, R * 1.5, 0, 6.2832); uctx.fill();
+    var body = uctx.createRadialGradient(CX - R * 0.3, CY - R * 0.3, R * 0.1, CX, CY, R);
+    body.addColorStop(0, 'rgba(22,28,58,0.95)');
+    body.addColorStop(0.8, 'rgba(8,10,24,0.97)');
+    body.addColorStop(1, 'rgba(45,80,160,0.6)');
+    uctx.fillStyle = body;
+    uctx.beginPath(); uctx.arc(CX, CY, R, 0, 6.2832); uctx.fill();
+  }
+
+  function resize() {
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    W = stage.clientWidth; H = stage.clientHeight;
+    CX = W / 2; CY = H * 0.55;
+    R = Math.min(W, H) * 0.42;
+    under.width = W * DPR; under.height = H * DPR;
+    uctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    glc.width = W * DPR; glc.height = H * DPR;
+    if (gl) gl.viewport(0, 0, glc.width, glc.height);
+    drawUnderlay();
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  if (!gl) {
+    // No-WebGL fallback: static landing chrome (CSS) stays, the globe/warp engine is skipped,
+    // and the ring becomes tap-to-enter — the app must remain enterable with zero GL (per spec).
+    var _h = document.getElementById('pl-hint'); if (_h) _h.textContent = 'TAP TO ENTER';
+    var _r = document.getElementById('pl-ring');
+    if (_r) _r.addEventListener('click', function () { if (typeof launch === 'function') launch(); });
+    return;
+  }
+
+  /* ════════ Shaders ════════ */
+  var VS = [
+    'attribute vec3 aPos;',
+    'attribute float aSize;',
+    'attribute vec3 aColor;',
+    'attribute float aPhase;',
+    'uniform float uRotY;',
+    'uniform float uCosT;',
+    'uniform float uSinT;',
+    'uniform vec2 uScale;',
+    'uniform vec2 uCenter;',
+    'uniform float uTime;',
+    'uniform float uDPR;',
+    'varying vec3 vColor;',
+    'varying float vAlpha;',
+    'void main() {',
+    '  float cy = cos(uRotY); float sy = sin(uRotY);',
+    '  float x = aPos.x * cy - aPos.z * sy;',
+    '  float z = aPos.x * sy + aPos.z * cy;',
+    '  float y = aPos.y;',
+    '  float y2 = y * uCosT - z * uSinT;',
+    '  float z2 = y * uSinT + z * uCosT;',
+    '  gl_Position = vec4(uCenter.x + x * uScale.x, uCenter.y + y2 * uScale.y, 0.0, 1.0);',
+    '  float front = smoothstep(0.0, 0.3, z2);',
+    '  float tw = 0.78 + 0.14 * sin(uTime * 2.0 + aPhase);',
+    '  float flare = pow(max(sin(uTime * 0.55 + aPhase * 9.7), 0.0), 32.0) * 1.6;',
+    '  vAlpha = front * min(tw + flare, 1.9);',
+    '  float fsz = 1.0 + flare * 0.9;',
+    '  vColor = aColor;',
+    '  gl_PointSize = aSize * fsz * (0.55 + z2 * 0.9) * uDPR;',
+    '}'
+  ].join('\n');
+
+  var FS = [
+    'precision mediump float;',
+    'varying vec3 vColor;',
+    'varying float vAlpha;',
+    'void main() {',
+    '  vec2 d = gl_PointCoord - vec2(0.5);',
+    '  float r = length(d) * 2.0;',
+    '  if (r > 1.0) discard;',
+    '  float glow = exp(-r * r * 3.0);',
+    '  gl_FragColor = vec4(vColor, vAlpha * glow);',
+    '}'
+  ].join('\n');
+
+  function compile(type, src) {
+    var s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+      throw new Error(gl.getShaderInfoLog(s));
+    }
+    return s;
+  }
+  var prog = gl.createProgram();
+  gl.attachShader(prog, compile(gl.VERTEX_SHADER, VS));
+  gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FS));
+  gl.linkProgram(prog);
+  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
+    throw new Error(gl.getProgramInfoLog(prog));
+  }
+  gl.useProgram(prog);
+
+  var loc = {
+    aPos: gl.getAttribLocation(prog, 'aPos'),
+    aSize: gl.getAttribLocation(prog, 'aSize'),
+    aColor: gl.getAttribLocation(prog, 'aColor'),
+    aPhase: gl.getAttribLocation(prog, 'aPhase'),
+    uRotY: gl.getUniformLocation(prog, 'uRotY'),
+    uCosT: gl.getUniformLocation(prog, 'uCosT'),
+    uSinT: gl.getUniformLocation(prog, 'uSinT'),
+    uScale: gl.getUniformLocation(prog, 'uScale'),
+    uCenter: gl.getUniformLocation(prog, 'uCenter'),
+    uTime: gl.getUniformLocation(prog, 'uTime'),
+    uDPR: gl.getUniformLocation(prog, 'uDPR')
+  };
+
+  gl.enable(gl.BLEND);
+  gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+  gl.disable(gl.DEPTH_TEST);
+  gl.clearColor(0, 0, 0, 0);
+
+  var STRIDE = 8 * 4;
+  function bindAttribs() {
+    gl.enableVertexAttribArray(loc.aPos);
+    gl.vertexAttribPointer(loc.aPos, 3, gl.FLOAT, false, STRIDE, 0);
+    gl.enableVertexAttribArray(loc.aSize);
+    gl.vertexAttribPointer(loc.aSize, 1, gl.FLOAT, false, STRIDE, 12);
+    gl.enableVertexAttribArray(loc.aColor);
+    gl.vertexAttribPointer(loc.aColor, 3, gl.FLOAT, false, STRIDE, 16);
+    gl.enableVertexAttribArray(loc.aPhase);
+    gl.vertexAttribPointer(loc.aPhase, 1, gl.FLOAT, false, STRIDE, 28);
+  }
+
+  /* ── Static geometry: real land + borders + arcs, SPECTRUM baked ── */
+  var staticData = [];
+  var r, c, lat, lon, p, col;
+
+  for (r = 0; r < MASK_H; r++) {
+    lat = 90 - ((r + 0.5) / MASK_H) * 180;
+    if (lat < -82) continue;
+    for (c = 0; c < MASK_W; c++) {
+      if (!isLand(r, c)) continue;
+      if (Math.random() > 0.42) continue;
+      lon = ((c + Math.random()) / MASK_W) * 360 - 180;
+      p = ll(lat + (Math.random() - 0.5) * 0.5, lon);
+      col = landColor(lon);
+      staticData.push(
+        p.x, p.y, p.z,
+        1.5 + Math.random() * 1.7,
+        col[0], col[1], col[2],
+        Math.random() * 6.283
+      );
+    }
+  }
+  (function () {
+    var bytes = b64ToBytes(BORD_B64);
+    var i16 = new Int16Array(bytes.buffer, 0, bytes.byteLength >> 1);
+    var i, blon, blat, bp;
+    for (i = 0; i < i16.length; i += 2) {
+      blon = i16[i] / 100; blat = i16[i + 1] / 100;
+      bp = ll(blat, blon);
+      staticData.push(
+        bp.x * 1.004, bp.y * 1.004, bp.z * 1.004,
+        1.3,
+        BORDER_COL[0], BORDER_COL[1], BORDER_COL[2],
+        Math.random() * 6.283
+      );
+    }
+  })();
+  var ai, st, t, A, B, x, y, z, len, alt;
+  var ARC_STEPS = 46;
+  for (ai = 0; ai < ARCS.length; ai++) {
+    A = HUBS[ARCS[ai][0]]; B = HUBS[ARCS[ai][1]];
+    for (st = 0; st <= ARC_STEPS; st++) {
+      t = st / ARC_STEPS;
+      x = A.x + (B.x - A.x) * t;
+      y = A.y + (B.y - A.y) * t;
+      z = A.z + (B.z - A.z) * t;
+      len = Math.sqrt(x * x + y * y + z * z) || 1;
+      alt = 1 + ARC_LIFT * Math.sin(t * Math.PI);
+      staticData.push(
+        x / len * alt, y / len * alt, z / len * alt,
+        1.6,
+        0.45, 0.8, 1.0,
+        t * 6.283 + ai
+      );
+    }
+  }
+  var staticArr = new Float32Array(staticData);
+  var staticCount = staticArr.length / 8;
+  var staticBuf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, staticBuf);
+  gl.bufferData(gl.ARRAY_BUFFER, staticArr, gl.STATIC_DRAW);
+
+  /* ── Dynamic: hubs + packets ── */
+  var NPACK = ARCS.length;
+  var dynCount = HUBS.length + NPACK;
+  var dynArr = new Float32Array(dynCount * 8);
+  var dynBuf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, dynBuf);
+  gl.bufferData(gl.ARRAY_BUFFER, dynArr.byteLength, gl.DYNAMIC_DRAW);
+
+  function arcPoint(ai2, t2, out, off) {
+    var A2 = HUBS[ARCS[ai2][0]], B2 = HUBS[ARCS[ai2][1]];
+    var x2 = A2.x + (B2.x - A2.x) * t2;
+    var y2 = A2.y + (B2.y - A2.y) * t2;
+    var z2 = A2.z + (B2.z - A2.z) * t2;
+    var l2 = Math.sqrt(x2 * x2 + y2 * y2 + z2 * z2) || 1;
+    var a2 = 1 + ARC_LIFT * Math.sin(t2 * Math.PI);
+    out[off] = x2 / l2 * a2; out[off + 1] = y2 / l2 * a2; out[off + 2] = z2 / l2 * a2;
+  }
+
+  /* ════════ Motion + entry state machine ════════ */
+  var rotY = 0;
+  var AUTO_SPEED = 0.18;
+  var vel = REDUCED ? 0 : AUTO_SPEED;
+  var dragging = false, lastX = 0;
+  var hintEl = document.getElementById('pl-hint');
+  var hintShown = true;
+
+  var mode = 'idle'; // idle | charge | warp | done
+  var chargeT = 0, CHARGE_S = 0.9;
+  var warpT = 0, WARP_S = 1.7;
+  var zoom = 1;
+
+  function hubFocusRot(h) {
+    var az = Math.atan2(HUBS[h].z, HUBS[h].x);
+    return Math.PI / 2 - az;
+  }
+  var AUS_ROT = hubFocusRot(0);
+
+  stage.addEventListener('pointerdown', function (e) {
+    if (mode !== 'idle') return;
+    dragging = true; lastX = e.clientX;
+    if (hintShown) { hintEl.style.opacity = '0'; hintShown = false; }
+  });
+  window.addEventListener('pointermove', function (e) {
+    if (!dragging) return;
+    var dx = e.clientX - lastX; lastX = e.clientX;
+    rotY += dx * 0.008;
+    vel = dx * 0.008 * 60;
+  });
+  window.addEventListener('pointerup', function () { dragging = false; });
+  window.addEventListener('pointercancel', function () { dragging = false; });
+
+  /* ── HOLD TO ENTER ring ── */
+  var ring = document.getElementById('pl-ring');
+  var progEl = document.getElementById('pl-prog');
+  var capEl = document.getElementById('pl-cap');
+  var flashEl = document.getElementById('pl-flash');
+  var doneEl = document.getElementById('pl-done');
+  var CIRC = 314.2;
+
+  ring.addEventListener('pointerdown', function (e) {
+    e.preventDefault(); e.stopPropagation();
+    if (mode !== 'idle') return;
+    mode = 'charge';
+    ring.classList.add('pl-charging');
+    capEl.textContent = 'Arming';
+  });
+  function releaseRing() {
+    if (mode === 'charge') {
+      mode = 'idle';
+      ring.classList.remove('pl-charging');
+      capEl.textContent = 'Enter';
+    }
+  }
+  window.addEventListener('pointerup', releaseRing);
+  window.addEventListener('pointercancel', releaseRing);
+
+  function startWarp() {
+    mode = 'warp';
+    warpT = 0;
+    ring.classList.remove('pl-charging');
+    capEl.textContent = 'Armed';
+    // fade chrome
+    var fades = document.querySelectorAll('.pl-fade');
+    for (var i = 0; i < fades.length; i++) fades[i].style.opacity = '0.12';
+    // shortest path to Austin
+    var twoPi = Math.PI * 2;
+    var cur = ((rotY % twoPi) + twoPi) % twoPi;
+    var tgt = ((AUS_ROT % twoPi) + twoPi) % twoPi;
+    var diff = tgt - cur;
+    if (diff > Math.PI) diff -= twoPi;
+    if (diff < -Math.PI) diff += twoPi;
+    warpFrom = rotY;
+    warpTo = rotY + diff;
+  }
+  var warpFrom = 0, warpTo = 0;
+
+  function finishWarp() {
+    if (mode === 'done') return;
+    mode = 'done';
+    running = false;
+    // Hand off to the app's real ENTER route. The flash frame stays up to mask the transition;
+    // launch() reveals the app and collapses #boot (taking the flash with it). Dev fallback below.
+    if (typeof launch === 'function') { launch(); }
+    else { doneEl.style.display = 'flex'; flashEl.style.opacity = '0'; }
+  }
+
+  /* ════════ Clock-free counters trimmed — decluttered by design ════════ */
+
+  /* ════════ Render loop ════════ */
+  var TILT = -0.30, COS_T = Math.cos(TILT), SIN_T = Math.sin(TILT);
+  var running = true, tPrev = 0, clock = 0;
+  var GREEN = [61/255, 220/255, 132/255];
+  var WHITE = [1, 1, 1];
+
+  function frame(t2) {
+    if (!running) return;
+    requestAnimationFrame(frame);
+    var dt = Math.min((t2 - tPrev) / 1000, 0.05); tPrev = t2;
+    clock += dt;
+
+    if (mode === 'charge') {
+      chargeT += dt;
+      var cp = Math.min(chargeT / CHARGE_S, 1);
+      progEl.style.strokeDashoffset = (CIRC * (1 - cp)).toFixed(1);
+      if (cp >= 1) { chargeT = 0; startWarp(); }
+    } else if (mode === 'idle' && chargeT > 0) {
+      chargeT = Math.max(chargeT - dt * 3, 0);
+      progEl.style.strokeDashoffset = (CIRC * (1 - chargeT / CHARGE_S)).toFixed(1);
+    }
+
+    if (mode === 'warp') {
+      warpT += dt;
+      var wp = Math.min(warpT / WARP_S, 1);
+      var ease = 1 - Math.pow(1 - wp, 3);
+      rotY = warpFrom + (warpTo - warpFrom) * Math.min(ease * 1.6, 1);
+      zoom = 1 + ease * ease * 7;
+      if (wp > 0.7) flashEl.style.opacity = ((wp - 0.7) / 0.3).toFixed(2);
+      if (wp >= 1) { finishWarp(); return; }
+    } else if (!dragging && mode !== 'done' && !REDUCED) {
+      vel += (AUTO_SPEED - vel) * Math.min(dt * 1.2, 1);
+      rotY += vel * dt;
+    }
+
+    // dynamic buffer
+    var off = 0, h2, sz2;
+    for (h2 = 0; h2 < HUBS.length; h2++) {
+      dynArr[off] = HUBS[h2].x; dynArr[off + 1] = HUBS[h2].y; dynArr[off + 2] = HUBS[h2].z;
+      sz2 = (h2 === 0 ? 8 : 3.5) + Math.sin(clock * 3 + h2) * 1.2;
+      dynArr[off + 3] = sz2;
+      dynArr[off + 4] = GREEN[0]; dynArr[off + 5] = GREEN[1]; dynArr[off + 6] = GREEN[2];
+      dynArr[off + 7] = h2;
+      off += 8;
+    }
+    var pk, pt;
+    for (pk = 0; pk < NPACK; pk++) {
+      pt = (clock * 0.22 + pk * 0.13) % 1;
+      arcPoint(pk, pt, dynArr, off);
+      dynArr[off + 3] = 3.2;
+      dynArr[off + 4] = WHITE[0]; dynArr[off + 5] = WHITE[1]; dynArr[off + 6] = WHITE[2];
+      dynArr[off + 7] = pk * 2.1;
+      off += 8;
+    }
+
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.uniform1f(loc.uRotY, rotY);
+    gl.uniform1f(loc.uCosT, COS_T);
+    gl.uniform1f(loc.uSinT, SIN_T);
+    gl.uniform2f(loc.uScale, R * zoom / (W / 2), R * zoom / (H / 2));
+    gl.uniform2f(loc.uCenter, (CX - W / 2) / (W / 2), (H / 2 - CY) / (H / 2));
+    gl.uniform1f(loc.uTime, clock);
+    gl.uniform1f(loc.uDPR, DPR);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, staticBuf);
+    bindAttribs();
+    gl.drawArrays(gl.POINTS, 0, staticCount);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, dynBuf);
+    gl.bufferSubData(gl.ARRAY_BUFFER, 0, dynArr);
+    bindAttribs();
+    gl.drawArrays(gl.POINTS, 0, dynCount);
+  }
+  requestAnimationFrame(function (t3) { tPrev = t3; frame(t3); });
+
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) { running = false; }
+    else if (mode !== 'done') { running = true; requestAnimationFrame(function (t4) { tPrev = t4; frame(t4); }); }
+  });
+})();
+
+</script>
 
 <!-- ━━━ APP ━━━ -->
 <div id="app">
