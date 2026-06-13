@@ -11027,7 +11027,11 @@ if (typeof window !== 'undefined') {
     ll(37.54, -77.44),  // Virginia (Chester)
     ll(33.75, -84.39)   // Georgia (Douglasville)
   ];
-  var ARCS = [[0,1],[0,3],[0,2],[1,4],[3,5],[2,6],[2,7],[3,7],[0,5]];
+  // ARCS re-routed to all-long US<->EU trans-Atlantic spans: the prior short
+  // US-internal arcs (e.g. Austin-Dallas) packed 46 additive cyan points into
+  // tight blobs that washed the SPECTRUM land gradient on the Austin face.
+  // v1.7.6 calm-arcs fix — see also the dimmed arc color below.
+  var ARCS = [[0,1],[0,2],[3,1],[3,2],[4,1],[4,2],[5,1],[6,2],[7,2]];
   var ARC_LIFT = 0.16;
 
   /* ════════ SPECTRUM palette — hard-locked ════════ */
@@ -11262,7 +11266,7 @@ if (typeof window !== 'undefined') {
       staticData.push(
         x / len * alt, y / len * alt, z / len * alt,
         1.6,
-        0.45, 0.8, 1.0,
+        0.30, 0.52, 0.65,   // dimmed cyan (was 0.45,0.8,1.0); additive arcs no longer wash the spectrum
         t * 6.283 + ai
       );
     }

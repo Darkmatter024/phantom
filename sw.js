@@ -33,7 +33,7 @@
 // app version stamps stay v1.7.6): cache key iterated so the offline precache
 // repopulates with the corrected HTML. Online navigations are network-first
 // and already get it; this is purely for the offline fallback copy.
-const CACHE_VERSION = 'phantom-v1.7.6-1';
+const CACHE_VERSION = 'phantom-v1.7.6-2';
 
 // Assets to precache on install. Keep this minimal — single-file PWA means
 // most of PHANTOM is in dct-ios.html itself.
