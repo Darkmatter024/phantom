@@ -10398,9 +10398,9 @@ body.has-resume-banner #boot {
     background:rgba(5,7,11,0.92); -webkit-backdrop-filter:var(--blur-sheet); backdrop-filter:var(--blur-sheet);
     border-top:1px solid rgba(92,242,255,0.20); }
 
-/* ══ PHANTOM globe landing (v1.13.3) — pl- namespaced, scoped to #boot ══ */
+/* ══ PHANTOM globe landing (v1.13.4) — pl- namespaced, scoped to #boot ══ */
 /* ── PHANTOM globe landing (v7 transplant, pl- namespaced, scoped to #boot) ── */
-#boot { --pl-cyan:#4be1ff; --pl-violet:#9d6bff; --pl-magenta:#ff4bd8; --pl-green:#3ddc84; --pl-bg:#030308; --pl-panel:rgba(16,20,38,0.55); --pl-border:rgba(125,140,255,0.18); }
+#boot { --pl-cyan:#4be1ff; --pl-violet:#9d6bff; --pl-magenta:#ff4bd8; --pl-green:#3ddc84; --pl-teal:#3ddbb5; --pl-bg:#030308; --pl-panel:rgba(16,20,38,0.55); --pl-border:rgba(125,140,255,0.18); }
 #boot, #boot * { box-sizing:border-box; }
 #boot .boot-items:empty { display:none; }
 /* ── Header — matches original landing ── */
@@ -10411,7 +10411,7 @@ body.has-resume-banner #boot {
   }
   .pl-hdr .pl-ver {
     font-size: 10px; letter-spacing: 0.34em; margin-right: -0.34em;
-    color: #57e6c9; text-transform: uppercase;
+    color: var(--pl-teal); text-transform: uppercase;
   }
   .pl-hdr h1 {
     margin-top: 10px;
@@ -10420,12 +10420,12 @@ body.has-resume-banner #boot {
     letter-spacing: 0.06em; margin-right: -0.06em;
     background: linear-gradient(90deg, var(--pl-cyan), var(--pl-violet) 52%, var(--pl-magenta));
     -webkit-background-clip: text; background-clip: text; color: transparent;
-    text-shadow: 0 0 34px rgba(120, 140, 255, 0.30);
+    text-shadow: 0 0 34px rgba(140, 120, 255, 0.32);
   }
   .pl-hdr .pl-sub {
     margin-top: 4px; font-size: 10px;
     letter-spacing: 0.40em; margin-right: -0.40em;
-    color: #8b93c4; text-transform: uppercase;
+    color: #9aa3d6; text-transform: uppercase;
   }
 
   /* ── Globe stage ── */
@@ -10528,7 +10528,7 @@ body.has-resume-banner #boot {
   .pl-hint {
     position: absolute; bottom: 12px; left: 0; right: 0;
     text-align: center; font-size: 9px; letter-spacing: 0.22em;
-    color: rgba(139,147,196,0.6); text-transform: uppercase;
+    color: rgba(166,176,224,0.82); text-transform: uppercase;
     pointer-events: none; transition: opacity 0.6s;
   }
 
@@ -10734,7 +10734,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.13.3';
+const PHANTOM_APP_VERSION = 'phantom-v1.13.4';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had

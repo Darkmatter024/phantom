@@ -33,8 +33,8 @@
 // external build line (this repo had been at v1.7.6). CACHE_VERSION is lifted to
 // a clean v1.13.3 — dropping the prior -N cache-iteration suffix — so this real
 // version bump busts every client's cache and the three stamps (app const /
-// version.json / this key) line up again.
-const CACHE_VERSION = 'phantom-v1.13.3';
+// version.json / this key) line up again. Patch bumps continue from here.
+const CACHE_VERSION = 'phantom-v1.13.4';
 
 // Assets to precache on install. Keep this minimal — single-file PWA means
 // most of PHANTOM is in dct-ios.html itself.
