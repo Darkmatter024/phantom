@@ -29,7 +29,11 @@
 
 // v1.6.66: HTML navigations are now network-first (see fetch handler) so the
 // live landing always wins online; cache bumped to evict any poisoned root.
-const CACHE_VERSION = 'phantom-v1.7.6';
+// v1.7.6 data patch (globe HUBS → real CoreWeave sites in dct-ios.html; the
+// app version stamps stay v1.7.6): cache key iterated so the offline precache
+// repopulates with the corrected HTML. Online navigations are network-first
+// and already get it; this is purely for the offline fallback copy.
+const CACHE_VERSION = 'phantom-v1.7.6-1';
 
 // Assets to precache on install. Keep this minimal — single-file PWA means
 // most of PHANTOM is in dct-ios.html itself.
