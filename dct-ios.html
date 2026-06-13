@@ -8369,30 +8369,35 @@ textarea.hud-input {
 .ta-foot-fix { background:linear-gradient(180deg, rgba(48,209,88,0.22), rgba(48,209,88,0.08)); border:1px solid rgba(48,209,88,0.5); color:var(--white); }
 .ta-foot-fix:active { transform:scale(0.98); }
 /* ━━━ HUD REDESIGN v1.6.99 — Skyline · Trace · Tiles (one bottom-up fill metaphor) ━━━ */
-/* ── PHASE PIPELINE (v1.14.0) — replaces rack skyline in NOW dashboard ── */
-.pp-card { background:linear-gradient(135deg,rgba(92,242,255,0.04),rgba(155,89,255,0.03)); border:1px solid rgba(92,242,255,0.18); border-radius:var(--hud-r12); padding:16px 16px 14px; margin-bottom:10px; position:relative; overflow:hidden; }
-.pp-hd { display:flex; justify-content:space-between; align-items:center; gap:10px; font-family:var(--mono); font-size:var(--fs-micro); letter-spacing:var(--hud-track-wide); color:var(--slate); margin-bottom:18px; }
-.pp-hd .pp-build { color:var(--white); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:right; }
+/* ── PHASE PIPELINE (v1.14.2) — NOW dashboard build-phase tracker ── */
+.pp-card { position:relative; background:linear-gradient(135deg,rgba(92,242,255,0.05),rgba(155,89,255,0.04)); border:1px solid rgba(92,242,255,0.2); border-radius:var(--hud-r12); padding:18px 16px 15px; margin-bottom:10px; overflow:hidden; }
+.pp-card::before { content:''; position:absolute; inset:0; background:radial-gradient(120% 80% at 50% -10%, rgba(92,242,255,0.07), transparent 60%); pointer-events:none; }
+.pp-hd { position:relative; display:flex; justify-content:space-between; align-items:center; gap:10px; font-family:var(--mono); font-size:var(--fs-micro); letter-spacing:var(--hud-track-wide); color:var(--cyan); margin-bottom:22px; }
+.pp-build { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:right; color:var(--white); font-weight:600; }
 .pp-row { position:relative; display:flex; }
-.pp-track { position:absolute; left:10%; right:10%; top:17px; height:2px; background:rgba(255,255,255,0.1); border-radius:2px; }
-.pp-track .pp-fill { position:absolute; left:0; top:0; height:100%; border-radius:2px; background:var(--green); box-shadow:0 0 8px rgba(50,215,75,0.6); transition:width .4s ease; }
-.pp-track.is-act .pp-fill { background:var(--cyan); box-shadow:0 0 8px rgba(92,242,255,0.6); }
-.pp-track.is-blk .pp-fill { background:var(--red); box-shadow:0 0 8px rgba(255,45,85,0.6); }
-.pp-node { flex:1; display:flex; flex-direction:column; align-items:center; gap:8px; z-index:1; min-width:0; }
-.pp-dot { width:34px; height:34px; border-radius:50%; border:2px solid rgba(255,255,255,0.14); background:var(--surf-1); display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:13px; color:var(--slate); }
-.pp-lbl { font-family:var(--mono); font-size:8.5px; letter-spacing:0.06em; color:var(--slate); text-align:center; line-height:1.1; }
-.pp-node.is-done .pp-dot { border-color:var(--green); color:var(--green); background:rgba(50,215,75,0.1); box-shadow:0 0 12px rgba(50,215,75,0.35); }
-.pp-node.is-done .pp-lbl { color:var(--white); }
-.pp-node.is-active .pp-dot { border-color:var(--cyan); color:var(--cyan); background:rgba(92,242,255,0.1); box-shadow:0 0 14px rgba(92,242,255,0.45); animation:pp-pulse 1.6s ease-in-out infinite; }
+.pp-track { position:absolute; left:10%; right:10%; top:18px; height:3px; background:rgba(255,255,255,0.07); border-radius:3px; }
+.pp-fill { position:absolute; left:0; top:0; height:100%; border-radius:3px; background:linear-gradient(90deg,rgba(48,209,88,0.45),var(--green)); box-shadow:0 0 10px rgba(48,209,88,0.7); transition:width 0.5s ease; }
+.pp-track.is-act .pp-fill { background:linear-gradient(90deg,rgba(92,242,255,0.45),var(--cyan)); box-shadow:0 0 10px rgba(92,242,255,0.7); }
+.pp-track.is-blk .pp-fill { background:var(--red); box-shadow:0 0 10px rgba(255,45,85,0.7); }
+.pp-node { flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; gap:9px; z-index:1; }
+.pp-dot { position:relative; width:38px; height:38px; border-radius:50%; border:2px solid rgba(255,255,255,0.16); background:radial-gradient(circle at 50% 32%, #1a2030, #0b0f1c); display:flex; align-items:center; justify-content:center; font-family:var(--orb); font-weight:700; font-size:14px; color:var(--slate); transition:all 0.3s ease; }
+.pp-lbl { font-family:var(--mono); font-size:8.5px; letter-spacing:0.04em; color:var(--slate); text-align:center; line-height:1.1; transition:color 0.3s ease; }
+.pp-node.is-done .pp-dot { border-color:var(--green); color:#04140a; background:radial-gradient(circle at 50% 32%, #5bf0a0, var(--green)); box-shadow:0 0 14px rgba(48,209,88,0.5), inset 0 0 6px rgba(255,255,255,0.3); }
+.pp-node.is-done .pp-lbl { color:#a8e8c4; }
+.pp-node.is-active .pp-dot { border-color:var(--cyan); color:var(--cyan); background:radial-gradient(circle at 50% 32%, #16384a, #0b1c26); animation:pp-pulse 1.7s ease-in-out infinite; }
 .pp-node.is-active .pp-lbl { color:var(--cyan); }
-.pp-node.is-blocked .pp-dot { border-color:var(--red); color:var(--red); background:rgba(255,45,85,0.1); box-shadow:0 0 12px rgba(255,45,85,0.4); }
-.pp-node.pp-seal.is-done .pp-dot { color:#04060d; background:var(--green); border-color:var(--green); box-shadow:0 0 16px rgba(50,215,75,0.6); }
-.pp-foot { display:flex; justify-content:space-between; align-items:center; margin-top:18px; font-family:var(--mono); font-size:var(--fs-caption); letter-spacing:1px; }
-.pp-stat { letter-spacing:2px; }
-.pp-stat.is-done { color:var(--green); } .pp-stat.is-act { color:var(--cyan); } .pp-stat.is-blk { color:var(--red); }
+.pp-node.is-blocked .pp-dot { border-color:var(--red); color:var(--red); background:radial-gradient(circle at 50% 32%, #3a1018, #200810); animation:pp-pulse-r 1.4s ease-in-out infinite; }
+.pp-node.is-blocked .pp-lbl { color:#ff8aa0; }
+.pp-node.pp-seal.is-done .pp-dot { box-shadow:0 0 20px rgba(48,209,88,0.7), inset 0 0 8px rgba(255,255,255,0.4); }
+.pp-foot { position:relative; display:flex; justify-content:space-between; align-items:center; margin-top:20px; font-family:var(--mono); font-size:var(--fs-caption); letter-spacing:1px; }
+.pp-stat { letter-spacing:2px; font-weight:600; }
+.pp-stat.is-done { color:var(--green); text-shadow:0 0 8px rgba(48,209,88,0.4); }
+.pp-stat.is-act { color:var(--cyan); text-shadow:0 0 8px rgba(92,242,255,0.4); }
+.pp-stat.is-blk { color:var(--red); text-shadow:0 0 8px rgba(255,45,85,0.4); }
 .pp-meta { color:var(--slate); }
-@keyframes pp-pulse { 0%,100% { box-shadow:0 0 10px rgba(92,242,255,0.3); } 50% { box-shadow:0 0 18px rgba(92,242,255,0.6); } }
-@media (prefers-reduced-motion: reduce) { .pp-node.is-active .pp-dot { animation:none; } }
+@keyframes pp-pulse { 0%,100% { box-shadow:0 0 12px rgba(92,242,255,0.4), inset 0 0 8px rgba(92,242,255,0.2); } 50% { box-shadow:0 0 22px rgba(92,242,255,0.75), inset 0 0 10px rgba(92,242,255,0.3); } }
+@keyframes pp-pulse-r { 0%,100% { box-shadow:0 0 12px rgba(255,45,85,0.4); } 50% { box-shadow:0 0 22px rgba(255,45,85,0.75); } }
+@media (prefers-reduced-motion: reduce) { .pp-node.is-active .pp-dot, .pp-node.is-blocked .pp-dot { animation:none; } }
 .sky-card { background:linear-gradient(135deg,rgba(92,242,255,0.04),rgba(155,89,255,0.03)); border:1px solid rgba(92,242,255,0.18); border-radius:var(--hud-r12); padding:12px 14px; margin-bottom:10px; display:flex; align-items:stretch; gap:14px; }
 .sky-bars { flex:3 1 0; display:flex; align-items:flex-end; gap:2px; min-height:72px; min-width:0; }
 .sky-col { flex:1 1 0; min-width:5px; height:72px; display:flex; align-items:flex-end; justify-content:center; padding:0 1px; background:none; border:none; cursor:pointer; -webkit-appearance:none; -webkit-tap-highlight-color:transparent; }
@@ -8429,7 +8434,7 @@ textarea.hud-input {
 .tile-rowhdr { grid-column:1 / -1; font-family:var(--mono); font-size:var(--fs-micro); letter-spacing:2px; color:var(--cyan); margin:6px 0 2px; }
 .tile { position:relative; aspect-ratio:1 / 1.6; min-height:var(--tap-xl); background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.10); border-radius:6px; padding:6px; cursor:pointer; -webkit-appearance:none; display:flex; flex-direction:column; overflow:hidden; -webkit-tap-highlight-color:transparent; }
 .tile-hdr { font-family:var(--mono); font-size:10px; font-weight:700; letter-spacing:0.5px; color:var(--white); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.tile-body { flex:1; margin:5px 0; border:1px solid rgba(255,255,255,0.08); border-radius:3px; background:rgba(0,0,0,0.25); display:flex; align-items:flex-end; overflow:hidden; }
+.tile-body { position:relative; flex:1; margin:5px 0; border:1px solid #2b2e39; border-radius:3px; background:linear-gradient(180deg,#16171e,#0e0f15); overflow:hidden; box-shadow:inset 0 1px 0 rgba(255,255,255,0.04); }
 .tile-fill { width:100%; transition:height 0.5s ease; }
 .tile.is-done .tile-fill { background:var(--green); box-shadow:0 0 8px rgba(48,209,88,0.4); }
 .tile.is-active .tile-fill { background:var(--cyan); }
@@ -8446,6 +8451,22 @@ textarea.hud-input {
 .tile.is-done .tile-underline { background:var(--green); box-shadow:0 0 6px rgba(48,209,88,0.5); }
 .tile.is-active .tile-underline { background:var(--cyan); }
 .tile.is-blocked .tile-underline { background:var(--red); }
+.tile-body::before, .tile-body::after { content:''; position:absolute; top:3px; bottom:3px; width:3px; background:repeating-linear-gradient(180deg,transparent 0 5px,rgba(0,0,0,0.5) 5px 7px); opacity:.8; z-index:2; }
+.tile-body::before { left:2px; } .tile-body::after { right:2px; }
+.rk { position:absolute; inset:3px 7px; display:flex; flex-direction:column; gap:2px; z-index:1; }
+.rk-u { position:relative; border-radius:1.5px; border:1px solid #30343f; background:linear-gradient(180deg,#24262f,#191b22); box-shadow:inset 0 1px 0 rgba(255,255,255,0.05); }
+.rk-pdu { flex:0 0 8%; background:linear-gradient(180deg,#1c1e26,#141620); }
+.rk-sw { flex:0 0 11%; }
+.rk-gpu { flex:1 1 auto; background-image:repeating-linear-gradient(0deg,transparent 0 2px,rgba(0,0,0,0.4) 2px 3px); }
+.rk-blank { flex:0 0 8%; background:linear-gradient(180deg,#181a21,#121319); border-style:dashed; border-color:#262934; }
+.rk-ghost { flex:1 1 auto; background:transparent; border:1px dashed #23262f; box-shadow:none; }
+.rk-led { position:absolute; right:3px; top:50%; transform:translateY(-50%); width:4px; height:4px; border-radius:50%; background:#2c2f3a; }
+.tile.is-done .rk-led { background:var(--green); box-shadow:0 0 5px rgba(48,209,88,0.8); }
+.tile.is-active .rk-led { background:var(--cyan); box-shadow:0 0 5px rgba(92,242,255,0.8); }
+.tile.is-blocked .rk-led { background:var(--red); box-shadow:0 0 6px rgba(255,45,85,0.8); }
+.tile.is-done { box-shadow:0 0 0 1px rgba(48,209,88,0.22), 0 0 14px rgba(48,209,88,0.14); }
+.tile.is-active { box-shadow:0 0 0 1px rgba(92,242,255,0.22), 0 0 14px rgba(92,242,255,0.14); }
+.tile.is-blocked { border-color:var(--red); box-shadow:0 0 0 1px rgba(255,45,85,0.3), 0 0 14px rgba(255,45,85,0.14); }
 @media (prefers-reduced-motion: reduce) {
   .sky-bar.is-active .sky-bar-fill::after { animation:none; opacity:0.9; }
   .trace-node.is-active { animation:none; box-shadow:0 0 10px var(--cyan); }
@@ -10422,7 +10443,7 @@ body.has-resume-banner #boot {
     background:rgba(5,7,11,0.92); -webkit-backdrop-filter:var(--blur-sheet); backdrop-filter:var(--blur-sheet);
     border-top:1px solid rgba(92,242,255,0.20); }
 
-/* ══ PHANTOM globe landing (v1.14.1) — pl- namespaced, scoped to #boot ══ */
+/* ══ PHANTOM globe landing (v1.14.3) — pl- namespaced, scoped to #boot ══ */
 /* ── PHANTOM globe landing (v7 transplant, pl- namespaced, scoped to #boot) ── */
 #boot { --pl-cyan:#4be1ff; --pl-violet:#9d6bff; --pl-magenta:#ff4bd8; --pl-green:#3ddc84; --pl-teal:#3ddbb5; --pl-bg:#030308; --pl-panel:rgba(16,20,38,0.55); --pl-border:rgba(125,140,255,0.18); }
 #boot, #boot * { box-sizing:border-box; }
@@ -10758,7 +10779,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.1';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.3';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -18551,29 +18572,38 @@ function today_render() {
     // types lit end-to-end, driven by rollup.phaseAgg. Same deploy, no new math.
     var PP_TYPES = (typeof DEPLOY_PHASE_TYPES !== 'undefined') ? DEPLOY_PHASE_TYPES : ['mechanical','power','network','compute','validation'];
     var pAgg = (rollup && rollup.phaseAgg) ? rollup.phaseAgg : {};
-    var ppDone = 0, ppActive = -1, ppStates = [];
-    PP_TYPES.forEach(function(t, i) {
-      var p = pAgg[t] || { complete:0, inProgress:0, blocked:0, total:0 };
-      var st = 'pending';
-      if (p.total > 0 && p.complete >= p.total) { st = 'done'; ppDone++; }
-      else if (p.blocked > 0) { st = 'blocked'; }
-      else if (p.inProgress > 0 || p.complete > 0) { st = 'active'; if (ppActive < 0) ppActive = i; }
-      ppStates.push(st);
+    // Frontier model: a phase is 'done' only when every rack has cleared it. The
+    // first not-done phase is the frontier (where the build actually is). Phases
+    // before it are done; phases after it are pending — so a build blocked at
+    // MECHANICAL no longer lights up POWER/NETWORK/COMPUTE/VALIDATION.
+    var ppDoneFlags = PP_TYPES.map(function(t) {
+      var p = pAgg[t] || { complete:0, total:0 };
+      return (p.total > 0 && (p.complete || 0) >= p.total);
     });
+    var ppDone = 0; ppDoneFlags.forEach(function(d) { if (d) ppDone++; });
     var ppAllDone = (PP_TYPES.length > 0 && ppDone === PP_TYPES.length);
-    var ppLastLit = ppAllDone ? (PP_TYPES.length - 1) : (ppActive >= 0 ? ppActive : (ppDone > 0 ? ppDone - 1 : -1));
-    var ppFill = (PP_TYPES.length > 1 && ppLastLit > 0) ? Math.round((ppLastLit / (PP_TYPES.length - 1)) * 100) : 0;
-    var ppBlk = (racksBlocked > 0) || (ppStates.indexOf('blocked') >= 0);
-    var ppTrack = ppBlk ? 'pp-track is-blk' : (ppAllDone ? 'pp-track is-done' : 'pp-track is-act');
+    var ppFrontier = ppDoneFlags.indexOf(false); // -1 when all phases are done
+    var ppAnyBlk = false;
+    PP_TYPES.forEach(function(t) { if (pAgg[t] && pAgg[t].blocked > 0) ppAnyBlk = true; });
+    var ppBlk = (racksBlocked > 0) || ppAnyBlk;
+    var ppFrontierBlk = (ppFrontier >= 0) && ppBlk;
+    var ppStates = ppDoneFlags.map(function(done, i) {
+      if (done) return 'done';
+      if (i === ppFrontier) return ppFrontierBlk ? 'blocked' : 'active';
+      return 'pending';
+    });
+    var ppActive = ppFrontier;
+    var ppFill = ppAllDone ? 100 : Math.max(0, Math.round(((ppFrontier - 1) / Math.max(1, PP_TYPES.length - 1)) * 100));
+    var ppTrack = ppFrontierBlk ? 'pp-track is-blk' : (ppAllDone ? 'pp-track is-done' : 'pp-track is-act');
     html += '<div class="pp-card">';
-    html += '<div class="pp-hd"><span>ACTIVE BUILD</span><span class="pp-build">' + escHtml(mostRecentDeploy.name || 'Deployment') + '</span></div>';
+    html += '<div class="pp-hd"><span>PHASE PROGRESS</span><span class="pp-build">' + escHtml(mostRecentDeploy.name || 'Deployment') + '</span></div>';
     html += '<div class="pp-row">';
     html += '<div class="' + ppTrack + '"><span class="pp-fill" style="width:' + ppFill + '%"></span></div>';
     PP_TYPES.forEach(function(t, i) {
       var st = ppStates[i];
       var lbl = (typeof DEPLOY_PHASE_LABELS !== 'undefined' && DEPLOY_PHASE_LABELS[t]) ? DEPLOY_PHASE_LABELS[t] : String(t).toUpperCase();
       var seal = (st === 'done' && i === PP_TYPES.length - 1) ? ' pp-seal' : '';
-      var glyph = (st === 'done') ? '&#10003;' : String(i + 1);
+      var glyph = (st === 'done') ? '&#10003;' : (st === 'blocked') ? '!' : String(i + 1);
       html += '<div class="pp-node is-' + st + seal + '"><span class="pp-dot">' + glyph + '</span><span class="pp-lbl">' + escHtml(lbl) + '</span></div>';
     });
     html += '</div>';
@@ -27078,7 +27108,13 @@ function deploy_renderFloorMap(deployId) {
       html += '<button class="tile is-' + f.state + '" onclick="deploy_showRackDetail(\'' + deployId + '\',\'' + rack.id + '\')" aria-label="' + escHtml(rack.rackId || rack.id || 'rack') + ' ' + f.fill + '% (' + f.state + ')" ontouchstart="this.style.opacity=\'0.7\'" ontouchend="this.style.opacity=\'1\'">';
       if (f.state === 'blocked') html += '<span class="tile-flag"></span>';
       html += '<div class="tile-hdr">' + escHtml(rack.rackId || rack.id || '?') + '</div>';
-      html += '<div class="tile-body"><div class="tile-fill" style="height:' + f.fill + '%"></div></div>';
+      html += '<div class="tile-body"><div class="rk">';
+      if (f.state === 'pending') {
+        html += '<div class="rk-u rk-ghost"></div><div class="rk-u rk-ghost"></div><div class="rk-u rk-ghost"></div><div class="rk-u rk-ghost"></div>';
+      } else {
+        html += '<div class="rk-u rk-pdu"></div><div class="rk-u rk-sw"><i class="rk-led"></i></div><div class="rk-u rk-gpu"><i class="rk-led"></i></div><div class="rk-u rk-gpu"><i class="rk-led"></i></div><div class="rk-u rk-gpu"><i class="rk-led"></i></div><div class="rk-u rk-blank"></div>';
+      }
+      html += '</div></div>';
       html += '<div class="tile-pips">';
       (ru.phases || []).forEach(function(p) {
         html += '<span class="tile-pip ' + hud_phaseClass(p.status) + '"></span>';
