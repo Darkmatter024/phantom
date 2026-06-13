@@ -10398,7 +10398,7 @@ body.has-resume-banner #boot {
     background:rgba(5,7,11,0.92); -webkit-backdrop-filter:var(--blur-sheet); backdrop-filter:var(--blur-sheet);
     border-top:1px solid rgba(92,242,255,0.20); }
 
-/* ══ PHANTOM globe landing (v1.13.5) — pl- namespaced, scoped to #boot ══ */
+/* ══ PHANTOM globe landing (v1.13.7) — pl- namespaced, scoped to #boot ══ */
 /* ── PHANTOM globe landing (v7 transplant, pl- namespaced, scoped to #boot) ── */
 #boot { --pl-cyan:#4be1ff; --pl-violet:#9d6bff; --pl-magenta:#ff4bd8; --pl-green:#3ddc84; --pl-teal:#3ddbb5; --pl-bg:#030308; --pl-panel:rgba(16,20,38,0.55); --pl-border:rgba(125,140,255,0.18); }
 #boot, #boot * { box-sizing:border-box; }
@@ -10430,7 +10430,7 @@ body.has-resume-banner #boot {
 
   /* ── Globe stage ── */
   .pl-stage {
-    position: relative; width: 100%; height: clamp(380px, 55vh, 540px); overflow: hidden;
+    position: relative; width: 100%; flex: 1 1 auto; min-height: 0; overflow: hidden;
     touch-action: none;
   }
   canvas.pl-layer { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
@@ -10734,7 +10734,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.13.5';
+const PHANTOM_APP_VERSION = 'phantom-v1.13.7';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -11213,7 +11213,7 @@ if (typeof window !== 'undefined') {
     DPR = Math.min(window.devicePixelRatio || 1, 2);
     W = stage.clientWidth; H = stage.clientHeight;
     CX = W / 2; CY = H * 0.50;
-    R = Math.min(W, H) * 0.45;
+    R = Math.min(W * 0.45, H * 0.40);
     under.width = W * DPR; under.height = H * DPR;
     uctx.setTransform(DPR, 0, 0, DPR, 0, 0);
     glc.width = W * DPR; glc.height = H * DPR;
