@@ -8369,6 +8369,30 @@ textarea.hud-input {
 .ta-foot-fix { background:linear-gradient(180deg, rgba(48,209,88,0.22), rgba(48,209,88,0.08)); border:1px solid rgba(48,209,88,0.5); color:var(--white); }
 .ta-foot-fix:active { transform:scale(0.98); }
 /* ━━━ HUD REDESIGN v1.6.99 — Skyline · Trace · Tiles (one bottom-up fill metaphor) ━━━ */
+/* ── PHASE PIPELINE (v1.14.0) — replaces rack skyline in NOW dashboard ── */
+.pp-card { background:linear-gradient(135deg,rgba(92,242,255,0.04),rgba(155,89,255,0.03)); border:1px solid rgba(92,242,255,0.18); border-radius:var(--hud-r12); padding:16px 16px 14px; margin-bottom:10px; position:relative; overflow:hidden; }
+.pp-hd { display:flex; justify-content:space-between; align-items:center; gap:10px; font-family:var(--mono); font-size:var(--fs-micro); letter-spacing:var(--hud-track-wide); color:var(--slate); margin-bottom:18px; }
+.pp-hd .pp-build { color:var(--white); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:right; }
+.pp-row { position:relative; display:flex; }
+.pp-track { position:absolute; left:10%; right:10%; top:17px; height:2px; background:rgba(255,255,255,0.1); border-radius:2px; }
+.pp-track .pp-fill { position:absolute; left:0; top:0; height:100%; border-radius:2px; background:var(--green); box-shadow:0 0 8px rgba(50,215,75,0.6); transition:width .4s ease; }
+.pp-track.is-act .pp-fill { background:var(--cyan); box-shadow:0 0 8px rgba(92,242,255,0.6); }
+.pp-track.is-blk .pp-fill { background:var(--red); box-shadow:0 0 8px rgba(255,45,85,0.6); }
+.pp-node { flex:1; display:flex; flex-direction:column; align-items:center; gap:8px; z-index:1; min-width:0; }
+.pp-dot { width:34px; height:34px; border-radius:50%; border:2px solid rgba(255,255,255,0.14); background:var(--surf-1); display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:13px; color:var(--slate); }
+.pp-lbl { font-family:var(--mono); font-size:8.5px; letter-spacing:0.06em; color:var(--slate); text-align:center; line-height:1.1; }
+.pp-node.is-done .pp-dot { border-color:var(--green); color:var(--green); background:rgba(50,215,75,0.1); box-shadow:0 0 12px rgba(50,215,75,0.35); }
+.pp-node.is-done .pp-lbl { color:var(--white); }
+.pp-node.is-active .pp-dot { border-color:var(--cyan); color:var(--cyan); background:rgba(92,242,255,0.1); box-shadow:0 0 14px rgba(92,242,255,0.45); animation:pp-pulse 1.6s ease-in-out infinite; }
+.pp-node.is-active .pp-lbl { color:var(--cyan); }
+.pp-node.is-blocked .pp-dot { border-color:var(--red); color:var(--red); background:rgba(255,45,85,0.1); box-shadow:0 0 12px rgba(255,45,85,0.4); }
+.pp-node.pp-seal.is-done .pp-dot { color:#04060d; background:var(--green); border-color:var(--green); box-shadow:0 0 16px rgba(50,215,75,0.6); }
+.pp-foot { display:flex; justify-content:space-between; align-items:center; margin-top:18px; font-family:var(--mono); font-size:var(--fs-caption); letter-spacing:1px; }
+.pp-stat { letter-spacing:2px; }
+.pp-stat.is-done { color:var(--green); } .pp-stat.is-act { color:var(--cyan); } .pp-stat.is-blk { color:var(--red); }
+.pp-meta { color:var(--slate); }
+@keyframes pp-pulse { 0%,100% { box-shadow:0 0 10px rgba(92,242,255,0.3); } 50% { box-shadow:0 0 18px rgba(92,242,255,0.6); } }
+@media (prefers-reduced-motion: reduce) { .pp-node.is-active .pp-dot { animation:none; } }
 .sky-card { background:linear-gradient(135deg,rgba(92,242,255,0.04),rgba(155,89,255,0.03)); border:1px solid rgba(92,242,255,0.18); border-radius:var(--hud-r12); padding:12px 14px; margin-bottom:10px; display:flex; align-items:stretch; gap:14px; }
 .sky-bars { flex:3 1 0; display:flex; align-items:flex-end; gap:2px; min-height:72px; min-width:0; }
 .sky-col { flex:1 1 0; min-width:5px; height:72px; display:flex; align-items:flex-end; justify-content:center; padding:0 1px; background:none; border:none; cursor:pointer; -webkit-appearance:none; -webkit-tap-highlight-color:transparent; }
@@ -10398,7 +10422,7 @@ body.has-resume-banner #boot {
     background:rgba(5,7,11,0.92); -webkit-backdrop-filter:var(--blur-sheet); backdrop-filter:var(--blur-sheet);
     border-top:1px solid rgba(92,242,255,0.20); }
 
-/* ══ PHANTOM globe landing (v1.13.8) — pl- namespaced, scoped to #boot ══ */
+/* ══ PHANTOM globe landing (v1.14.1) — pl- namespaced, scoped to #boot ══ */
 /* ── PHANTOM globe landing (v7 transplant, pl- namespaced, scoped to #boot) ── */
 #boot { --pl-cyan:#4be1ff; --pl-violet:#9d6bff; --pl-magenta:#ff4bd8; --pl-green:#3ddc84; --pl-teal:#3ddbb5; --pl-bg:#030308; --pl-panel:rgba(16,20,38,0.55); --pl-border:rgba(125,140,255,0.18); }
 #boot, #boot * { box-sizing:border-box; }
@@ -10734,7 +10758,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.13.8';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.1';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -18523,33 +18547,41 @@ function today_render() {
   // resolved deployment + same rollup.rackRollups as the cards above (no new math).
   // Does not render at all when there is no deployment (no hollow card).
   if (mostRecentDeploy && totalRacks > 0) {
-    var skyRolls = (rollup && rollup.rackRollups) ? rollup.rackRollups : [];
-    var bigColor = racksBlocked > 0 ? 'var(--red)' : (pct >= 90 ? 'var(--green)' : 'var(--cyan)');
-    // Disambiguator — created date + last-4 of id so duplicate-named deployments are
-    // visually distinguishable at a glance (kept from v1.6.95).
-    var idTail     = mostRecentDeploy.id ? ('#' + String(mostRecentDeploy.id).slice(-4)) : '';
-    var createdStr = (mostRecentDeploy.createdAt && typeof formatDate === 'function') ? formatDate(mostRecentDeploy.createdAt) : '';
-    var disamb     = [createdStr, idTail].filter(Boolean).join(' · ');
-
-    html += '<div class="sky-card">';
-    // Skyline (left) — one tappable column per rack, bar fills bottom-up by phase %.
-    html += '<div class="sky-bars">';
-    skyRolls.forEach(function(rr) {
-      var f = hud_rackFill(rr.rollup);
-      html += '<button class="sky-col" onclick="deploy_showRackDetail(\'' + mostRecentDeploy.id + '\',\'' + rr.rack.id + '\')" aria-label="' + escHtml(rr.rack.rackId || rr.rack.id || 'rack') + ' ' + f.fill + '% (' + f.state + ')">' +
-                '<span class="sky-bar is-' + f.state + '"><span class="sky-bar-fill" style="height:' + f.fill + '%"></span></span>' +
-              '</button>';
+    // ── PHASE PIPELINE (v1.14.0) — replaces the rack skyline. The 5 runbook phase
+    // types lit end-to-end, driven by rollup.phaseAgg. Same deploy, no new math.
+    var PP_TYPES = (typeof DEPLOY_PHASE_TYPES !== 'undefined') ? DEPLOY_PHASE_TYPES : ['mechanical','power','network','compute','validation'];
+    var pAgg = (rollup && rollup.phaseAgg) ? rollup.phaseAgg : {};
+    var ppDone = 0, ppActive = -1, ppStates = [];
+    PP_TYPES.forEach(function(t, i) {
+      var p = pAgg[t] || { complete:0, inProgress:0, blocked:0, total:0 };
+      var st = 'pending';
+      if (p.total > 0 && p.complete >= p.total) { st = 'done'; ppDone++; }
+      else if (p.blocked > 0) { st = 'blocked'; }
+      else if (p.inProgress > 0 || p.complete > 0) { st = 'active'; if (ppActive < 0) ppActive = i; }
+      ppStates.push(st);
+    });
+    var ppAllDone = (PP_TYPES.length > 0 && ppDone === PP_TYPES.length);
+    var ppLastLit = ppAllDone ? (PP_TYPES.length - 1) : (ppActive >= 0 ? ppActive : (ppDone > 0 ? ppDone - 1 : -1));
+    var ppFill = (PP_TYPES.length > 1 && ppLastLit > 0) ? Math.round((ppLastLit / (PP_TYPES.length - 1)) * 100) : 0;
+    var ppBlk = (racksBlocked > 0) || (ppStates.indexOf('blocked') >= 0);
+    var ppTrack = ppBlk ? 'pp-track is-blk' : (ppAllDone ? 'pp-track is-done' : 'pp-track is-act');
+    html += '<div class="pp-card">';
+    html += '<div class="pp-hd"><span>ACTIVE BUILD</span><span class="pp-build">' + escHtml(mostRecentDeploy.name || 'Deployment') + '</span></div>';
+    html += '<div class="pp-row">';
+    html += '<div class="' + ppTrack + '"><span class="pp-fill" style="width:' + ppFill + '%"></span></div>';
+    PP_TYPES.forEach(function(t, i) {
+      var st = ppStates[i];
+      var lbl = (typeof DEPLOY_PHASE_LABELS !== 'undefined' && DEPLOY_PHASE_LABELS[t]) ? DEPLOY_PHASE_LABELS[t] : String(t).toUpperCase();
+      var seal = (st === 'done' && i === PP_TYPES.length - 1) ? ' pp-seal' : '';
+      var glyph = (st === 'done') ? '&#10003;' : String(i + 1);
+      html += '<div class="pp-node is-' + st + seal + '"><span class="pp-dot">' + glyph + '</span><span class="pp-lbl">' + escHtml(lbl) + '</span></div>';
     });
     html += '</div>';
-    // Readout (right) — the ONE big number, then the confirmation lines.
-    html += '<div class="sky-readout">';
-    html += '<div class="sky-pct" style="color:' + bigColor + '">' + pct + '%</div>';
-    html += '<div class="sky-line"><span style="color:var(--green);font-weight:700">' + racksComplete + '</span> of <span style="color:var(--white);font-weight:700">' + totalRacks + '</span> racks done' + (phaseTotal > 0 ? ' · ' + phaseDone + '/' + phaseTotal + ' phases' : '') + '</div>';
-    html += '<div class="sky-name">' + escHtml(mostRecentDeploy.name || 'Deployment') + (disamb ? ' <span class="sky-disamb">' + escHtml(disamb) + '</span>' : '') + '</div>';
-    if (racksBlocked > 0) {
-      html += '<div style="margin-top:6px"><span class="badge b-red" style="font-size: var(--fs-micro);letter-spacing:1px"><span class="ico ico-md ico-warning"></span> ' + racksBlocked + ' BLOCKED</span></div>';
-    }
-    html += '</div>';
+    var ppFoot;
+    if (ppBlk) ppFoot = '<span class="pp-stat is-blk">BLOCKED</span><span class="pp-meta">' + racksBlocked + ' rack' + (racksBlocked === 1 ? '' : 's') + ' need attention</span>';
+    else if (ppAllDone) ppFoot = '<span class="pp-stat is-done">BUILD COMPLETE</span><span class="pp-meta">' + racksComplete + '/' + totalRacks + ' racks &middot; locked in</span>';
+    else { var ppCur = (ppActive >= 0 && DEPLOY_PHASE_LABELS[PP_TYPES[ppActive]]) ? DEPLOY_PHASE_LABELS[PP_TYPES[ppActive]] : '\u2014'; ppFoot = '<span class="pp-stat is-act">' + escHtml(ppCur) + ' &middot; IN PROGRESS</span><span class="pp-meta">' + ppDone + '/' + PP_TYPES.length + ' phases</span>'; }
+    html += '<div class="pp-foot">' + ppFoot + '</div>';
     html += '</div>';
   }
 
