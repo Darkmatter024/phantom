@@ -10443,7 +10443,7 @@ body.has-resume-banner #boot {
     background:rgba(5,7,11,0.92); -webkit-backdrop-filter:var(--blur-sheet); backdrop-filter:var(--blur-sheet);
     border-top:1px solid rgba(92,242,255,0.20); }
 
-/* ══ PHANTOM globe landing (v1.14.6) — pl- namespaced, scoped to #boot ══ */
+/* ══ PHANTOM globe landing (v1.14.7) — pl- namespaced, scoped to #boot ══ */
 /* ── PHANTOM globe landing (v7 transplant, pl- namespaced, scoped to #boot) ── */
 #boot { --pl-cyan:#4be1ff; --pl-violet:#9d6bff; --pl-magenta:#ff4bd8; --pl-green:#3ddc84; --pl-teal:#3ddbb5; --pl-bg:#030308; --pl-panel:rgba(16,20,38,0.55); --pl-border:rgba(125,140,255,0.18); }
 #boot, #boot * { box-sizing:border-box; }
@@ -10779,7 +10779,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.6';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.7';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -11251,7 +11251,7 @@ if (typeof window !== 'undefined') {
          upper-left = terminator (far limb falls into shadow); (3) soft specular glint = sheen.
          Static layer — drawUnderlay runs on resize only, never per frame, so the extra fills
          are free. The fixed sun stays upper-left while continents rotate past — correct. ── */
-    var LX = CX - R * 0.38, LY = CY - R * 0.38;        // sun direction (upper-left)
+    var LX = CX - R * 0.48, LY = CY - R * 0.48;        // sun direction (upper-left) — further off-center for stronger 3D
     // (1) base ocean ball — concentric, darker toward the limb for roundness
     var body = uctx.createRadialGradient(CX, CY, 0, CX, CY, R);
     body.addColorStop(0.00, 'rgba(12,22,42,1.0)');     // deep ocean (lifted off near-black)
@@ -11260,9 +11260,10 @@ if (typeof window !== 'undefined') {
     uctx.fillStyle = body;
     uctx.beginPath(); uctx.arc(CX, CY, R, 0, 6.2832); uctx.fill();
     // (2) directional light — lit near the sun point, fading to shadow on the far limb
-    var lit = uctx.createRadialGradient(LX, LY, R * 0.05, LX, LY, R * 1.35);
-    lit.addColorStop(0.00, 'rgba(36,70,112,0.55)');    // lit ocean catching light
-    lit.addColorStop(0.45, 'rgba(20,42,72,0.28)');
+    var lit = uctx.createRadialGradient(LX, LY, R * 0.05, LX, LY, R * 1.25);
+    lit.addColorStop(0.00, 'rgba(40,76,120,0.58)');    // lit ocean catching light
+    lit.addColorStop(0.38, 'rgba(22,46,78,0.30)');
+    lit.addColorStop(0.70, 'rgba(10,20,38,0.07)');     // steeper falloff = sharper terminator
     lit.addColorStop(1.00, 'rgba(8,16,30,0.0)');
     uctx.fillStyle = lit;
     uctx.beginPath(); uctx.arc(CX, CY, R, 0, 6.2832); uctx.fill();
@@ -11272,6 +11273,17 @@ if (typeof window !== 'undefined') {
     sheen.addColorStop(1.00, 'rgba(120,175,225,0.0)');
     uctx.fillStyle = sheen;
     uctx.beginPath(); uctx.arc(CX, CY, R, 0, 6.2832); uctx.fill();
+    // (4) atmosphere rim — even fresnel limb ALL the way around. Drawn last so it overlays the
+    //     body's dark limb; the bright stop sits at r≈R and fades into space. Concentric =
+    //     even, fixing the bottom-only edge (the .pl-horizon CSS lit only the bottom).
+    var rim = uctx.createRadialGradient(CX, CY, R * 0.90, CX, CY, R * 1.07);
+    rim.addColorStop(0.00, 'rgba(120,225,255,0.0)');   // inner — over the dark limb, ~invisible
+    rim.addColorStop(0.45, 'rgba(95,205,255,0.08)');
+    rim.addColorStop(0.59, 'rgba(140,232,255,0.32)');  // bright atmosphere edge at r≈R
+    rim.addColorStop(0.72, 'rgba(110,215,255,0.12)');
+    rim.addColorStop(1.00, 'rgba(120,225,255,0.0)');   // fade into space
+    uctx.fillStyle = rim;
+    uctx.beginPath(); uctx.arc(CX, CY, R * 1.07, 0, 6.2832); uctx.fill();
   }
 
   function resize() {
