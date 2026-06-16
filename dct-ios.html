@@ -11418,8 +11418,8 @@ if (typeof window !== 'undefined') {
        existing geometry; just appends to staticData in the standard 8-float format. ── */
   (function () {
     var GRAT_R   = 0.998;                 // just under surface (lights 1.0, borders 1.004)
-    var GRAT_COL = [0.13, 0.18, 0.34];    // dim cool slate-violet; dimmer than BORDER_COL
-    var GRAT_SZ  = 0.8;                    // finer than borders (1.3)
+    var GRAT_COL = [0.40, 0.52, 0.82];    // cool blue grid — reads on the navy ocean face, still below the lights
+    var GRAT_SZ  = 1.1;                    // bigger dots so the grid reads as lines, not specks
     var gLat, gLon, gp;
     // Meridians every 30° lon, lat -75..75 step 5°
     for (gLon = -180; gLon < 180; gLon += 30) {
