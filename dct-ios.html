@@ -10443,7 +10443,7 @@ body.has-resume-banner #boot {
     background:rgba(5,7,11,0.92); -webkit-backdrop-filter:var(--blur-sheet); backdrop-filter:var(--blur-sheet);
     border-top:1px solid rgba(92,242,255,0.20); }
 
-/* ══ PHANTOM globe landing (v1.14.7) — pl- namespaced, scoped to #boot ══ */
+/* ══ PHANTOM globe landing (v1.14.8) — pl- namespaced, scoped to #boot ══ */
 /* ── PHANTOM globe landing (v7 transplant, pl- namespaced, scoped to #boot) ── */
 #boot { --pl-cyan:#4be1ff; --pl-violet:#9d6bff; --pl-magenta:#ff4bd8; --pl-green:#3ddc84; --pl-teal:#3ddbb5; --pl-bg:#030308; --pl-panel:rgba(16,20,38,0.55); --pl-border:rgba(125,140,255,0.18); }
 #boot, #boot * { box-sizing:border-box; }
@@ -10779,7 +10779,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.7';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.8';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -11323,6 +11323,7 @@ if (typeof window !== 'undefined') {
     'uniform float uDPR;',
     'varying vec3 vColor;',
     'varying float vAlpha;',
+    'varying float vCloud;',
     'void main() {',
     '  float cy = cos(uRotY); float sy = sin(uRotY);',
     '  float x = aPos.x * cy - aPos.z * sy;',
@@ -11332,10 +11333,16 @@ if (typeof window !== 'undefined') {
     '  float z2 = y * uSinT + z * uCosT;',
     '  gl_Position = vec4(uCenter.x + x * uScale.x, uCenter.y + y2 * uScale.y, 0.0, 1.0);',
     '  float front = smoothstep(0.0, 0.3, z2);',
-    '  float tw = 0.60 + 0.12 * sin(uTime * 2.0 + aPhase);',
+    '  float isCloud = step(aPhase, -0.5);',                  // aPhase < 0  => cloud
+    '  float cph = -aPhase;',                                 // cloud phase (positive)
+    '  float tw = 0.60 + 0.12 * sin(uTime * 2.0 + aPhase);',  // city-light twinkle (unchanged)
+    '  float twC = 0.80 + 0.06 * sin(uTime * 0.20 + cph);',   // slow cloud drift, no sparkle
     '  float flare = pow(max(sin(uTime * 0.55 + aPhase * 9.7), 0.0), 40.0) * 0.55;',
-    '  vAlpha = front * min(tw + flare, 1.0);',
+    '  flare = flare * (1.0 - isCloud);',                     // clouds never flare
+    '  float twMix = mix(tw, twC, isCloud);',
+    '  vAlpha = front * min(twMix + flare, 1.0);',
     '  float fsz = 1.0 + flare * 0.4;',
+    '  vCloud = isCloud;',
     '  vColor = aColor;',
     '  gl_PointSize = aSize * fsz * (0.55 + z2 * 0.9) * uDPR;',
     '}'
@@ -11345,11 +11352,12 @@ if (typeof window !== 'undefined') {
     'precision mediump float;',
     'varying vec3 vColor;',
     'varying float vAlpha;',
+    'varying float vCloud;',
     'void main() {',
     '  vec2 d = gl_PointCoord - vec2(0.5);',
     '  float r = length(d) * 2.0;',
     '  if (r > 1.0) discard;',
-    '  float glow = exp(-r * r * 5.0);',
+    '  float glow = exp(-r * r * mix(5.0, 2.2, vCloud));',    // clouds = softer/fluffier edge
     '  gl_FragColor = vec4(vColor, vAlpha * glow);',
     '}'
   ].join('\n');
@@ -11463,6 +11471,43 @@ if (typeof window !== 'undefined') {
       );
     }
   }
+  /* ── Ambient cloud layer: soft puffs above the ocean so empty faces read as weather, not a
+       blank ball. Rotates WITH the globe (same buffer as the lights). NEGATIVE aPhase marks
+       each as a cloud so the shader renders it soft (no sparkle) — cities untouched. Banded FBM
+       clumps clouds into systems (ITCZ + mid-lat storm tracks), not a uniform haze. Static —
+       built once, zero per-frame cost. Density/alpha are the tuning knobs (see watch items). ── */
+  (function () {
+    function ch(x, y) { var n = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453; return n - Math.floor(n); }
+    function vn(x, y) {
+      var xi = Math.floor(x), yi = Math.floor(y), xf = x - xi, yf = y - yi;
+      var a = ch(xi, yi), b = ch(xi + 1, yi), c = ch(xi, yi + 1), d = ch(xi + 1, yi + 1);
+      var u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf);
+      return a * (1 - u) * (1 - v) + b * u * (1 - v) + c * (1 - u) * v + d * u * v;
+    }
+    function fbm(x, y) { return 0.6 * vn(x, y) + 0.3 * vn(x * 2.1, y * 2.1) + 0.1 * vn(x * 4.3, y * 4.3); }
+    var R_CLOUD = 1.012, clat, clon, aL, wLat, n, dens, cp, cb, csz;
+    for (clat = -72; clat <= 72; clat += 3) {
+      aL = Math.abs(clat);
+      wLat = 0.55 * Math.exp(-Math.pow((aL - 8) / 12, 2))     // ITCZ / tropics
+           + 0.85 * Math.exp(-Math.pow((aL - 48) / 16, 2))    // mid-lat storm track
+           + 0.15;
+      for (clon = -180; clon < 180; clon += 3) {
+        n = fbm(clon * 0.025 + 10, clat * 0.05 + 5);
+        dens = wLat * (n * 1.4 - 0.30);                       // gate -> clumps (tune -0.30)
+        if (dens <= 0 || Math.random() > dens) continue;
+        cp = ll(clat + (Math.random() - 0.5) * 2.2, clon + (Math.random() - 0.5) * 2.2);
+        cb = 0.30 + (n - 0.4) * 0.28; if (cb < 0.16) cb = 0.16; // brighter in the densest cores
+        csz = 6.0 + n * 9.0 + Math.random() * 3.0;            // large soft puffs
+        staticData.push(
+          cp.x * R_CLOUD, cp.y * R_CLOUD, cp.z * R_CLOUD,
+          csz,
+          cb * 0.74, cb * 0.82, cb * 1.00,                    // cool blue-white, additive => soft
+          -(1.0 + Math.random() * 6.0)                         // NEGATIVE phase = cloud sentinel
+        );
+      }
+    }
+  })();
+
   var staticArr = new Float32Array(staticData);
   var staticCount = staticArr.length / 8;
   var staticBuf = gl.createBuffer();
