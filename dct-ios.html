@@ -10443,7 +10443,7 @@ body.has-resume-banner #boot {
     background:rgba(5,7,11,0.92); -webkit-backdrop-filter:var(--blur-sheet); backdrop-filter:var(--blur-sheet);
     border-top:1px solid rgba(92,242,255,0.20); }
 
-/* ══ PHANTOM globe landing (v1.14.4) — pl- namespaced, scoped to #boot ══ */
+/* ══ PHANTOM globe landing (v1.14.5) — pl- namespaced, scoped to #boot ══ */
 /* ── PHANTOM globe landing (v7 transplant, pl- namespaced, scoped to #boot) ── */
 #boot { --pl-cyan:#4be1ff; --pl-violet:#9d6bff; --pl-magenta:#ff4bd8; --pl-green:#3ddc84; --pl-teal:#3ddbb5; --pl-bg:#030308; --pl-panel:rgba(16,20,38,0.55); --pl-border:rgba(125,140,255,0.18); }
 #boot, #boot * { box-sizing:border-box; }
@@ -10779,7 +10779,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.4';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.5';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -11411,6 +11411,43 @@ if (typeof window !== 'undefined') {
       );
     }
   })();
+
+  /* ── Graticule: dim dotted lat/lon grid on the sphere shell. Defines the globe on
+       empty (ocean) faces so they don't read as a void. Behind lights/borders (R<1),
+       additive — quiet under lit land, visible over dark ocean. No behavior change to
+       existing geometry; just appends to staticData in the standard 8-float format. ── */
+  (function () {
+    var GRAT_R   = 0.998;                 // just under surface (lights 1.0, borders 1.004)
+    var GRAT_COL = [0.13, 0.18, 0.34];    // dim cool slate-violet; dimmer than BORDER_COL
+    var GRAT_SZ  = 0.8;                    // finer than borders (1.3)
+    var gLat, gLon, gp;
+    // Meridians every 30° lon, lat -75..75 step 5°
+    for (gLon = -180; gLon < 180; gLon += 30) {
+      for (gLat = -75; gLat <= 75; gLat += 5) {
+        gp = ll(gLat, gLon);
+        staticData.push(
+          gp.x * GRAT_R, gp.y * GRAT_R, gp.z * GRAT_R,
+          GRAT_SZ,
+          GRAT_COL[0], GRAT_COL[1], GRAT_COL[2],
+          Math.random() * 6.283
+        );
+      }
+    }
+    // Parallels at -60,-30,0,30,60, lon -180..175 step 5°
+    var PAR = [-60, -30, 0, 30, 60], pi2;
+    for (pi2 = 0; pi2 < PAR.length; pi2++) {
+      for (gLon = -180; gLon < 180; gLon += 5) {
+        gp = ll(PAR[pi2], gLon);
+        staticData.push(
+          gp.x * GRAT_R, gp.y * GRAT_R, gp.z * GRAT_R,
+          GRAT_SZ,
+          GRAT_COL[0], GRAT_COL[1], GRAT_COL[2],
+          Math.random() * 6.283
+        );
+      }
+    }
+  })();
+
   var ai, st, t, A, B, x, y, z, len, alt;
   var ARC_STEPS = 46;
   for (ai = 0; ai < ARCS.length; ai++) {
