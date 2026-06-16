@@ -10443,7 +10443,7 @@ body.has-resume-banner #boot {
     background:rgba(5,7,11,0.92); -webkit-backdrop-filter:var(--blur-sheet); backdrop-filter:var(--blur-sheet);
     border-top:1px solid rgba(92,242,255,0.20); }
 
-/* ══ PHANTOM globe landing (v1.14.5) — pl- namespaced, scoped to #boot ══ */
+/* ══ PHANTOM globe landing (v1.14.6) — pl- namespaced, scoped to #boot ══ */
 /* ── PHANTOM globe landing (v7 transplant, pl- namespaced, scoped to #boot) ── */
 #boot { --pl-cyan:#4be1ff; --pl-violet:#9d6bff; --pl-magenta:#ff4bd8; --pl-green:#3ddc84; --pl-teal:#3ddbb5; --pl-bg:#030308; --pl-panel:rgba(16,20,38,0.55); --pl-border:rgba(125,140,255,0.18); }
 #boot, #boot * { box-sizing:border-box; }
@@ -10779,7 +10779,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.5';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.6';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -11246,11 +11246,31 @@ if (typeof window !== 'undefined') {
     halo.addColorStop(1, 'rgba(0,0,0,0)');
     uctx.fillStyle = halo;
     uctx.beginPath(); uctx.arc(CX, CY, R * 1.5, 0, 6.2832); uctx.fill();
+    /* ── Ocean-sphere body: 3 stacked fills = a lit 3D planet, not a flat disc.
+         (1) dark-ocean ball with limb darkening = curvature; (2) directional light from the
+         upper-left = terminator (far limb falls into shadow); (3) soft specular glint = sheen.
+         Static layer — drawUnderlay runs on resize only, never per frame, so the extra fills
+         are free. The fixed sun stays upper-left while continents rotate past — correct. ── */
+    var LX = CX - R * 0.38, LY = CY - R * 0.38;        // sun direction (upper-left)
+    // (1) base ocean ball — concentric, darker toward the limb for roundness
     var body = uctx.createRadialGradient(CX, CY, 0, CX, CY, R);
-    body.addColorStop(0, 'rgba(5,7,18,1.0)');
-    body.addColorStop(0.90, 'rgba(5,7,18,1.0)');
-    body.addColorStop(1, 'rgba(38,86,140,0.30)');
+    body.addColorStop(0.00, 'rgba(12,22,42,1.0)');     // deep ocean (lifted off near-black)
+    body.addColorStop(0.70, 'rgba(7,12,26,1.0)');
+    body.addColorStop(1.00, 'rgba(3,6,14,1.0)');       // dark limb = curvature
     uctx.fillStyle = body;
+    uctx.beginPath(); uctx.arc(CX, CY, R, 0, 6.2832); uctx.fill();
+    // (2) directional light — lit near the sun point, fading to shadow on the far limb
+    var lit = uctx.createRadialGradient(LX, LY, R * 0.05, LX, LY, R * 1.35);
+    lit.addColorStop(0.00, 'rgba(36,70,112,0.55)');    // lit ocean catching light
+    lit.addColorStop(0.45, 'rgba(20,42,72,0.28)');
+    lit.addColorStop(1.00, 'rgba(8,16,30,0.0)');
+    uctx.fillStyle = lit;
+    uctx.beginPath(); uctx.arc(CX, CY, R, 0, 6.2832); uctx.fill();
+    // (3) specular sheen — tight soft glint at the sun point
+    var sheen = uctx.createRadialGradient(LX, LY, 0, LX, LY, R * 0.55);
+    sheen.addColorStop(0.00, 'rgba(120,175,225,0.16)');
+    sheen.addColorStop(1.00, 'rgba(120,175,225,0.0)');
+    uctx.fillStyle = sheen;
     uctx.beginPath(); uctx.arc(CX, CY, R, 0, 6.2832); uctx.fill();
   }
 
@@ -11409,42 +11429,6 @@ if (typeof window !== 'undefined') {
         BORDER_COL[0], BORDER_COL[1], BORDER_COL[2],
         Math.random() * 6.283
       );
-    }
-  })();
-
-  /* ── Graticule: dim dotted lat/lon grid on the sphere shell. Defines the globe on
-       empty (ocean) faces so they don't read as a void. Behind lights/borders (R<1),
-       additive — quiet under lit land, visible over dark ocean. No behavior change to
-       existing geometry; just appends to staticData in the standard 8-float format. ── */
-  (function () {
-    var GRAT_R   = 0.998;                 // just under surface (lights 1.0, borders 1.004)
-    var GRAT_COL = [0.40, 0.52, 0.82];    // cool blue grid — reads on the navy ocean face, still below the lights
-    var GRAT_SZ  = 1.1;                    // bigger dots so the grid reads as lines, not specks
-    var gLat, gLon, gp;
-    // Meridians every 30° lon, lat -75..75 step 5°
-    for (gLon = -180; gLon < 180; gLon += 30) {
-      for (gLat = -75; gLat <= 75; gLat += 5) {
-        gp = ll(gLat, gLon);
-        staticData.push(
-          gp.x * GRAT_R, gp.y * GRAT_R, gp.z * GRAT_R,
-          GRAT_SZ,
-          GRAT_COL[0], GRAT_COL[1], GRAT_COL[2],
-          Math.random() * 6.283
-        );
-      }
-    }
-    // Parallels at -60,-30,0,30,60, lon -180..175 step 5°
-    var PAR = [-60, -30, 0, 30, 60], pi2;
-    for (pi2 = 0; pi2 < PAR.length; pi2++) {
-      for (gLon = -180; gLon < 180; gLon += 5) {
-        gp = ll(PAR[pi2], gLon);
-        staticData.push(
-          gp.x * GRAT_R, gp.y * GRAT_R, gp.z * GRAT_R,
-          GRAT_SZ,
-          GRAT_COL[0], GRAT_COL[1], GRAT_COL[2],
-          Math.random() * 6.283
-        );
-      }
     }
   })();
 
