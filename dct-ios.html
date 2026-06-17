@@ -10463,10 +10463,34 @@ body.has-resume-banner #boot {
     font-family: 'PhantomBrand', -apple-system, sans-serif;
     font-size: 44px; font-weight: 400;
     letter-spacing: 0.06em; margin-right: -0.06em;
-    background: linear-gradient(90deg, var(--pl-cyan), var(--pl-violet) 52%, var(--pl-magenta));
-    -webkit-background-clip: text; background-clip: text; color: transparent;
-    text-shadow: 0 0 34px rgba(140, 120, 255, 0.32);
+    position: relative;                     /* needed for ::after specular */
+    background: linear-gradient(180deg,
+      #eafdff 0%,  #9fe6ff 15%, #2f7fc4 34%,
+      #0a1326 50%, #3a1f6e 56%, #7b3fd6 66%,
+      #ff7fe6 84%, #ffe2f7 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 2px 1px rgba(0,0,0,.5))
+            drop-shadow(0 0 16px rgba(120,90,255,.30));
   }
+  .pl-hdr h1::after {           /* specular streak, plays once on .lit */
+    content: "PHANTOM";
+    position: absolute; inset: 0;
+    background: linear-gradient(105deg,
+      transparent 40%, rgba(255,255,255,.95) 49%, transparent 60%);
+    background-size: 320% 100%;
+    background-position: 200% 0;          /* parked off-screen = invisible at rest */
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    pointer-events: none;
+  }
+  .pl-hdr h1.lit::after { animation: phanSweep 1.2s ease-out; }
+  @keyframes phanSweep { from { background-position: 200% 0 } to { background-position: -120% 0 } }
+  @media (prefers-reduced-motion: reduce) { .pl-hdr h1.lit::after { animation: none } }
   .pl-hdr .pl-sub {
     margin-top: 4px; font-size: 10px;
     letter-spacing: 0.40em; margin-right: -0.40em;
@@ -10801,7 +10825,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.38';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.39';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -10818,6 +10842,34 @@ document.addEventListener('DOMContentLoaded', function() {
     if (loc) loc.textContent = _site || '';
   } catch (_) {}
 });
+
+// v1.14.39: landing wordmark scramble-boot -> spectral chrome (entry only, one-shot)
+function phantomBoot(el){
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+    el.textContent = 'PHANTOM'; el.classList.add('lit'); return;   // skip scramble
+  }
+  var GLYPHS = 'ABCDEFGHJKLMNPQRSTUVWXYZ0123456789#/<>*';
+  var TARGET = 'PHANTOM', frame = 0, total = 26;
+  el.classList.remove('lit');
+  var t = setInterval(function(){
+    frame++;
+    var reveal = Math.floor((frame/total)*TARGET.length), out = '';
+    for (var i=0;i<TARGET.length;i++){
+      out += i<reveal ? TARGET[i] : GLYPHS[(Math.random()*GLYPHS.length)|0];
+    }
+    el.textContent = out;
+    if (frame>=total){
+      clearInterval(t);
+      el.textContent = 'PHANTOM';
+      setTimeout(function(){ el.classList.add('lit'); }, 200);   // fires specular sweep
+    }
+  }, 40);
+}
+window.addEventListener('load', function(){
+  var _wm = document.querySelector('.pl-hdr h1');
+  if (_wm) phantomBoot(_wm);
+});
+
 // Poll interval for reg.update() while app is in foreground. 10 min.
 const PHANTOM_UPDATE_POLL_MS = 10 * 60 * 1000;
 
