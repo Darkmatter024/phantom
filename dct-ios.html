@@ -10801,7 +10801,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.37';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.38';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -11559,20 +11559,26 @@ if (typeof window !== 'undefined') {
     if (lat < -82) continue;
     for (c = 0; c < MASK_W; c++) {
       if (!isLand(r, c)) continue;
-      var nlv = nightLevel(r, c);                       // real night brightness 0..15
-      if (nlv < 1) continue;                            // dark land -> unlit
+      var nlv = nightLevel(r, c);
+      if (nlv < 1) continue;
       var lf = nlv / 15;
-      if (Math.random() > lf * 1.70 + 0.12) continue;  // density follows real luminance
-      lon = ((c + Math.random()) / MASK_W) * 360 - 180;
-      p = ll(lat + (Math.random() - 0.5) * 0.5, lon);
-      col = landColor(lon);
-      var nbr = 0.62 + lf * 0.75;                        // v1.14.34: +1 notch brighter (was 0.50+0.60) — dim towns faint, metros full-bright
-      staticData.push(
-        p.x, p.y, p.z,
-        0.6 + lf * 1.4,                                  // metros render larger
-        col[0] * nbr, col[1] * nbr, col[2] * nbr,
-        Math.random() * 6.283
-      );
+      // v1.14.38: supersample bright cells so metros build a dense glowing CORE,
+      // not one speckle per 0.5° cell. lf^2 => rural stays 1 dot, cores up to 6.
+      // Density carries the detail; per-dot brightness stays modest (no OLED white-out).
+      var ns = 1 + Math.floor(lf * lf * 5);
+      for (var si = 0; si < ns; si++) {
+        if (Math.random() > lf * 1.70 + 0.12) continue;
+        lon = ((c + Math.random()) / MASK_W) * 360 - 180;
+        p = ll(lat + (Math.random() - 0.5) * 0.5, lon);
+        col = landColor(lon);
+        var nbr = 0.55 + lf * 0.80 + (Math.random() - 0.5) * 0.12;
+        staticData.push(
+          p.x, p.y, p.z,
+          0.5 + lf * 1.5 + Math.random() * 0.25,
+          col[0] * nbr, col[1] * nbr, col[2] * nbr,
+          Math.random() * 6.283
+        );
+      }
     }
   }
   if (SHOW_SPECTRUM_BORDERS) (function () {
@@ -11896,7 +11902,7 @@ if (typeof window !== 'undefined') {
     gl.disable(gl.BLEND);
     gl.useProgram(gprog);
     gl.uniform1f(gloc.uRotY, rotY); gl.uniform1f(gloc.uCosT, Math.cos(tilt)); gl.uniform1f(gloc.uSinT, Math.sin(tilt));
-    gl.uniform2f(gloc.uScale, R * zoom / (W / 2), R * zoom / (H / 2));
+    gl.uniform2f(gloc.uScale, -R * zoom / (W / 2), R * zoom / (H / 2));
     gl.uniform2f(gloc.uCenter, (CX - W / 2) / (W / 2), (H / 2 - CY) / (H / 2));
     gl.uniform3f(gloc.uSun, -0.55, 0.35, 0.75);     // upper-left sun toward viewer (matches reference)
     gl.uniform1f(gloc.uTime, clock);
@@ -11915,7 +11921,7 @@ if (typeof window !== 'undefined') {
     gl.uniform1f(loc.uRotY, rotY);
     gl.uniform1f(loc.uCosT, Math.cos(tilt));
     gl.uniform1f(loc.uSinT, Math.sin(tilt));
-    gl.uniform2f(loc.uScale, R * zoom / (W / 2), R * zoom / (H / 2));
+    gl.uniform2f(loc.uScale, -R * zoom / (W / 2), R * zoom / (H / 2));
     gl.uniform2f(loc.uCenter, (CX - W / 2) / (W / 2), (H / 2 - CY) / (H / 2));
     gl.uniform1f(loc.uTime, clock);
     gl.uniform1f(loc.uDPR, DPR);
