@@ -10825,7 +10825,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.41';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.42';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -11373,7 +11373,7 @@ if (typeof window !== 'undefined') {
     var rim = uctx.createRadialGradient(CX, CY, R * 0.90, CX, CY, R * 1.07);
     rim.addColorStop(0.00, 'rgba(120,225,255,0.0)');   // inner — over the dark limb, ~invisible
     rim.addColorStop(0.45, 'rgba(95,205,255,0.08)');
-    rim.addColorStop(0.59, 'rgba(140,232,255,0.32)');  // bright atmosphere edge at r≈R
+    rim.addColorStop(0.59, 'rgba(140,232,255,0.20)');  // bright atmosphere edge at r≈R
     rim.addColorStop(0.72, 'rgba(110,215,255,0.12)');
     rim.addColorStop(1.00, 'rgba(120,225,255,0.0)');   // fade into space
     uctx.fillStyle = rim;
@@ -11550,7 +11550,7 @@ if (typeof window !== 'undefined') {
     '  float cl=texture2D(uClouds,vUV).r;',
     '  base=mix(base, vec3(0.16,0.19,0.26), cl*0.45);',      // faint unlit night clouds, cool grey
     '  float fres=pow(1.0-max(N.z,0.0),3.0);',
-    '  base += vec3(0.22,0.45,1.0)*fres*0.55;',              // constant cool-blue atmosphere rim (no warm terminator)
+    '  base += vec3(0.22,0.45,1.0)*fres*0.38;',              // constant cool-blue atmosphere rim (no warm terminator)
     '  gl_FragColor=vec4(base,1.0);',
     '}'
   ].join('\n');
@@ -11662,8 +11662,8 @@ if (typeof window !== 'undefined') {
       alt = 1 + ARC_LIFT * Math.sin(t * Math.PI);
       staticData.push(
         x / len * alt, y / len * alt, z / len * alt,
-        1.6,
-        0.30, 0.52, 0.65,   // dimmed cyan (was 0.45,0.8,1.0); additive arcs no longer wash the spectrum
+        1.25,
+        0.21, 0.36, 0.46,   // dimmed cyan (was 0.45,0.8,1.0); additive arcs no longer wash the spectrum
         t * 6.283 + ai
       );
     }
