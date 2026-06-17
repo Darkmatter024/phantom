@@ -10801,7 +10801,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.32';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.33';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -11236,28 +11236,23 @@ if (typeof window !== 'undefined') {
     return { x: Math.sin(p) * Math.cos(t), y: Math.cos(p), z: Math.sin(p) * Math.sin(t) };
   }
 
+  // Real CoreWeave NA + Europe footprint (brief §4). Austin = home (index 0, warp target).
   var HUBS = [
-    ll(30.27, -97.74),  // Austin — home (index 0, warp target)
-    ll(51.51, -0.13),   // London
-    ll(41.39, 2.17),    // Barcelona
-    ll(40.76, -74.03),  // New Jersey (Weehawken)
-    ll(41.88, -87.63),  // Chicago
-    ll(32.78, -96.81),  // Dallas
-    ll(37.54, -77.44),  // Virginia (Chester)
-    ll(33.75, -84.39),  // Georgia (Douglasville)
-    ll(50.11, 8.68),    // Frankfurt (8)
-    ll(35.68, 139.69),  // Tokyo (9)
-    ll(1.35, 103.82),   // Singapore (10)
-    ll(19.08, 72.88),   // Mumbai (11)
-    ll(-23.55, -46.63), // Sao Paulo (12)
-    ll(-33.87, 151.21)  // Sydney (13)
+    ll(30.27, -97.74),   // Austin TX — home (index 0, warp target)
+    ll(33.02, -96.70),   // Plano TX (1)
+    ll(41.88, -87.63),   // Chicago IL (2)
+    ll(40.77, -74.02),   // Weehawken NJ (3)
+    ll(37.36, -77.44),   // Chester VA (4)
+    ll(33.75, -84.39),   // Douglasville GA (5)
+    ll(45.52, -122.99),  // Hillsboro OR (6)
+    ll(36.17, -115.14),  // Las Vegas NV (7)
+    ll(39.53, -119.81),  // Reno NV (8)
+    ll(51.10, -0.18)     // London / Crawley UK (9)
   ];
-  // ARCS re-routed to all-long US<->EU trans-Atlantic spans: the prior short
-  // US-internal arcs (e.g. Austin-Dallas) packed 46 additive cyan points into
-  // tight blobs that washed the SPECTRUM land gradient on the Austin face.
-  // v1.7.6 calm-arcs fix — see also the dimmed arc color below.
-  var ARCS = [[0,1],[0,2],[3,1],[3,2],[4,1],[4,2],[5,1],[6,2],[7,2],
-    [8,3],[8,11],[11,10],[10,9],[9,3],[6,12],[10,13],[1,3],[0,9]];
+  // Austin (home) radiates to every node + three trans-Atlantic spans to London.
+  // Subtle network, not a light show (brief §4). Indices map to the trimmed HUBS above.
+  var ARCS = [[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[0,7],[0,8],[0,9],
+    [3,9],[4,9]];
   var ARC_LIFT = 0.16;
 
   /* ════════ SPECTRUM palette — hard-locked ════════ */
@@ -11548,15 +11543,14 @@ if (typeof window !== 'undefined') {
     'void main(){',
     '  if (vN.z < -0.02) discard;',
     '  vec3 N=normalize(vN);',
-    '  float lt=dot(N,normalize(uSun));',
-    '  float day=smoothstep(-0.12,0.18,lt);',
-    '  vec3 dayC=texture2D(uDay,vUV).rgb;',
-    '  vec3 nightC=texture2D(uNight,vUV).rgb*1.15;',
-    '  vec3 base=mix(nightC*(1.0-day), dayC*(0.25+0.95*max(lt,0.0)), day);',
+    '  vec3 dayC=texture2D(uDay,vUV).rgb;',                  // Blue Marble = terrain albedo (NIGHT: no day/night mix, sun killed)
+    '  float lum=dot(dayC, vec3(0.299,0.587,0.114));',
+    '  vec3 terrain=mix(dayC, vec3(lum), 0.35);',            // slight desaturate
+    '  vec3 base=terrain*vec3(0.13,0.16,0.22);',             // multiply down hard + cool bias => faint terrain in shadow, oceans near-black
     '  float cl=texture2D(uClouds,vUV).r;',
-    '  base=mix(base, vec3(1.0)*(0.30+0.85*max(lt,0.0)), cl*(0.20+0.65*day));',
+    '  base=mix(base, vec3(0.16,0.19,0.26), cl*0.45);',      // faint unlit night clouds, cool grey
     '  float fres=pow(1.0-max(N.z,0.0),3.0);',
-    '  base += vec3(0.30,0.55,1.0)*fres*(0.35+0.5*day);',
+    '  base += vec3(0.22,0.45,1.0)*fres*0.55;',              // constant cool-blue atmosphere rim (no warm terminator)
     '  gl_FragColor=vec4(base,1.0);',
     '}'
   ].join('\n');
@@ -11608,7 +11602,8 @@ if (typeof window !== 'undefined') {
 
   /* ── Static geometry: real land + borders + arcs, SPECTRUM baked ── */
   var staticData = [];
-  var SHOW_SPECTRUM_LAND = false;   // photoreal NASA texture now provides land + city lights + borders
+  var SHOW_SPECTRUM_LAND = true;     // HYBRID night-Earth: SPECTRUM city-light dots are the ONLY glow over the dark NASA terrain
+  var SHOW_SPECTRUM_BORDERS = false; // real coastlines come from the texture; violet outline dots would fight it
   var r, c, lat, lon, p, col;
 
   if (SHOW_SPECTRUM_LAND) for (r = 0; r < MASK_H; r++) {
@@ -11632,7 +11627,7 @@ if (typeof window !== 'undefined') {
       );
     }
   }
-  if (SHOW_SPECTRUM_LAND) (function () {
+  if (SHOW_SPECTRUM_BORDERS) (function () {
     var bytes = b64ToBytes(BORD_B64);
     var i16 = new Int16Array(bytes.buffer, 0, bytes.byteLength >> 1);
     var i, blon, blat, bp;
