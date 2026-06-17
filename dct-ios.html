@@ -10801,7 +10801,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.33';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.34';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -11618,7 +11618,7 @@ if (typeof window !== 'undefined') {
       lon = ((c + Math.random()) / MASK_W) * 360 - 180;
       p = ll(lat + (Math.random() - 0.5) * 0.5, lon);
       col = landColor(lon);
-      var nbr = 0.50 + lf * 0.60;                        // dim towns faint, metros full-bright
+      var nbr = 0.62 + lf * 0.75;                        // v1.14.34: +1 notch brighter (was 0.50+0.60) — dim towns faint, metros full-bright
       staticData.push(
         p.x, p.y, p.z,
         0.6 + lf * 1.4,                                  // metros render larger
