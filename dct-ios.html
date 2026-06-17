@@ -10825,7 +10825,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.42';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.43';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -11622,8 +11622,8 @@ if (typeof window !== 'undefined') {
         if (Math.random() > lf * 1.70 + 0.12) continue;
         lon = ((c + Math.random()) / MASK_W) * 360 - 180;
         p = ll(lat + (Math.random() - 0.5) * 0.5, lon);
-        col = (function(){ var cr = Math.random(), b = cr < 0.60 ? (Math.random() < 0.5 ? [0.875, 0.965, 1.0] : [0.624, 0.902, 1.0]) : cr < 0.85 ? [0.616, 0.420, 1.0] : [1.0, 0.294, 0.847]; return [b[0] + (Math.random() - 0.5) * 0.06, b[1] + (Math.random() - 0.5) * 0.06, b[2] + (Math.random() - 0.5) * 0.04]; })();
-        var nbr = 0.40 + lf * 0.55 + (Math.random() - 0.5) * 0.10;
+        col = (function(){ function cl(v){return v<0?0:v>1?1:v;} var cp = 0.05 + lf * 0.70, cr = Math.random(), wb = cl(lf * 1.15 + (Math.random() - 0.5) * 0.25), b; if (cr < cp) { b = [1.0, 0.957 - 0.045 * (1 - wb), 0.866 - 0.085 * (1 - wb)]; } else if (cr < cp + 0.46) { b = [1.0, 0.76 + lf * 0.10, 0.46 + lf * 0.16]; } else { b = [0.886, 0.560, 0.235]; } return [cl(b[0] + (Math.random() - 0.5) * 0.05), cl(b[1] + (Math.random() - 0.5) * 0.07), cl(b[2] + (Math.random() - 0.5) * 0.05)]; })();
+        var nbr = 0.40 + lf * 0.70 + (Math.random() - 0.5) * 0.10;
         staticData.push(
           p.x, p.y, p.z,
           0.24 + lf * 0.40 + Math.random() * 0.10,
@@ -11903,7 +11903,7 @@ if (typeof window !== 'undefined') {
       dynArr[off] = HUBS[h2].x; dynArr[off + 1] = HUBS[h2].y; dynArr[off + 2] = HUBS[h2].z;
       sz2 = (h2 === 0 ? 8 : 3.5) + Math.sin(clock * 3 + h2) * 1.2;
       dynArr[off + 3] = sz2;
-      dynArr[off + 4] = GREEN[0]; dynArr[off + 5] = GREEN[1]; dynArr[off + 6] = GREEN[2];
+      dynArr[off + 4] = 0.310; dynArr[off + 5] = 0.796; dynArr[off + 6] = 1.0;   // v1.14.43: cyan hub beacons (was GREEN) to match the Black-Marble cool data overlay
       dynArr[off + 7] = h2;
       off += 8;
     }
