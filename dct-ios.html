@@ -10821,11 +10821,35 @@ body.has-resume-banner #boot {
   .pl-note b { color: var(--pl-cyan); letter-spacing: 0.08em; }
 
 @media (prefers-reduced-motion: reduce){ #boot .pl-dot, #boot .pl-dock.pl-seated .pl-led{ animation:none !important; } }
+
+  /* ── Hold-to-enter charge ring (v1.14.46) — spectrum ring, deliberate gloved-tap entry ── */
+  #boot .pl-hold {
+    position: fixed; left: 50%; bottom: 72px; transform: translateX(-50%);
+    width: 120px; height: 120px; padding: 0; border: 0; background: transparent;
+    z-index: 6; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: none;
+    opacity: 0; pointer-events: none; transition: opacity 0.5s ease;
+  }
+  #boot .pl-hold.pl-armed { opacity: 1; pointer-events: auto; }
+  #boot .pl-hold-ring { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  #boot .pl-hold-trk { fill: none; stroke: rgba(90,160,255,0.16); stroke-width: 3.5; }
+  #boot .pl-hold-prg {
+    fill: none; stroke: url(#pl-hold-grad); stroke-width: 5; stroke-linecap: round;
+    filter: drop-shadow(0 0 7px rgba(75,225,255,0.75));
+  }
+  #boot .pl-hold-core {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    font-family: 'PhantomBrand', sans-serif; font-size: 15px; letter-spacing: 0.22em; text-indent: 0.22em;
+    color: #dff4ff; text-shadow: 0 0 10px rgba(75,225,255,0.55);
+  }
+  #boot .pl-hold.pl-charging .pl-hold-core { color: #fff; text-shadow: 0 0 18px rgba(150,200,255,0.95); }
+  #boot .pl-hold.pl-armed:not(.pl-charging) .pl-hold-core { animation: pl-holdBreathe 2.8s ease-in-out infinite; }
+  @keyframes pl-holdBreathe { 0%, 100% { opacity: 0.78; } 50% { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce){ #boot .pl-hold.pl-armed:not(.pl-charging) .pl-hold-core { animation: none; } }
 </style>
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.45';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.46';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -11185,6 +11209,20 @@ if (typeof window !== 'undefined') {
   <div class="pl-stat pl-s2 pl-right pl-fade"><div class="pl-lbl">Offline Cache</div><div class="pl-val">100%</div></div>
   <div class="pl-hint pl-fade" id="pl-hint">Spin to come online</div>
 </div>
+<button id="pl-hold" class="pl-hold pl-fade" type="button" aria-label="Hold to enter PHANTOM">
+  <svg class="pl-hold-ring" viewBox="0 0 120 120" aria-hidden="true">
+    <defs>
+      <linearGradient id="pl-hold-grad" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#4be1ff"/>
+        <stop offset="0.55" stop-color="#9d6bff"/>
+        <stop offset="1" stop-color="#ff4bd8"/>
+      </linearGradient>
+    </defs>
+    <circle class="pl-hold-trk" cx="60" cy="60" r="52"/>
+    <circle class="pl-hold-prg" id="pl-hold-prg" cx="60" cy="60" r="52" transform="rotate(-90 60 60)"/>
+  </svg>
+  <span class="pl-hold-core">HOLD</span>
+</button>
 <div class="boot-items"></div>
 <div class="pl-flash" id="pl-flash"></div>
 <div class="pl-done" id="pl-done">
@@ -11788,6 +11826,8 @@ if (typeof window !== 'undefined') {
   var chargeT = 0, CHARGE_S = 0.9;
   var warpT = 0, WARP_S = 1.45;
   var zoom = 1;
+  /* v1.14.46 hold-to-enter: arm threshold (online proximity to AUS-01), drain speed, held-flag */
+  var ARM_ONLINE = 0.85, DRAIN_MULT = 3.5, charging = false;
 
   function hubFocusRot(h) {
     var az = Math.atan2(HUBS[h].z, HUBS[h].x);
@@ -11857,6 +11897,31 @@ if (typeof window !== 'undefined') {
     else { doneEl.style.display = 'flex'; flashEl.style.opacity = '0'; }
   }
 
+  /* ── Hold-to-enter charge ring (v1.14.46): deliberate gloved-tap entry, armed when AUS-01 is online ── */
+  var holdEl = document.getElementById('pl-hold');
+  var holdPrg = document.getElementById('pl-hold-prg');
+  var HOLD_C = 2 * Math.PI * 52;
+  if (holdPrg) { holdPrg.style.strokeDasharray = HOLD_C.toFixed(1); holdPrg.style.strokeDashoffset = HOLD_C.toFixed(1); }
+  function holdPaint(p) {
+    p = Math.max(0, Math.min(1, p));
+    if (holdPrg) holdPrg.style.strokeDashoffset = (HOLD_C * (1 - p)).toFixed(1);
+  }
+  function holdArmable() { return (interacted || REDUCED) && online >= ARM_ONLINE; }
+  function holdStart() {
+    if (mode !== 'idle' || !holdArmable()) return;
+    if (REDUCED) { startWarp(); return; }   // reduced-motion: confirm-tap, skip the charge animation
+    mode = 'charge'; charging = true; chargeT = 0;
+    if (holdEl) holdEl.classList.add('pl-charging');
+  }
+  function holdRelease() { if (mode === 'charge') charging = false; }   // begin drain; loop drops to idle if not full
+  if (holdEl) {
+    holdEl.addEventListener('pointerdown', function (e) { e.preventDefault(); holdStart(); });
+    holdEl.addEventListener('keydown', function (e) { if ((e.key === 'Enter' || e.key === ' ') && !e.repeat) { e.preventDefault(); holdStart(); } });
+    window.addEventListener('pointerup', holdRelease);
+    window.addEventListener('pointercancel', holdRelease);
+    window.addEventListener('keyup', function (e) { if (e.key === 'Enter' || e.key === ' ') holdRelease(); });
+  }
+
   /* ════════ Clock-free counters trimmed — decluttered by design ════════ */
 
   /* ════════ Render loop ════════ */
@@ -11872,9 +11937,14 @@ if (typeof window !== 'undefined') {
     clock += REDUCED ? 0 : dt;
     if (!REDUCED) drawStars(clock);
 
-    /* charge ring retired — enter is now the seat-the-link connector */
-
-    if (mode === 'warp') {
+    /* v1.14.46: hold-to-enter charge ring — fills while held, drains on release, fires the warp on full charge */
+    if (mode === 'charge') {
+      if (charging) chargeT = Math.min(chargeT + dt, CHARGE_S);
+      else chargeT = Math.max(chargeT - dt * DRAIN_MULT, 0);
+      holdPaint(chargeT / CHARGE_S);
+      if (chargeT >= CHARGE_S) { startWarp(); }
+      else if (!charging && chargeT <= 0) { mode = 'idle'; if (holdEl) holdEl.classList.remove('pl-charging'); }
+    } else if (mode === 'warp') {
       warpT += dt;
       var wp = Math.min(warpT / WARP_S, 1);
       var ease = 1 - Math.pow(1 - wp, 3);
@@ -11948,7 +12018,8 @@ if (typeof window !== 'undefined') {
     }
     if (s2Val) s2Val.textContent = Math.round(online * 100) + '%';
     if (s1Val) { s1Val.textContent = online > 0.85 ? 'ONLINE' : 'OFFLINE'; s1Val.style.color = online > 0.85 ? '' : 'rgba(125,134,184,0.65)'; }
-    if (hintEl && mode === 'idle') hintEl.textContent = online > 0.55 ? 'AUS-01 in range · center to lock' : 'Spin to come online';
+    if (holdEl && (mode === 'idle' || mode === 'charge')) holdEl.classList.toggle('pl-armed', holdArmable());
+    if (hintEl && mode === 'idle') hintEl.textContent = holdArmable() ? 'Hold to enter' : (online > 0.55 ? 'AUS-01 in range · center to lock' : 'Spin to come online');
     gl.clear(gl.COLOR_BUFFER_BIT);
 
     // ── photoreal Earth: opaque textured sphere, drawn UNDER the arcs/hubs ──
