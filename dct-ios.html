@@ -10825,7 +10825,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.44';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.45';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -11537,7 +11537,7 @@ if (typeof window !== 'undefined') {
   ].join('\n');
   var GFS = [
     'precision mediump float;',
-    'uniform sampler2D uDay,uClouds;', 'uniform vec3 uSun;', 'uniform float uTime;',
+    'uniform sampler2D uDay,uClouds,uNight;', 'uniform vec3 uSun;', 'uniform float uTime;',
     'varying vec2 vUV;', 'varying vec3 vN;',
     'void main(){',
     '  if (vN.z < -0.02) discard;',
@@ -11550,6 +11550,8 @@ if (typeof window !== 'undefined') {
     '  base=mix(base, vec3(0.16,0.19,0.26), cl*0.45);',      // faint unlit night clouds, cool grey
     '  float fres=pow(1.0-max(N.z,0.0),3.0);',
     '  base += vec3(0.22,0.45,1.0)*fres*0.38;',              // constant cool-blue atmosphere rim (no warm terminator)
+    '  float nl=texture2D(uNight,vUV).r;',
+    '  base += vec3(1.0,0.85,0.55)*nl*nl*1.6;',
     '  gl_FragColor=vec4(base,1.0);',
     '}'
   ].join('\n');
@@ -11566,7 +11568,7 @@ if (typeof window !== 'undefined') {
     aPos: gl.getAttribLocation(gprog, 'aPos'), aUV: gl.getAttribLocation(gprog, 'aUV'),
     uRotY: gl.getUniformLocation(gprog, 'uRotY'), uCosT: gl.getUniformLocation(gprog, 'uCosT'), uSinT: gl.getUniformLocation(gprog, 'uSinT'),
     uScale: gl.getUniformLocation(gprog, 'uScale'), uCenter: gl.getUniformLocation(gprog, 'uCenter'),
-    uDay: gl.getUniformLocation(gprog, 'uDay'), uClouds: gl.getUniformLocation(gprog, 'uClouds'),
+    uDay: gl.getUniformLocation(gprog, 'uDay'), uClouds: gl.getUniformLocation(gprog, 'uClouds'), uNight: gl.getUniformLocation(gprog, 'uNight'),
     uSun: gl.getUniformLocation(gprog, 'uSun'), uTime: gl.getUniformLocation(gprog, 'uTime')
   };
   function mkTex(src) {
@@ -11580,7 +11582,7 @@ if (typeof window !== 'undefined') {
     img.onload = function () { gl.bindTexture(gl.TEXTURE_2D, t); gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img); gl.generateMipmap(gl.TEXTURE_2D); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); var _ax = gl.getExtension('EXT_texture_filter_anisotropic') || gl.getExtension('WEBKIT_EXT_texture_filter_anisotropic'); if (_ax) gl.texParameterf(gl.TEXTURE_2D, _ax.TEXTURE_MAX_ANISOTROPY_EXT, gl.getParameter(_ax.MAX_TEXTURE_MAX_ANISOTROPY_EXT)); };
     img.src = src; return t;
   }
-  var texDay = mkTex(TEX_DAY), texClouds = mkTex(TEX_CLOUDS);
+  var texDay = mkTex(TEX_DAY), texClouds = mkTex(TEX_CLOUDS), texNight = mkTex('phantom-night.webp');
 
   gl.enable(gl.BLEND);
   gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
@@ -11601,7 +11603,7 @@ if (typeof window !== 'undefined') {
 
   /* ── Static geometry: real land + borders + arcs, SPECTRUM baked ── */
   var staticData = [];
-  var SHOW_SPECTRUM_LAND = true;     // HYBRID night-Earth: SPECTRUM city-light dots are the ONLY glow over the dark NASA terrain
+  var SHOW_SPECTRUM_LAND = false;     // HYBRID night-Earth: SPECTRUM city-light dots are the ONLY glow over the dark NASA terrain
   var SHOW_SPECTRUM_BORDERS = false; // real coastlines come from the texture; violet outline dots would fight it
   var r, c, lat, lon, p, col;
 
@@ -11959,6 +11961,7 @@ if (typeof window !== 'undefined') {
     gl.uniform1f(gloc.uTime, clock);
     gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, texDay); gl.uniform1i(gloc.uDay, 0);
     gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, texClouds); gl.uniform1i(gloc.uClouds, 2);
+    gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, texNight); gl.uniform1i(gloc.uNight, 1);
     gl.bindBuffer(gl.ARRAY_BUFFER, sphPosBuf); gl.enableVertexAttribArray(gloc.aPos); gl.vertexAttribPointer(gloc.aPos, 3, gl.FLOAT, false, 0, 0);
     gl.bindBuffer(gl.ARRAY_BUFFER, sphUVBuf); gl.enableVertexAttribArray(gloc.aUV); gl.vertexAttribPointer(gloc.aUV, 2, gl.FLOAT, false, 0, 0);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, sphIdxBuf);
