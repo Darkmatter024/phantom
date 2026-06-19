@@ -10849,7 +10849,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.46';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.47';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -11272,27 +11272,55 @@ if (typeof window !== 'undefined') {
 
   // Real CoreWeave footprint — NA + Europe. Source: coreweave.com/ai-data-centers (GTC 2026,
   // "49 data centers across North America and Europe"). Named sites placed; Austin = home (idx 0).
+  // v1.14.47: footprint matched to the phantom-globe prototype (21 NA/EU sites) + 3 real CoreWeave
+  // sites re-added (West TX, Reno, Glasgow) = 24 hubs, Austin = home (idx 0).
   var HUBS = [
-    ll(30.27,  -97.74),  // 0  Austin TX — home / warp target
-    ll(33.02,  -96.70),  // 1  Plano TX (Dallas metro)
-    ll(32.45,  -99.73),  // 2  West TX — Project Horizon (APPROX; exact site not public)
-    ll(35.75,  -95.37),  // 3  Muskogee OK — Helios / Port of Muskogee
-    ll(41.88,  -87.63),  // 4  Chicago IL
-    ll(40.04,  -76.31),  // 5  Lancaster PA
-    ll(40.77,  -74.02),  // 6  Weehawken NJ (covers Kenilworth NEST11 too — same metro)
-    ll(37.36,  -77.44),  // 7  Chester VA
-    ll(33.75,  -84.39),  // 8  Douglasville GA (Atlanta)
-    ll(36.17, -115.14),  // 9  Las Vegas NV
-    ll(39.53, -119.81),  // 10 Reno NV
-    ll(45.52, -122.99),  // 11 Hillsboro OR
-    ll(51.10,   -0.18),  // 12 London / Crawley UK
-    ll(41.39,    2.17),  // 13 Barcelona ES (Merlin Edged)
-    ll(55.85,   -3.92)   // 14 Glasgow / Eurocentral — DataVita, Scotland
+    ll(30.27,  -97.74),  // 0  Austin TX — home / warp target  [AUS-01]
+    ll(40.79,  -74.02),  // 1  New Jersey             [NJ]
+    ll(40.04,  -76.31),  // 2  Lancaster PA            [LNC]
+    ll(37.35,  -77.44),  // 3  Chester VA              [CHS]
+    ll(36.10,  -80.24),  // 4  Winston-Salem NC        [WSN]
+    ll(33.75,  -84.39),  // 5  Atlanta GA              [ATL]
+    ll(32.46,  -84.99),  // 6  Columbus GA             [CSG]
+    ll(41.88,  -87.63),  // 7  Chicago IL              [CHI]
+    ll(39.77,  -86.16),  // 8  Indianapolis IN         [IND]
+    ll(41.68,  -86.25),  // 9  South Bend IN           [SBN]
+    ll(42.50,  -82.94),  // 10 Roseville MI (Detroit)  [DET]
+    ll(33.02,  -96.70),  // 11 Plano TX (Dallas metro) [PLN]
+    ll(35.75,  -95.37),  // 12 Muskogee OK             [MSK]
+    ll(46.00,  -98.52),  // 13 Ellendale ND            [ELN]
+    ll(38.83, -104.82),  // 14 Colorado Springs CO     [COS]
+    ll(36.17, -115.14),  // 15 Las Vegas NV            [LAS]
+    ll(45.52, -122.99),  // 16 Hillsboro OR            [HIL]
+    ll(43.36,  -80.31),  // 17 Cambridge ON            [YKF]
+    ll(51.51,   -0.13),  // 18 London UK               [LON]
+    ll(41.39,    2.17),  // 19 Barcelona ES            [BCN]
+    ll(60.61,   15.63),  // 20 Falun SE                [FLU]
+    ll(32.45,  -99.73),  // 21 West TX / Project Horizon [PHX] (re-added — APPROX; exact site not public)
+    ll(39.53, -119.81),  // 22 Reno NV                 [RNO] (re-added)
+    ll(55.85,   -3.92)   // 23 Glasgow / Eurocentral   [GLA] (re-added — DataVita, Scotland)
   ];
-  // Austin radiates to every site; two trans-Atlantic spans (NJ + VA -> London); European triangle.
+  // Regional mesh from the prototype: NJ/Chicago east-coast spine, two trans-Atlantic spans,
+  // a London–Falun European link, and AUS-01's four "live" home spurs (gold). Sites with no arc
+  // (Lancaster, Chester, Columbus, Indy, South Bend, Detroit, Ellendale, Colo. Springs) render as lone beacons.
   var ARCS = [
-    [0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[0,7],[0,8],[0,9],[0,10],[0,11],[0,12],[0,13],[0,14],
-    [6,12],[7,12],[12,13],[12,14]
+    [1,18],  // NJ → London          (trans-Atlantic)
+    [1,19],  // NJ → Barcelona       (trans-Atlantic)
+    [1,7],   // NJ → Chicago
+    [1,5],   // NJ → Atlanta
+    [17,1],  // Cambridge ON → NJ
+    [7,20],  // Chicago → Falun
+    [7,16],  // Chicago → Hillsboro
+    [5,4],   // Atlanta → Winston-Salem
+    [18,20], // London → Falun
+    [0,15],  // AUS-01 → Las Vegas   (live / gold)
+    [0,5],   // AUS-01 → Atlanta     (live / gold)
+    [0,16],  // AUS-01 → Hillsboro   (live / gold)
+    [11,0],  // Plano → AUS-01       (live / gold)
+    [12,7],  // Muskogee → Chicago
+    [21,11], // West TX / Project Horizon → Plano   (re-added, cyan integrator)
+    [22,15], // Reno → Las Vegas                    (re-added, cyan integrator)
+    [23,18]  // Glasgow → London                    (re-added, cyan integrator)
   ];
   var ARC_LIFT = 0.16;
 
@@ -11688,10 +11716,14 @@ if (typeof window !== 'undefined') {
     }
   })();
 
-  var ai, st, t, A, B, x, y, z, len, alt;
+  var ai, st, t, A, B, x, y, z, len, alt, arcLive, arcSz, arcR, arcG, arcB;
   var ARC_STEPS = 46;
   for (ai = 0; ai < ARCS.length; ai++) {
     A = HUBS[ARCS[ai][0]]; B = HUBS[ARCS[ai][1]];
+    // v1.14.47: arcs touching AUS-01 (idx 0) are "live" — warm gold + brighter/thicker; the rest stay dim cyan mesh.
+    arcLive = (ARCS[ai][0] === 0 || ARCS[ai][1] === 0);
+    arcSz = arcLive ? 1.7 : 1.25;
+    arcR = arcLive ? 0.62 : 0.21; arcG = arcLive ? 0.46 : 0.36; arcB = arcLive ? 0.16 : 0.46;  // gold / cyan (device-tunable)
     for (st = 0; st <= ARC_STEPS; st++) {
       t = st / ARC_STEPS;
       x = A.x + (B.x - A.x) * t;
@@ -11701,8 +11733,8 @@ if (typeof window !== 'undefined') {
       alt = 1 + ARC_LIFT * Math.sin(t * Math.PI);
       staticData.push(
         x / len * alt, y / len * alt, z / len * alt,
-        1.25,
-        0.21, 0.36, 0.46,   // dimmed cyan (was 0.45,0.8,1.0); additive arcs no longer wash the spectrum
+        arcSz,
+        arcR, arcG, arcB,
         t * 6.283 + ai
       );
     }
@@ -11796,7 +11828,8 @@ if (typeof window !== 'undefined') {
   /* ── Dynamic: hubs + packets ── */
   var PPA = 2;
   var NPACK = ARCS.length * PPA;
-  var dynCount = HUBS.length + NPACK + lightCells.length;
+  var HALO = 1;   // v1.14.47: one soft expanding gold halo at AUS-01 (prototype .halo ring)
+  var dynCount = HUBS.length + NPACK + lightCells.length + HALO;
   var dynArr = new Float32Array(dynCount * 8);
   var dynBuf = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, dynBuf);
@@ -11929,6 +11962,8 @@ if (typeof window !== 'undefined') {
   var running = true, tPrev = 0, clock = 0, _lastFilt = -1;
   var GREEN = [61/255, 220/255, 132/255];
   var WHITE = [1, 1, 1];
+  // v1.14.47 fiber packets: gold on AUS-01 home spurs, cyan on the regional mesh (matches the prototype).
+  var PKT_GOLD = [1.0, 0.88, 0.50], PKT_CYAN = [0.80, 0.95, 1.0];
 
   function frame(t2) {
     if (!running) return;
@@ -11974,17 +12009,22 @@ if (typeof window !== 'undefined') {
       dynArr[off] = HUBS[h2].x; dynArr[off + 1] = HUBS[h2].y; dynArr[off + 2] = HUBS[h2].z;
       sz2 = (h2 === 0 ? 8 : 3.5) + Math.sin(clock * 3 + h2) * 1.2;
       dynArr[off + 3] = sz2;
-      dynArr[off + 4] = 0.310; dynArr[off + 5] = 0.796; dynArr[off + 6] = 1.0;   // v1.14.43: cyan hub beacons (was GREEN) to match the Black-Marble cool data overlay
+      if (h2 === 0) { dynArr[off + 4] = 1.0; dynArr[off + 5] = 0.80; dynArr[off + 6] = 0.34; }   // v1.14.47: gold home beacon (AUS-01)
+      else { dynArr[off + 4] = 0.310; dynArr[off + 5] = 0.796; dynArr[off + 6] = 1.0; }           // cyan regional beacons (v1.14.43 palette)
       dynArr[off + 7] = h2;
       off += 8;
     }
-    var pk, pt, pp;
+    var pk, pt, pp, pLive, pSpd, pCol, pSz;
     for (pk = 0; pk < ARCS.length; pk++) {
+      pLive = (ARCS[pk][0] === 0 || ARCS[pk][1] === 0);   // home spur => gold, faster, bigger
+      pSpd = pLive ? 0.34 : 0.20;
+      pCol = pLive ? PKT_GOLD : PKT_CYAN;
+      pSz = pLive ? 3.8 : 2.6;
       for (pp = 0; pp < PPA; pp++) {
-        pt = (clock * 0.22 + pk * 0.13 + pp / PPA) % 1;
+        pt = (clock * pSpd + pk * 0.13 + pp / PPA) % 1;
         arcPoint(pk, pt, dynArr, off);
-        dynArr[off + 3] = 3.2;
-        dynArr[off + 4] = WHITE[0]; dynArr[off + 5] = WHITE[1]; dynArr[off + 6] = WHITE[2];
+        dynArr[off + 3] = pSz;
+        dynArr[off + 4] = pCol[0]; dynArr[off + 5] = pCol[1]; dynArr[off + 6] = pCol[2];
         dynArr[off + 7] = pk * 2.1 + pp;
         off += 8;
       }
@@ -12008,6 +12048,16 @@ if (typeof window !== 'undefined') {
       dynArr[off + 7] = li * 3.1 + 5.0;                      // positive phase => tight glow, front-gated
       off += 8;
     }
+
+    // v1.14.47: AUS-01 home halo — a slow soft gold ring that expands + fades, then repeats (the prototype .halo).
+    // Cloud-path aPhase (-0.5 > p > -25) => soft edge, no twinkle/flare; front-gated so it hides when Austin faces away.
+    var hph = (clock % 3.2) / 3.2;          // 0..1 expand cycle (frozen at 0 under reduced-motion => a steady dot)
+    var hbr = (1 - hph) * 0.55;             // fade as it grows
+    dynArr[off] = HUBS[0].x; dynArr[off + 1] = HUBS[0].y; dynArr[off + 2] = HUBS[0].z;
+    dynArr[off + 3] = 8 + hph * 34;
+    dynArr[off + 4] = 1.0 * hbr; dynArr[off + 5] = 0.80 * hbr; dynArr[off + 6] = 0.36 * hbr;
+    dynArr[off + 7] = -2.0;                 // soft cloud-path glow
+    off += 8;
 
     var _ob = Math.round(online * 100);
     if (_ob !== _lastFilt) {
