@@ -10467,17 +10467,50 @@ body.has-resume-banner #boot {
 #boot .pm-wordmark { display:block; width:min(82vw,360px); height:auto; margin:0 auto; aspect-ratio:1100 / 141; }
 #boot .pe-sub { font-family:'Chakra Petch','Helvetica Neue',Arial,sans-serif; font-size:11px; letter-spacing:.34em; color:#8e9bd0; opacity:.8; margin-top:13px; text-transform:uppercase; }
 
-/* ── Spectral Iris enter button ── */
+/* ── DOWNLINK enter button (v1.14.52): machined gold hex terminus where the data-mesh grounds out.
+   Gold-only accent (the wordmark owns the spectrum); single TOP light source; idle power pools into the
+   core; gold charge-surge on hold. CSS layers + restyled static SVG only — hold-charge JS/hex untouched.
+   Scoped under #boot, pe-dl-* prefixed. ── */
 #boot .pe-enterzone { top:66%; }
 #boot .pe-stage { width:132px; height:132px; position:relative; margin:0 auto; cursor:pointer; touch-action:none; display:flex; align-items:center; justify-content:center; }
-#boot .pe-stage::before { content:""; position:absolute; left:50%; top:50%; width:160%; height:160%; transform:translate(-50%,-50%); border-radius:50%; background:radial-gradient(circle, rgba(40,224,255,0.22) 0%, transparent 70%); opacity:0.8; z-index:0; pointer-events:none; }
-#boot .pe-stage svg { position:absolute; inset:0; width:100%; height:100%; overflow:visible; z-index:1; }
-#boot .pe-stage.pe-idle::before { animation:pe-haloBreathe 2.8s ease-in-out infinite; }
-@keyframes pe-haloBreathe { 0%,100%{opacity:0.6} 50%{opacity:1} }
-#boot .pe-clabel { position:absolute; display:flex; align-items:center; justify-content:center; pointer-events:none; z-index:2; }
-#boot .pe-clabel .pe-g { font-family:'Chakra Petch','Helvetica Neue',Arial,sans-serif; font-size:13px; letter-spacing:.26em; color:rgba(220,245,255,0.92); text-shadow:0 0 8px rgba(40,224,255,0.45); transition:.2s; }
-#boot .pe-deploytxt { font-family:'Chakra Petch','Helvetica Neue',Arial,sans-serif; font-size:10px; letter-spacing:.3em; color:#46566c; text-transform:uppercase; margin-top:14px; height:12px; }
-#boot .pe-flash { position:absolute; inset:-50px; border-radius:50%; pointer-events:none; opacity:0; z-index:5; background:radial-gradient(circle,#fff,rgba(40,224,255,.5) 26%,transparent 64%); }
+/* ambient pool glow — faint gold + a whisper of cyan for "online"; breathes low + slow (radial-gradient, no box-shadow) */
+#boot .pe-stage::before { content:""; position:absolute; left:50%; top:50%; width:152%; height:152%; transform:translate(-50%,-50%); border-radius:50%; background:radial-gradient(circle, rgba(255,203,69,0.15) 0%, rgba(40,224,255,0.05) 40%, transparent 70%); opacity:0.6; z-index:0; pointer-events:none; }
+#boot .pe-stage.pe-idle::before { animation:pe-dl-amb 5s ease-in-out infinite; }
+@keyframes pe-dl-amb { 0%,100%{opacity:0.45} 50%{opacity:0.8} }
+/* machined hex: gold hairline rim under a brushed-graphite plate, top-lit (single light = the globe above) */
+#boot .pe-dl-rim, #boot .pe-dl-plate { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); clip-path:polygon(50% 0%,93.3% 25%,93.3% 75%,50% 100%,6.7% 75%,6.7% 25%); pointer-events:none; }
+#boot .pe-dl-rim { width:92px; height:104px; z-index:1; background:linear-gradient(180deg, rgba(255,205,80,0.92) 0%, rgba(210,150,55,0.55) 34%, rgba(120,90,40,0.40) 72%, rgba(80,62,30,0.34) 100%); }
+#boot .pe-dl-plate { width:87px; height:98px; z-index:2; background:radial-gradient(125% 72% at 50% 4%, rgba(196,210,230,0.20), rgba(120,135,158,0.05) 32%, transparent 54%), linear-gradient(180deg, #1b2233 0%, #11151f 44%, #080b12 100%); }
+#boot .pe-dl-plate::after { content:""; position:absolute; left:50%; top:53%; width:56%; height:56%; transform:translate(-50%,-50%); border-radius:50%; background:radial-gradient(circle, rgba(0,0,0,0.55) 0%, transparent 70%); }
+/* breathing gold core (idle luminance) — recedes on hold so the SVG surge owns the charge */
+#boot .pe-dl-core { position:absolute; left:50%; top:50%; width:46px; height:46px; transform:translate(-50%,-50%); border-radius:50%; z-index:3; pointer-events:none; opacity:0; transition:opacity .4s ease; background:radial-gradient(circle, rgba(255,216,128,0.9) 0%, rgba(255,203,69,0.42) 34%, rgba(255,180,60,0.10) 62%, transparent 76%); }
+#boot .pe-stage.pe-idle .pe-dl-core { opacity:1; animation:pe-dl-core 4.6s ease-in-out infinite; }
+@keyframes pe-dl-core { 0%,100%{ transform:translate(-50%,-50%) scale(0.9); opacity:0.45 } 50%{ transform:translate(-50%,-50%) scale(1.06); opacity:0.85 } }
+/* light-packets pooling INTO the core (idle alive-tell) — gold radial dots drifting inward, staggered/organic */
+#boot .pe-dl-pool { position:absolute; left:50%; top:50%; width:96px; height:108px; transform:translate(-50%,-50%); z-index:3; pointer-events:none; opacity:1; transition:opacity .35s ease; }
+#boot .pe-stage:not(.pe-idle) .pe-dl-pool, #boot .pe-stage:not(.pe-idle) .pe-dl-core { opacity:0; }
+#boot .pe-dl-pool b { position:absolute; left:50%; top:50%; width:9px; height:9px; margin:-4.5px 0 0 -4.5px; border-radius:50%; opacity:0; background:radial-gradient(circle, rgba(255,226,150,0.95) 0%, rgba(255,203,69,0.5) 45%, transparent 70%); }
+#boot .pe-dl-pool b:nth-child(1){ animation:pe-dl-pk1 5.2s ease-in infinite; }
+#boot .pe-dl-pool b:nth-child(2){ animation:pe-dl-pk2 6.1s ease-in infinite 1.3s; }
+#boot .pe-dl-pool b:nth-child(3){ animation:pe-dl-pk3 5.7s ease-in infinite 2.6s; }
+#boot .pe-dl-pool b:nth-child(4){ animation:pe-dl-pk4 6.6s ease-in infinite 3.9s; }
+@keyframes pe-dl-pk1 { 0%{transform:translate(-32px,-30px) scale(.7);opacity:0} 16%{opacity:.85} 82%{opacity:.4} 100%{transform:translate(0,0) scale(.35);opacity:0} }
+@keyframes pe-dl-pk2 { 0%{transform:translate(34px,-26px) scale(.7);opacity:0} 18%{opacity:.8} 82%{opacity:.4} 100%{transform:translate(0,0) scale(.35);opacity:0} }
+@keyframes pe-dl-pk3 { 0%{transform:translate(30px,32px) scale(.7);opacity:0} 18%{opacity:.8} 82%{opacity:.4} 100%{transform:translate(0,0) scale(.35);opacity:0} }
+@keyframes pe-dl-pk4 { 0%{transform:translate(-30px,30px) scale(.7);opacity:0} 18%{opacity:.75} 82%{opacity:.4} 100%{transform:translate(0,0) scale(.35);opacity:0} }
+/* SVG aperture = the gold charge-surge (above plate, below label). Seam spokes forced gold via CSS — beats draw()'s setAttribute, no JS change */
+#boot .pe-stage svg { position:absolute; inset:0; width:100%; height:100%; overflow:visible; z-index:4; }
+#boot #pe-seams line { stroke:var(--gold); }
+/* HOLD label — warm, restrained, premium (text-shadow ok: static element) */
+#boot .pe-clabel { position:absolute; display:flex; align-items:center; justify-content:center; pointer-events:none; z-index:6; }
+#boot .pe-clabel .pe-g { font-family:'Chakra Petch','Helvetica Neue',Arial,sans-serif; font-size:12px; font-weight:500; letter-spacing:.32em; text-indent:.32em; color:rgba(255,240,210,0.94) !important; text-shadow:0 0 9px rgba(255,203,69,0.55), 0 0 3px rgba(4,6,10,0.85); transition:.2s; }
+#boot .pe-deploytxt { font-family:'Chakra Petch','Helvetica Neue',Arial,sans-serif; font-size:10px; letter-spacing:.3em; color:#5a5648; text-transform:uppercase; margin-top:14px; height:12px; }
+#boot .pe-flash { position:absolute; inset:-50px; border-radius:50%; pointer-events:none; opacity:0; z-index:8; background:radial-gradient(circle,#fff,rgba(255,203,69,.5) 26%,transparent 64%); }
+/* OPTIONAL filament (FLAGGED): hairline gold downlink rising from the button into the tagline gap. OFF unless #boot has .pe-dl-link */
+#boot .pe-dl-fil { display:none; }
+#boot.pe-dl-link .pe-dl-fil { display:block; position:absolute; left:50%; top:-92px; transform:translateX(-50%); width:2px; height:92px; pointer-events:none; z-index:0; background:linear-gradient(180deg, rgba(255,203,69,0) 0%, rgba(255,203,69,0.40) 62%, rgba(255,203,69,0.7) 100%); }
+#boot.pe-dl-link .pe-dl-fil::after { content:""; position:absolute; left:50%; top:0; width:4px; height:4px; margin-left:-2px; border-radius:50%; background:radial-gradient(circle, rgba(255,236,175,0.95) 0%, transparent 70%); animation:pe-dl-fil 3.6s ease-in infinite; }
+@keyframes pe-dl-fil { 0%{top:-2px;opacity:0} 14%{opacity:1} 90%{opacity:0.55} 100%{top:88px;opacity:0} }
 
 /* ── CAL strip ── */
 #boot .pe-cal { position:fixed; bottom:22px; left:0; width:100%; text-align:center; z-index:10; }
@@ -10498,14 +10531,17 @@ body.has-resume-banner #boot {
 #boot .pe-handle.pe-sel .pe-hlbl { color:var(--gold); }
 
 @media (prefers-reduced-motion:reduce){
-  #boot .pe-stage.pe-idle::before { animation:none !important; opacity:0.8; }
+  #boot .pe-stage::before { animation:none !important; opacity:0.6; }
+  #boot .pe-stage.pe-idle .pe-dl-core { animation:none !important; opacity:0.7; }
+  #boot .pe-dl-pool b { animation:none !important; opacity:0; }
+  #boot.pe-dl-link .pe-dl-fil::after { animation:none !important; opacity:0; }
   #boot .pe-mk.pe-home, #boot .pe-mk.pe-home::after { animation:none !important; }
 }
 </style>
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.51';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.52';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -10866,15 +10902,20 @@ if (typeof window !== 'undefined') {
 
 <div class="pe-uz pe-enterzone">
   <div class="pe-stage pe-idle" id="pe-stage" role="button" tabindex="0" aria-label="Hold to enter PHANTOM">
+    <div class="pe-dl-fil" aria-hidden="true"></div>
+    <div class="pe-dl-rim" aria-hidden="true"></div>
+    <div class="pe-dl-plate" aria-hidden="true"></div>
+    <div class="pe-dl-core" aria-hidden="true"></div>
+    <div class="pe-dl-pool" aria-hidden="true"><b></b><b></b><b></b><b></b></div>
     <svg viewBox="0 0 200 200" aria-hidden="true">
       <defs>
-        <radialGradient id="pe-portalG"><stop offset="0" stop-color="#fff"/><stop offset=".35" stop-color="#1fffd0"/><stop offset=".7" stop-color="#28e0ff"/><stop offset="1" stop-color="#8a4bff"/></radialGradient>
+        <radialGradient id="pe-portalG"><stop offset="0" stop-color="#fff7e6"/><stop offset=".4" stop-color="#ffcb45"/><stop offset=".75" stop-color="#c8901f"/><stop offset="1" stop-color="#5a3f12"/></radialGradient>
         <mask id="pe-irisMask"><rect width="200" height="200" fill="#fff"/><polygon id="pe-hole" points="" fill="#000"/></mask>
       </defs>
       <circle id="pe-portal" cx="100" cy="100" r="2" fill="url(#pe-portalG)" opacity=".85"/>
-      <circle cx="100" cy="100" r="74" fill="#06090e" mask="url(#pe-irisMask)" stroke="#28e0ff" stroke-opacity="0.55" stroke-width="1.8"/>
-      <g id="pe-seams" stroke="#1c2738" stroke-width="1"></g>
-      <polygon id="pe-rim" points="" fill="none" stroke="url(#pe-portalG)" stroke-width="2" opacity="0"/>
+      <circle cx="100" cy="100" r="74" fill="transparent" mask="url(#pe-irisMask)" stroke="none"/>
+      <g id="pe-seams" stroke-width="1"></g>
+      <polygon id="pe-rim" points="" fill="none" stroke="url(#pe-portalG)" stroke-width="2.4" opacity="0"/>
     </svg>
     <div class="pe-clabel"><div class="pe-g" id="pe-glab">HOLD</div></div>
     <div class="pe-flash" id="pe-flash"></div>
