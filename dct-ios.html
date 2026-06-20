@@ -10467,49 +10467,28 @@ body.has-resume-banner #boot {
 #boot .pm-wordmark { display:block; width:min(82vw,360px); height:auto; margin:0 auto; aspect-ratio:1100 / 141; filter:saturate(0.7) hue-rotate(-18deg) brightness(1.04); }
 #boot .pe-sub { font-family:'Chakra Petch','Helvetica Neue',Arial,sans-serif; font-size:11px; letter-spacing:.34em; color:#8e9bd0; opacity:.8; margin-top:13px; text-transform:uppercase; }
 
-/* ── GATEWAY enter button (v1.14.53): machined concentric-ring port, COOL CHROME. Brushed-steel bezel rings,
-   cyan-white luminous core, a contained cyan-violet confirm-bloom on the press. Single TOP light source. No
-   red, no rainbow on the button (the wordmark owns the spectrum). CSS layers + restyled static SVG only —
-   hold-charge JS/hex untouched. Scoped #boot, pe-gw-* prefixed. Filament threads rise into the wordmark. ── */
-#boot .pe-enterzone { top:66%; }
-#boot .pe-stage { width:132px; height:132px; position:relative; margin:0 auto; cursor:pointer; touch-action:none; display:flex; align-items:center; justify-content:center; }
-/* ambient — faint cyan field, breathing low + slow (radial-gradient, no box-shadow) */
-#boot .pe-stage::before { content:""; position:absolute; left:50%; top:50%; width:156%; height:156%; transform:translate(-50%,-50%); border-radius:50%; background:radial-gradient(circle, rgba(40,224,255,0.16) 0%, rgba(138,75,255,0.05) 42%, transparent 70%); opacity:0.55; z-index:0; pointer-events:none; }
-#boot .pe-stage.pe-idle::before { animation:pe-gw-amb 5.2s ease-in-out infinite; }
-@keyframes pe-gw-amb { 0%,100%{opacity:0.4} 50%{opacity:0.72} }
-/* filament threads rising from the port up into the wordmark (cyan, ON) */
-#boot .pe-gw-fil { display:block; position:absolute; left:50%; top:-92px; transform:translateX(-50%); width:2px; height:92px; pointer-events:none; z-index:0; background:linear-gradient(180deg, rgba(40,224,255,0) 0%, rgba(40,224,255,0.32) 60%, rgba(120,210,255,0.62) 100%); }
-#boot .pe-gw-fil::after { content:""; position:absolute; left:50%; top:0; width:4px; height:4px; margin-left:-2px; border-radius:50%; background:radial-gradient(circle, rgba(190,240,255,0.95) 0%, transparent 70%); animation:pe-gw-fil 3.6s ease-in infinite; }
-@keyframes pe-gw-fil { 0%{top:-2px;opacity:0} 14%{opacity:1} 90%{opacity:0.5} 100%{top:88px;opacity:0} }
-/* concentric machined-steel rings, top-lit (single light = the globe above): stacked discs -> visible ring bands */
-#boot .pe-gw-bezel, #boot .pe-gw-ring2, #boot .pe-gw-ring3 { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); border-radius:50%; pointer-events:none; }
-#boot .pe-gw-bezel { width:106px; height:106px; z-index:1; background:radial-gradient(52% 36% at 50% 10%, rgba(250,253,255,0.88) 0%, rgba(186,200,222,0.22) 38%, transparent 58%), radial-gradient(80% 46% at 50% 96%, rgba(0,0,0,0.58) 0%, transparent 60%), linear-gradient(180deg, #d6dfee 0%, #828ea4 27%, #283040 70%, #0b1018 100%); }
-#boot .pe-gw-ring2 { width:88px; height:88px; z-index:2; background:radial-gradient(56% 36% at 50% 13%, rgba(236,244,255,0.66) 0%, transparent 54%), radial-gradient(74% 40% at 50% 93%, rgba(0,0,0,0.56) 0%, transparent 60%), linear-gradient(180deg, #bcc6d8 0%, #5e6a82 30%, #1f2736 76%, #0a0f18 100%); }
-#boot .pe-gw-ring3 { width:64px; height:64px; z-index:3; background:radial-gradient(80% 50% at 50% 15%, rgba(150,170,200,0.42) 0%, transparent 58%), radial-gradient(circle at 50% 60%, #0b1019 0%, #03060c 76%); }
-/* cyan-white luminous core (idle breathe) */
-#boot .pe-gw-core { position:absolute; left:50%; top:50%; width:60px; height:60px; transform:translate(-50%,-50%); border-radius:50%; z-index:4; pointer-events:none; background:radial-gradient(circle, #ffffff 0%, #eafdff 9%, #28e0ff 27%, rgba(40,224,255,0.58) 48%, rgba(70,150,255,0.22) 70%, transparent 84%); }
-#boot .pe-stage.pe-idle .pe-gw-core { animation:pe-gw-core 4.4s ease-in-out infinite; }
-@keyframes pe-gw-core { 0%,100%{ transform:translate(-50%,-50%) scale(0.92); opacity:0.72 } 50%{ transform:translate(-50%,-50%) scale(1.05); opacity:1 } }
-/* contained cyan-violet confirm-bloom around the rim — appears ON THE PRESS (charge), recedes on release */
-#boot .pe-gw-bloom { position:absolute; left:50%; top:50%; width:112px; height:112px; transform:translate(-50%,-50%); border-radius:50%; z-index:5; pointer-events:none; opacity:0; transition:opacity .3s ease; background:radial-gradient(circle, transparent 40%, rgba(40,224,255,0.22) 49%, rgba(138,75,255,0.20) 58%, transparent 72%); }
-#boot .pe-stage:not(.pe-idle) .pe-gw-bloom { opacity:1; animation:pe-gw-bloom 1.2s ease-out forwards; }
-@keyframes pe-gw-bloom { 0%{ transform:translate(-50%,-50%) scale(0.84); opacity:0 } 100%{ transform:translate(-50%,-50%) scale(1.04); opacity:1 } }
-#boot .pe-gw-bloom b { position:absolute; left:50%; top:50%; width:5px; height:5px; margin:-2.5px 0 0 -2.5px; border-radius:50%; opacity:0; transition:opacity .3s ease; background:radial-gradient(circle, rgba(175,225,255,0.95) 0%, rgba(138,75,255,0.5) 50%, transparent 72%); }
-#boot .pe-stage:not(.pe-idle) .pe-gw-bloom b { opacity:0.9; }
-#boot .pe-gw-bloom b:nth-child(1){ transform:rotate(0deg) translateY(-50px); }
-#boot .pe-gw-bloom b:nth-child(2){ transform:rotate(60deg) translateY(-50px); }
-#boot .pe-gw-bloom b:nth-child(3){ transform:rotate(120deg) translateY(-50px); }
-#boot .pe-gw-bloom b:nth-child(4){ transform:rotate(180deg) translateY(-50px); }
-#boot .pe-gw-bloom b:nth-child(5){ transform:rotate(240deg) translateY(-50px); }
-#boot .pe-gw-bloom b:nth-child(6){ transform:rotate(300deg) translateY(-50px); }
-/* SVG aperture = the cyan charge-surge + cyan-violet tendril spokes (above rings, below label) */
-#boot .pe-stage svg { position:absolute; inset:0; width:100%; height:100%; overflow:visible; z-index:6; pointer-events:none; }
-#boot #pe-seams line { stroke:#5a8cff; }
-/* HOLD label — clean cool caps */
-#boot .pe-clabel { position:absolute; display:flex; align-items:center; justify-content:center; pointer-events:none; z-index:7; }
-#boot .pe-clabel .pe-g { font-family:'Chakra Petch','Helvetica Neue',Arial,sans-serif; font-size:12px; font-weight:500; letter-spacing:.32em; text-indent:.32em; color:rgba(230,248,255,0.95) !important; text-shadow:0 0 9px rgba(40,224,255,0.5), 0 0 3px rgba(4,6,10,0.85); transition:.2s; }
-#boot .pe-deploytxt { font-family:'Chakra Petch','Helvetica Neue',Arial,sans-serif; font-size:10px; letter-spacing:.3em; color:rgba(40,224,255,0.6); text-transform:uppercase; margin-top:14px; height:12px; }
-#boot .pe-flash { position:absolute; inset:-50px; border-radius:50%; pointer-events:none; opacity:0; z-index:9; background:radial-gradient(circle,#fff,rgba(40,224,255,.55) 26%,transparent 64%); }
+/* ── ENTRY BAR (v1.14.56, Phase 2): purple glass bar matching the app DEPLOY tile material. Reuses the
+   EXISTING hold-charge — draw() publishes the charge value (0..1) to --pe-c, and the glow-swell + bracket-
+   brighten ride it (NO parallel timer). Compact bar pinned near the bottom. Scoped #boot, pe-* prefixed. ── */
+#boot .pe-enterzone { left:0; right:0; top:auto; bottom:calc(env(safe-area-inset-bottom) + 7%); padding:0 var(--s5); }
+#boot .pe-stage { position:relative; display:inline-flex; align-items:center; justify-content:center; max-width:90vw; min-height:60px; padding:18px 26px; border-radius:22px; cursor:pointer; touch-action:none; -webkit-tap-highlight-color:transparent; --pe-c:0;
+  background:radial-gradient(120% 95% at 50% -12%, rgba(138,75,255,0.26), transparent 58%), linear-gradient(180deg, rgba(22,24,34,0.62), rgba(10,12,20,0.74));
+  -webkit-backdrop-filter:blur(16px) saturate(1.2); backdrop-filter:blur(16px) saturate(1.2);
+  border:1px solid rgba(255,255,255,0.07);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.11), 0 12px 34px rgba(0,0,0,0.5); }
+/* charge glow — purple swell whose strength rides the existing charge value (--pe-c, published by draw()) */
+#boot .pe-bar-glow { position:absolute; inset:0; border-radius:22px; pointer-events:none; z-index:0; opacity:calc(var(--pe-c) * 0.85); background:radial-gradient(130% 110% at 50% 125%, rgba(138,75,255,0.55) 0%, transparent 62%); }
+/* purple L-corner brackets — brighten with charge (opacity only, no animated filter/box-shadow) */
+#boot .pe-bk { position:absolute; width:17px; height:17px; border:2px solid #8a4bff; opacity:calc(0.5 + var(--pe-c) * 0.5); z-index:2; pointer-events:none; }
+#boot .pe-bk-tl { top:11px; left:11px; border-right:0; border-bottom:0; border-radius:5px 0 0 0; }
+#boot .pe-bk-tr { top:11px; right:11px; border-left:0; border-bottom:0; border-radius:0 5px 0 0; }
+#boot .pe-bk-bl { bottom:11px; left:11px; border-right:0; border-top:0; border-radius:0 0 0 5px; }
+#boot .pe-bk-br { bottom:11px; right:11px; border-left:0; border-top:0; border-radius:0 0 5px 0; }
+/* HOLD TO ENTER — doubled, purple, Chakra Petch (the JS swaps it to OPENING / ENTERING during charge) */
+#boot .pe-deploytxt { position:relative; z-index:1; margin:0; height:auto; white-space:nowrap; font-family:'Chakra Petch','Helvetica Neue',Arial,sans-serif; font-size:clamp(20px,6vw,28px); font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:#8a4bff; text-shadow:0 0 14px rgba(138,75,255,0.6); pointer-events:none; }
+/* keep the old SVG charge-hooks alive for draw() (it writes their attributes) but fully hidden + out of flow */
+#boot .pe-stash { position:absolute; width:0; height:0; opacity:0; overflow:hidden; pointer-events:none; }
+#boot .pe-flash { position:absolute; inset:-40px; border-radius:40px; pointer-events:none; opacity:0; z-index:5; background:radial-gradient(circle, rgba(200,170,255,0.92) 0%, rgba(138,75,255,0.5) 26%, transparent 64%); }
 
 /* ── CAL strip ── */
 #boot .pe-cal { position:fixed; bottom:22px; left:0; width:100%; text-align:center; z-index:10; display:none; }
@@ -10531,18 +10510,14 @@ body.has-resume-banner #boot {
 #boot .pe-handle.pe-sel .pe-hlbl { color:var(--gold); }
 
 @media (prefers-reduced-motion:reduce){
-  #boot .pe-stage::before { animation:none !important; opacity:0.5; }
-  #boot .pe-stage.pe-idle .pe-gw-core { animation:none !important; opacity:0.75; }
-  #boot .pe-stage:not(.pe-idle) .pe-gw-bloom { animation:none !important; opacity:0.8 !important; }
-  #boot .pe-stage:not(.pe-idle) .pe-gw-bloom b { opacity:0.6 !important; }
-  #boot .pe-gw-fil::after { animation:none !important; opacity:0; }
+  /* entry bar: no idle motion (charge glow is user-driven via --pe-c) */
   #boot .pe-mk.pe-home, #boot .pe-mk.pe-home::after { animation:none !important; }
 }
 </style>
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.55';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.56';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -10903,25 +10878,12 @@ if (typeof window !== 'undefined') {
 
 <div class="pe-uz pe-enterzone">
   <div class="pe-stage pe-idle" id="pe-stage" role="button" tabindex="0" aria-label="Hold to enter PHANTOM">
-    <div class="pe-gw-fil" aria-hidden="true"></div>
-    <div class="pe-gw-bezel" aria-hidden="true"></div>
-    <div class="pe-gw-ring2" aria-hidden="true"></div>
-    <div class="pe-gw-ring3" aria-hidden="true"></div>
-    <div class="pe-gw-core" aria-hidden="true"></div>
-    <div class="pe-gw-bloom" aria-hidden="true"><b></b><b></b><b></b><b></b><b></b><b></b></div>
-    <svg viewBox="0 0 200 200" aria-hidden="true">
-      <defs>
-        <radialGradient id="pe-portalG"><stop offset="0" stop-color="#eaffff"/><stop offset=".4" stop-color="#28e0ff"/><stop offset=".74" stop-color="#6a7bff"/><stop offset="1" stop-color="#3a2f6a"/></radialGradient>
-        <mask id="pe-irisMask"><rect width="200" height="200" fill="#fff"/><polygon id="pe-hole" points="" fill="#000"/></mask>
-      </defs>
-      <circle id="pe-portal" cx="100" cy="100" r="2" fill="url(#pe-portalG)" opacity=".85"/>
-      <circle cx="100" cy="100" r="74" fill="transparent" mask="url(#pe-irisMask)" stroke="none"/>
-      <g id="pe-seams" stroke-width="1"></g>
-      <polygon id="pe-rim" points="" fill="none" stroke="url(#pe-portalG)" stroke-width="2" opacity="0"/>
-    </svg>
+    <span class="pe-bk pe-bk-tl"></span><span class="pe-bk pe-bk-tr"></span><span class="pe-bk pe-bk-bl"></span><span class="pe-bk pe-bk-br"></span>
+    <div class="pe-bar-glow" aria-hidden="true"></div>
+    <svg class="pe-stash" viewBox="0 0 200 200" aria-hidden="true"><defs><radialGradient id="pe-portalG"><stop offset="0" stop-color="#eaffff"/><stop offset="1" stop-color="#3a2f6a"/></radialGradient><mask id="pe-irisMask"><rect width="200" height="200" fill="#fff"/><polygon id="pe-hole" points="" fill="#000"/></mask></defs><circle id="pe-portal" cx="100" cy="100" r="2" fill="url(#pe-portalG)" opacity=".85"/><g id="pe-seams"></g><polygon id="pe-rim" points="" fill="none" stroke="url(#pe-portalG)"/></svg>
+    <div class="pe-deploytxt" id="pe-dtxt">Hold to enter</div>
     <div class="pe-flash" id="pe-flash"></div>
   </div>
-  <div class="pe-deploytxt" id="pe-dtxt">Hold to enter</div>
 </div>
 
 <div class="pe-cal" id="pe-cal">
@@ -10949,7 +10911,7 @@ if (typeof window !== 'undefined') {
   function hexPts(r,rot){var p=[];for(var i=0;i<6;i++){var a=(i/6)*2*Math.PI-Math.PI/2+rot;p.push((100+Math.cos(a)*r)+','+(100+Math.sin(a)*r));}return p.join(' ');}
   for(var s=0;s<6;s++){var sa=(s/6)*2*Math.PI-Math.PI/2;var ln=document.createElementNS(NS,'line');
     ln.setAttribute('x1',100);ln.setAttribute('y1',100);ln.setAttribute('x2',100+Math.cos(sa)*74);ln.setAttribute('y2',100+Math.sin(sa)*74);seams.appendChild(ln);}
-  function draw(c){var r=4+c*70,rot=c*0.5;hole.setAttribute('points',hexPts(r,rot));
+  function draw(c){if(stage)stage.style.setProperty('--pe-c',c);var r=4+c*70,rot=c*0.5;hole.setAttribute('points',hexPts(r,rot));
     portal.setAttribute('r',Math.max(2,r-3));portal.setAttribute('opacity',.5+c*.5);
     rim.setAttribute('points',hexPts(r,rot));rim.setAttribute('opacity',c);
     Array.prototype.forEach.call(seams.children,function(ln,i){var a=(i/6)*2*Math.PI-Math.PI/2+rot;ln.setAttribute('x2',100+Math.cos(a)*74);ln.setAttribute('y2',100+Math.sin(a)*74);
