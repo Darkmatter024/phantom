@@ -10470,13 +10470,14 @@ body.has-resume-banner #boot {
 /* ── Spectral Iris enter button ── */
 #boot .pe-enterzone { top:66%; }
 #boot .pe-stage { width:132px; height:132px; position:relative; margin:0 auto; cursor:pointer; touch-action:none; display:flex; align-items:center; justify-content:center; }
-#boot .pe-stage svg { position:absolute; inset:0; width:100%; height:100%; overflow:visible; }
-#boot .pe-stage.pe-idle { animation:pe-breathe 2.6s ease-in-out infinite; }
-@keyframes pe-breathe { 0%,100%{filter:drop-shadow(0 0 4px rgba(40,224,255,.25))} 50%{filter:drop-shadow(0 0 12px rgba(40,224,255,.5))} }
-#boot .pe-clabel { position:absolute; display:flex; align-items:center; justify-content:center; pointer-events:none; }
-#boot .pe-clabel .pe-g { font-family:'Chakra Petch','Helvetica Neue',Arial,sans-serif; font-size:13px; letter-spacing:.26em; color:#46566c; transition:.2s; }
+#boot .pe-stage::before { content:""; position:absolute; left:50%; top:50%; width:160%; height:160%; transform:translate(-50%,-50%); border-radius:50%; background:radial-gradient(circle, rgba(40,224,255,0.22) 0%, transparent 70%); opacity:0.8; z-index:0; pointer-events:none; }
+#boot .pe-stage svg { position:absolute; inset:0; width:100%; height:100%; overflow:visible; z-index:1; }
+#boot .pe-stage.pe-idle::before { animation:pe-haloBreathe 2.8s ease-in-out infinite; }
+@keyframes pe-haloBreathe { 0%,100%{opacity:0.6} 50%{opacity:1} }
+#boot .pe-clabel { position:absolute; display:flex; align-items:center; justify-content:center; pointer-events:none; z-index:2; }
+#boot .pe-clabel .pe-g { font-family:'Chakra Petch','Helvetica Neue',Arial,sans-serif; font-size:13px; letter-spacing:.26em; color:rgba(220,245,255,0.92); text-shadow:0 0 8px rgba(40,224,255,0.45); transition:.2s; }
 #boot .pe-deploytxt { font-family:'Chakra Petch','Helvetica Neue',Arial,sans-serif; font-size:10px; letter-spacing:.3em; color:#46566c; text-transform:uppercase; margin-top:14px; height:12px; }
-#boot .pe-flash { position:absolute; inset:-50px; border-radius:50%; pointer-events:none; opacity:0; background:radial-gradient(circle,#fff,rgba(40,224,255,.5) 26%,transparent 64%); }
+#boot .pe-flash { position:absolute; inset:-50px; border-radius:50%; pointer-events:none; opacity:0; z-index:5; background:radial-gradient(circle,#fff,rgba(40,224,255,.5) 26%,transparent 64%); }
 
 /* ── CAL strip ── */
 #boot .pe-cal { position:fixed; bottom:22px; left:0; width:100%; text-align:center; z-index:10; }
@@ -10497,14 +10498,14 @@ body.has-resume-banner #boot {
 #boot .pe-handle.pe-sel .pe-hlbl { color:var(--gold); }
 
 @media (prefers-reduced-motion:reduce){
-  #boot .pe-stage.pe-idle { animation:none !important; }
+  #boot .pe-stage.pe-idle::before { animation:none !important; opacity:0.8; }
   #boot .pe-mk.pe-home, #boot .pe-mk.pe-home::after { animation:none !important; }
 }
 </style>
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.50';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.51';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -10871,7 +10872,7 @@ if (typeof window !== 'undefined') {
         <mask id="pe-irisMask"><rect width="200" height="200" fill="#fff"/><polygon id="pe-hole" points="" fill="#000"/></mask>
       </defs>
       <circle id="pe-portal" cx="100" cy="100" r="2" fill="url(#pe-portalG)" opacity=".85"/>
-      <circle cx="100" cy="100" r="74" fill="#06090e" mask="url(#pe-irisMask)" stroke="#1a2330" stroke-width="1.5"/>
+      <circle cx="100" cy="100" r="74" fill="#06090e" mask="url(#pe-irisMask)" stroke="#28e0ff" stroke-opacity="0.55" stroke-width="1.8"/>
       <g id="pe-seams" stroke="#1c2738" stroke-width="1"></g>
       <polygon id="pe-rim" points="" fill="none" stroke="url(#pe-portalG)" stroke-width="2" opacity="0"/>
     </svg>
@@ -10910,14 +10911,14 @@ if (typeof window !== 'undefined') {
     portal.setAttribute('r',Math.max(2,r-3));portal.setAttribute('opacity',.5+c*.5);
     rim.setAttribute('points',hexPts(r,rot));rim.setAttribute('opacity',c);
     Array.prototype.forEach.call(seams.children,function(ln,i){var a=(i/6)*2*Math.PI-Math.PI/2+rot;ln.setAttribute('x2',100+Math.cos(a)*74);ln.setAttribute('y2',100+Math.sin(a)*74);
-      ln.setAttribute('stroke',c>.04?lerpHex(i/6):'#1c2738');ln.setAttribute('opacity',.3+c*.5);});}
+      ln.setAttribute('stroke',c>.04?lerpHex(i/6):'#28e0ff');ln.setAttribute('opacity',c>.04?(.3+c*.5):0.12);});}
   var charging=false,charge=0,raf=null,fired=false;
   function loop(){if(!charging)return;charge=Math.min(1,charge+1/64);draw(charge);if(charge>=1){fire();return;}raf=requestAnimationFrame(loop);}
   function start(e){if(e&&e.preventDefault)e.preventDefault();if(charging||fired)return;
     charging=true;stage.classList.remove('pe-idle');if(glab){glab.textContent='';}if(dtxt){dtxt.textContent='Opening';}
     if(e&&e.pointerId!=null&&stage.setPointerCapture){try{stage.setPointerCapture(e.pointerId);}catch(_){}}
     raf=requestAnimationFrame(loop);}
-  function resetIdle(){charge=0;draw(0);if(glab){glab.textContent='HOLD';glab.style.color='#46566c';}if(dtxt){dtxt.textContent='Hold to enter';}stage.classList.add('pe-idle');}
+  function resetIdle(){charge=0;draw(0);if(glab){glab.textContent='HOLD';glab.style.color='rgba(220,245,255,0.92)';}if(dtxt){dtxt.textContent='Hold to enter';}stage.classList.add('pe-idle');}
   function cancel(){if(!charging||charge>=1||fired)return;charging=false;if(raf)cancelAnimationFrame(raf);resetIdle();}
   function fire(){charging=false;if(raf)cancelAnimationFrame(raf);if(fired)return;fired=true;if(dtxt){dtxt.textContent='Entering…';}
     if(flash){flash.style.transition='opacity .12s';flash.style.opacity='1';}
