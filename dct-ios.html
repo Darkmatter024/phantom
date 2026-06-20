@@ -10464,7 +10464,7 @@ body.has-resume-banner #boot {
 #boot .pe-uz { position:fixed; left:0; width:100%; z-index:10; text-align:center; padding:0 26px; }
 #boot .pe-brand { top:52%; }
 #boot .pe-eyebrow { font-family:'Chakra Petch','Helvetica Neue',Arial,sans-serif; font-size:11px; letter-spacing:.42em; color:#aab6e8; opacity:.85; text-transform:uppercase; margin-bottom:12px; }
-#boot .pm-wordmark { display:block; width:min(82vw,360px); height:auto; margin:0 auto; aspect-ratio:1100 / 141; }
+#boot .pm-wordmark { display:block; width:min(82vw,360px); height:auto; margin:0 auto; aspect-ratio:1100 / 141; filter:saturate(0.7) hue-rotate(-18deg) brightness(1.04); }
 #boot .pe-sub { font-family:'Chakra Petch','Helvetica Neue',Arial,sans-serif; font-size:11px; letter-spacing:.34em; color:#8e9bd0; opacity:.8; margin-top:13px; text-transform:uppercase; }
 
 /* ── GATEWAY enter button (v1.14.53): machined concentric-ring port, COOL CHROME. Brushed-steel bezel rings,
@@ -10483,11 +10483,11 @@ body.has-resume-banner #boot {
 @keyframes pe-gw-fil { 0%{top:-2px;opacity:0} 14%{opacity:1} 90%{opacity:0.5} 100%{top:88px;opacity:0} }
 /* concentric machined-steel rings, top-lit (single light = the globe above): stacked discs -> visible ring bands */
 #boot .pe-gw-bezel, #boot .pe-gw-ring2, #boot .pe-gw-ring3 { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); border-radius:50%; pointer-events:none; }
-#boot .pe-gw-bezel { width:106px; height:106px; z-index:1; background:linear-gradient(180deg, #c8d2e2 0%, #79849a 27%, #2b3344 71%, #141a26 100%); }
-#boot .pe-gw-ring2 { width:88px; height:88px; z-index:2; background:linear-gradient(180deg, #b0bacc 0%, #5c6679 30%, #232b3a 74%, #11161f 100%); }
-#boot .pe-gw-ring3 { width:64px; height:64px; z-index:3; background:linear-gradient(180deg, #414b5e 0%, #1d2532 52%, #0a0e16 100%); }
+#boot .pe-gw-bezel { width:106px; height:106px; z-index:1; background:radial-gradient(58% 42% at 50% 13%, rgba(234,242,253,0.62) 0%, rgba(150,166,190,0.12) 42%, transparent 64%), radial-gradient(75% 42% at 50% 94%, rgba(0,0,0,0.5) 0%, transparent 60%), linear-gradient(180deg, #c6d0e0 0%, #79849a 30%, #2a3242 72%, #0e131c 100%); }
+#boot .pe-gw-ring2 { width:88px; height:88px; z-index:2; background:radial-gradient(60% 40% at 50% 16%, rgba(222,232,247,0.5) 0%, transparent 56%), radial-gradient(72% 40% at 50% 92%, rgba(0,0,0,0.5) 0%, transparent 60%), linear-gradient(180deg, #aab4c6 0%, #5c6679 32%, #222a39 76%, #0d121b 100%); }
+#boot .pe-gw-ring3 { width:64px; height:64px; z-index:3; background:radial-gradient(75% 55% at 50% 18%, rgba(120,140,170,0.32) 0%, transparent 60%), radial-gradient(circle at 50% 58%, #0c111a 0%, #05080f 72%); }
 /* cyan-white luminous core (idle breathe) */
-#boot .pe-gw-core { position:absolute; left:50%; top:50%; width:40px; height:40px; transform:translate(-50%,-50%); border-radius:50%; z-index:4; pointer-events:none; background:radial-gradient(circle, rgba(228,250,255,0.96) 0%, rgba(40,224,255,0.6) 32%, rgba(60,130,255,0.15) 60%, transparent 78%); }
+#boot .pe-gw-core { position:absolute; left:50%; top:50%; width:54px; height:54px; transform:translate(-50%,-50%); border-radius:50%; z-index:4; pointer-events:none; background:radial-gradient(circle, #ffffff 0%, #dff7ff 13%, rgba(40,224,255,0.92) 34%, rgba(70,150,255,0.30) 62%, transparent 80%); }
 #boot .pe-stage.pe-idle .pe-gw-core { animation:pe-gw-core 4.4s ease-in-out infinite; }
 @keyframes pe-gw-core { 0%,100%{ transform:translate(-50%,-50%) scale(0.92); opacity:0.72 } 50%{ transform:translate(-50%,-50%) scale(1.05); opacity:1 } }
 /* contained cyan-violet confirm-bloom around the rim — appears ON THE PRESS (charge), recedes on release */
@@ -10503,7 +10503,7 @@ body.has-resume-banner #boot {
 #boot .pe-gw-bloom b:nth-child(5){ transform:rotate(240deg) translateY(-50px); }
 #boot .pe-gw-bloom b:nth-child(6){ transform:rotate(300deg) translateY(-50px); }
 /* SVG aperture = the cyan charge-surge + cyan-violet tendril spokes (above rings, below label) */
-#boot .pe-stage svg { position:absolute; inset:0; width:100%; height:100%; overflow:visible; z-index:6; }
+#boot .pe-stage svg { position:absolute; inset:0; width:100%; height:100%; overflow:visible; z-index:6; pointer-events:none; }
 #boot #pe-seams line { stroke:#5a8cff; }
 /* HOLD label — clean cool caps */
 #boot .pe-clabel { position:absolute; display:flex; align-items:center; justify-content:center; pointer-events:none; z-index:7; }
@@ -10541,7 +10541,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.53';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.54';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
