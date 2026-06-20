@@ -10471,7 +10471,7 @@ body.has-resume-banner #boot {
    EXISTING hold-charge — draw() publishes the charge value (0..1) to --pe-c, and the glow-swell + bracket-
    brighten ride it (NO parallel timer). Compact bar pinned near the bottom. Scoped #boot, pe-* prefixed. ── */
 #boot .pe-enterzone { left:0; right:0; top:auto; bottom:calc(env(safe-area-inset-bottom) + 7%); padding:0 var(--s5); }
-#boot .pe-stage { position:relative; display:inline-flex; align-items:center; justify-content:center; max-width:90vw; min-height:60px; padding:18px 26px; border-radius:22px; cursor:pointer; touch-action:none; -webkit-tap-highlight-color:transparent; --pe-c:0;
+#boot .pe-stage { position:relative; display:flex; align-items:center; justify-content:center; width:min(360px,90vw); margin:0 auto; min-height:60px; padding:20px 24px; border-radius:22px; cursor:pointer; touch-action:none; -webkit-tap-highlight-color:transparent; --pe-c:0;
   background:radial-gradient(120% 95% at 50% -12%, rgba(138,75,255,0.26), transparent 58%), linear-gradient(180deg, rgba(22,24,34,0.62), rgba(10,12,20,0.74));
   -webkit-backdrop-filter:blur(16px) saturate(1.2); backdrop-filter:blur(16px) saturate(1.2);
   border:1px solid rgba(255,255,255,0.07);
@@ -10479,13 +10479,13 @@ body.has-resume-banner #boot {
 /* charge glow — purple swell whose strength rides the existing charge value (--pe-c, published by draw()) */
 #boot .pe-bar-glow { position:absolute; inset:0; border-radius:22px; pointer-events:none; z-index:0; opacity:calc(var(--pe-c) * 0.85); background:radial-gradient(130% 110% at 50% 125%, rgba(138,75,255,0.55) 0%, transparent 62%); }
 /* purple L-corner brackets — brighten with charge (opacity only, no animated filter/box-shadow) */
-#boot .pe-bk { position:absolute; width:17px; height:17px; border:2px solid #8a4bff; opacity:calc(0.5 + var(--pe-c) * 0.5); z-index:2; pointer-events:none; }
+#boot .pe-bk { position:absolute; width:17px; height:17px; border:2px solid #8a4bff; opacity:calc(0.8 + var(--pe-c) * 0.2); z-index:2; pointer-events:none; }
 #boot .pe-bk-tl { top:11px; left:11px; border-right:0; border-bottom:0; border-radius:5px 0 0 0; }
 #boot .pe-bk-tr { top:11px; right:11px; border-left:0; border-bottom:0; border-radius:0 5px 0 0; }
 #boot .pe-bk-bl { bottom:11px; left:11px; border-right:0; border-top:0; border-radius:0 0 0 5px; }
 #boot .pe-bk-br { bottom:11px; right:11px; border-left:0; border-top:0; border-radius:0 0 5px 0; }
 /* HOLD TO ENTER — doubled, purple, Chakra Petch (the JS swaps it to OPENING / ENTERING during charge) */
-#boot .pe-deploytxt { position:relative; z-index:1; margin:0; height:auto; white-space:nowrap; font-family:'Chakra Petch','Helvetica Neue',Arial,sans-serif; font-size:clamp(20px,6vw,28px); font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:#8a4bff; text-shadow:0 0 14px rgba(138,75,255,0.6); pointer-events:none; }
+#boot .pe-deploytxt { position:relative; z-index:1; margin:0; height:auto; white-space:nowrap; font-family:'Chakra Petch','Helvetica Neue',Arial,sans-serif; font-size:clamp(22px,7.5vw,30px); font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:#8a4bff; text-shadow:0 0 14px rgba(138,75,255,0.6); pointer-events:none; }
 /* keep the old SVG charge-hooks alive for draw() (it writes their attributes) but fully hidden + out of flow */
 #boot .pe-stash { position:absolute; width:0; height:0; opacity:0; overflow:hidden; pointer-events:none; }
 #boot .pe-flash { position:absolute; inset:-40px; border-radius:40px; pointer-events:none; opacity:0; z-index:5; background:radial-gradient(circle, rgba(200,170,255,0.92) 0%, rgba(138,75,255,0.5) 26%, transparent 64%); }
@@ -10517,7 +10517,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.56';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.57';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
