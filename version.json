@@ -1,6 +1,6 @@
 {
-  "version": "phantom-v1.14.59",
+  "version": "phantom-v1.14.60",
   "released": "2026-06-21",
-  "prevVersion": "phantom-v1.14.58",
-  "notes": "v1.14.59 - Plate moved inline->sibling (plate.webp, precached). Live #pe-streams layer (z:2) pours data off the globe into the corridor; additive IIFE, #pe-mesh untouched. Seam blend on heromask."
+  "prevVersion": "phantom-v1.14.59",
+  "notes": "v1.14.60 - Streams now visible + curved: #pe-streams z2->z6 (in front of globe, behind wordmark), brighter/denser, quadratic-bow fan from globe rim into the corridor VP. Reduce-Motion fallback curved + visible. #pe-mesh untouched."
 }

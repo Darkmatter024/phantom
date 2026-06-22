@@ -10455,7 +10455,7 @@ body.has-resume-banner #boot {
 /* ── globe hero (img + mesh + masks move as one) ── */
 #boot .pe-hero { position:fixed; top:0; left:0; width:100%; height:46%; z-index:5; }
 #boot .pe-plate { position:fixed; inset:0; width:100%; height:100%; object-fit:cover; object-position:50% 50%; z-index:1; pointer-events:none; }
-#boot .pe-streams { position:fixed; inset:0; width:100%; height:100%; z-index:2; pointer-events:none; }
+#boot .pe-streams { position:fixed; inset:0; width:100%; height:100%; z-index:6; pointer-events:none; }
 #boot .pe-hero img { position:absolute; top:-2%; left:50%; transform:translateX(-50%); width:142%; max-width:none; display:block; }
 #boot .pe-heromask { position:absolute; inset:0; background:linear-gradient(180deg,rgba(4,6,10,0) 48%,rgba(4,6,10,.55) 72%,var(--bg) 90%); pointer-events:none; }
 #boot .pe-heromask.pe-side { background:linear-gradient(90deg,var(--bg),rgba(4,6,10,0) 14%,rgba(4,6,10,0) 86%,var(--bg)); }
@@ -10519,7 +10519,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.59';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.60';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -11079,40 +11079,43 @@ if (typeof window !== 'undefined') {
   // fractions of the viewport — TUNE on device:
   var VPX=0.50, VPY=0.57;          // aisle convergence — set to the plate's vanishing point
   var EMIT_Y0=0.30, EMIT_Y1=0.40;  // band along the globe's lower rim
-  var EMIT_X0=0.25, EMIT_X1=0.75;  // spread across the aisle mouth
+  var EMIT_X0=0.20, EMIT_X1=0.80;  // spread across the aisle mouth
 
   function size(){W=window.innerWidth;H=window.innerHeight;cv.width=W*dpr;cv.height=H*dpr;cv.style.width=W+'px';cv.style.height=H+'px';ctx.setTransform(dpr,0,0,dpr,0,0);}
   size(); window.addEventListener('resize',size);
 
-  var N=reduce?0:36, ps=[];
+  var N=reduce?0:54, ps=[];
   function spawn(){var sx=EMIT_X0+Math.random()*(EMIT_X1-EMIT_X0);
     return {sx:sx, sy:EMIT_Y0+Math.random()*(EMIT_Y1-EMIT_Y0), t:Math.random()*0.2, sp:0.0035+Math.random()*0.004, c:col(sx)};}
   while(ps.length<N)ps.push(spawn());
 
-  function pos(p,t){var e=t*t;            // ease-in: accelerate into the depth
-    return [(p.sx+(VPX-p.sx)*e)*W, (p.sy+(VPY-p.sy)*e)*H];}
+  var BOW=0.30;  // how far each filament fans outward before sweeping into the VP (tune knob)
+  function pos(p,t){var e=t*t, u=1-e;     // ease-in + quadratic bow
+    var cx=p.sx+(p.sx-VPX)*BOW, cy=VPY;   // control: drop off the globe, bow outward, sweep to VP
+    return [(u*u*p.sx + 2*u*e*cx + e*e*VPX)*W,
+            (u*u*p.sy + 2*u*e*cy + e*e*VPY)*H];}
 
   function frame(){
     if(bootEl&&bootEl.style.display==='none')return; // entered app -> stop (battery), matches #pe-mesh
     ctx.clearRect(0,0,W,H);
     for(var i=0;i<ps.length;i++){var p=ps[i]; p.t+=p.sp;
       if(p.t>=1){ps[i]=spawn();continue;}
-      var a=pos(p,p.t), b=pos(p,Math.max(0,p.t-0.06)), fd=1-p.t, c=p.c;
+      var a=pos(p,p.t), b=pos(p,Math.max(0,p.t-0.10)), fd=1-p.t, c=p.c;
       var g=ctx.createLinearGradient(b[0],b[1],a[0],a[1]);
       g.addColorStop(0,'rgba('+(c[0]|0)+','+(c[1]|0)+','+(c[2]|0)+',0)');
-      g.addColorStop(1,'rgba('+(c[0]|0)+','+(c[1]|0)+','+(c[2]|0)+','+(0.34*fd).toFixed(3)+')');
-      ctx.strokeStyle=g; ctx.lineWidth=1.1*fd+0.3; ctx.beginPath(); ctx.moveTo(b[0],b[1]); ctx.lineTo(a[0],a[1]); ctx.stroke();
-      var r=2.0*fd+0.4;
-      ctx.beginPath(); ctx.arc(a[0],a[1],r+1.4,0,7); ctx.fillStyle='rgba('+(c[0]|0)+','+(c[1]|0)+','+(c[2]|0)+','+(0.14*fd).toFixed(3)+')'; ctx.fill();
-      ctx.beginPath(); ctx.arc(a[0],a[1],r,0,7); ctx.fillStyle='rgba(235,250,255,'+(0.85*fd).toFixed(3)+')'; ctx.fill();}
+      g.addColorStop(1,'rgba('+(c[0]|0)+','+(c[1]|0)+','+(c[2]|0)+','+(0.60*fd).toFixed(3)+')');
+      ctx.strokeStyle=g; ctx.lineWidth=1.6*fd+0.4; ctx.beginPath(); ctx.moveTo(b[0],b[1]); ctx.lineTo(a[0],a[1]); ctx.stroke();
+      var r=2.4*fd+0.5;
+      ctx.beginPath(); ctx.arc(a[0],a[1],r+1.6,0,7); ctx.fillStyle='rgba('+(c[0]|0)+','+(c[1]|0)+','+(c[2]|0)+','+(0.24*fd).toFixed(3)+')'; ctx.fill();
+      ctx.beginPath(); ctx.arc(a[0],a[1],r,0,7); ctx.fillStyle='rgba(235,250,255,'+(0.95*fd).toFixed(3)+')'; ctx.fill();}
     requestAnimationFrame(frame);
   }
-  function staticDraw(){ctx.clearRect(0,0,W,H);var s=[0.30,0.42,0.50,0.58,0.70];
-    for(var i=0;i<s.length;i++){var sx=s[i],c=col(sx),b=[sx*W,(EMIT_Y0+0.03)*H],a=[VPX*W,VPY*H];
-      var g=ctx.createLinearGradient(b[0],b[1],a[0],a[1]);
-      g.addColorStop(0,'rgba('+(c[0]|0)+','+(c[1]|0)+','+(c[2]|0)+',0.16)');
+  function staticDraw(){ctx.clearRect(0,0,W,H);var s=[0.24,0.34,0.42,0.50,0.58,0.66,0.76];
+    for(var i=0;i<s.length;i++){var sx=s[i],c=col(sx),cx=(sx+(sx-VPX)*BOW)*W,cy=VPY*H,bx=sx*W,by=(EMIT_Y0+0.02)*H,ax=VPX*W,ay=VPY*H;
+      var g=ctx.createLinearGradient(bx,by,ax,ay);
+      g.addColorStop(0,'rgba('+(c[0]|0)+','+(c[1]|0)+','+(c[2]|0)+',0.34)');
       g.addColorStop(1,'rgba('+(c[0]|0)+','+(c[1]|0)+','+(c[2]|0)+',0)');
-      ctx.strokeStyle=g; ctx.lineWidth=0.8; ctx.beginPath(); ctx.moveTo(b[0],b[1]); ctx.lineTo(a[0],a[1]); ctx.stroke();}}
+      ctx.strokeStyle=g; ctx.lineWidth=1.3; ctx.beginPath(); ctx.moveTo(bx,by); ctx.quadraticCurveTo(cx,cy,ax,ay); ctx.stroke();}}
 
   if(reduce){staticDraw(); window.addEventListener('resize',staticDraw);}
   else{requestAnimationFrame(frame);}
