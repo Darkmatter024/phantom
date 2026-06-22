@@ -1,6 +1,6 @@
 {
-  "version": "phantom-v1.14.58",
+  "version": "phantom-v1.14.59",
   "released": "2026-06-21",
-  "prevVersion": "phantom-v1.14.57",
-  "notes": "v1.14.58 - Phase 1 done: clean DC-aisle plate (.pe-plate, base64 webp ~88KB) mounted z:1 behind globe hero, pointer-events:none. Mesh/markers/cal untouched. No PRECACHE change (plate inlined)."
+  "prevVersion": "phantom-v1.14.58",
+  "notes": "v1.14.59 - Plate moved inline->sibling (plate.webp, precached). Live #pe-streams layer (z:2) pours data off the globe into the corridor; additive IIFE, #pe-mesh untouched. Seam blend on heromask."
 }
