@@ -1,6 +1,6 @@
 {
-  "version": "phantom-v1.14.60",
-  "released": "2026-06-21",
-  "prevVersion": "phantom-v1.14.59",
-  "notes": "v1.14.60 - Streams now visible + curved: #pe-streams z2->z6 (in front of globe, behind wordmark), brighter/denser, quadratic-bow fan from globe rim into the corridor VP. Reduce-Motion fallback curved + visible. #pe-mesh untouched."
+  "version": "phantom-v1.14.61",
+  "released": "2026-06-22",
+  "prevVersion": "phantom-v1.14.60",
+  "notes": "v1.14.61 - Corridor swap: new globe-stripped corridor plate.webp (starfield sky welds into live #pe-mesh). Retired #pe-streams (HTML+CSS+IIFE). Live mesh is the sole boot animation. #pe-mesh untouched."
 }
