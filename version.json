@@ -1,6 +1,6 @@
 {
-  "version": "phantom-v1.14.61",
+  "version": "phantom-v1.14.62",
   "released": "2026-06-22",
-  "prevVersion": "phantom-v1.14.60",
-  "notes": "v1.14.61 - Corridor swap: new globe-stripped corridor plate.webp (starfield sky welds into live #pe-mesh). Retired #pe-streams (HTML+CSS+IIFE). Live mesh is the sole boot animation. #pe-mesh untouched."
+  "prevVersion": "phantom-v1.14.61",
+  "notes": "v1.14.62 - Entry exposure-blowout: full-frame cyan/white compositor flash on iris launch (lens passing a server light), masks the boot->app cut then hard-snaps to the dashboard. Body-level #pe-flash (relocated from #pe-stage) so #boot collapse-transform never re-roots it; opacity-only, reduced-motion skips the strobe. #pe-mesh untouched."
 }
