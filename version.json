@@ -1,6 +1,6 @@
 {
-  "version": "phantom-v1.14.57",
-  "released": "2026-06-20",
-  "prevVersion": "phantom-v1.14.56",
-  "notes": "v1.14.57 - ENTRY BAR aligned to the phantom-glass-entry prototype (from files(8).zip = the master-plan reference set: PHANTOM_LOOK_REFERENCE.png locked look + phantom-glass-entry.html button prototype + the plan). The v1.14.56 bar already used the prototype's exact .glass recipe; this matches its .entry exactly: fixed width:min(360px,90vw) (was shrink-wrap) + prototype padding 20px 24px; brighter idle L-brackets (opacity 0.8 idle -> 1 charged, was 0.5); 'HOLD TO ENTER' label up to 30px (clamp 22-30px, was max 28px). NOTE: the prototype's SVG perimeter-trace rect is non-functional (0-size, no width/height), so the bar's real working charge feedback is the bracket-brighten + glow-swell (both ride --pe-c, published by draw()); a proper perimeter trace is available as a follow-up if wanted (CSS SVG geometry is iffy on iOS, so deferred). Re-verified: touch lands on #pe-stage (hitStage true), bar 360px, zero overflow, hold->warp into HOME fires (boot->app), and the MASTER RULE holds - the live globe packet mesh is still animating (canvas pixel-diff). Gates: node --check 3/3, <style> braces 2655/2655, four stamps lockstep v1.14.57, dct/sw CRLF + version.json LF, ~64px tap, scoped #boot/#pe-. The look-reference PNG also clarifies the PENDING phases: Phase 1 still needs John to generate the CLEAN data-center-aisle bg (the composite PNG is the look target, not the standalone aisle layer); Phase 4-A 'COREWEAVE LOCATION INDEX' panel design is now visible (4-column ~49-DC glass panel + stats row) for when John picks it. STILL PENDING from v1.14.49: the ?cal=1 mesh-node calibration pass."
+  "version": "phantom-v1.14.58",
+  "released": "2026-06-21",
+  "prevVersion": "phantom-v1.14.57",
+  "notes": "v1.14.58 - Phase 1 done: clean DC-aisle plate (.pe-plate, base64 webp ~88KB) mounted z:1 behind globe hero, pointer-events:none. Mesh/markers/cal untouched. No PRECACHE change (plate inlined)."
 }
