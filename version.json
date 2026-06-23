@@ -1,6 +1,6 @@
 {
-  "version": "phantom-v1.14.62",
+  "version": "phantom-v1.14.63",
   "released": "2026-06-22",
-  "prevVersion": "phantom-v1.14.61",
-  "notes": "v1.14.62 - Entry exposure-blowout: full-frame cyan/white compositor flash on iris launch (lens passing a server light), masks the boot->app cut then hard-snaps to the dashboard. Body-level #pe-flash (relocated from #pe-stage) so #boot collapse-transform never re-roots it; opacity-only, reduced-motion skips the strobe. #pe-mesh untouched."
+  "prevVersion": "phantom-v1.14.62",
+  "notes": "v1.14.63 - Fork A: full composite plate (globe+streams+corridor+baked wordmark) replaces live mesh/globe/wordmark. Z-axis aisle dive on entry into existing #pe-flash exposure blowout. #pe-mesh retired."
 }
