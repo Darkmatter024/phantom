@@ -10489,6 +10489,15 @@ body.has-resume-banner #boot {
 #boot .pe-deploytxt { position:relative; z-index:1; margin:0; height:auto; white-space:nowrap; font-family:'Chakra Petch','Helvetica Neue',Arial,sans-serif; font-size:clamp(22px,7.5vw,30px); font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:#8a4bff; text-shadow:0 0 14px rgba(138,75,255,0.6); pointer-events:none; }
 /* keep the old SVG charge-hooks alive for draw() (it writes their attributes) but fully hidden + out of flow */
 #boot .pe-stash { position:absolute; width:0; height:0; opacity:0; overflow:hidden; pointer-events:none; }
+/* v1.14.64 tap-anywhere entry — whole-frame catcher + small lettering, no button (replaces the v1.14.56 hold-to-charge glass bar) */
+#boot .pe-tapcatch{ position:absolute; inset:0; z-index:5; width:100%; height:100%; background:transparent; border:0; margin:0; padding:0; cursor:pointer; -webkit-tap-highlight-color:transparent; -webkit-appearance:none; appearance:none; }
+#boot .pe-enterhint{ z-index:6; pointer-events:none; top:auto; bottom:calc(env(safe-area-inset-bottom) + 6.5%); }
+#boot .pe-taphint{ font-family:'Chakra Petch','Helvetica Neue',Arial,sans-serif; font-size:11px; letter-spacing:.42em; color:#aab6e8; text-transform:uppercase; opacity:.7; animation:peTapPulse 2.8s ease-in-out infinite; }
+@keyframes peTapPulse{ 0%,100%{opacity:.4;} 50%{opacity:.85;} }
+/* DESIGN_RULES §7 (a11y quality floor): visible keyboard focus the spec omitted — subtle, on-brand cyan, native to the plate; brightens the hint so the cue itself reads as focused */
+#boot .pe-tapcatch:focus-visible{ outline:1px solid rgba(40,224,255,0.5); outline-offset:-3px; }
+#boot .pe-tapcatch:focus-visible ~ .pe-enterhint .pe-taphint{ opacity:.95; color:#cfe8ff; text-shadow:0 0 10px rgba(40,224,255,0.45); }
+@media (prefers-reduced-motion:reduce){ #boot .pe-taphint{ animation:none; opacity:.7; } }
 /* v1.14.62 entry exposure-blowout: full-frame cyan/white compositor flash (a lens passing a high-intensity server light). Body-level so #boot collapse-transform + .pe-stage backdrop-filter never re-root or scale it. ONLY opacity animates (promoted + contained) so there is no per-frame paint on iPad. */
 #pe-flash { position:fixed; inset:0; z-index:9000; pointer-events:none; opacity:0; background:radial-gradient(120% 80% at 50% 56%, #ffffff 0%, #eafdff 22%, #4fe6ff 60%, #16b9ff 100%); will-change:opacity; contain:strict; }
 #pe-flash.pe-expose { animation:peExpose 50ms linear forwards; }
@@ -10498,10 +10507,10 @@ body.has-resume-banner #boot {
 /* v1.14.63 Z-axis aisle dive — corridor plate rushes the vanishing point, UI fades, then #pe-flash covers the cut */
 #boot .pe-plate { transform-origin:50% 56%; will-change:transform; }
 #boot.pe-dive .pe-plate { animation:peDive 600ms cubic-bezier(.5,0,.85,.3) forwards; }
-#boot.pe-dive .pe-uz, #boot.pe-dive .pe-enterzone { animation:peDiveFade 360ms ease-out forwards; }
+#boot.pe-dive .pe-uz, #boot.pe-dive .pe-tapcatch { animation:peDiveFade 360ms ease-out forwards; }
 @keyframes peDive { from { transform:scale(1); } to { transform:scale(4.6); } }
 @keyframes peDiveFade { to { opacity:0; } }
-@media (prefers-reduced-motion:reduce){ #boot.pe-dive .pe-plate, #boot.pe-dive .pe-uz, #boot.pe-dive .pe-enterzone { animation:none; } }
+@media (prefers-reduced-motion:reduce){ #boot.pe-dive .pe-plate, #boot.pe-dive .pe-uz, #boot.pe-dive .pe-tapcatch { animation:none; } }
 
 /* ── CAL strip ── */
 #boot .pe-cal { position:fixed; bottom:22px; left:0; width:100%; text-align:center; z-index:10; display:none; }
@@ -10530,7 +10539,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.63';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.64';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -10879,14 +10888,8 @@ if (typeof window !== 'undefined') {
 <div id="boot">
 <img class="pe-plate" alt="" src="plate.webp">
 
-<div class="pe-uz pe-enterzone">
-  <div class="pe-stage pe-idle" id="pe-stage" role="button" tabindex="0" aria-label="Hold to enter PHANTOM">
-    <span class="pe-bk pe-bk-tl"></span><span class="pe-bk pe-bk-tr"></span><span class="pe-bk pe-bk-bl"></span><span class="pe-bk pe-bk-br"></span>
-    <div class="pe-bar-glow" aria-hidden="true"></div>
-    <svg class="pe-stash" viewBox="0 0 200 200" aria-hidden="true"><defs><radialGradient id="pe-portalG"><stop offset="0" stop-color="#eaffff"/><stop offset="1" stop-color="#3a2f6a"/></radialGradient><mask id="pe-irisMask"><rect width="200" height="200" fill="#fff"/><polygon id="pe-hole" points="" fill="#000"/></mask></defs><circle id="pe-portal" cx="100" cy="100" r="2" fill="url(#pe-portalG)" opacity=".85"/><g id="pe-seams"></g><polygon id="pe-rim" points="" fill="none" stroke="url(#pe-portalG)"/></svg>
-    <div class="pe-deploytxt" id="pe-dtxt">Hold to enter</div>
-  </div>
-</div>
+<button class="pe-tapcatch" id="pe-tapcatch" type="button" aria-label="Tap anywhere to enter PHANTOM"></button>
+<div class="pe-uz pe-enterhint" aria-hidden="true"><span class="pe-taphint" id="pe-taphint">TAP TO ENTER</span></div>
 
 <div class="pe-cal" id="pe-cal">
   <div class="pe-row"><span id="pe-calread">CAL &#10216; LOCK &#10003; &#10217;</span> <button class="pe-calbtn" id="pe-calcopy" type="button">COPY</button></div>
@@ -10898,55 +10901,41 @@ if (typeof window !== 'undefined') {
    fires launch(); mesh is deliberately faint; ?cal=1 (or triple-tap CAL) lets John drag nodes onto
    real cities on the OLED and COPY the locked coords. Offline-first; reduced-motion aware. */
 
-/* ===== Spectral Iris enter button ===== */
+/* ===== Tap-anywhere enter (v1.14.64) — whole-frame tap fires pe-dive -> pe-flash -> launch ===== */
 (function () {
   "use strict";
-  var SPEC = ['#ff2bd6','#b03cff','#8a4bff','#5a6cff','#28e0ff','#23eecb','#1fffd0'];
-  function lerpHex(t){ t=Math.max(0,Math.min(1,t)); var n=SPEC.length-1, i=Math.min(n-1,Math.floor(t*n)), f=t*n-i;
-    var a=SPEC[i].match(/\w\w/g).map(function(h){return parseInt(h,16);}), b=SPEC[i+1].match(/\w\w/g).map(function(h){return parseInt(h,16);});
-    return '#'+a.map(function(v,k){return Math.round(v+(b[k]-v)*f).toString(16).padStart(2,'0');}).join(''); }
-  var hole=document.getElementById('pe-hole'), portal=document.getElementById('pe-portal'), seams=document.getElementById('pe-seams'),
-      rim=document.getElementById('pe-rim'), glab=document.getElementById('pe-glab'), dtxt=document.getElementById('pe-dtxt'),
-      flash=document.getElementById('pe-flash'), stage=document.getElementById('pe-stage');
-  if(!stage||!hole) return;
-  var NS='http://www.w3.org/2000/svg';
-  function hexPts(r,rot){var p=[];for(var i=0;i<6;i++){var a=(i/6)*2*Math.PI-Math.PI/2+rot;p.push((100+Math.cos(a)*r)+','+(100+Math.sin(a)*r));}return p.join(' ');}
-  for(var s=0;s<6;s++){var sa=(s/6)*2*Math.PI-Math.PI/2;var ln=document.createElementNS(NS,'line');
-    ln.setAttribute('x1',100);ln.setAttribute('y1',100);ln.setAttribute('x2',100+Math.cos(sa)*74);ln.setAttribute('y2',100+Math.sin(sa)*74);seams.appendChild(ln);}
-  function draw(c){if(stage)stage.style.setProperty('--pe-c',c);var r=4+c*70,rot=c*0.5;hole.setAttribute('points',hexPts(r,rot));
-    portal.setAttribute('r',Math.max(2,r-3));portal.setAttribute('opacity',.5+c*.5);
-    rim.setAttribute('points',hexPts(r,rot));rim.setAttribute('opacity',c);
-    Array.prototype.forEach.call(seams.children,function(ln,i){var a=(i/6)*2*Math.PI-Math.PI/2+rot;ln.setAttribute('x2',100+Math.cos(a)*74);ln.setAttribute('y2',100+Math.sin(a)*74);
-      ln.setAttribute('stroke',c>.04?lerpHex(i/6):'#28e0ff');ln.setAttribute('opacity',c>.04?(.3+c*.5):0.12);});}
-  var charging=false,charge=0,raf=null,fired=false;
-  function loop(){if(!charging)return;charge=Math.min(1,charge+1/64);draw(charge);if(charge>=1){fire();return;}raf=requestAnimationFrame(loop);}
-  function start(e){if(e&&e.preventDefault)e.preventDefault();if(charging||fired)return;
-    charging=true;stage.classList.remove('pe-idle');if(glab){glab.textContent='';}if(dtxt){dtxt.textContent='Opening';}
-    if(e&&e.pointerId!=null&&stage.setPointerCapture){try{stage.setPointerCapture(e.pointerId);}catch(_){}}
-    raf=requestAnimationFrame(loop);}
-  function resetIdle(){charge=0;draw(0);if(glab){glab.textContent='HOLD';glab.style.color='rgba(220,245,255,0.92)';}if(dtxt){dtxt.textContent='Hold to enter';}stage.classList.add('pe-idle');}
-  function cancel(){if(!charging||charge>=1||fired)return;charging=false;if(raf)cancelAnimationFrame(raf);resetIdle();}
-  function fire(){charging=false;if(raf)cancelAnimationFrame(raf);if(fired)return;fired=true;if(dtxt){dtxt.textContent='Entering…';}
-    var _rm=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    var _b=document.getElementById('boot');
-    if(_rm){
-      if(flash){flash.classList.add('pe-expose');}
-      setTimeout(function(){ try{ if(typeof launch==='function'){ launch(false); } else { throw 0; } }
-        catch(e){ if(flash){flash.classList.remove('pe-expose');} if(_b){_b.classList.remove('pe-dive');} fired=false; resetIdle(); } },120);
+  var boot  = document.getElementById('boot');
+  var flash = document.getElementById('pe-flash');
+  var hint  = document.getElementById('pe-taphint');
+  var tap   = document.getElementById('pe-tapcatch');
+  if (!boot || !tap) return;
+
+  var fired = false;
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function softReset(){
+    fired = false;
+    if (flash) { flash.classList.remove('pe-expose'); }
+    boot.classList.remove('pe-dive');
+    if (hint) { hint.textContent = 'TAP TO ENTER'; }
+  }
+
+  function fire(){
+    if (fired) return;
+    fired = true;
+    if (hint) { hint.textContent = 'ENTERING…'; }
+    if (reduce) {
+      if (flash) { flash.classList.add('pe-expose'); }
+      setTimeout(function(){ try { if (typeof launch === 'function') { launch(false); } else { throw 0; } } catch(e){ softReset(); } }, 120);
       return;
     }
-    if(_b){_b.classList.add('pe-dive');}
-    setTimeout(function(){ if(flash){flash.classList.add('pe-expose');} },520);
-    setTimeout(function(){
-      try{ if(typeof launch==='function'){ launch(true); } else { throw 0; } }
-      catch(e){ if(flash){flash.classList.remove('pe-expose');} if(_b){_b.classList.remove('pe-dive');} fired=false; resetIdle(); }
-    },600);}
-  stage.addEventListener('pointerdown',start);
-  stage.addEventListener('pointercancel',cancel);
-  window.addEventListener('pointerup',cancel);
-  stage.addEventListener('keydown',function(e){if((e.key===' '||e.key==='Enter')&&!e.repeat){e.preventDefault();start();}});
-  stage.addEventListener('keyup',function(e){if(e.key===' '||e.key==='Enter')cancel();});
-  draw(0);
+    boot.classList.add('pe-dive');
+    setTimeout(function(){ if (flash) { flash.classList.add('pe-expose'); } }, 520);
+    setTimeout(function(){ try { if (typeof launch === 'function') { launch(true); } else { throw 0; } } catch(e){ softReset(); } }, 600);
+  }
+
+  // whole-frame tap. The catcher is a <button>, so Enter/Space activate it for free.
+  tap.addEventListener('click', fire);
 })();
 
 /* ===== CoreWeave light-packet mesh + calibration ===== */

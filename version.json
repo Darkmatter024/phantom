@@ -1,6 +1,6 @@
 {
-  "version": "phantom-v1.14.63",
-  "released": "2026-06-22",
-  "prevVersion": "phantom-v1.14.62",
-  "notes": "v1.14.63 - Fork A: full composite plate (globe+streams+corridor+baked wordmark) replaces live mesh/globe/wordmark. Z-axis aisle dive on entry into existing #pe-flash exposure blowout. #pe-mesh retired."
+  "version": "phantom-v1.14.64",
+  "released": "2026-06-24",
+  "prevVersion": "phantom-v1.14.63",
+  "notes": "v1.14.64 - Tap-anywhere boot entry: retired the hold-to-charge glass bar; the whole boot frame is now a transparent tap catcher firing the existing pe-dive -> pe-flash -> launch transition. Single pulsing TAP TO ENTER cue under the wordmark (+ DESIGN_RULES focus-visible state). Plate swapped to the locked SPECTRUM composite."
 }
