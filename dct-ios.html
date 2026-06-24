@@ -10454,6 +10454,7 @@ body.has-resume-banner #boot {
 
 /* ── globe hero (img + mesh + masks move as one) ── */
 #boot .pe-hero { position:fixed; top:0; left:0; width:100%; height:46%; z-index:5; }
+#boot .pe-platepic { position:fixed; inset:0; display:block; }
 #boot .pe-plate { position:fixed; inset:0; width:100%; height:100%; object-fit:cover; object-position:50% 50%; z-index:1; pointer-events:none; }
 #boot .pe-hero img { position:absolute; top:-2%; left:50%; transform:translateX(-50%); width:142%; max-width:none; display:block; }
 #boot .pe-heromask { position:absolute; inset:0; background:linear-gradient(180deg,rgba(4,6,10,0) 48%,rgba(4,6,10,.55) 72%,var(--bg) 90%); pointer-events:none; }
@@ -10491,8 +10492,20 @@ body.has-resume-banner #boot {
 #boot .pe-stash { position:absolute; width:0; height:0; opacity:0; overflow:hidden; pointer-events:none; }
 /* v1.14.64 tap-anywhere entry — whole-frame catcher + small lettering, no button (replaces the v1.14.56 hold-to-charge glass bar) */
 #boot .pe-tapcatch{ position:absolute; inset:0; z-index:5; width:100%; height:100%; background:transparent; border:0; margin:0; padding:0; cursor:pointer; -webkit-tap-highlight-color:transparent; -webkit-appearance:none; appearance:none; }
-#boot .pe-enterhint{ z-index:6; pointer-events:none; top:auto; bottom:calc(env(safe-area-inset-bottom) + 6.5%); }
-#boot .pe-taphint{ font-family:'Chakra Petch','Helvetica Neue',Arial,sans-serif; font-size:11px; letter-spacing:.42em; color:#aab6e8; text-transform:uppercase; opacity:.7; animation:peTapPulse 2.8s ease-in-out infinite; }
+/* tap cue — calibrated per orientation (John, on-device) */
+#boot .pe-enterhint{
+  position:fixed; left:0; width:100%; text-align:center; z-index:6; pointer-events:none;
+  top:auto;
+  bottom:calc(env(safe-area-inset-bottom) + 4.5%);   /* PHONE / portrait */
+  transform:translateX(1%);                          /* x: +1% */
+}
+@media (min-aspect-ratio:1/1){                        /* LAPTOP / landscape */
+  #boot .pe-enterhint{
+    bottom:calc(env(safe-area-inset-bottom) + 2%);
+    transform:translateX(1%);                         /* x: +1% */
+  }
+}
+#boot .pe-taphint{ display:inline-block; font-family:'Chakra Petch','Helvetica Neue',Arial,sans-serif; font-size:11px; letter-spacing:.42em; color:#aab6e8; text-transform:uppercase; opacity:.7; animation:peTapPulse 2.8s ease-in-out infinite; }
 @keyframes peTapPulse{ 0%,100%{opacity:.4;} 50%{opacity:.85;} }
 /* DESIGN_RULES §7 (a11y quality floor): visible keyboard focus the spec omitted — subtle, on-brand cyan, native to the plate; brightens the hint so the cue itself reads as focused */
 #boot .pe-tapcatch:focus-visible{ outline:1px solid rgba(40,224,255,0.5); outline-offset:-3px; }
@@ -10539,7 +10552,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.64';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.65';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -10886,7 +10899,10 @@ if (typeof window !== 'undefined') {
 
 <!-- ━━━ BOOT ━━━ -->
 <div id="boot">
-<img class="pe-plate" alt="" src="plate.webp">
+<picture class="pe-platepic">
+  <source media="(min-aspect-ratio: 1/1)" srcset="plate-wide.webp">
+  <img class="pe-plate" alt="" src="plate.webp">
+</picture>
 
 <button class="pe-tapcatch" id="pe-tapcatch" type="button" aria-label="Tap anywhere to enter PHANTOM"></button>
 <div class="pe-uz pe-enterhint" aria-hidden="true"><span class="pe-taphint" id="pe-taphint">TAP TO ENTER</span></div>

@@ -1,6 +1,6 @@
 {
-  "version": "phantom-v1.14.64",
+  "version": "phantom-v1.14.65",
   "released": "2026-06-24",
-  "prevVersion": "phantom-v1.14.63",
-  "notes": "v1.14.64 - Tap-anywhere boot entry: retired the hold-to-charge glass bar; the whole boot frame is now a transparent tap catcher firing the existing pe-dive -> pe-flash -> launch transition. Single pulsing TAP TO ENTER cue under the wordmark (+ DESIGN_RULES focus-visible state). Plate swapped to the locked SPECTRUM composite."
+  "prevVersion": "phantom-v1.14.64",
+  "notes": "v1.14.65 - Responsive boot: dual-plate <picture> auto-swaps the portrait plate.webp (phone) for plate-wide.webp (landscape/laptop) via min-aspect-ratio; pe-dive stays on the inner <img>. Per-orientation TAP TO ENTER offsets (portrait 4.5%, landscape 2%). Updated portrait plate (dimensional chrome wordmark). plate-wide.webp added to SW precache."
 }
