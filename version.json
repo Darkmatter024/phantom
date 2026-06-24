@@ -1,6 +1,6 @@
 {
-  "version": "phantom-v1.14.66",
+  "version": "phantom-v1.14.67",
   "released": "2026-06-24",
-  "prevVersion": "phantom-v1.14.65",
-  "notes": "v1.14.66 - Golden node pins: gold CoreWeave city markers projected (orthographic) onto the baked globe as a pointer-events:none overlay, so tap-anywhere entry still fires. Austin = haloed hub. 18 confirmed cities (PLA/ELL/KEN withheld as unverified). Portrait-calibrated; pins hidden on landscape until landscape calibration. ?cal=1 scrubs the 6 projection params and COPYs the result."
+  "prevVersion": "phantom-v1.14.66",
+  "notes": "v1.14.67 - Removed the golden node pins (v1.14.66): pin overlay, orthographic projection module, dive-ride/landscape-hide rules, and the ?cal=1 pin tuner all pulled. Back to the clean responsive <picture> boot (globe, dual plates, tap-anywhere, TAP TO ENTER) unchanged. Reverts ba8a7de."
 }

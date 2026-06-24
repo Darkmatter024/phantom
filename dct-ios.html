@@ -10519,23 +10519,6 @@ body.has-resume-banner #boot {
 
 /* v1.14.63 Z-axis aisle dive — corridor plate rushes the vanishing point, UI fades, then #pe-flash covers the cut */
 #boot .pe-plate { transform-origin:50% 56%; will-change:transform; }
-
-/* v1.14.66 golden node pins — gold overlay projected onto the baked globe; pointer-events:none so tap-anywhere still fires over a pin */
-#boot .pe-pinlayer{ position:fixed; inset:0; z-index:4; pointer-events:none; }
-#boot .pe-pin{ position:absolute; width:5px; height:5px; margin:-2.5px 0 0 -2.5px; border-radius:50%; background:#ffcb45; box-shadow:0 0 4px 1px rgba(255,203,69,.8); }
-#boot .pe-pin.pe-hub{ width:9px; height:9px; margin:-4.5px 0 0 -4.5px; box-shadow:0 0 10px 3px rgba(255,203,69,.95), 0 0 22px 8px rgba(255,203,69,.35); animation:pePinPulse 2.6s ease-in-out infinite; }
-@keyframes pePinPulse{ 0%,100%{transform:scale(1);opacity:.9;} 50%{transform:scale(1.35);opacity:1;} }
-@media (prefers-reduced-motion:reduce){ #boot .pe-pin.pe-hub{ animation:none; } }
-/* pins ride the dive with the plate */
-#boot.pe-dive .pe-pinlayer{ animation:peDive 600ms cubic-bezier(.5,0,.85,.3) forwards; transform-origin:50% 56%; }
-/* landscape loads the wide plate (different globe framing) — hide portrait-calibrated pins until landscape is calibrated */
-@media (min-aspect-ratio:1/1){ #boot .pe-pinlayer{ display:none; } }
-/* ?cal=1 projection-calibration panel */
-#boot .pe-calpanel{ position:fixed; left:8px; top:8px; z-index:11; background:#070a0fcc; border:1px solid #243042; border-radius:8px; padding:8px; font-family:'Chakra Petch','Helvetica Neue',Arial,sans-serif; }
-#boot .pe-calrow{ display:flex; align-items:center; gap:6px; margin:2px 0; }
-#boot .pe-calrow button, #boot .pe-calcopybtn{ background:#13202e; color:#cfe8ff; border:1px solid #2a4055; border-radius:4px; min-width:26px; min-height:26px; font-size:13px; cursor:pointer; }
-#boot .pe-calval{ color:#ffcb45; font-size:11px; letter-spacing:.06em; min-width:80px; display:inline-block; text-align:center; }
-#boot .pe-calcopybtn{ margin-top:6px; width:100%; padding:6px; font-size:11px; letter-spacing:.08em; }
 #boot.pe-dive .pe-plate { animation:peDive 600ms cubic-bezier(.5,0,.85,.3) forwards; }
 #boot.pe-dive .pe-uz, #boot.pe-dive .pe-tapcatch { animation:peDiveFade 360ms ease-out forwards; }
 @keyframes peDive { from { transform:scale(1); } to { transform:scale(4.6); } }
@@ -10569,7 +10552,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.66';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.67';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -10920,7 +10903,6 @@ if (typeof window !== 'undefined') {
   <source media="(min-aspect-ratio: 1/1)" srcset="plate-wide.webp">
   <img class="pe-plate" alt="" src="plate.webp">
 </picture>
-<div class="pe-pinlayer" id="pe-pinlayer" aria-hidden="true"></div>
 
 <button class="pe-tapcatch" id="pe-tapcatch" type="button" aria-label="Tap anywhere to enter PHANTOM"></button>
 <div class="pe-uz pe-enterhint" aria-hidden="true"><span class="pe-taphint" id="pe-taphint">TAP TO ENTER</span></div>
@@ -10970,126 +10952,6 @@ if (typeof window !== 'undefined') {
 
   // whole-frame tap. The catcher is a <button>, so Enter/Space activate it for free.
   tap.addEventListener('click', fire);
-})();
-
-/* ===== Golden node pins (v1.14.66) — gold overlay projected onto the baked globe.
-   pointer-events:none so v1.14.64 tap-anywhere still fires over a pin. Portrait-calibrated;
-   hidden on landscape (wide plate has different framing). ?cal=1 scrubs the 6 projection params. ===== */
-(function () {
-  "use strict";
-  var boot = document.getElementById('boot');
-  var layer = document.getElementById('pe-pinlayer');
-  var img = boot && boot.querySelector('img.pe-plate');
-  if (!boot || !layer || !img) return;
-
-  var D2R = Math.PI / 180;
-
-  // Real lat/lon for the confirmed CoreWeave metros. Codes match the live NODES object.
-  // PLA / ELL / KEN are UNVERIFIED guesses (handoff flag) — withheld until John confirms the cities.
-  var CITIES = [
-    { code:'AUS', lat:30.27, lon:-97.74, hub:true },
-    { code:'MKO', lat:35.75, lon:-95.37 },
-    { code:'COS', lat:38.83, lon:-104.82 },
-    { code:'LAS', lat:36.17, lon:-115.14 },
-    { code:'PDX', lat:45.52, lon:-122.68 },
-    { code:'ORD', lat:41.88, lon:-87.63 },
-    { code:'SBN', lat:41.68, lon:-86.25 },
-    { code:'IND', lat:39.77, lon:-86.16 },
-    { code:'DET', lat:42.33, lon:-83.05 },
-    { code:'LNS', lat:40.04, lon:-76.30 },
-    { code:'EWR', lat:40.74, lon:-74.17 },
-    { code:'RIC', lat:37.54, lon:-77.44 },
-    { code:'INT', lat:36.10, lon:-80.24 },
-    { code:'ATL', lat:33.75, lon:-84.39 },
-    { code:'CSG', lat:32.46, lon:-84.99 },
-    { code:'LON', lat:51.51, lon:-0.13 },
-    { code:'STO', lat:59.33, lon:18.07 },
-    { code:'BCN', lat:41.39, lon:2.17 }
-    // TODO(John): PLA 33.02,-96.70 · ELL 46.99,-120.55 · KEN 42.58,-87.82 — confirm real cities, then add.
-  ];
-
-  // Orthographic projection params (plate-normalized 0..1). lon0/lat0/roll in DEGREES (UI-friendly).
-  // STARTING GUESSES against the live portrait plate — John dials these in via ?cal=1 then COPY.
-  var P = { cx:0.500, cy:0.225, r:0.340, lon0:-37, lat0:23, roll:-3 };
-
-  function project(latDeg, lonDeg, aspect) {
-    var phi = latDeg * D2R, lam = lonDeg * D2R;
-    var lon0 = P.lon0 * D2R, lat0 = P.lat0 * D2R, roll = P.roll * D2R;
-    var dl = lam - lon0;
-    var x3 = Math.cos(phi) * Math.sin(dl);
-    var y3 = Math.cos(lat0) * Math.sin(phi) - Math.sin(lat0) * Math.cos(phi) * Math.cos(dl);
-    var z3 = Math.sin(lat0) * Math.sin(phi) + Math.cos(lat0) * Math.cos(phi) * Math.cos(dl);
-    var sx = P.cx + P.r * (x3 * Math.cos(roll) - y3 * Math.sin(roll));
-    var sy = P.cy - P.r * (x3 * Math.sin(roll) + y3 * Math.cos(roll)) * aspect;
-    return { x: sx, y: sy, front: z3 >= 0 };
-  }
-
-  // build pin DOM once
-  var pins = CITIES.map(function (c) {
-    var el = document.createElement('div');
-    el.className = 'pe-pin' + (c.hub ? ' pe-hub' : '');
-    el.setAttribute('data-code', c.code);
-    layer.appendChild(el);
-    return { c: c, el: el };
-  });
-
-  // object-fit:cover mapping plate-normalized -> screen px (object-position 50% 50%)
-  function place() {
-    var W0 = img.naturalWidth || 1024, H0 = img.naturalHeight || 1536;
-    var aspect = W0 / H0;
-    var w = layer.clientWidth, h = layer.clientHeight;
-    if (!w || !h) return;
-    var scale = Math.max(w / W0, h / H0);
-    var rw = W0 * scale, rh = H0 * scale;
-    var ox = (w - rw) / 2, oy = (h - rh) / 2;
-    pins.forEach(function (p) {
-      var pr = project(p.c.lat, p.c.lon, aspect);
-      if (!pr.front) { p.el.style.display = 'none'; return; }
-      p.el.style.display = 'block';
-      p.el.style.left = (ox + pr.x * rw).toFixed(1) + 'px';
-      p.el.style.top  = (oy + pr.y * rh).toFixed(1) + 'px';
-    });
-  }
-
-  if (img.complete && img.naturalWidth) place();
-  img.addEventListener('load', place);
-  window.addEventListener('resize', place);
-  window.addEventListener('orientationchange', function () { setTimeout(place, 60); });
-
-  // ---- ?cal=1 calibration harness: scrub the 6 params live, COPY result ----
-  var CAL_ON = (function () { try { return new URLSearchParams(location.search).get('cal') === '1'; } catch (e) { return false; } })();
-  if (CAL_ON) {
-    boot.classList.add('pe-calon');
-    var tapc = document.getElementById('pe-tapcatch');
-    if (tapc) { tapc.style.pointerEvents = 'none'; } // don't fire entry while calibrating
-    var panel = document.createElement('div');
-    panel.className = 'pe-calpanel';
-    var STEP = { cx:0.005, cy:0.005, r:0.005, lon0:0.5, lat0:0.5, roll:0.5 };
-    ['cx','cy','r','lon0','lat0','roll'].forEach(function (k) {
-      var row = document.createElement('div'); row.className = 'pe-calrow';
-      var minus = document.createElement('button'); minus.type = 'button'; minus.textContent = '−';
-      var plus  = document.createElement('button'); plus.type = 'button'; plus.textContent = '+';
-      var val = document.createElement('span'); val.className = 'pe-calval';
-      var dec = (k === 'cx' || k === 'cy' || k === 'r') ? 3 : 1;
-      function refresh(){ val.textContent = k + ' ' + P[k].toFixed(dec); }
-      minus.addEventListener('click', function(){ P[k] -= STEP[k]; refresh(); place(); });
-      plus.addEventListener('click',  function(){ P[k] += STEP[k]; refresh(); place(); });
-      row.appendChild(minus); row.appendChild(val); row.appendChild(plus);
-      panel.appendChild(row); refresh();
-    });
-    var copy = document.createElement('button'); copy.type = 'button'; copy.className = 'pe-calcopybtn'; copy.textContent = 'COPY PARAMS';
-    copy.addEventListener('click', function () {
-      var coords = {};
-      var W0 = img.naturalWidth || 1024, H0 = img.naturalHeight || 1536;
-      CITIES.forEach(function (c) { var pr = project(c.lat, c.lon, W0 / H0); coords[c.code] = [ +pr.x.toFixed(4), +pr.y.toFixed(4) ]; });
-      var out = JSON.stringify({ params: P, coords: coords }, null, 2);
-      try { navigator.clipboard.writeText(out); copy.textContent = 'COPIED ✓'; }
-      catch (e) { console.log(out); copy.textContent = 'SEE CONSOLE'; }
-      setTimeout(function(){ copy.textContent = 'COPY PARAMS'; }, 1500);
-    });
-    panel.appendChild(copy);
-    boot.appendChild(panel);
-  }
 })();
 
 /* ===== CoreWeave light-packet mesh + calibration ===== */
