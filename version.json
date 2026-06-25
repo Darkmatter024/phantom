@@ -1,6 +1,6 @@
 {
-  "version": "phantom-v1.14.80",
+  "version": "phantom-v1.14.81",
   "released": "2026-06-25",
-  "prevVersion": "phantom-v1.14.79",
-  "notes": "v1.14.80 - Reconcile fidelity guard (roadmap P1): a Master restored from backup or quota-evicted is cab-only, so DOCUMENT RECONCILE saw 0 Master hosts and showed a misleading '✓ No mismatches' (false-CLEAN). Now when a Master is loaded but reconcile checked 0 hosts, reconcile_render shows a prominent 'Master is cab-only — reconcile NOT authoritative, re-load the source file' warning and the no-findings line drops the green ✓ for a 'limited cab-only data' note. Uses the existing res.hostCount signal (no new persisted state). The scope-picker already warned on cab-only; this closes the same gap in reconcile."
+  "prevVersion": "phantom-v1.14.80",
+  "notes": "v1.14.81 - Browsable Ghost Echo quirk corpus (roadmap P1, final item): a 'Browse Quirks' button in the Ghost Echo sheet opens a searchable list of ALL captured quirks (own outgoing + imported incoming, newest first, PEER badge on imported) - so a tech can proactively read the team's accumulated gotchas instead of only seeing them reactively on a matching rack+phase. Inline-styled overlay matching the capture modal; live text search across hardware/phase/text; no new CSS. Completes the Ghost Echo quirk loop (capture -> portable -> browsable)."
 }
