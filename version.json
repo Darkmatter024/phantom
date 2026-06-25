@@ -1,6 +1,6 @@
 {
-  "version": "phantom-v1.14.78",
+  "version": "phantom-v1.14.79",
   "released": "2026-06-25",
-  "prevVersion": "phantom-v1.14.77",
-  "notes": "v1.14.78 - Backup schema-version guardrail (roadmap P1): the full backup is now stamped with schemaVersion (PHANTOM_BACKUP_SCHEMA=1), and restore REFUSES a newer-schema bundle before any destructive write (the restore clears the Ghost Echo DB + overwrites localStorage) - preventing a wipe-then-partial-restore from a bundle an older app can't fully understand. Older/missing schema is allowed best-effort with a warning in the restore confirm. Protects the v1.14.74/.77 portability now that backups move between techs/versions. Additive imports (quirk/Ghost-Echo merges) are non-destructive and unchanged."
+  "prevVersion": "phantom-v1.14.78",
+  "notes": "v1.14.79 - Site-agnostic SCAN rack recognition (roadmap P1): the scanner classifier only accepted the hardcoded L-NN/R-NN pattern, silently mis-tagging any other site's racks (A01, ROW-B-03, GB300-NVL-01) as ASSET. It now also matches a scanned tag against the loaded Master's cab namespace (window._lastPhantomMaster.racksByCab, tolerant of separators/case) and returns the canonical cab key. Falls back to the L-NN/R-NN regex when no Master is loaded, so existing sites are unchanged. Multi-site correctness. (EDP/BOM parser rack-detection regexes left as a separate file-format concern.)"
 }

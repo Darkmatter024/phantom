@@ -10459,7 +10459,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.78';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.79';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -42523,6 +42523,21 @@ var ScanDispatch = (function() {
   // ── Strict regex for rack IDs (L-NN or R-NN convention), no extra chars ──
   var RACK_REGEX = /^[LR]-\d{2}$/i;
 
+  // v1.14.79: site-agnostic rack recognition — match a scanned tag against the loaded Master's
+  // cab namespace (the real rack IDs for THIS site, any naming: A01 / ROW-B-03 / GB300-NVL-01),
+  // tolerant of separators/case. Returns the canonical Master cab key or null. Falls back to
+  // RACK_REGEX when no Master is loaded, so L-NN/R-NN sites keep working unchanged.
+  function _rackInMaster(raw) {
+    var m = (typeof window !== 'undefined') ? window._lastPhantomMaster : null;
+    if (!m || !m.racksByCab) return null;
+    function norm(s) { return String(s || '').toUpperCase().replace(/[\s_-]/g, ''); }
+    var target = norm(raw);
+    if (!target) return null;
+    var keys = Object.keys(m.racksByCab);
+    for (var i = 0; i < keys.length; i++) { if (norm(keys[i]) === target) return keys[i]; }
+    return null;
+  }
+
   // ── Public: open the scanner with the dispatch callback ──
   function openScanner() {
     if (typeof PhantomScanner === 'undefined' || !PhantomScanner.open) {
@@ -42551,11 +42566,16 @@ var ScanDispatch = (function() {
       return candidates; // deep-link is unambiguous, return immediately
     }
 
-    // 2. Rack ID — strict regex match
+    // 2. Rack ID — strict L-NN/R-NN regex, OR (v1.14.79) a cab in the loaded Master (any site's naming).
     if (RACK_REGEX.test(raw)) {
       candidates.push({ type: 'rack', confidence: 'strong', payload: raw.toUpperCase() });
       // Rack regex is exclusive — if it matches, we don't fall through
       return candidates;
+    }
+    var _masterCab = _rackInMaster(raw);
+    if (_masterCab) {
+      candidates.push({ type: 'rack', confidence: 'strong', payload: _masterCab });
+      return candidates; // matched the site's real cab namespace — unambiguous rack
     }
 
     // 3. Switch — check active deployment's portMaps
