@@ -2711,43 +2711,6 @@ code { font-family:var(--mono); font-size: var(--fs-caption); color:var(--cyan2)
 }
 
 /* ━━━ VOICE ASSISTANT ━━━ */
-.va-btn {
-  position: fixed;
-  bottom: calc(var(--tabnav-h) + 16px);
-  right: calc(var(--safe-right) + 16px);
-  width: 58px; height: 58px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--cyan-subtle), rgba(0,188,212,0.1));
-  border: 1.5px solid rgba(92,242,255,0.4);
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer; z-index: var(--z-float);
-  box-shadow: 0 0 20px rgba(92,242,255,0.2), 0 4px 20px rgba(0,0,0,0.4);
-  transition: all 0.15s;
-  -webkit-appearance: none;
-  user-select: none;
-}
-.va-btn:active { transform: scale(0.93); }
-.va-btn.listening {
-  background: rgba(255,45,85,0.2);
-  border-color: var(--red);
-  box-shadow: 0 0 0 0 rgba(255,45,85,0.4);
-  animation: vaPulse var(--hud-dur-pulse) ease-out infinite;
-}
-.va-btn.thinking {
-  background: rgba(255,214,10,0.12);
-  border-color: var(--gold);
-  animation: vaSpin 1.2s linear infinite;
-}
-@keyframes vaPulse {
-  0% { box-shadow: 0 0 0 0 rgba(255,45,85,0.5); }
-  70% { box-shadow: 0 0 0 14px rgba(255,45,85,0); }
-  100% { box-shadow: 0 0 0 0 rgba(255,45,85,0); }
-}
-@keyframes vaSpin {
-  0% { box-shadow: 0 0 0 0 rgba(255,214,10,0.5); }
-  70% { box-shadow: 0 0 0 10px rgba(255,214,10,0); }
-  100% { box-shadow: 0 0 0 0 rgba(255,214,10,0); }
-}
 .va-icon { font-size: 22px; line-height: 1; pointer-events: none; }
 
 /* Response sheet */
@@ -10482,7 +10445,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.72';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.73';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -15603,8 +15566,6 @@ function showPage(id, tnEl, opsTab) {
   if (id === 'triage') brief_show();
   if (id === 'triage' || id === 'sop') identity_refreshOverflowLabels();
   // Mic button — Triage only
-  const vaBtn = document.getElementById('vaBtn');
-  if (vaBtn) vaBtn.style.display = id === 'triage' ? '' : 'none';
   haptic(4);
 
   // Cut 10: push nav state for back navigation. Suppressed when called from
@@ -36036,7 +35997,6 @@ function vaInit() {
         try {
           if (VA.listening) {
             VA.listening = false;
-            setBtnState('idle');
             if (VA.transcript && VA.transcript.length > 1) {
               vaAsk(VA.transcript);
             } else {
@@ -36049,7 +36009,6 @@ function vaInit() {
       VA.recognition.onerror = (e) => {
         try {
           VA.listening = false;
-          setBtnState('idle');
           if (e.error === 'not-allowed') {
             vaShowError('Microphone access denied.\n\nGo to Settings → Safari → Microphone and allow access, then try again.');
           } else if (e.error === 'no-speech') {
@@ -36064,29 +36023,6 @@ function vaInit() {
     VA.recognition = null;
   }
 
-  // Attach button listeners
-  const btn = document.getElementById('vaBtn');
-  if (!btn) { return; }
-
-  btn.addEventListener('touchstart', (e) => {
-    e.preventDefault();
-    vaStart();
-  }, { passive: false });
-
-  btn.addEventListener('touchend', (e) => {
-    e.preventDefault();
-    vaEnd();
-  }, { passive: false });
-
-  btn.addEventListener('mousedown', (e) => {
-    e.preventDefault();
-    vaStart();
-  });
-
-  btn.addEventListener('mouseup', (e) => {
-    e.preventDefault();
-    vaEnd();
-  });
 }
 
 // ── BUTTON PRESS ──
@@ -36099,7 +36035,6 @@ function vaStart() {
     try { if (VA.speechSynth) VA.speechSynth.cancel(); } catch(e) {}
     VA.transcript = '';
     VA.listening = true;
-    setBtnState('listening');
     openVaSheet('listening');
     try { VA.recognition.start(); } catch(err) { /* already started */ }
   } catch(e) {
@@ -36107,28 +36042,7 @@ function vaStart() {
   }
 }
 
-function vaEnd() {
-  try {
-    if (VA.listening && VA.recognition) {
-      try { VA.recognition.stop(); } catch(e) {}
-      setBtnState('thinking');
-      setVaBody('thinking');
-    }
-  } catch(e) {}
-}
 
-// ── STATE ──
-function setBtnState(state) {
-  try {
-    const btn = document.getElementById('vaBtn');
-    const icon = document.getElementById('vaIcon');
-    if (!btn || !icon) return;
-    btn.className = 'va-btn' + (state !== 'idle' ? ' ' + state : '');
-    if (state === 'idle')      icon.innerHTML = '<span class="ico ico-md ico-mic"></span>️';
-    if (state === 'listening') icon.innerHTML = '<span class="ico ico-md ico-alert-red"></span>';
-    if (state === 'thinking')  icon.innerHTML = '<span class="ico ico-md ico-loader"></span>';
-  } catch(e) {}
-}
 
 function openVaSheet(state) {
   try {
@@ -36164,7 +36078,6 @@ function setVaBody(state) {
 async function vaAsk(question) {
   try {
     openVaSheet('thinking');
-    setBtnState('thinking');
 
     var liveCtx = brief_buildLiveContext();
     var hwCtx = hwMatrix_queryContext(question);
@@ -36184,7 +36097,6 @@ async function vaAsk(question) {
   } catch(e) {
     vaShowError('Could not reach assistant: ' + e.message);
   }
-  setBtnState('idle');
 }
 
 // ── RENDER ANSWER ──
@@ -36315,7 +36227,6 @@ function vaShowError(msg) {
       againBtn.addEventListener('click', vaAskAgain, { once: true });
     }
   } catch(e) {}
-  setBtnState('idle');
 }
 
 // ── SPEECH SYNTHESIS ──
@@ -36366,7 +36277,6 @@ function vaClose() {
     if (VA.recognition) {
       try { VA.recognition.abort(); } catch(e) {}
     }
-    setBtnState('idle');
   } catch(e) {}
 }
 
@@ -36375,7 +36285,6 @@ function vaAskAgain() {
     try { if (VA.speechSynth) VA.speechSynth.cancel(); } catch(e) {}
     VA.transcript = '';
     VA.listening = true;
-    setBtnState('listening');
     setVaBody('listening');
     try { VA.recognition.start(); } catch(err) {}
   } catch(e) {}
