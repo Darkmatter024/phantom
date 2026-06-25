@@ -1,6 +1,6 @@
 {
-  "version": "phantom-v1.14.79",
+  "version": "phantom-v1.14.80",
   "released": "2026-06-25",
-  "prevVersion": "phantom-v1.14.78",
-  "notes": "v1.14.79 - Site-agnostic SCAN rack recognition (roadmap P1): the scanner classifier only accepted the hardcoded L-NN/R-NN pattern, silently mis-tagging any other site's racks (A01, ROW-B-03, GB300-NVL-01) as ASSET. It now also matches a scanned tag against the loaded Master's cab namespace (window._lastPhantomMaster.racksByCab, tolerant of separators/case) and returns the canonical cab key. Falls back to the L-NN/R-NN regex when no Master is loaded, so existing sites are unchanged. Multi-site correctness. (EDP/BOM parser rack-detection regexes left as a separate file-format concern.)"
+  "prevVersion": "phantom-v1.14.79",
+  "notes": "v1.14.80 - Reconcile fidelity guard (roadmap P1): a Master restored from backup or quota-evicted is cab-only, so DOCUMENT RECONCILE saw 0 Master hosts and showed a misleading '✓ No mismatches' (false-CLEAN). Now when a Master is loaded but reconcile checked 0 hosts, reconcile_render shows a prominent 'Master is cab-only — reconcile NOT authoritative, re-load the source file' warning and the no-findings line drops the green ✓ for a 'limited cab-only data' note. Uses the existing res.hostCount signal (no new persisted state). The scope-picker already warned on cab-only; this closes the same gap in reconcile."
 }

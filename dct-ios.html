@@ -10459,7 +10459,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.79';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.80';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -38539,6 +38539,10 @@ function reconcile_render(mount){
     body += '<div style="font-family:var(--raj);font-size:var(--fs-body);color:var(--slate);padding:6px 0">Cross-checks the loaded Master, BOM, and EDP for optic shortages, count mismatches, and phantom assets. Tap RUN.</div>';
   } else {
     var t = res.totals || {}; var miss = (res.have.master?'':'Master ') + (res.have.bom?'':'BOM ') + (res.have.edp?'':'EDP ');
+    // v1.14.80: a Master loaded but with 0 reconciled hosts = cab-only / not-fully-stored (restored from a
+    // backup or quota-evicted). A "clean" reconcile on it is VACUOUS — never present it as authoritative.
+    var _incomplete = !!(res.have && res.have.master && (res.hostCount || 0) === 0);
+    if (_incomplete) body += '<div style="font-family:var(--raj);font-size:var(--fs-caption);color:var(--gold);background:rgba(255,214,10,0.08);border:1px solid rgba(255,214,10,0.3);border-radius:8px;padding:8px 10px;margin-bottom:10px">⚠ Master is cab-only / not fully stored — this reconcile saw 0 Master hosts, so a clean result is NOT authoritative. Re-load the source Master file for a full reconcile.</div>';
     body += '<div class="kpi-row" style="margin:0 0 10px">' +
       '<div class="kpi"><div class="kpi-label">Optics</div><div class="kpi-val ' + (t.optic?'kpi-crit':'kpi-ok') + '">' + (t.optic||0) + '</div></div>' +
       '<div class="kpi"><div class="kpi-label">Hardware</div><div class="kpi-val ' + (t.hw?'kpi-warn':'kpi-ok') + '">' + (t.hw||0) + '</div></div>' +
@@ -38546,7 +38550,9 @@ function reconcile_render(mount){
       '<div class="kpi"><div class="kpi-label">Review</div><div class="kpi-val">' + (t.review||0) + '</div></div></div>';
     if (miss.trim()) body += '<div style="font-family:var(--mono);font-size:var(--fs-caption);color:var(--slate);margin-bottom:8px">Not loaded: ' + miss.trim() + ' — reconciled what was available.</div>';
     if (!res.findings.length){
-      body += '<div style="font-family:var(--raj);font-size:var(--fs-body);color:var(--green-neon,#39ff14);padding:6px 0">✓ No mismatches found across the loaded documents.</div>';
+      body += _incomplete
+        ? '<div style="font-family:var(--raj);font-size:var(--fs-body);color:var(--slate);padding:6px 0">No mismatches in the limited cab-only data — re-load the Master to verify.</div>'
+        : '<div style="font-family:var(--raj);font-size:var(--fs-body);color:var(--green-neon,#39ff14);padding:6px 0">✓ No mismatches found across the loaded documents.</div>';
     } else {
       res.findings.forEach(function(f, i){
         var bcls = (f.sev==='high' && !f.advisory) ? 'b-red' : 'b-gold';
