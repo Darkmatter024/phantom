@@ -1,6 +1,6 @@
 {
-  "version": "phantom-v1.14.85",
+  "version": "phantom-v1.14.86",
   "released": "2026-06-25",
-  "prevVersion": "phantom-v1.14.84",
-  "notes": "v1.14.85 - Redesign Step 2 cont. (re-home Reference -> Optics): the whole pg-fiber surface (Fiber Types/Form Factors/MPO-HPC/DOM-DDM/Optic/Cables/Triage subtabs + 8 fiber-sub panels, the Optic-Score tool, all toggleCard/openSopDetail launchers) is re-homed into Reference->Optics by re-parenting all of pg-fiber's children into #rf-optics at boot (redesign_homeOptics), then initSubtab() defaults the inner Fiber Types subtab. Flag-gated: with the flag off (field default) pg-fiber stays put and the KNOW nav tab, voice router, and search all work unchanged; the 13 fiber search-index hits gain a ref:'rf-optics' hint that only fires in redesign mode (showRefTab). Reference default tab flipped Know -> Optics (first tab). The fiber strip's Hardware/CLI cross-links still point to the old pages until those re-home. Nothing else moved."
+  "prevVersion": "phantom-v1.14.85",
+  "notes": "v1.14.86 - Redesign nav-chrome fix: the #mode-toggle (Command/Work/Ref) strip was position:sticky;top:8px;z-60, so on a scrolled page it floated over the active page's own sub-tab strip (e.g. Reference's Optics/Hardware/CLI-IB/HW Ref/Know) and the labels collided. Made #mode-toggle position:relative (scrolls with the page) so the two strips stack instead of overlapping. One inline-style edit; base .subtab-strip untouched, so the field app's sub-tabs are unaffected. (Handoff was authored against v1.14.84 targeting v1.14.85, but v1.14.85 already shipped the Optics re-home on a parallel build line - reconciled to v1.14.86.)"
 }
