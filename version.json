@@ -1,6 +1,6 @@
 {
-  "version": "phantom-v1.14.73",
-  "released": "2026-06-24",
-  "prevVersion": "phantom-v1.14.72",
-  "notes": "v1.14.73 - Removed the dead #vaBtn floating push-to-talk remnant (its HTML element was dropped in a prior refactor; voice is fully served by the .qa-voice quick-action). Deleted the vaInit listener-attach block, vaEnd, setBtnState + its 8 no-op call sites, the showPage mic toggle, and the .va-btn CSS rules + vaPulse/vaSpin keyframes (91 lines). The SpeechRecognition engine and live voice path (vaStart/openVaSheet/vaAsk/setVaBody/.qa-voice) are untouched. Deferred trivia: 3 grouped .va-btn selector fragments + the net-gate-adjacent offline .va-btn rules (harmless dead selectors)."
+  "version": "phantom-v1.14.74",
+  "released": "2026-06-25",
+  "prevVersion": "phantom-v1.14.73",
+  "notes": "v1.14.74 - Ghost Echo quirk portability (roadmap P0 #1, multi-DCT lens): the tribal-knowledge corpus (phantom_ghost_echo_v1) can now MOVE between techs. Added exportGhostQuirks/importGhostQuirks (import merges another tech's quirks into the previously-dead 'incoming' peer layer, dedup + provenance), folded ghostQuirks into the full-backup bundle + restore, and added Export/Import Quirks buttons (fix-log buttons relabeled Export/Import Log). Fixed ge_findQuirks (#2): outgoing matched on a tolerant normalized siteId, imported incoming no longer site-gated so cross-site peer knowledge actually surfaces. No change to capture/local-retrieve or the IndexedDB fix-log."
 }

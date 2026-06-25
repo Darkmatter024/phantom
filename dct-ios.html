@@ -10445,7 +10445,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.73';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.74';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -13416,8 +13416,10 @@ if (typeof window !== 'undefined') {
         <div class="ge-section" style="display:flex;justify-content:space-between;align-items:center">
           <span>Recent Ghosts</span>
           <div>
-            <button class="ge-clear-btn pt-btn pt-btn-ghost" onclick="exportGhostEcho()" style="color:var(--cyan);border-color:rgba(92,242,255,0.25)">↗ Export</button>
-            <button class="ge-clear-btn pt-btn pt-btn-ghost" onclick="importGhostEcho()" style="color:var(--violet,#9b59ff);border-color:rgba(155,89,255,0.25)">↙ Import</button>
+            <button class="ge-clear-btn pt-btn pt-btn-ghost" onclick="exportGhostEcho()" style="color:var(--cyan);border-color:rgba(92,242,255,0.25)">↗ Export Log</button>
+            <button class="ge-clear-btn pt-btn pt-btn-ghost" onclick="importGhostEcho()" style="color:var(--violet,#9b59ff);border-color:rgba(155,89,255,0.25)">↙ Import Log</button>
+            <button class="ge-clear-btn pt-btn pt-btn-ghost" onclick="exportGhostQuirks()" style="color:var(--cyan);border-color:rgba(92,242,255,0.25)">↗ Export Quirks</button>
+            <button class="ge-clear-btn pt-btn pt-btn-ghost" onclick="importGhostQuirks()" style="color:var(--violet,#9b59ff);border-color:rgba(155,89,255,0.25)">↙ Import Quirks</button>
             <button class="ge-clear-btn pt-btn pt-btn-warning" onclick="geClearRack()">Clear Rack</button>
             <button class="ge-clear-btn destructive pt-btn pt-btn-destructive" onclick="geClearAll()">Clear All</button>
           </div>
@@ -21021,6 +21023,9 @@ function ge_save(cache) {
   return safeStore(GHOST_ECHO_KEY, JSON.stringify(cache));
 }
 
+// v1.14.74: normalize a siteId for tolerant comparison so 'DFW-07' / 'DFW07' / 'dfw-7' collapse.
+function ge_normSite(s) { return String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); }
+
 // Derive hardwareType from a rack's slots. Priority: GPU platform (the
 // defining piece of hardware for a rack), then dominant switch platform,
 // then "generic" as a last resort. Returns a stable short key used as
@@ -21109,7 +21114,10 @@ function ge_findQuirks(hardwareType, phaseType) {
     for (var i = 0; i < arr.length; i++) {
       var q = arr[i];
       if (!q || !q.scope || seen[q.id]) continue;
-      if (q.siteId !== currentSite) continue;
+      // v1.14.74: outgoing (this device's own quirks) is site-scoped but TOLERANT (normalized) so a
+      // one-char facilityId drift doesn't hide them; incoming (imported peer knowledge) is intentionally
+      // cross-site, so it is NOT site-gated — it matches on hardware+phase alone.
+      if (l === 0 && ge_normSite(q.siteId) !== ge_normSite(currentSite)) continue;
       if (q.scope.hardwareType !== hardwareType) continue;
       if (q.scope.phase !== phaseType) continue;
       seen[q.id] = true;
@@ -39911,6 +39919,48 @@ function importGhostEcho() {
   input.click();
 }
 
+// ━━━ Ghost Echo QUIRK portability (v1.14.74) ━━━
+// The quirk corpus (ge_* / phantom_ghost_echo_v1) is the hand-written tribal knowledge — DISTINCT from
+// the IndexedDB fix-log above. Export ships THIS device's authored quirks (outgoing); import merges another
+// tech's quirks into the local 'incoming' (peer) layer so they surface in retrieval (ge_findQuirks reads both).
+function exportGhostQuirks() {
+  var cache = (typeof ge_load === 'function') ? ge_load() : null;
+  var out = cache ? (cache.outgoing || []) : [];
+  if (!out.length) { alert('No Ghost Echo quirks captured on this device to export.'); return; }
+  downloadJSON({ type: 'PHANTOM Ghost Echo Quirks', exported: new Date().toISOString(), schemaVersion: 1, quirks: out }, 'phantom-ghost-quirks');
+}
+
+function importGhostQuirks() {
+  var input = document.createElement('input');
+  input.type = 'file'; input.accept = '.json,application/json';
+  input.onchange = function(e) {
+    var file = e.target.files[0]; if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+      try {
+        var data = JSON.parse(ev.target.result);
+        var entries = Array.isArray(data) ? data : (Array.isArray(data.quirks) ? data.quirks : null);
+        if (!entries || !entries.length) { alert('No Ghost Echo quirks found in file.'); return; }
+        if (!confirm('Merge ' + entries.length + ' quirk(s) from another tech into your Ghost Echo?\n\nYour own quirks are kept; duplicates by ID are skipped.')) return;
+        var cache = ge_load();
+        var have = {};
+        (cache.outgoing || []).forEach(function(q) { if (q && q.id) have[q.id] = true; });
+        (cache.incoming || []).forEach(function(q) { if (q && q.id) have[q.id] = true; });
+        var added = 0, skipped = 0, stamp = new Date().toISOString().slice(0, 10);
+        entries.forEach(function(q) {
+          if (!q || !q.id || !q.scope || have[q.id]) { skipped++; return; }
+          q.receivedVia = (Array.isArray(q.receivedVia) ? q.receivedVia : []).concat(['import:' + stamp]);
+          cache.incoming.push(q); have[q.id] = true; added++;
+        });
+        if (!ge_save(cache)) { alert('Storage full — quirks not imported.'); return; }
+        alert('Imported ' + added + ' quirk(s), skipped ' + skipped + ' (duplicate/invalid). They surface when you hit a matching rack + phase.');
+      } catch(err) { alert('Failed to parse file: ' + err.message); }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
 function exportAllData() {
   if (window.phantomMarkBackupDone) phantomMarkBackupDone();
   const sops = loadSOPs();
@@ -39928,6 +39978,7 @@ function exportAllData() {
       version: '1.0',
       sops: sops,
       ghostEcho: ghosts,
+      ghostQuirks: (typeof ge_load === 'function') ? ge_load() : null,
       rackMaps: racks,
       burndown: burndown,
       rackHistory: safeParse(localStorage.getItem('phantom_rack_history') || '{}', {}),
@@ -40390,6 +40441,7 @@ function phantomImport() {
         if (Array.isArray(bundle.rackMaps) && bundle.rackMaps.length) items.push(bundle.rackMaps.length + ' rack maps');
         if (Array.isArray(bundle.burndown) && bundle.burndown.length)  items.push(bundle.burndown.length + ' burndown jobs');
         if (Array.isArray(bundle.ghostEcho) && bundle.ghostEcho.length) items.push(bundle.ghostEcho.length + ' Ghost Echo entries');
+        if (bundle.ghostQuirks) { var _qn = ((bundle.ghostQuirks.outgoing||[]).length + (bundle.ghostQuirks.incoming||[]).length); if (_qn) items.push(_qn + ' Ghost Echo quirks'); }
         if (Array.isArray(bundle.opticInventory) && bundle.opticInventory.length) items.push(bundle.opticInventory.length + ' optic scans');
         if (Array.isArray(bundle.deployments) && bundle.deployments.length) items.push(bundle.deployments.length + ' deployments');
         if (Array.isArray(bundle.deployOptics) && bundle.deployOptics.length) items.push(bundle.deployOptics.length + ' optic ledger records');
@@ -40460,6 +40512,21 @@ function phantomImport() {
           });
           alert('Restore failed at "' + _failKey + '" — not enough storage. No changes were made (rolled back). Free space and try again.');
           return;
+        }
+        // v1.14.74: restore Ghost Echo quirks (localStorage tribal-knowledge corpus), merging both layers
+        // by id-dedup so a restore never clobbers quirks already on this device.
+        if (bundle.ghostQuirks && typeof ge_load === 'function') {
+          try {
+            var _gq = ge_load(), _qseen = {};
+            (_gq.outgoing || []).forEach(function(q) { if (q && q.id) _qseen[q.id] = true; });
+            (_gq.incoming || []).forEach(function(q) { if (q && q.id) _qseen[q.id] = true; });
+            ['outgoing', 'incoming'].forEach(function(layer) {
+              (bundle.ghostQuirks[layer] || []).forEach(function(q) {
+                if (q && q.id && !_qseen[q.id]) { _gq[layer].push(q); _qseen[q.id] = true; }
+              });
+            });
+            ge_save(_gq);
+          } catch (_) {}
         }
         if (Array.isArray(bundle.ghostEcho) && bundle.ghostEcho.length) {
           const req = indexedDB.open('GhostEchoDB', 1);
