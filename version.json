@@ -1,6 +1,6 @@
 {
-  "version": "phantom-v1.14.88",
+  "version": "phantom-v1.14.89",
   "released": "2026-06-25",
-  "prevVersion": "phantom-v1.14.87",
-  "notes": "v1.14.88 - Redesign Step 2 cont. (Reference -> Hardware, part 2 = Cage Nut Compass): the Cage Nut Compass (pg-compass) is folded into Hardware as a 'Cage Nut' subtab. redesign_homeCompass() builds a stab on the re-homed Hardware strip + a #pw-compass block panel and moves the compass tool's content in (dropping its Back-to-Triage header - the subtab strip is the nav now). compass_render's one #pg-compass-scoped chassis-button query is made global so the tool works in its new home; goCompass() routes to the Hardware Cage Nut subtab in redesign mode. Flag-gated; field mode leaves pg-compass + its launcher whole. This COMPLETES Reference -> Hardware (pg-power pt1 in v1.14.87 + Cage Nut here). Reference tabs done so far: Optics, Hardware, Know. Remaining: CLI/IB (pg-cli), HW Ref."
+  "prevVersion": "phantom-v1.14.88",
+  "notes": "v1.14.89 - Redesign Step 2 cont. (re-home Reference -> CLI/IB): the whole pg-cli surface (IB/NDR · OOB · Console · Test&Cert · Parser subtabs + cli-sub panels) re-parented into Reference->CLI/IB (#rf-cli) at boot (redesign_homeCLI), initSubtab defaults the IB/NDR subtab. 13 CLI/OOB/CONSOLE/TEST search hits repointed (ref:'rf-cli'). The fiber strip's CLI cross-link now routes to Reference->CLI/IB in redesign mode (both fiber cross-links now redesign-aware). Flag-gated; field mode leaves pg-cli, the KNOW-tab CLI cross-link, and the voice router's showPage('cli') untouched. Reference tabs done: Optics, Hardware, CLI/IB, Know. Remaining: HW Ref (last Reference surface), then Step 3 (Workspace)."
 }
