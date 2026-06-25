@@ -8654,6 +8654,10 @@ textarea.hud-input {
  * All sub-sections default to hidden. JS adds .stab-active to show the
  * active one. CSS media queries can then override display:block → grid.     */
 .fiber-sub, .cli-sub, .pwr-sub { display: none; }
+/* Redesign Reference page subtab panels. Block wrapper; the re-homed inner
+   node (e.g. pw-rb, class pwr-sub) provides its own responsive grid. */
+.ref-sub { display: none; }
+.ref-sub.stab-active { display: block; }
 
 /* ━━━ BOM PROGRESS (Cut 4a) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 .bom-stab-strip {
@@ -10459,7 +10463,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.83';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.84';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -10969,10 +10973,22 @@ if (typeof window !== 'undefined') {
       </div>
     </div>
     <div class="page" id="pg-ref">
-      <div style="padding:28px 16px;text-align:center;color:var(--gold)">
-        <div style="font-size:18px;font-weight:700;letter-spacing:1.5px">REFERENCE</div>
-        <div style="margin-top:8px;opacity:0.6;font-size:var(--fs-caption)">Scaffold · Step 1 — Optics · Hardware · CLI/IB · HW Ref · Know land here.</div>
+      <!-- REDESIGN STEP 2 — Reference subtab strip. Surfaces re-home one at a time
+           (Know first, §9). Optics/Hardware/CLI-IB/HW Ref are stubs until their step. -->
+      <div class="subtab-strip">
+        <div class="stab" data-rf="rf-optics" onclick="showStab(this,'ref-sub','rf-optics')">Optics</div>
+        <div class="stab" data-rf="rf-hw" onclick="showStab(this,'ref-sub','rf-hw')">Hardware</div>
+        <div class="stab" data-rf="rf-cli" onclick="showStab(this,'ref-sub','rf-cli')">CLI/IB</div>
+        <div class="stab" data-rf="rf-hwref" onclick="showStab(this,'ref-sub','rf-hwref')">HW Ref</div>
+        <div class="stab active" data-rf="rf-know" onclick="showStab(this,'ref-sub','rf-know')">Know</div>
       </div>
+      <div class="ref-sub" id="rf-optics"><div style="padding:24px 16px;opacity:0.5;font-size:var(--fs-caption);text-align:center">Optics — re-homing from Fiber in a later step.</div></div>
+      <div class="ref-sub" id="rf-hw"><div style="padding:24px 16px;opacity:0.5;font-size:var(--fs-caption);text-align:center">Hardware — re-homing from Power in a later step.</div></div>
+      <div class="ref-sub" id="rf-cli"><div style="padding:24px 16px;opacity:0.5;font-size:var(--fs-caption);text-align:center">CLI/IB — re-homing from CLI in a later step.</div></div>
+      <div class="ref-sub" id="rf-hwref"><div style="padding:24px 16px;opacity:0.5;font-size:var(--fs-caption);text-align:center">HW Ref — re-homing in a later step.</div></div>
+      <!-- Know: the operational-knowledge content (#pw-rb) is re-parented in here
+           at boot by redesign_homeKnow(). Empty in source; filled at runtime. -->
+      <div class="ref-sub stab-active" id="rf-know"></div>
     </div>
 
     <!-- PAGE: TRIAGE -->
@@ -14173,9 +14189,9 @@ const INDEX = [
   {cat:'HW',title:'Dell HPE Supermicro NVIDIA LED patterns',snip:'System health, PSU, DIMM, drive LED colors and meanings',page:'power'},
   {cat:'HW',title:'Rack map elevation visual',snip:'Drop in rack elevation data, Claude renders visual rack',page:'power'},
   {cat:'RUNBOOK',title:'Incident note template ticket format',snip:'Asset, impact, steps, root cause, resolution, parts',page:'power'},
-  {cat:'RUNBOOK',title:'Change management checklist',snip:'Pre/during/post — ticket, baseline, rollback, config save',page:'power'},
-  {cat:'RUNBOOK',title:'Shift handover template P1 P2 P3 P4',snip:'Shift start checklist, handover format, severity reference',page:'power'},
-  {cat:'RUNBOOK',title:'Escalation decision tree',snip:'DLC leak, multi-rack, UPS fault, FEC uncorrectable, smoke',page:'power'},
+  {cat:'RUNBOOK',title:'Change management checklist',snip:'Pre/during/post — ticket, baseline, rollback, config save',page:'power',ref:'rf-know'},
+  {cat:'RUNBOOK',title:'Shift handover template P1 P2 P3 P4',snip:'Shift start checklist, handover format, severity reference',page:'power',ref:'rf-know'},
+  {cat:'RUNBOOK',title:'Escalation decision tree',snip:'DLC leak, multi-rack, UPS fault, FEC uncorrectable, smoke',page:'power',ref:'rf-know'},
   {cat:'OOB',title:'Out of band management iDRAC iLO IPMI BMC',snip:'SSH racadm Redfish sol activate BMC cold reset',page:'cli'},
   {cat:'OOB',title:'Finding BMC IP when unknown',snip:'ipmitool lan print, DHCP table, racadm, hponcfg',page:'cli'},
   {cat:'CONSOLE',title:'Console cable baud rates by platform',snip:'9600 vs 115200 — Arista Cisco Dell HPE Supermicro NVIDIA',page:'cli'},
@@ -14199,6 +14215,10 @@ const STAB_GROUPS = {
   'fiber-sub': ['fs-fiber','fs-form','fs-mpo','fs-dom','fs-optic','fs-cable','fs-hardware','fs-triage'],
   'cli-sub':   ['cs-cert','cs-ib','cs-oob','cs-console','cs-parser'],
   'pwr-sub':   ['pw-power','pw-hw','pw-rb','pw-rm','pw-thermal','pw-blast'],
+  // Redesign Reference page subtabs. In redesign mode only, pw-rb (Runbook/
+  // ops-knowledge) is re-parented into #rf-know at boot by redesign_homeKnow();
+  // pw-rb stays a pwr-sub member so FIELD mode (flag off) is untouched.
+  'ref-sub':   ['rf-optics','rf-hw','rf-cli','rf-hwref','rf-know'],
 };
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -15592,6 +15612,33 @@ function redesign_initToggle() {
   try { showMode('command'); } catch (e) { try { console.warn('[redesign] takeover failed', e); } catch (_) {} }
 }
 document.addEventListener('DOMContentLoaded', redesign_initToggle);
+
+// ━━━ REDESIGN STEP 2 — Reference page tab routing + Know re-home ━━━
+// showRefTab(): jump into the Reference page and activate a subtab. Used by
+// EXTERNAL entry points (the old pg-power Runbook button, search results) so they
+// still reach the re-homed content. Direct tab taps use showStab(this,...).
+function showRefTab(targetId) {
+  showMode('ref');
+  var btn = document.querySelector('#pg-ref .subtab-strip .stab[data-rf="' + targetId + '"]');
+  if (btn) showStab(btn, 'ref-sub', targetId);
+}
+// redesign_homeKnow(): re-parent the live Runbook/ops-knowledge node (#pw-rb) out
+// of pg-power into Reference→Know (#rf-know). Re-parenting (not copying) keeps all
+// markup, handlers, and the pwr-sub responsive grid intact — §1 re-home-don't-
+// rebuild. Runs in BOTH modes so the content has ONE home that search + the old
+// Runbook button both reach. pw-rb is held permanently stab-active; #rf-know gates
+// its visibility via the ref-sub group.
+function redesign_homeKnow() {
+  if (!redesign_isOn()) return;  // FIELD mode: leave pw-rb in pg-power, untouched
+  var rb = document.getElementById('pw-rb');
+  var dest = document.getElementById('rf-know');
+  if (rb && dest && rb.parentNode !== dest) {
+    dest.appendChild(rb);
+    rb.style.display = '';
+    rb.classList.add('stab-active');
+  }
+}
+document.addEventListener('DOMContentLoaded', redesign_homeKnow);
 
 function showPageSafe(pageId, sourceTabId, opsTab) {
   var safeToast = function(msg, kind) {
@@ -34153,6 +34200,9 @@ function doSearch(q) {
         let opsTab = 'sops';
         if (h.cat === 'OPS' && h.snip.includes('port map')) opsTab = 'portmap';
         if (h.cat === 'OPS' && h.snip.includes('BOM')) opsTab = 'bom';
+        // Redesign mode only: runbook/ops-knowledge hits open the re-homed
+        // Reference→Know. Field mode keeps the original page route untouched.
+        if (redesign_isOn() && h.ref) { showRefTab(h.ref); return; }
         showPage(h.page, tnEl, opsTab);
       };
       sp.appendChild(d);
