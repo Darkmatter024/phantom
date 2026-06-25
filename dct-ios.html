@@ -7267,6 +7267,20 @@ textarea.hud-input {
 }
 .osv-verdict-row .lbl { color: var(--slate); text-transform: uppercase; }
 .osv-verdict-row .val { color: var(--cyan); font-weight: 500; word-break: break-all; text-align: right; max-width: 60%; }
+/* Rx-power check (v1.14.75) — gloved keypad + per-optic verdict */
+.osv-rx { margin-top: 10px; }
+.osv-rx-toggle { width: 100%; min-height: 44px; background: rgba(92,242,255,0.08); border: 1px solid rgba(92,242,255,0.25); color: var(--cyan); border-radius: var(--hud-r12); font-family: var(--mono); font-size: var(--fs-caption); letter-spacing: 1px; cursor: pointer; }
+.osv-rx-panel { margin-top: 8px; }
+.osv-rx-display { font-family: var(--orb); font-size: 28px; font-weight: 900; text-align: center; color: var(--white); padding: 8px; letter-spacing: 1px; }
+.osv-rx-verdict { font-family: var(--raj); font-size: 12px; line-height: 1.4; text-align: center; min-height: 34px; padding: 4px 8px; color: var(--slate); }
+.osv-rx-verdict.osv-rx-green { color: var(--green); }
+.osv-rx-verdict.osv-rx-yellow { color: var(--gold); }
+.osv-rx-verdict.osv-rx-red { color: var(--red); }
+.osv-rx-keys { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.osv-rx-keys button { min-height: 52px; font-family: var(--orb); font-size: 20px; background: var(--surface-2,#0d1f2d); border: 1px solid rgba(255,255,255,0.12); color: var(--white); border-radius: var(--hud-r12); cursor: pointer; }
+.osv-rx-keys button:active { background: rgba(92,242,255,0.15); }
+.osv-rx-del { width: 100%; min-height: 44px; margin-top: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); color: var(--slate); border-radius: var(--hud-r12); font-family: var(--mono); cursor: pointer; }
+.osv-rx-log { width: 100%; min-height: 48px; margin-top: 8px; background: rgba(50,215,75,0.12); border: 1px solid rgba(50,215,75,0.4); color: var(--green); border-radius: var(--hud-r12); font-family: var(--mono); font-size: var(--fs-caption); letter-spacing: 1px; cursor: pointer; }
 
 /* Reason chips */
 .osv-reason-chips {
@@ -10445,7 +10459,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.74';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.75';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -11467,6 +11481,22 @@ if (typeof window !== 'undefined') {
               <div class="osv-verdict-detail" id="osv-verdict-detail">—</div>
               <div class="osv-verdict-row"><span class="lbl">Expected</span><span class="val" id="osv-verdict-expected">—</span></div>
               <div class="osv-verdict-row"><span class="lbl">Scanned</span><span class="val" id="osv-verdict-scanned">—</span></div>
+            </div>
+            <!-- Rx-power check (v1.14.75) — gloved keypad, verdict vs the matched optic's OPTIC_DB thresholds -->
+            <div class="osv-rx" id="osv-rx-section" style="display:none">
+              <button class="osv-rx-toggle" id="osv-rx-toggle" onclick="OpticScore.rxToggle()"><span class="ico ico-md ico-eye"></span> &nbsp;Check Rx Power</button>
+              <div class="osv-rx-panel" id="osv-rx-panel" style="display:none">
+                <div class="osv-rx-display" id="osv-rx-display">— dBm</div>
+                <div class="osv-rx-verdict" id="osv-rx-verdict"></div>
+                <div class="osv-rx-keys">
+                  <button onclick="OpticScore.rxKey('7')">7</button><button onclick="OpticScore.rxKey('8')">8</button><button onclick="OpticScore.rxKey('9')">9</button>
+                  <button onclick="OpticScore.rxKey('4')">4</button><button onclick="OpticScore.rxKey('5')">5</button><button onclick="OpticScore.rxKey('6')">6</button>
+                  <button onclick="OpticScore.rxKey('1')">1</button><button onclick="OpticScore.rxKey('2')">2</button><button onclick="OpticScore.rxKey('3')">3</button>
+                  <button onclick="OpticScore.rxKey('+/-')">±</button><button onclick="OpticScore.rxKey('0')">0</button><button onclick="OpticScore.rxKey('.')">.</button>
+                </div>
+                <button class="osv-rx-del" onclick="OpticScore.rxKey('del')">⌫ Delete</button>
+                <button class="osv-rx-log" onclick="OpticScore.rxLog()">✓ Log Rx Reading</button>
+              </div>
             </div>
             <button class="osv-primary-btn" id="osv-result-primary-btn" onclick="OpticScore.nextPort()">Next Port →</button>
             <button class="osv-secondary-btn" id="osv-result-override-btn" onclick="OpticScore.startOverride()" style="display:none"><span class="ico ico-md ico-warning"></span> Override + Log Reason</button>
@@ -41898,6 +41928,72 @@ var OpticScore = (function() {
     return { verdict: 'red', reason: 'Form factor mismatch (' + (expected.formFactor || '?') + ' expected, ' + (scanned.formFactor || '?') + ' scanned). DO NOT SEAT.' };
   }
 
+  // ── Rx-power check (v1.14.75) ────────────────────
+  // Judge a measured Rx against the matched optic's reach thresholds (the per-reach values
+  // that live on every OPTIC_DB entry). DAC/AOC/unrecognized reaches have no Rx spec.
+  var _rxInput = '';
+  // Per-reach Rx thresholds (from OPTIC_DB). Where a reach has multiple OPTIC_DB alarm values
+  // (DR: -11.5 and -10.5), the more conservative (higher) alarm is used — bias to false-RED, never false-GREEN.
+  var REACH_RX = { SR:{min:-9.5,max:2.4,alarm:-11.5}, DR:{min:-8.5,max:0.5,alarm:-10.5}, LR:{min:-10.6,max:4.5,alarm:-14.4}, ER:{min:-24.0,max:-7.0,alarm:-26.0} };
+  function _rxReach(opticStr) {
+    if (!opticStr) return null;
+    var s = ' ' + String(opticStr).toUpperCase();
+    if (/\bDAC\b/.test(s)) return 'DAC';
+    if (/\bAOC\b/.test(s)) return 'AOC';
+    if (/PSM/.test(s)) return 'DR'; // PSM4 is DR-class
+    var m = s.match(/[^A-Z](SR|DR|LR|ER|FR|ZR)(?![A-Z])/); // reach token, tolerant of suffixes (ER4L etc)
+    return m ? m[1] : null;
+  }
+  function _rxThresholds(opticStr) {
+    var r = _rxReach(opticStr);
+    if (!r || r === 'DAC' || r === 'AOC') return null;
+    return REACH_RX[r] ? { reach: r, t: REACH_RX[r] } : null;
+  }
+  function _rxVerdict(rx, opticStr) {
+    if (rx == null || isNaN(rx)) return { verdict: 'unknown', reason: 'Enter the measured Rx power (dBm).' };
+    var th = _rxThresholds(opticStr);
+    if (!th) return { verdict: 'unknown', reason: 'No Rx spec for this optic (DAC/AOC or unrecognized reach).' };
+    var t = th.t;
+    if (rx <= t.alarm) return { verdict: 'red', reason: 'AT/BELOW ALARM (' + t.alarm + ' dBm ' + th.reach + ') — do not accept. Clean end-face; suspect break or dying laser.' };
+    if (rx < t.min)   return { verdict: 'yellow', reason: 'MARGINAL (below ' + th.reach + ' min ' + t.min + ' dBm) — clean ends, monitor FEC.' };
+    if (rx > t.max)   return { verdict: 'yellow', reason: 'HIGH (above ' + th.reach + ' max ' + t.max + ' dBm) — add in-line attenuator if link errors.' };
+    return { verdict: 'green', reason: 'IN SPEC (' + th.reach + ' ' + t.min + ' to ' + t.max + ' dBm).' };
+  }
+  function _rxOptic() { return (_lastVerdict && (_lastVerdict.scanned || _lastVerdict.expected)) || ''; }
+  function _renderRx() {
+    var disp = document.getElementById('osv-rx-display');
+    var vEl = document.getElementById('osv-rx-verdict');
+    if (disp) disp.textContent = (_rxInput === '' || _rxInput === '-') ? '— dBm' : (_rxInput + ' dBm');
+    if (!vEl) return;
+    vEl.className = 'osv-rx-verdict';
+    if (_rxInput === '' || _rxInput === '-') { vEl.textContent = ''; return; }
+    var res = _rxVerdict(parseFloat(_rxInput), _rxOptic());
+    vEl.classList.add('osv-rx-' + res.verdict);
+    vEl.textContent = res.reason;
+  }
+  function rxToggle() {
+    var p = document.getElementById('osv-rx-panel');
+    if (!p) return;
+    var open = (p.style.display === 'none' || !p.style.display);
+    p.style.display = open ? 'block' : 'none';
+    _rxInput = open ? '-' : ''; // Rx is negative dBm — prefill the sign
+    _renderRx();
+  }
+  function rxKey(k) {
+    if (k === 'del') _rxInput = _rxInput.slice(0, -1);
+    else if (k === '+/-') _rxInput = (_rxInput.charAt(0) === '-') ? _rxInput.slice(1) : ('-' + _rxInput);
+    else if (k === '.') { if (_rxInput.indexOf('.') < 0 && _rxInput !== '' && _rxInput !== '-') _rxInput += '.'; }
+    else if (_rxInput.length < 6) _rxInput += k;
+    _renderRx();
+  }
+  function rxLog() {
+    if (_rxInput === '' || _rxInput === '-' || isNaN(parseFloat(_rxInput))) { if (typeof phantomToast === 'function') phantomToast('Enter an Rx reading first', 'warn'); return; }
+    var rx = parseFloat(_rxInput);
+    var res = _rxVerdict(rx, _rxOptic());
+    _appendHistory({ ts: Date.now(), switch: _activeSwitch, port: _activePort, scannedOptic: (_lastVerdict && _lastVerdict.scanned) || '', expectedOptic: (_lastVerdict && _lastVerdict.expected) || '', verdict: 'rx-' + res.verdict, overridden: false, reason: 'RX ' + rx + ' dBm: ' + res.reason });
+    if (typeof phantomToast === 'function') phantomToast('Rx ' + rx + ' dBm logged (' + res.verdict.toUpperCase() + ')', res.verdict === 'green' ? 'ok' : 'warn');
+  }
+
   // ── Active deployment lookup ─────────────────────
   // Returns the parsed EDP for the most recently-updated deployment, or null.
   function _getActiveDeployment() {
@@ -42210,6 +42306,11 @@ var OpticScore = (function() {
     if (detailEl) detailEl.textContent = _lastVerdict.reason;
     if (expectedEl) expectedEl.textContent = _lastVerdict.expected || '(none)';
     if (scannedEl) scannedEl.textContent = _lastVerdict.scanned || '(none)';
+    // v1.14.75: reset + gate the Rx-power check — only show it for optics with an OPTIC_DB Rx spec.
+    _rxInput = '';
+    var rxPanel = document.getElementById('osv-rx-panel'); if (rxPanel) rxPanel.style.display = 'none';
+    var rxSec = document.getElementById('osv-rx-section'); if (rxSec) rxSec.style.display = _rxThresholds(_rxOptic()) ? '' : 'none';
+    _renderRx();
   }
 
   function nextPort() {
@@ -42341,6 +42442,9 @@ var OpticScore = (function() {
     lockPort: lockPort,
     handleScan: handleScan,
     nextPort: nextPort,
+    rxToggle: rxToggle,
+    rxKey: rxKey,
+    rxLog: rxLog,
     backToSwitch: backToSwitch,
     startOverride: startOverride,
     startOverrideOther: startOverrideOther,
