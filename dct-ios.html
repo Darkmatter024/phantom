@@ -10463,7 +10463,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.86';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.87';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -11167,7 +11167,7 @@ if (typeof window !== 'undefined') {
         <div class="stab" onclick="showStab(this,'fiber-sub','fs-dom')">DOM/DDM</div>
         <div class="stab" onclick="showStab(this,'fiber-sub','fs-optic');osReset()">Optic</div>
         <div class="stab" onclick="showStab(this,'fiber-sub','fs-cable')">Cables</div>
-        <div class="stab" onclick="showPage('power', getTnItem('fiber'))">Hardware</div>
+        <div class="stab" onclick="if(redesign_isOn()){showRefTab('rf-hw')}else{showPage('power', getTnItem('fiber'))}">Hardware</div>
         <div class="stab" onclick="showPage('cli', getTnItem('fiber'))">CLI</div>
         <div class="stab" id="stab-fiber-triage" onclick="showStab(this,'fiber-sub','fs-triage')">Triage</div>
       </div>
@@ -14179,17 +14179,17 @@ const INDEX = [
   {cat:'CLI',title:'NX-OS interface FEC counters',snip:'show interface ethernet counters errors fec',page:'cli'},
   {cat:'CLI',title:'Quantum-2 QM9700 ibstat perfquery',snip:'ibstat, ibnetdiscover, perfquery, ibnodes down',page:'cli'},
   {cat:'CLI',title:'ConnectX-7 BlueField-3 Linux mlxlink',snip:'ethtool, mlxlink, mst start, ip link',page:'cli'},
-  {cat:'POWER',title:'80% derate rule PDU breaker NEC 210.20',snip:'Never exceed 80% continuously — required for >3h loads',page:'power'},
-  {cat:'POWER',title:'GB300 NVL72 120kW DLC Direct Liquid',snip:'120kW rack, CDU inlet temp, flow rate, 480V 3-phase',page:'power'},
-  {cat:'POWER',title:'DLC leak response CDU manifold',snip:'Isolate CDU manifold valve, document, escalate',page:'power'},
-  {cat:'POWER',title:'3-phase load balancing PDU phase',snip:'Balance L1/L2/L3, <10% imbalance',page:'power'},
-  {cat:'POWER',title:'H100 H200 GB200 GB300 power cords PDU',snip:'C19 L6-30P IEC 60309 cord types phase mapping',page:'power'},
-  {cat:'HW',title:'H100 SXM5 GPU XID faults nvidia-smi ECC',snip:'nvidia-smi, XID errors, ECC uncorrectable, NVLink',page:'power'},
-  {cat:'HW',title:'BMC iDRAC iLO IPMI ipmitool OOB',snip:'ipmitool power sel list sdr, Redfish API',page:'power'},
-  {cat:'HW',title:'NVMe hot-swap drive replacement checklist',snip:'Slot mapping, RAID check, nvme list, lsblk, tag drive',page:'power'},
-  {cat:'HW',title:'Dell HPE Supermicro NVIDIA LED patterns',snip:'System health, PSU, DIMM, drive LED colors and meanings',page:'power'},
-  {cat:'HW',title:'Rack map elevation visual',snip:'Drop in rack elevation data, Claude renders visual rack',page:'power'},
-  {cat:'RUNBOOK',title:'Incident note template ticket format',snip:'Asset, impact, steps, root cause, resolution, parts',page:'power'},
+  {cat:'POWER',title:'80% derate rule PDU breaker NEC 210.20',snip:'Never exceed 80% continuously — required for >3h loads',page:'power',ref:'rf-hw'},
+  {cat:'POWER',title:'GB300 NVL72 120kW DLC Direct Liquid',snip:'120kW rack, CDU inlet temp, flow rate, 480V 3-phase',page:'power',ref:'rf-hw'},
+  {cat:'POWER',title:'DLC leak response CDU manifold',snip:'Isolate CDU manifold valve, document, escalate',page:'power',ref:'rf-hw'},
+  {cat:'POWER',title:'3-phase load balancing PDU phase',snip:'Balance L1/L2/L3, <10% imbalance',page:'power',ref:'rf-hw'},
+  {cat:'POWER',title:'H100 H200 GB200 GB300 power cords PDU',snip:'C19 L6-30P IEC 60309 cord types phase mapping',page:'power',ref:'rf-hw'},
+  {cat:'HW',title:'H100 SXM5 GPU XID faults nvidia-smi ECC',snip:'nvidia-smi, XID errors, ECC uncorrectable, NVLink',page:'power',ref:'rf-hw'},
+  {cat:'HW',title:'BMC iDRAC iLO IPMI ipmitool OOB',snip:'ipmitool power sel list sdr, Redfish API',page:'power',ref:'rf-hw'},
+  {cat:'HW',title:'NVMe hot-swap drive replacement checklist',snip:'Slot mapping, RAID check, nvme list, lsblk, tag drive',page:'power',ref:'rf-hw'},
+  {cat:'HW',title:'Dell HPE Supermicro NVIDIA LED patterns',snip:'System health, PSU, DIMM, drive LED colors and meanings',page:'power',ref:'rf-hw'},
+  {cat:'HW',title:'Rack map elevation visual',snip:'Drop in rack elevation data, Claude renders visual rack',page:'power',ref:'rf-hw'},
+  {cat:'RUNBOOK',title:'Incident note template ticket format',snip:'Asset, impact, steps, root cause, resolution, parts',page:'power',ref:'rf-know'},
   {cat:'RUNBOOK',title:'Change management checklist',snip:'Pre/during/post — ticket, baseline, rollback, config save',page:'power',ref:'rf-know'},
   {cat:'RUNBOOK',title:'Shift handover template P1 P2 P3 P4',snip:'Shift start checklist, handover format, severity reference',page:'power',ref:'rf-know'},
   {cat:'RUNBOOK',title:'Escalation decision tree',snip:'DLC leak, multi-rack, UPS fault, FEC uncorrectable, smoke',page:'power',ref:'rf-know'},
@@ -15638,6 +15638,13 @@ function redesign_homeKnow() {
     rb.style.display = '';
     rb.classList.add('stab-active');
   }
+  // pw-rb now lives in Reference→Know, not Power. Drop it from the pwr-sub group
+  // so Hardware (re-homed pg-power) subtab switching can't strip its stab-active
+  // and hide the Know panel. Idempotent; redesign-mode only (homeKnow early-returns
+  // in field mode, so the field pwr-sub keeps pw-rb intact).
+  if (STAB_GROUPS['pwr-sub'].indexOf('pw-rb') !== -1) {
+    STAB_GROUPS['pwr-sub'] = STAB_GROUPS['pwr-sub'].filter(function(id){ return id !== 'pw-rb'; });
+  }
 }
 document.addEventListener('DOMContentLoaded', redesign_homeKnow);
 
@@ -15661,6 +15668,31 @@ function redesign_homeOptics() {
   }
 }
 document.addEventListener('DOMContentLoaded', redesign_homeOptics);
+
+// redesign_homeHardware(): re-parent the rest of pg-power (Power / LED-GPU / Rack
+// Map / Blast Radius / Thermal subtabs + panels) into Reference→Hardware (#rf-hw).
+// Runs AFTER homeKnow (registered earlier), so pw-rb is already moved to Know and
+// dropped from pwr-sub. Hides the now-orphaned Runbook stab button, then defaults
+// the inner Power subtab. Flag-gated → FIELD mode leaves pg-power whole.
+function redesign_homeHardware() {
+  if (!redesign_isOn()) return;
+  var src = document.getElementById('pg-power');
+  var dest = document.getElementById('rf-hw');
+  if (src && dest && src.firstChild) {
+    dest.innerHTML = '';
+    while (src.firstChild) dest.appendChild(src.firstChild);
+    var strip = dest.querySelector('.subtab-strip');
+    if (strip) {
+      strip.querySelectorAll('.stab').forEach(function(b) {
+        if (/pw-rb/.test(b.getAttribute('onclick') || '')) b.style.display = 'none';
+      });
+    }
+    if (typeof initSubtab === 'function') {
+      try { initSubtab('pwr-sub', 'pw-power', '#rf-hw .subtab-strip .stab'); } catch (_) {}
+    }
+  }
+}
+document.addEventListener('DOMContentLoaded', redesign_homeHardware);
 
 function showPageSafe(pageId, sourceTabId, opsTab) {
   var safeToast = function(msg, kind) {
