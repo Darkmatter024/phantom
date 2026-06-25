@@ -1,6 +1,6 @@
 {
-  "version": "phantom-v1.14.69",
+  "version": "phantom-v1.14.70",
   "released": "2026-06-24",
-  "prevVersion": "phantom-v1.14.68",
-  "notes": "v1.14.69 - Connectivity gate: tagged the Ask Assistant (.qa-voice) launch trigger with data-requires-net=\"1\" so it dims + disables + badges OFFLINE when network is lost (was tappable offline -> dead-ends at the AI call). Added a scoped ::after override so the OFFLINE badge renders cleanly over .qa-btn's existing corner-bracket pseudo-element. Online behavior unchanged."
+  "prevVersion": "phantom-v1.14.69",
+  "notes": "v1.14.70 - Dead-code sweep (from AUDIT.md, adversarially verified): removed the retired CoreWeave mesh+calibration IIFE, the #bootCanvas BOOT DRIFT STARS IIFE, phantomBoot scramble + its dead .pl-hdr handler, the orphaned pe-cal calibration markup, 5 unreferenced helpers (getIncidentsByFaultType/getPlatforms/getOpticTypesForPlatform/getOpticDetails/power_deleteTopology), and the retired entry-screen CSS cluster (globe hero/hold-charge bar/Spectral Iris/calibration). 359 lines removed, no behavior change. Deferred: legacy handoff-sheet cluster, if(false) AUTO-SKIP block, stale comments."
 }

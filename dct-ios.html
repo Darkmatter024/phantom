@@ -10458,44 +10458,12 @@ body.has-resume-banner #boot {
 }
 #boot * { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
 
-/* ── globe hero (img + mesh + masks move as one) ── */
-#boot .pe-hero { position:fixed; top:0; left:0; width:100%; height:46%; z-index:5; }
 #boot .pe-platepic { position:fixed; inset:0; display:block; }
 #boot .pe-plate { position:fixed; inset:0; width:100%; height:100%; object-fit:cover; object-position:50% 50%; z-index:1; pointer-events:none; }
-#boot .pe-hero img { position:absolute; top:-2%; left:50%; transform:translateX(-50%); width:142%; max-width:none; display:block; }
-#boot .pe-heromask { position:absolute; inset:0; background:linear-gradient(180deg,rgba(4,6,10,0) 48%,rgba(4,6,10,.55) 72%,var(--bg) 90%); pointer-events:none; }
-#boot .pe-heromask.pe-side { background:linear-gradient(90deg,var(--bg),rgba(4,6,10,0) 14%,rgba(4,6,10,0) 86%,var(--bg)); }
-#boot .pe-hero canvas { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
-#boot #pe-mklayer { position:absolute; inset:0; pointer-events:none; }
 
 /* ── lower UI zone ── */
 #boot .pe-uz { position:fixed; left:0; width:100%; z-index:10; text-align:center; padding:0 26px; }
-#boot .pe-brand { top:46%; }
-#boot .pe-eyebrow { font-family:'Chakra Petch','Helvetica Neue',Arial,sans-serif; font-size:11px; letter-spacing:.42em; color:#aab6e8; opacity:.85; text-transform:uppercase; margin-bottom:12px; }
-#boot .pm-wordmark { display:block; width:min(82vw,360px); height:auto; margin:0 auto; aspect-ratio:1100 / 141; filter:saturate(0.7) hue-rotate(-18deg) brightness(1.04); }
-#boot .pe-sub { font-family:'Chakra Petch','Helvetica Neue',Arial,sans-serif; font-size:11px; letter-spacing:.34em; color:#8e9bd0; opacity:.8; margin-top:13px; text-transform:uppercase; }
 
-/* ── ENTRY BAR (v1.14.56, Phase 2): purple glass bar matching the app DEPLOY tile material. Reuses the
-   EXISTING hold-charge — draw() publishes the charge value (0..1) to --pe-c, and the glow-swell + bracket-
-   brighten ride it (NO parallel timer). Compact bar pinned near the bottom. Scoped #boot, pe-* prefixed. ── */
-#boot .pe-enterzone { left:0; right:0; top:auto; bottom:calc(env(safe-area-inset-bottom) + 7%); padding:0 var(--s5); }
-#boot .pe-stage { position:relative; display:flex; align-items:center; justify-content:center; width:min(360px,90vw); margin:0 auto; min-height:60px; padding:20px 24px; border-radius:22px; cursor:pointer; touch-action:none; -webkit-tap-highlight-color:transparent; --pe-c:0;
-  background:radial-gradient(120% 95% at 50% -12%, rgba(138,75,255,0.26), transparent 58%), linear-gradient(180deg, rgba(22,24,34,0.62), rgba(10,12,20,0.74));
-  -webkit-backdrop-filter:blur(16px) saturate(1.2); backdrop-filter:blur(16px) saturate(1.2);
-  border:1px solid rgba(255,255,255,0.07);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,0.11), 0 12px 34px rgba(0,0,0,0.5); }
-/* charge glow — purple swell whose strength rides the existing charge value (--pe-c, published by draw()) */
-#boot .pe-bar-glow { position:absolute; inset:0; border-radius:22px; pointer-events:none; z-index:0; opacity:calc(var(--pe-c) * 0.85); background:radial-gradient(130% 110% at 50% 125%, rgba(138,75,255,0.55) 0%, transparent 62%); }
-/* purple L-corner brackets — brighten with charge (opacity only, no animated filter/box-shadow) */
-#boot .pe-bk { position:absolute; width:17px; height:17px; border:2px solid #8a4bff; opacity:calc(0.8 + var(--pe-c) * 0.2); z-index:2; pointer-events:none; }
-#boot .pe-bk-tl { top:11px; left:11px; border-right:0; border-bottom:0; border-radius:5px 0 0 0; }
-#boot .pe-bk-tr { top:11px; right:11px; border-left:0; border-bottom:0; border-radius:0 5px 0 0; }
-#boot .pe-bk-bl { bottom:11px; left:11px; border-right:0; border-top:0; border-radius:0 0 0 5px; }
-#boot .pe-bk-br { bottom:11px; right:11px; border-left:0; border-top:0; border-radius:0 0 5px 0; }
-/* HOLD TO ENTER — doubled, purple, Chakra Petch (the JS swaps it to OPENING / ENTERING during charge) */
-#boot .pe-deploytxt { position:relative; z-index:1; margin:0; height:auto; white-space:nowrap; font-family:'Chakra Petch','Helvetica Neue',Arial,sans-serif; font-size:clamp(22px,7.5vw,30px); font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:#8a4bff; text-shadow:0 0 14px rgba(138,75,255,0.6); pointer-events:none; }
-/* keep the old SVG charge-hooks alive for draw() (it writes their attributes) but fully hidden + out of flow */
-#boot .pe-stash { position:absolute; width:0; height:0; opacity:0; overflow:hidden; pointer-events:none; }
 /* v1.14.64 tap-anywhere entry — whole-frame catcher + small lettering, no button (replaces the v1.14.56 hold-to-charge glass bar) */
 #boot .pe-tapcatch{ position:absolute; inset:0; z-index:5; width:100%; height:100%; background:transparent; border:0; margin:0; padding:0; cursor:pointer; -webkit-tap-highlight-color:transparent; -webkit-appearance:none; appearance:none; }
 /* tap cue — calibrated per orientation (John, on-device) */
@@ -10531,34 +10499,11 @@ body.has-resume-banner #boot {
 @keyframes peDiveFade { to { opacity:0; } }
 @media (prefers-reduced-motion:reduce){ #boot.pe-dive .pe-plate, #boot.pe-dive .pe-uz, #boot.pe-dive .pe-tapcatch { animation:none; } }
 
-/* ── CAL strip ── */
-#boot .pe-cal { position:fixed; bottom:22px; left:0; width:100%; text-align:center; z-index:10; display:none; }
-#boot.pe-calon .pe-cal { display:block; }
-#boot .pe-cal .pe-row { font-family:'Chakra Petch','Helvetica Neue',Arial,sans-serif; font-size:9.5px; letter-spacing:.16em; color:#3f4a5c; display:inline-flex; gap:12px; align-items:center;
-  border:1px solid #131b27; border-radius:6px; padding:7px 13px; background:#070a0f99; }
-#boot .pe-cal b { color:var(--cyan); font-weight:500; }
-#boot .pe-cal .pe-lock { color:var(--teal); }
-
-/* ── calibration mode (?cal=1 or triple-tap CAL) ── */
-#boot .pe-calbtn { font-family:'Chakra Petch','Helvetica Neue',Arial,sans-serif; font-size:9.5px; letter-spacing:.14em; color:var(--bg); background:var(--cyan); border:0; border-radius:5px; padding:5px 11px; cursor:pointer; display:none; }
-#boot.pe-calon .pe-calbtn { display:inline-block; }
-#boot .pe-handle { position:absolute; width:28px; height:28px; border-radius:50%; transform:translate(-50%,-50%); z-index:22;
-  border:1.5px solid var(--cyan); background:rgba(40,224,255,.14); cursor:grab; touch-action:none; display:none; pointer-events:auto; }
-#boot.pe-calon #pe-mklayer { pointer-events:auto; }
-#boot.pe-calon .pe-handle { display:block; }
-#boot .pe-handle.pe-sel { border-color:var(--gold); background:rgba(255,203,69,.20); z-index:23; }
-#boot .pe-handle .pe-hlbl { position:absolute; left:50%; top:-15px; transform:translateX(-50%); font-family:'Chakra Petch','Helvetica Neue',Arial,sans-serif; font-size:8px; letter-spacing:.08em; color:var(--cyan); white-space:nowrap; }
-#boot .pe-handle.pe-sel .pe-hlbl { color:var(--gold); }
-
-@media (prefers-reduced-motion:reduce){
-  /* entry bar: no idle motion (charge glow is user-driven via --pe-c) */
-  #boot .pe-mk.pe-home, #boot .pe-mk.pe-home::after { animation:none !important; }
-}
 </style>
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.69';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.70';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -10576,32 +10521,6 @@ document.addEventListener('DOMContentLoaded', function() {
   } catch (_) {}
 });
 
-// v1.14.39: landing wordmark scramble-boot -> spectral chrome (entry only, one-shot)
-function phantomBoot(el){
-  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches){
-    el.textContent = 'PHANTOM'; el.classList.add('lit'); return;   // skip scramble
-  }
-  var GLYPHS = 'ABCDEFGHJKLMNPQRSTUVWXYZ0123456789#/<>*';
-  var TARGET = 'PHANTOM', frame = 0, total = 26;
-  el.classList.remove('lit');
-  var t = setInterval(function(){
-    frame++;
-    var reveal = Math.floor((frame/total)*TARGET.length), out = '';
-    for (var i=0;i<TARGET.length;i++){
-      out += i<reveal ? TARGET[i] : GLYPHS[(Math.random()*GLYPHS.length)|0];
-    }
-    el.textContent = out;
-    if (frame>=total){
-      clearInterval(t);
-      el.textContent = 'PHANTOM';
-      setTimeout(function(){ el.classList.add('lit'); }, 200);   // fires specular sweep
-    }
-  }, 40);
-}
-window.addEventListener('load', function(){
-  var _wm = document.querySelector('.pl-hdr h1');
-  if (_wm) phantomBoot(_wm);
-});
 
 // Poll interval for reg.update() while app is in foreground. 10 min.
 const PHANTOM_UPDATE_POLL_MS = 10 * 60 * 1000;
@@ -10913,9 +10832,6 @@ if (typeof window !== 'undefined') {
 <button class="pe-tapcatch" id="pe-tapcatch" type="button" aria-label="Tap anywhere to enter PHANTOM"></button>
 <div class="pe-uz pe-enterhint" aria-hidden="true"><span class="pe-taphint" id="pe-taphint">TAP TO ENTER</span></div>
 
-<div class="pe-cal" id="pe-cal">
-  <div class="pe-row"><span id="pe-calread">CAL &#10216; LOCK &#10003; &#10217;</span> <button class="pe-calbtn" id="pe-calcopy" type="button">COPY</button></div>
-</div>
 </div>
 <script>
 /* ━━━ PHANTOM entry screen (v1.14.49) — Spectral Iris + CoreWeave mesh + calibration ━━━
@@ -10960,124 +10876,6 @@ if (typeof window !== 'undefined') {
   tap.addEventListener('click', fire);
 })();
 
-/* ===== CoreWeave light-packet mesh + calibration ===== */
-(function () {
-  var cv=document.getElementById('pe-mesh'); if(!cv) return;
-  var hero=cv.parentElement, ctx=cv.getContext('2d');
-  var bootEl=document.getElementById('boot');
-  var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var W=0,H=0,dpr=Math.min(3,window.devicePixelRatio||1);
-
-  // ?cal=1 gates BOTH the localStorage override AND persistence, so production (no flag) is always
-  // the baked NODES and immune to a stray triple-tap drag corrupting future boots.
-  var CAL_ON=(function(){try{return new URLSearchParams(location.search).get('cal')==='1';}catch(e){return false;}})();
-  var CAL_KEY='phantom.entry.cal';
-
-  // real CoreWeave metros -> normalized hero-box coords. STARTING POINT — locked truth comes from John's ?cal=1 pass.
-  var NODES={
-    AUS:[0.117,0.316,1], PLA:[0.117,0.31], MKO:[0.121,0.298], COS:[0.095,0.286], LAS:[0.072,0.292], PDX:[0.055,0.264],
-    ELL:[0.112,0.261], ORD:[0.131,0.274], SBN:[0.137,0.275], IND:[0.135,0.284], DET:[0.145,0.272], LNS:[0.166,0.281],
-    EWR:[0.171,0.279], KEN:[0.171,0.281], RIC:[0.161,0.287], INT:[0.155,0.292], ATL:[0.147,0.302], CSG:[0.147,0.306],
-    LON:[0.666,0.234], STO:[0.705,0.192], BCN:[0.659,0.287]
-  };
-  var EDGES=[
-    ['AUS','PLA'],['AUS','MKO'],['AUS','COS'],['AUS','LAS'],['AUS','ORD'],['AUS','ATL'],['AUS','EWR'],['AUS','RIC'],['AUS','LON'],
-    ['PLA','COS'],['COS','LAS'],['LAS','PDX'],['PDX','ELL'],['ELL','ORD'],['ORD','SBN'],['SBN','IND'],['IND','DET'],
-    ['DET','LNS'],['LNS','EWR'],['EWR','KEN'],['KEN','RIC'],['RIC','INT'],['INT','ATL'],['ATL','CSG'],['CSG','MKO'],
-    ['MKO','PLA'],['ORD','DET'],['IND','ATL'],['LON','STO'],['LON','BCN'],['STO','BCN'],
-    ['EWR','LON'],['RIC','LON'],['KEN','BCN'],['BCN','ATL']
-  ];
-  // override baked NODES ONLY in an explicit ?cal=1 session (never in production)
-  if(CAL_ON){try{var sv=JSON.parse(localStorage.getItem(CAL_KEY)||'null');if(sv&&typeof sv==='object'){for(var ok in sv){if(NODES[ok])NODES[ok]=sv[ok];}}}catch(e){}}
-
-  var SPEC=[[31,255,208],[40,224,255],[138,75,255],[176,60,255],[255,43,214]]; // teal->cyan->violet->magenta
-  function col(t){t=Math.max(0,Math.min(1,t));var n=SPEC.length-1,i=Math.min(n-1,Math.floor(t*n)),f=t*n-i;
-    var a=SPEC[i],b=SPEC[i+1];return [a[0]+(b[0]-a[0])*f,a[1]+(b[1]-a[1])*f,a[2]+(b[2]-a[2])*f];}
-
-  var pts={}, edges=[];
-  function build(){
-    var r=hero.getBoundingClientRect();W=r.width;H=r.height;
-    cv.width=W*dpr;cv.height=H*dpr;cv.style.width=W+'px';cv.style.height=H+'px';ctx.setTransform(dpr,0,0,dpr,0,0);
-    pts={};for(var k in NODES){pts[k]=[NODES[k][0]*W,NODES[k][1]*H,NODES[k][2]||0];}
-    var Cx=0.5*W, Cy=1.45*H;
-    edges=EDGES.map(function(pair){var a=pair[0],b=pair[1];var A=pts[a],B=pts[b];var mx=(A[0]+B[0])/2,my=(A[1]+B[1])/2;
-      var nx=mx-Cx,ny=my-Cy;var nl=Math.hypot(nx,ny)||1;nx/=nl;ny/=nl;
-      var d=Math.hypot(B[0]-A[0],B[1]-A[1]);var bow=d*0.22+8;
-      return {A:A,B:B,cx:mx+nx*bow,cy:my+ny*bow,c:col((A[0]+B[0])/2/W),d:d};});
-  }
-  build();window.addEventListener('resize',function(){build();if(reduce)drawStatic();});
-
-  function qpt(e,t){var u=1-t;return [u*u*e.A[0]+2*u*t*e.cx+t*t*e.B[0], u*u*e.A[1]+2*u*t*e.cy+t*t*e.B[1]];}
-
-  var packets=[];var TARGET=reduce?0:44;
-  function spawn(){var ei=Math.random()<0.45?Math.floor(Math.random()*9):Math.floor(Math.random()*edges.length);
-    packets.push({e:edges[ei],t:0,sp:0.004+Math.random()*0.006,dir:Math.random()<0.5?1:-1});}
-
-  function frame(){
-    if(bootEl&&bootEl.style.display==='none')return; // entered the app -> stop animating a hidden canvas (battery)
-    ctx.clearRect(0,0,W,H);
-    ctx.lineWidth=0.7;
-    for(var ai=0;ai<edges.length;ai++){var e=edges[ai];ctx.beginPath();ctx.moveTo(e.A[0],e.A[1]);ctx.quadraticCurveTo(e.cx,e.cy,e.B[0],e.B[1]);
-      ctx.strokeStyle='rgba('+(e.c[0]|0)+','+(e.c[1]|0)+','+(e.c[2]|0)+',0.05)';ctx.stroke();}
-    for(var k in pts){var p=pts[k];
-      if(p[2]){var pr=1.2+Math.sin(Date.now()/420)*0.4;
-        ctx.beginPath();ctx.arc(p[0],p[1],pr+1.6,0,7);ctx.fillStyle='rgba(255,203,69,0.14)';ctx.fill();
-        ctx.beginPath();ctx.arc(p[0],p[1],pr,0,7);ctx.fillStyle='rgba(255,203,69,0.9)';ctx.fill();}
-      else{ctx.beginPath();ctx.arc(p[0],p[1],0.7,0,7);ctx.fillStyle='rgba(150,200,255,0.35)';ctx.fill();}}
-    while(packets.length<TARGET)spawn();
-    for(var i=packets.length-1;i>=0;i--){var pk=packets[i];pk.t+=pk.sp;
-      if(pk.t>=1){packets.splice(i,1);continue;}
-      var t=pk.dir>0?pk.t:1-pk.t;var xy=qpt(pk.e,t);var x=xy[0],y=xy[1];
-      var tt=Math.max(0,Math.min(1,(pk.dir>0?pk.t-0.05:1-(pk.t-0.05))));var tl=qpt(pk.e,tt);
-      var c=pk.e.c;
-      var g=ctx.createLinearGradient(tl[0],tl[1],x,y);
-      g.addColorStop(0,'rgba('+(c[0]|0)+','+(c[1]|0)+','+(c[2]|0)+',0)');
-      g.addColorStop(1,'rgba('+(c[0]|0)+','+(c[1]|0)+','+(c[2]|0)+',0.32)');
-      ctx.strokeStyle=g;ctx.lineWidth=0.9;ctx.beginPath();ctx.moveTo(tl[0],tl[1]);ctx.lineTo(x,y);ctx.stroke();
-      ctx.beginPath();ctx.arc(x,y,1.8,0,7);ctx.fillStyle='rgba('+(c[0]|0)+','+(c[1]|0)+','+(c[2]|0)+',0.16)';ctx.fill();
-      ctx.beginPath();ctx.arc(x,y,0.85,0,7);ctx.fillStyle='rgba(235,250,255,0.85)';ctx.fill();}
-    requestAnimationFrame(frame);
-  }
-  function drawStatic(){if(bootEl&&bootEl.style.display==='none')return;ctx.clearRect(0,0,W,H);for(var ai=0;ai<edges.length;ai++){var e=edges[ai];ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(e.A[0],e.A[1]);
-    ctx.quadraticCurveTo(e.cx,e.cy,e.B[0],e.B[1]);ctx.strokeStyle='rgba('+(e.c[0]|0)+','+(e.c[1]|0)+','+(e.c[2]|0)+',0.18)';ctx.stroke();}}
-
-  /* ===== calibration mode (§3) — drag nodes onto cities, COPY the locked coords ===== */
-  var calRead=document.getElementById('pe-calread'), calCopy=document.getElementById('pe-calcopy'), mkl=document.getElementById('pe-mklayer');
-  var handles={}, selCode=null, calActive=false;
-  function fmt(n){return (Math.round(n*1000)/1000).toFixed(3);}
-  function serialize(){var o={};for(var k in NODES){var v=NODES[k];o[k]=v[2]?[+fmt(v[0]),+fmt(v[1]),1]:[+fmt(v[0]),+fmt(v[1])];}return o;}
-  function updateRead(){if(!calRead)return;if(selCode){var v=NODES[selCode];calRead.innerHTML=selCode+'&nbsp; x <b>'+fmt(v[0])+'</b>&nbsp; y <b>'+fmt(v[1])+'</b>';}else{calRead.textContent='CAL — drag a node onto its city';}}
-  function persist(){if(!CAL_ON)return;try{localStorage.setItem(CAL_KEY,JSON.stringify(serialize()));}catch(e){}} // only ?cal=1 sessions write
-  function placeHandle(code){var h=handles[code],v=NODES[code];if(!h)return;h.style.left=(v[0]*100)+'%';h.style.top=(v[1]*100)+'%';}
-  function enterCal(){
-    if(calActive||!mkl||!bootEl)return;calActive=true;bootEl.classList.add('pe-calon');
-    Object.keys(NODES).forEach(function(code){
-      var h=document.createElement('div');h.className='pe-handle'+(NODES[code][2]?' pe-home':'');
-      var lb=document.createElement('span');lb.className='pe-hlbl';lb.textContent=code;h.appendChild(lb);
-      mkl.appendChild(h);handles[code]=h;placeHandle(code);
-      var dragging=false;
-      h.addEventListener('pointerdown',function(e){e.preventDefault();e.stopPropagation();dragging=true;selCode=code;
-        Object.keys(handles).forEach(function(c){handles[c].classList.toggle('pe-sel',c===code);});updateRead();
-        if(e.pointerId!=null&&h.setPointerCapture){try{h.setPointerCapture(e.pointerId);}catch(_){}}});
-      h.addEventListener('pointermove',function(e){if(!dragging)return;var r=hero.getBoundingClientRect();
-        var nx=Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)),ny=Math.max(0,Math.min(1,(e.clientY-r.top)/r.height));
-        NODES[code][0]=nx;NODES[code][1]=ny;placeHandle(code);build();if(reduce)drawStatic();updateRead();});
-      h.addEventListener('pointerup',function(){if(!dragging)return;dragging=false;persist();});
-      h.addEventListener('pointercancel',function(){dragging=false;});
-    });
-    updateRead();
-  }
-  if(calCopy){calCopy.addEventListener('click',function(e){e.stopPropagation();var j=JSON.stringify(serialize());
-    function ok(){calCopy.textContent='COPIED';setTimeout(function(){calCopy.textContent='COPY';},1200);}
-    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(j).then(ok,function(){calCopy.textContent='FAIL';});}
-    else{try{var ta=document.createElement('textarea');ta.value=j;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.focus();ta.select();document.execCommand('copy');document.body.removeChild(ta);ok();}catch(err){calCopy.textContent='FAIL';}}});}
-  // triple-tap the CAL strip to enter calibration on-device (no URL bar in the installed PWA)
-  var calEl=document.getElementById('pe-cal'), taps=0, tapT=0;
-  if(calEl){calEl.addEventListener('click',function(){var now=Date.now();if(now-tapT>600)taps=0;tapT=now;taps++;if(taps>=3){taps=0;enterCal();}});}
-  if(CAL_ON)enterCal();
-
-  if(reduce&&!CAL_ON){drawStatic();}else{requestAnimationFrame(frame);}
-})();
 
 </script>
 
@@ -14449,17 +14247,6 @@ function getPDUConfig(typeKey) {
   return PDU_CONFIGS[typeKey] || null;
 }
 
-/**
- * getIncidentsByFaultType(faultType, fallbackFaultType)
- * Returns the first INCIDENTS entry matching faultType,
- * falling back to fallbackFaultType if provided.
- */
-function getIncidentsByFaultType(faultType, fallbackFaultType) {
-  return INCIDENTS.find(i =>
-    i.faultType === faultType ||
-    (fallbackFaultType && i.faultType === fallbackFaultType)
-  ) || null;
-}
 
 /**
  * platformExists(platformKey)
@@ -14797,40 +14584,6 @@ function row(key, val) {
   return `<div class="os-result-row"><div class="os-rkey">${key}</div><div class="os-rval">${val}</div></div>`;
 }
 
-/**
- * getPlatforms()
- * Returns array of { key, label, cage, speed } for every platform in OPTIC_DB.
- * Excludes the 'summary' key if present (not a real platform).
- */
-function getPlatforms() {
-  return Object.entries(OPTIC_DB)
-    .filter(([k]) => k !== 'summary')
-    .map(([key, p]) => ({ key, label: p.platform, cage: p.cage, speed: p.speed }));
-}
-
-/**
- * getOpticTypesForPlatform(platformKey)
- * Returns array of optic type keys that exist for this platform
- * e.g. ['dac','aoc','sr','dr','lr','er','zr']
- * Returns [] if platform not found.
- */
-function getOpticTypesForPlatform(platformKey) {
-  const p = OPTIC_DB[platformKey];
-  if (!p || !p.results) return [];
-  return Object.keys(p.results);
-}
-
-/**
- * getOpticDetails(platformKey, opticTypeKey)
- * Returns the full detail object for one optic type on one platform.
- * Fields: optic, pn, fiber, connector, dom, notes, rxMin?, rxMax?, alarmLow?
- * Returns null if not found.
- */
-function getOpticDetails(platformKey, opticTypeKey) {
-  const p = OPTIC_DB[platformKey];
-  if (!p || !p.results) return null;
-  return p.results[opticTypeKey] || null;
-}
 
 // ━━━ DCT-04: GLOBAL ERROR HANDLER ━━━
 (function() {
@@ -20675,14 +20428,6 @@ function power_saveTopology(deployId, topo) {
   return safeStore(POWER_TOPO_KEY, JSON.stringify(all));
 }
 
-// Delete topology for a deployment. Returns true on success.
-function power_deleteTopology(deployId) {
-  if (!deployId) return false;
-  var all = safeParse(localStorage.getItem(POWER_TOPO_KEY) || '{}', {});
-  if (!all || typeof all !== 'object') all = {};
-  delete all[deployId];
-  return safeStore(POWER_TOPO_KEY, JSON.stringify(all));
-}
 
 // Parse CSV string into a topology object.
 // Format (one row per rack):
@@ -36767,110 +36512,6 @@ function vaAskAgain() {
   window.addEventListener('resize', () => { resize(); initNodes(); });
 })();
 
-// ━━━ BOOT DRIFT STARS (v11) ━━━
-// Calm ambient layer behind boot content. Slow linear drift, small dots,
-// low opacity, per-star twinkle. Stops cleanly when boot collapses.
-// Honors prefers-reduced-motion. No streaks, no shadows, no center radial.
-(function() {
-  const canvas = document.getElementById('bootCanvas');
-  if (!canvas) return;
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
-  function resize() {
-    canvas.width  = window.innerWidth;
-    canvas.height = window.innerHeight;
-  }
-  resize();
-
-  const ctx = canvas.getContext('2d');
-  let W = canvas.width, H = canvas.height;
-  const COUNT = 50;
-  const stars = [];
-
-  function rand(min, max) { return min + Math.random() * (max - min); }
-
-  function makeStar(seedX, seedY) {
-    const r = Math.random();
-    let color;
-    if (r > 0.97)      color = 'rgba(155,89,255,0.85)';   // rare violet
-    else if (r > 0.78) color = 'rgba(92,242,255,0.85)';   // cyan accent
-    else               color = 'rgba(220,230,245,0.80)';  // mostly white
-    return {
-      x: (typeof seedX === 'number') ? seedX : rand(0, W),
-      y: (typeof seedY === 'number') ? seedY : rand(0, H),
-      r: rand(0.5, 1.7),
-      vx: rand(-0.08, 0.08),
-      vy: rand(-0.08, 0.08),
-      color: color,
-      twinkleOffset: rand(0, Math.PI * 2),
-      twinkleSpeed: rand(0.0006, 0.0014),
-      baseAlpha: rand(0.65, 1.0)
-    };
-  }
-
-  for (let i = 0; i < COUNT; i++) stars.push(makeStar());
-
-  let running = true;
-  let rafId = null;
-
-  // P1-1: Cancel rAF explicitly on boot collapse so the GPU loop stops cold.
-  const bootEl = document.getElementById('boot');
-  if (bootEl) {
-    const observer = new MutationObserver(() => {
-      if (bootEl.style.display === 'none') {
-        running = false;
-        cancelAnimationFrame(rafId);
-        ctx.clearRect(0, 0, W, H);
-        observer.disconnect();
-      }
-    });
-    observer.observe(bootEl, { attributes: true, attributeFilter: ['style'] });
-  }
-
-  // Resize handler — v9.7 was missing this, so canvas got stretched
-  // when the window changed. Recompute and clamp existing stars in-bounds.
-  window.addEventListener('resize', function() {
-    resize();
-    W = canvas.width; H = canvas.height;
-    for (let i = 0; i < stars.length; i++) {
-      if (stars[i].x > W) stars[i].x = rand(0, W);
-      if (stars[i].y > H) stars[i].y = rand(0, H);
-    }
-  });
-
-  const startTime = performance.now();
-
-  function animate(now) {
-    if (!running) return;
-    const elapsed = now - startTime;
-    // 800ms global fade-in so stars don't pop in on boot
-    const globalAlpha = Math.min(1, elapsed / 800);
-
-    ctx.clearRect(0, 0, W, H);
-
-    for (let i = 0; i < stars.length; i++) {
-      const s = stars[i];
-      s.x += s.vx;
-      s.y += s.vy;
-      // Wrap to opposite edge — continuous drift field
-      if (s.x < -2)     s.x = W + 2;
-      else if (s.x > W + 2) s.x = -2;
-      if (s.y < -2)     s.y = H + 2;
-      else if (s.y > H + 2) s.y = -2;
-
-      // Per-star slow opacity twinkle
-      const twinkle = 0.7 + 0.3 * Math.sin(s.twinkleOffset + now * s.twinkleSpeed);
-      ctx.globalAlpha = s.baseAlpha * twinkle * globalAlpha;
-      ctx.fillStyle = s.color;
-      ctx.beginPath();
-      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    ctx.globalAlpha = 1;
-    rafId = requestAnimationFrame(animate);
-  }
-  rafId = requestAnimationFrame(animate);
-})();
 // ━━━ AUTO-SKIP BOOT ON REPEAT VISITS ━━━
 // v10: DISABLED — boot screen shows every time. The status check is useful
 // every session, not just the first. To re-enable, change `false` back to
