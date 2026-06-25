@@ -10463,7 +10463,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.87';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.88';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -15693,6 +15693,36 @@ function redesign_homeHardware() {
   }
 }
 document.addEventListener('DOMContentLoaded', redesign_homeHardware);
+
+// redesign_homeCompass(): fold the Cage Nut Compass (pg-compass) into Hardware as a
+// 'Cage Nut' subtab. Builds a stab on the re-homed Hardware strip + a #pw-compass
+// BLOCK panel (class ref-sub, NOT the pwr-sub grid — it's one tool, not cards) and
+// MOVES the compass content in, dropping its Back-to-Triage header (the strip is the
+// nav now). compass_render() targets global ids so it works in the new home. Runs
+// after homeHardware (strip must exist). Flag-gated → FIELD mode leaves pg-compass whole.
+function redesign_homeCompass() {
+  if (!redesign_isOn()) return;
+  var src = document.getElementById('pg-compass');
+  var dest = document.getElementById('rf-hw');
+  var strip = dest ? dest.querySelector('.subtab-strip') : null;
+  if (!src || !dest || !strip || document.getElementById('pw-compass')) return;
+  var panel = document.createElement('div');
+  panel.className = 'ref-sub';
+  panel.id = 'pw-compass';
+  Array.prototype.slice.call(src.children).forEach(function(ch) {
+    if (ch.classList && ch.classList.contains('cn-header')) return;  // drop Back-to-Triage header
+    panel.appendChild(ch);
+  });
+  dest.appendChild(panel);
+  STAB_GROUPS['pwr-sub'].push('pw-compass');
+  var btn = document.createElement('div');
+  btn.className = 'stab';
+  btn.id = 'stab-pw-compass';
+  btn.textContent = 'Cage Nut';
+  btn.setAttribute('onclick', "showStab(this,'pwr-sub','pw-compass');compass_render()");
+  strip.appendChild(btn);
+}
+document.addEventListener('DOMContentLoaded', redesign_homeCompass);
 
 function showPageSafe(pageId, sourceTabId, opsTab) {
   var safeToast = function(msg, kind) {
@@ -41917,7 +41947,7 @@ function compass_render() {
   if (up)   up.disabled   = (compassState.startU >= COMPASS_RACK_HEIGHT - compassState.chassisH + 1);
 
   // Chassis segmented control active state
-  var chassisBtns = document.querySelectorAll('#pg-compass .cn-chassis-btn');
+  var chassisBtns = document.querySelectorAll('.cn-chassis-btn');  // global: compass content may be re-homed to Reference→Hardware
   for (var i = 0; i < chassisBtns.length; i++) {
     var hAttr = parseInt(chassisBtns[i].getAttribute('data-h'), 10);
     if (hAttr === compassState.chassisH) chassisBtns[i].classList.add('active');
@@ -41982,6 +42012,14 @@ function compass_render() {
 
 function goCompass() {
   compass_loadState();
+  if (redesign_isOn()) {
+    // Redesign: Cage Nut is a Hardware subtab (redesign_homeCompass), not a page.
+    showRefTab('rf-hw');
+    var cb = document.getElementById('stab-pw-compass');
+    if (cb) showStab(cb, 'pwr-sub', 'pw-compass');
+    setTimeout(compass_render, 0);
+    return;
+  }
   showPage('compass', null);
   // Defer render until after showPage applies the .active class — DOM
   // queries inside compass_render() target #pg-compass children.
