@@ -325,7 +325,7 @@ body {
 #app,
 .sop-sheet, .sop-sheet-inner,
 .va-sheet, .ge-sheet,
-.handoff-sheet, #hw-matrix-sheet,
+#hw-matrix-sheet,
 .qr-overlay, #rapid-scan-overlay,
 .pt-sheet, .audit-detail-sheet,
 .rm-sheet, .bd-sheet, .deploy-sheet {
@@ -9175,7 +9175,6 @@ textarea.hud-input {
 
   /* Handoff and SOP sheets already width:100% — add desktop max-width */
   .sop-sheet-inner  { max-width: 900px; margin: 0 auto; }
-  .handoff-sheet-inner { max-width: 900px; margin: 0 auto; }
 }
 
 /* ── 1400px: Ultra-wide — center content column via padding ──
@@ -10503,7 +10502,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.70';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.71';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -13490,29 +13489,6 @@ if (typeof window !== 'undefined') {
 
 
   <!-- ━━━ DCT-13: SHIFT HANDOFF SHEET ━━━ -->
-  <div id="handoff-sheet" style="display:none;position:fixed;inset:0;z-index:8800;-webkit-overflow-scrolling:touch;background:rgba(0,0,0,0.7);backdrop-filter:blur(6px);overflow-y:auto;padding:env(safe-area-inset-top,20px) 0 env(safe-area-inset-bottom,20px)">
-    <div style="background:var(--surface-2,#0d1f2d);min-height:100%;max-width:480px;margin:0 auto;padding:20px 16px 40px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-        <div>
-          <div style="font-family:var(--mono);font-size: var(--fs-micro);letter-spacing:2px;color:var(--cyan)">PHANTOM OPS</div>
-          <div style="font-family:var(--raj);font-size:22px;font-weight:700;color:var(--white)">Shift Handoff</div>
-        </div>
-        <button onclick="phantomHandoffClose()" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:var(--slate);font-family:var(--mono);font-size: var(--fs-caption);padding:8px 14px;border-radius:8px;cursor:pointer">CLOSE</button>
-      </div>
-
-      <div style="font-family:var(--mono);font-size: var(--fs-micro);letter-spacing:1.5px;color:var(--slate);margin-bottom:6px">SHIFT NOTES</div>
-      <textarea id="handoff-notes" rows="5" placeholder="Write handoff notes for incoming tech…&#10;&#10;• Open issues&#10;• In-progress changes&#10;• Things to watch" style="width:100%;box-sizing:border-box;background:rgba(0,0,0,0.35);border:1px solid rgba(92,242,255,0.15);border-radius:8px;color:var(--white);font-family:var(--raj);font-size: var(--fs-body);padding:10px 12px;outline:none;resize:vertical;margin-bottom:4px" oninput="safeStore('phantom_handoff_notes',this.value)"></textarea>
-      <div style="font-family:var(--raj);font-size: var(--fs-caption);color:var(--slate);margin-bottom:16px">Auto-saved to this device.</div>
-
-      <div style="font-family:var(--mono);font-size: var(--fs-micro);letter-spacing:1.5px;color:var(--slate);margin-bottom:8px">OPEN BURNDOWN JOBS</div>
-      <div id="handoff-burndown" style="margin-bottom:16px"></div>
-
-      <div style="font-family:var(--mono);font-size: var(--fs-micro);letter-spacing:1.5px;color:var(--slate);margin-bottom:8px">RECENT GHOST ECHO</div>
-      <div id="handoff-ghost" style="margin-bottom:20px"></div>
-
-      <button onclick="phantomHandoffExport()" style="width:100%;background:rgba(92,242,255,0.08);border:1px solid rgba(92,242,255,0.25);color:var(--cyan);font-family:var(--mono);font-size: var(--fs-micro);letter-spacing:1.5px;padding:12px;border-radius:var(--hud-r12);cursor:pointer">↗ EXPORT HANDOFF REPORT</button>
-    </div>
-  </div>
 
   <!-- ━━━ HW MATRIX SHEET ━━━ -->
   <div id="hw-matrix-sheet" role="dialog" aria-modal="true" aria-label="Hardware Reference Matrix">
@@ -15362,14 +15338,6 @@ function nav_back() {
       var s = classSheets[i];
       var el = document.getElementById(s.id);
       if (el && el.classList.contains(s.cls)) { s.close(); return; }
-    }
-    var styleSheets = [
-      { id: 'handoff-sheet',   close: function() { if (typeof phantomHandoffClose === 'function') phantomHandoffClose(); } }
-    ];
-    for (var j = 0; j < styleSheets.length; j++) {
-      var s2 = styleSheets[j];
-      var el2 = document.getElementById(s2.id);
-      if (el2 && el2.style.display && el2.style.display !== 'none') { s2.close(); return; }
     }
   } catch (e) { /* fall through to history.back */ }
 
@@ -36988,7 +36956,6 @@ const OPTIC_INV_KEY = 'phantom_optic_inventory';
 // phantom_force_lead_v1, phantom_identity, __phantom_health)
 // stay inline — naming a one-shot removeItem call is cosmetic.
 const BURNDOWN_KEY        = 'dct_burndown_v1';
-const HANDOFF_NOTES_KEY   = 'phantom_handoff_notes';
 const RACK_VIEWER_LAST_KEY = 'phantom_rack_viewer_last';
 
 const _opticStore = DataStore(OPTIC_INV_KEY);
@@ -39541,104 +39508,6 @@ const AUDIT = (() => {
 
 // qrAddToAudit — removed: zombie function, never called from UI.
 
-// ━━━ DCT-13: SHIFT HANDOFF ━━━
-function phantomHandoffOpen() {
-  // Smart routing: if active/paused deployment exists, go to Stage 9 handoff generator.
-  // Otherwise fall back to the legacy free-form notes sheet.
-  var deploys = deploy_loadAll().filter(function(d) { return d.status === 'active' || d.status === 'paused'; });
-  deploys.sort(function(a, b) { return b.updated - a.updated; });
-  if (deploys.length > 0) {
-    showPage('sop', getTnItem('sop'), 'deploy');
-    setTimeout(function() { handoff_showGenerator(deploys[0].id); }, 80);
-  } else {
-    phantomHandoffOpenLegacy();
-  }
-}
-
-function phantomHandoffOpenLegacy() {
-  const sheet = document.getElementById('handoff-sheet');
-  sheet.style.display = 'block';
-
-  // Restore notes
-  const notes = document.getElementById('handoff-notes');
-  if (notes) notes.value = localStorage.getItem(HANDOFF_NOTES_KEY) || '';
-
-  // Open burndown jobs
-  const bdEl = document.getElementById('handoff-burndown');
-  if (bdEl) {
-    const jobs = safeParse(localStorage.getItem(BURNDOWN_KEY) || '[]', []).filter(j => !j.archived);
-    if (!jobs.length) {
-      bdEl.innerHTML = '<div style="font-family:var(--raj);font-size:12px;color:var(--slate);padding:8px 0">No open jobs.</div>';
-    } else {
-      bdEl.innerHTML = jobs.map(function(j) {
-        const total = j.ports ? j.ports.length : 0;
-        const done = j.ports ? j.ports.filter(function(p){return p.status==='done';}).length : 0;
-        const pct = total ? Math.round(done/total*100) : 0;
-        const priColor = {P1:'#ff3b3b',P2:'#ffd60a',P3:'#5cf2ff'}[j.priority||'P3']||'#5cf2ff';
-        return '<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:8px;padding:10px 12px;margin-bottom:6px">' +
-          '<div style="display:flex;gap: 8px;align-items:center;margin-bottom:4px">' +
-          '<span style="font-family:var(--raj);font-size: var(--fs-body);font-weight:600;color:var(--white);flex:1">' + escHtml(j.name) + '</span>' +
-          '<span style="font-family:var(--mono);font-size: var(--fs-caption);color:' + priColor + '">' + (j.priority||'P3') + '</span></div>' +
-          '<div style="font-family:var(--raj);font-size:11px;color:var(--slate)">Owner: ' + escHtml(j.owner||'—') + ' · ' + done + '/' + total + ' ports (' + pct + '%)</div></div>';
-      }).join('');
-    }
-  }
-
-  // Recent Ghost Echo
-  const geEl = document.getElementById('handoff-ghost');
-  if (geEl) {
-    // Pull from Ghost Echo's actual store (phantom_ghost_echo_v1). Outgoing
-    // layer = quirks captured on this device. Sorted newest-first.
-    const _geCache = (typeof ge_load === 'function') ? ge_load() : { outgoing: [] };
-    const items = (_geCache.outgoing || [])
-      .slice()
-      .sort(function(a, b) { return (b.ts || 0) - (a.ts || 0); })
-      .slice(0, 5);
-    if (!items.length) {
-      geEl.innerHTML = '<div style="font-family:var(--raj);font-size:12px;color:var(--slate);padding:8px 0">No recent Ghost Echo entries.</div>';
-    } else {
-      geEl.innerHTML = items.map(function(item) {
-        var hw    = (item.scope && item.scope.hardwareType) || 'generic';
-        var phase = (item.scope && item.scope.phase)        || 'unknown';
-        var label = hw + ' / ' + phase;
-        return '<div style="background:rgba(155,89,255,0.06);border:1px solid rgba(155,89,255,0.15);border-radius:8px;padding:10px 12px;margin-bottom:6px">' +
-          '<div style="font-family:var(--raj);font-size:12px;font-weight:600;color:#d4a8ff">' + escHtml(label) + '</div>' +
-          '<div style="font-family:var(--raj);font-size:11px;color:var(--slate)">' + new Date(item.ts||0).toLocaleString() + '</div>' +
-          (item.text ? '<div style="font-family:var(--raj);font-size:11px;color:#5cf2ff;margin-top:3px">' + escHtml(item.text) + '</div>' : '') + '</div>';
-      }).join('');
-    }
-  }
-}
-
-function phantomHandoffClose() {
-  document.getElementById('handoff-sheet').style.display = 'none';
-}
-
-function phantomHandoffExport() {
-  const notes = document.getElementById('handoff-notes')?.value || '';
-  const jobs = safeParse(localStorage.getItem(BURNDOWN_KEY) || '[]', []).filter(j => !j.archived);
-  // Pull from Ghost Echo's actual store. Outgoing layer, newest-first, top 10.
-  const _geCache = (typeof ge_load === 'function') ? ge_load() : { outgoing: [] };
-  const ghost = (_geCache.outgoing || [])
-    .slice()
-    .sort(function(a, b) { return (b.ts || 0) - (a.ts || 0); })
-    .slice(0, 10);
-  const report = {
-    exported: new Date().toISOString(),
-    type: 'PHANTOM Shift Handoff',
-    notes: notes,
-    openBurndown: jobs,
-    recentGhostEcho: ghost,
-    vendorAudit: (function() {
-      try {
-        var a = (typeof deploy_getActive === 'function') ? deploy_getActive() : null;
-        var rk = (a && a.id && typeof deploy_loadRacks === 'function') ? deploy_loadRacks(a.id) : [];
-        return (typeof _auditWalk_rollup === 'function') ? _auditWalk_rollup(rk) : null;
-      } catch (_) { return null; }
-    })()
-  };
-  downloadJSON(report, 'phantom-handoff');
-}
 
 // ━━━ DCT-12: QR DEEP-LINK ━━━
 function qrDeepLink(val) {

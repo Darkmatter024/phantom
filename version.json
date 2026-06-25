@@ -1,6 +1,6 @@
 {
-  "version": "phantom-v1.14.70",
+  "version": "phantom-v1.14.71",
   "released": "2026-06-24",
-  "prevVersion": "phantom-v1.14.69",
-  "notes": "v1.14.70 - Dead-code sweep (from AUDIT.md, adversarially verified): removed the retired CoreWeave mesh+calibration IIFE, the #bootCanvas BOOT DRIFT STARS IIFE, phantomBoot scramble + its dead .pl-hdr handler, the orphaned pe-cal calibration markup, 5 unreferenced helpers (getIncidentsByFaultType/getPlatforms/getOpticTypesForPlatform/getOpticDetails/power_deleteTopology), and the retired entry-screen CSS cluster (globe hero/hold-charge bar/Spectral Iris/calibration). 359 lines removed, no behavior change. Deferred: legacy handoff-sheet cluster, if(false) AUTO-SKIP block, stale comments."
+  "prevVersion": "phantom-v1.14.70",
+  "notes": "v1.14.71 - Removed the orphaned legacy shift-handoff cluster (deferred from v1.14.70): static #handoff-sheet markup, phantomHandoffOpen/Legacy/Close/Export, the nav_back styleSheets close-registry entry, HANDOFF_NOTES_KEY, and dead .handoff-sheet/.handoff-sheet-inner CSS. The live Shift Handoff (handoff_quick -> handoff_showGenerator + _handoffModal overlay) is untouched. Side benefit: resolves the duplicate id=handoff-sheet. 131 lines removed, no behavior change."
 }
