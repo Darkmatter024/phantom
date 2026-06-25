@@ -1,6 +1,6 @@
 {
-  "version": "phantom-v1.14.82",
+  "version": "phantom-v1.14.83",
   "released": "2026-06-25",
-  "prevVersion": "phantom-v1.14.81",
-  "notes": "v1.14.82 - Command Center redesign Step 1 (scaffold, no re-home): flag-gated 3-way mode toggle (Command/Work/Ref) reusing the .subtab-strip/.stab component, plus three empty page shells (pg-cmd/pg-work/pg-ref). Hidden behind a redesign flag (?redesign=1, persisted to localStorage) so the live 5-tab field nav is completely unaffected. Routes through the existing showPage() plumbing. Nothing re-homed; both nav systems coexist. First step of the staged migration in MASTER SPEC sec 9."
+  "prevVersion": "phantom-v1.14.82",
+  "notes": "v1.14.83 - Redesign Step 1 correction: mode toggle now TAKES OVER the viewport instead of overlaying. redesign_initToggle() hides the live 5-tab nav and calls showMode('command') so pg-cmd replaces pg-triage (the profile bar + Today dashboard live inside pg-triage and hide with it). Plus two fixes the symptom masked: (1) showMode suppresses nav_push via _navInternalCall so the scaffold never contaminates session-restore state (otherwise turning redesign off would replay p:'cmd' onto the live app); (2) the 700ms session-restore early-returns while the redesign flag is on, so it can't race the takeover or pop a resume banner over the scaffold. Still nothing re-homed - shells remain empty stubs. Flag-gated (?redesign=1); field app untouched."
 }

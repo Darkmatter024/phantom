@@ -10459,7 +10459,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.82';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.83';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -15495,6 +15495,11 @@ function _session_startFresh() {
 
 (function _session_bootRestore() {
   function restore() {
+    // Redesign preview owns the viewport — skip session-restore entirely so it
+    // can't flip away from pg-cmd or pop a resume banner over the scaffold. The
+    // user's real session is left untouched (showMode suppresses nav writes), so
+    // it resumes normally once redesign is turned off.
+    try { if (localStorage.getItem('phantom_redesign') === '1') return; } catch (_) {}
     var s = _session_read();
     if (!s || !s.p) return;
     // Skip restoring if it's just the default page with no deeper context.
@@ -15555,7 +15560,12 @@ function showMode(mode) {
   var map = { command: 'cmd', work: 'work', ref: 'ref' };
   var pid = map[mode];
   if (!pid) return;
-  showPage(pid, null);
+  // Scaffold pages must NOT write nav/session-restore state. Without this,
+  // showPage()'s nav_push persists p:'cmd', which a later normal-mode boot
+  // would replay — flipping the live app onto the empty stub. Suppress via
+  // the existing _navInternalCall guard (same idiom as the sop→showOpsTab call).
+  _navInternalCall = true;
+  try { showPage(pid, null); } finally { _navInternalCall = false; }
   ['command', 'work', 'ref'].forEach(function(m) {
     var el = document.getElementById('mode-' + m);
     if (el) el.classList.toggle('active', m === mode);
@@ -15572,6 +15582,14 @@ function redesign_initToggle() {
   if (!redesign_isOn()) return;
   var t = document.getElementById('mode-toggle');
   if (t) t.style.display = 'flex';
+  // Take over the viewport: hide the live 5-tab field nav and switch into the
+  // redesign view. showMode('command') activates pg-cmd and deactivates the
+  // default pg-triage, so the profile bar + Today dashboard (which live inside
+  // pg-triage) hide with it — no positioning change needed. On ?redesign=0 the
+  // flag clears; a clean reload restores the nav + pg-triage by default.
+  var nav = document.querySelector('.tab-nav');
+  if (nav) nav.style.display = 'none';
+  try { showMode('command'); } catch (e) { try { console.warn('[redesign] takeover failed', e); } catch (_) {} }
 }
 document.addEventListener('DOMContentLoaded', redesign_initToggle);
 
