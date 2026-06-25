@@ -1,6 +1,6 @@
 {
-  "version": "phantom-v1.14.68",
+  "version": "phantom-v1.14.69",
   "released": "2026-06-24",
-  "prevVersion": "phantom-v1.14.67",
-  "notes": "v1.14.68 - Ghost Echo data restore: backup/transfer functions (exportGhostEcho, importGhostEcho, exportAllData, restore) were pointed at a non-existent 'incidents' store; realigned all 8 references to the canonical 'ghosts' store. Restores the Tribal Knowledge pillar (export / import / full-backup / restore now move data). No schema or DB-version change."
+  "prevVersion": "phantom-v1.14.68",
+  "notes": "v1.14.69 - Connectivity gate: tagged the Ask Assistant (.qa-voice) launch trigger with data-requires-net=\"1\" so it dims + disables + badges OFFLINE when network is lost (was tappable offline -> dead-ends at the AI call). Added a scoped ::after override so the OFFLINE badge renders cleanly over .qa-btn's existing corner-bracket pseudo-element. Online behavior unchanged."
 }
