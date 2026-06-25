@@ -10463,7 +10463,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.84';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.85';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -10976,19 +10976,20 @@ if (typeof window !== 'undefined') {
       <!-- REDESIGN STEP 2 — Reference subtab strip. Surfaces re-home one at a time
            (Know first, §9). Optics/Hardware/CLI-IB/HW Ref are stubs until their step. -->
       <div class="subtab-strip">
-        <div class="stab" data-rf="rf-optics" onclick="showStab(this,'ref-sub','rf-optics')">Optics</div>
+        <div class="stab active" data-rf="rf-optics" onclick="showStab(this,'ref-sub','rf-optics')">Optics</div>
         <div class="stab" data-rf="rf-hw" onclick="showStab(this,'ref-sub','rf-hw')">Hardware</div>
         <div class="stab" data-rf="rf-cli" onclick="showStab(this,'ref-sub','rf-cli')">CLI/IB</div>
         <div class="stab" data-rf="rf-hwref" onclick="showStab(this,'ref-sub','rf-hwref')">HW Ref</div>
-        <div class="stab active" data-rf="rf-know" onclick="showStab(this,'ref-sub','rf-know')">Know</div>
+        <div class="stab" data-rf="rf-know" onclick="showStab(this,'ref-sub','rf-know')">Know</div>
       </div>
-      <div class="ref-sub" id="rf-optics"><div style="padding:24px 16px;opacity:0.5;font-size:var(--fs-caption);text-align:center">Optics — re-homing from Fiber in a later step.</div></div>
+      <!-- Optics: pg-fiber surface re-parented in here at boot by redesign_homeOptics(). -->
+      <div class="ref-sub stab-active" id="rf-optics"></div>
       <div class="ref-sub" id="rf-hw"><div style="padding:24px 16px;opacity:0.5;font-size:var(--fs-caption);text-align:center">Hardware — re-homing from Power in a later step.</div></div>
       <div class="ref-sub" id="rf-cli"><div style="padding:24px 16px;opacity:0.5;font-size:var(--fs-caption);text-align:center">CLI/IB — re-homing from CLI in a later step.</div></div>
       <div class="ref-sub" id="rf-hwref"><div style="padding:24px 16px;opacity:0.5;font-size:var(--fs-caption);text-align:center">HW Ref — re-homing in a later step.</div></div>
       <!-- Know: the operational-knowledge content (#pw-rb) is re-parented in here
            at boot by redesign_homeKnow(). Empty in source; filled at runtime. -->
-      <div class="ref-sub stab-active" id="rf-know"></div>
+      <div class="ref-sub" id="rf-know"></div>
     </div>
 
     <!-- PAGE: TRIAGE -->
@@ -14160,19 +14161,19 @@ const INDEX = [
   {cat:'TRIAGE',title:'–40 dBm / LOS — hard down',snip:'No light received. Check Tx, polarity, break in strand',page:'triage'},
   {cat:'TRIAGE',title:'Interface flapping',snip:'Intermittent — thermal, dirty, loose LC, bad optic',page:'triage'},
   {cat:'TRIAGE',title:'Optic not recognized by switch',snip:'Vendor lock, EEPROM blank, 3rd party key required',page:'triage'},
-  {cat:'FIBER',title:'OM3 Multimode reach table',snip:'10G/40G/100G/400G max distances, aqua jacket',page:'fiber'},
-  {cat:'FIBER',title:'OM4 Multimode reach table',snip:'10G/25G/40G/100G/400G max distances, magenta jacket',page:'fiber'},
-  {cat:'FIBER',title:'OM5 Wideband Multimode SWDM',snip:'LC duplex at 100G+, lime green jacket, 150m',page:'fiber'},
-  {cat:'FIBER',title:'OS2 Single-Mode SMF LR ER ZR',snip:'APC vs UPC warning — never mix. Yellow jacket.',page:'fiber'},
-  {cat:'FIBER',title:'APC vs UPC connectors',snip:'Never mix APC and UPC on same SMF link — 60dB loss',page:'fiber'},
-  {cat:'FIBER',title:'QSFP-DD OSFP QSFP28 form factors',snip:'400G/800G form factors, lane counts, backward compat',page:'fiber'},
-  {cat:'FIBER',title:'MPO polarity A B C methods',snip:'Method A straight, B flipped, C pair-flipped',page:'fiber'},
-  {cat:'FIBER',title:'NDR InfiniBand NVLink 5.0 GB300',snip:'QSFP112/OSFP for NDR 400Gb/s, NVLink 5.0 in-chassis',page:'fiber'},
-  {cat:'DOM',title:'Rx power thresholds 10G 25G 100G 400G',snip:'Normal ranges and alarm LOW thresholds by optic type',page:'fiber'},
-  {cat:'DOM',title:'Temperature thresholds transceiver',snip:'0–70°C normal, 75°C warning, 80°C alarm shutdown',page:'fiber'},
-  {cat:'DOM',title:'TX bias current aging laser',snip:'>120mA = aging laser, proactive replacement needed',page:'fiber'},
-  {cat:'DOM',title:'Arista DOM CLI transceiver show',snip:'show interfaces transceiver, watch 5',page:'fiber'},
-  {cat:'DOM',title:'mlxlink ConnectX-7 diagnostics',snip:'mlxlink -m, --show_fec, ethtool -m ens1f0',page:'fiber'},
+  {cat:'FIBER',title:'OM3 Multimode reach table',snip:'10G/40G/100G/400G max distances, aqua jacket',page:'fiber',ref:'rf-optics'},
+  {cat:'FIBER',title:'OM4 Multimode reach table',snip:'10G/25G/40G/100G/400G max distances, magenta jacket',page:'fiber',ref:'rf-optics'},
+  {cat:'FIBER',title:'OM5 Wideband Multimode SWDM',snip:'LC duplex at 100G+, lime green jacket, 150m',page:'fiber',ref:'rf-optics'},
+  {cat:'FIBER',title:'OS2 Single-Mode SMF LR ER ZR',snip:'APC vs UPC warning — never mix. Yellow jacket.',page:'fiber',ref:'rf-optics'},
+  {cat:'FIBER',title:'APC vs UPC connectors',snip:'Never mix APC and UPC on same SMF link — 60dB loss',page:'fiber',ref:'rf-optics'},
+  {cat:'FIBER',title:'QSFP-DD OSFP QSFP28 form factors',snip:'400G/800G form factors, lane counts, backward compat',page:'fiber',ref:'rf-optics'},
+  {cat:'FIBER',title:'MPO polarity A B C methods',snip:'Method A straight, B flipped, C pair-flipped',page:'fiber',ref:'rf-optics'},
+  {cat:'FIBER',title:'NDR InfiniBand NVLink 5.0 GB300',snip:'QSFP112/OSFP for NDR 400Gb/s, NVLink 5.0 in-chassis',page:'fiber',ref:'rf-optics'},
+  {cat:'DOM',title:'Rx power thresholds 10G 25G 100G 400G',snip:'Normal ranges and alarm LOW thresholds by optic type',page:'fiber',ref:'rf-optics'},
+  {cat:'DOM',title:'Temperature thresholds transceiver',snip:'0–70°C normal, 75°C warning, 80°C alarm shutdown',page:'fiber',ref:'rf-optics'},
+  {cat:'DOM',title:'TX bias current aging laser',snip:'>120mA = aging laser, proactive replacement needed',page:'fiber',ref:'rf-optics'},
+  {cat:'DOM',title:'Arista DOM CLI transceiver show',snip:'show interfaces transceiver, watch 5',page:'fiber',ref:'rf-optics'},
+  {cat:'DOM',title:'mlxlink ConnectX-7 diagnostics',snip:'mlxlink -m, --show_fec, ethtool -m ens1f0',page:'fiber',ref:'rf-optics'},
   {cat:'CLI',title:'Arista interface errors counters',snip:'show interfaces counters errors, watch 5',page:'cli'},
   {cat:'CLI',title:'Arista LLDP MAC ARP spanning-tree',snip:'lldp neighbors, mac address-table, arp',page:'cli'},
   {cat:'CLI',title:'NX-OS interface FEC counters',snip:'show interface ethernet counters errors fec',page:'cli'},
@@ -15639,6 +15640,27 @@ function redesign_homeKnow() {
   }
 }
 document.addEventListener('DOMContentLoaded', redesign_homeKnow);
+
+// redesign_homeOptics(): re-parent the WHOLE pg-fiber surface (its subtab strip +
+// all 8 fiber-sub panels) into Reference→Optics (#rf-optics). Re-parenting keeps
+// the fiber-sub group, showStab/toggleCard/openSopDetail handlers, and responsive
+// grid byte-identical. Flag-gated so FIELD mode leaves pg-fiber (the KNOW nav tab)
+// untouched. After the move, initSubtab() defaults the inner fiber subtab so the
+// Optics tab shows content immediately. NOTE: the fiber strip's Hardware/CLI
+// cross-links still showPage('power'/'cli') — repoint when those re-home.
+function redesign_homeOptics() {
+  if (!redesign_isOn()) return;
+  var src = document.getElementById('pg-fiber');
+  var dest = document.getElementById('rf-optics');
+  if (src && dest && src.firstChild) {
+    dest.innerHTML = '';
+    while (src.firstChild) dest.appendChild(src.firstChild);
+    if (typeof initSubtab === 'function') {
+      try { initSubtab('fiber-sub', 'fs-fiber', '#rf-optics .subtab-strip .stab'); } catch (_) {}
+    }
+  }
+}
+document.addEventListener('DOMContentLoaded', redesign_homeOptics);
 
 function showPageSafe(pageId, sourceTabId, opsTab) {
   var safeToast = function(msg, kind) {
