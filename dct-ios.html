@@ -10459,7 +10459,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.77';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.78';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -40003,6 +40003,9 @@ function importGhostQuirks() {
   input.click();
 }
 
+// v1.14.78: full-backup bundle schema version. Bump when a change would make an OLDER PHANTOM
+// mis-handle a bundle this version writes. Restore refuses a bundle whose schemaVersion exceeds this.
+var PHANTOM_BACKUP_SCHEMA = 1;
 function exportAllData() {
   if (window.phantomMarkBackupDone) phantomMarkBackupDone();
   const sops = loadSOPs();
@@ -40018,6 +40021,7 @@ function exportAllData() {
       exported: new Date().toISOString(),
       app: 'PHANTOM — Field Intelligence System',
       version: '1.0',
+      schemaVersion: PHANTOM_BACKUP_SCHEMA,
       sops: sops,
       ghostEcho: ghosts,
       ghostQuirks: (typeof ge_load === 'function') ? ge_load() : null,
@@ -40480,7 +40484,17 @@ function phantomImport() {
         if (!bundle.app || !bundle.app.includes('PHANTOM')) {
           alert('Not a valid PHANTOM backup file.'); return;
         }
+        // v1.14.78: schema-version guardrail — REFUSE a newer-schema backup BEFORE any destructive write
+        // (the restore below clears the Ghost Echo DB + overwrites localStorage). This prevents a wipe-then-
+        // partial-restore from a bundle this version can't fully understand. Older/missing = best-effort + a note.
+        var _bs = (typeof bundle.schemaVersion === 'number') ? bundle.schemaVersion : 0;
+        if (_bs > PHANTOM_BACKUP_SCHEMA) {
+          alert('This backup is from a NEWER PHANTOM version (backup schema ' + _bs + '; this app supports up to ' + PHANTOM_BACKUP_SCHEMA + ').\n\nUpdate PHANTOM before restoring — nothing was changed (your data is untouched).');
+          return;
+        }
         const items = [];
+        if (_bs && _bs < PHANTOM_BACKUP_SCHEMA) items.push('⚠ older backup schema (' + _bs + ') — best-effort restore');
+        else if (!_bs) items.push('⚠ backup predates schema versioning — best-effort restore');
         if (Array.isArray(bundle.sops) && bundle.sops.length)      items.push(bundle.sops.length + ' SOPs');
         if (Array.isArray(bundle.rackMaps) && bundle.rackMaps.length) items.push(bundle.rackMaps.length + ' rack maps');
         if (Array.isArray(bundle.burndown) && bundle.burndown.length)  items.push(bundle.burndown.length + ' burndown jobs');

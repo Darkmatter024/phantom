@@ -1,6 +1,6 @@
 {
-  "version": "phantom-v1.14.77",
+  "version": "phantom-v1.14.78",
   "released": "2026-06-25",
-  "prevVersion": "phantom-v1.14.76",
-  "notes": "v1.14.77 - Master + scope-snapshot portability (roadmap P0): the parsed Master source-of-truth (phantom_master_v1) and the Master-derived scope snapshot (phantom_jobsnap_v1) now travel in the full-backup bundle as their raw LZString-compressed strings, and restore writes them back verbatim under the existing quota-rollback. Completes the portability story (with v1.14.74 quirks): handing off a backup now carries the reference layer, not just the deployments derived from it. No re-compression, no schema change."
+  "prevVersion": "phantom-v1.14.77",
+  "notes": "v1.14.78 - Backup schema-version guardrail (roadmap P1): the full backup is now stamped with schemaVersion (PHANTOM_BACKUP_SCHEMA=1), and restore REFUSES a newer-schema bundle before any destructive write (the restore clears the Ghost Echo DB + overwrites localStorage) - preventing a wipe-then-partial-restore from a bundle an older app can't fully understand. Older/missing schema is allowed best-effort with a warning in the restore confirm. Protects the v1.14.74/.77 portability now that backups move between techs/versions. Additive imports (quirk/Ghost-Echo merges) are non-destructive and unchanged."
 }
