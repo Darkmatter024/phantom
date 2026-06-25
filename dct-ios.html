@@ -10463,7 +10463,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.89';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.90';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -15741,6 +15741,25 @@ function redesign_homeCLI() {
 }
 document.addEventListener('DOMContentLoaded', redesign_homeCLI);
 
+// redesign_homeHWRef(): the HW Ref matrix is a modal sheet (#hw-matrix-sheet), not
+// a page. Move its .hwm-inner (search + model/category filters + count + list) into
+// Reference→HW Ref (#rf-hwref), dropping the sheet's title+CLOSE header (the tab is
+// the chrome now). .hwm-* styling is class-based so it survives the move; the inner
+// .hwm-list keeps its own responsive grid. Render once so the tab shows populated.
+// Flag-gated → FIELD mode leaves the sheet + hwMatrix_open's sheet path untouched.
+function redesign_homeHWRef() {
+  if (!redesign_isOn()) return;
+  var inner = document.querySelector('#hw-matrix-sheet .hwm-inner');
+  var dest = document.getElementById('rf-hwref');
+  if (!inner || !dest || dest.querySelector('.hwm-inner')) return;
+  var hdr = inner.querySelector('.hwm-hdr');
+  if (hdr) hdr.parentNode.removeChild(hdr);
+  dest.innerHTML = '';
+  dest.appendChild(inner);
+  if (typeof hwMatrix_render === 'function') { try { hwMatrix_render(); } catch (_) {} }
+}
+document.addEventListener('DOMContentLoaded', redesign_homeHWRef);
+
 function showPageSafe(pageId, sourceTabId, opsTab) {
   var safeToast = function(msg, kind) {
     try {
@@ -20090,6 +20109,14 @@ var PHANTOM_HW_MATRIX = {
 
 // ── HW Matrix: open / close ──
 function hwMatrix_open() {
+  if (redesign_isOn()) {
+    // Redesign: HW Ref is the Reference→HW Ref tab, not a sheet.
+    showRefTab('rf-hwref');
+    var si = document.getElementById('hwm-search'); if (si) si.value = '';
+    if (typeof hwMatrix_render === 'function') hwMatrix_render();
+    setTimeout(function() { var s = document.getElementById('hwm-search'); if (s) s.focus(); }, 200);
+    return;
+  }
   var sheet = document.getElementById('hw-matrix-sheet');
   if (!sheet) return;
   sheet.style.display = 'block';

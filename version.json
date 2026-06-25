@@ -1,6 +1,6 @@
 {
-  "version": "phantom-v1.14.89",
+  "version": "phantom-v1.14.90",
   "released": "2026-06-25",
-  "prevVersion": "phantom-v1.14.88",
-  "notes": "v1.14.89 - Redesign Step 2 cont. (re-home Reference -> CLI/IB): the whole pg-cli surface (IB/NDR · OOB · Console · Test&Cert · Parser subtabs + cli-sub panels) re-parented into Reference->CLI/IB (#rf-cli) at boot (redesign_homeCLI), initSubtab defaults the IB/NDR subtab. 13 CLI/OOB/CONSOLE/TEST search hits repointed (ref:'rf-cli'). The fiber strip's CLI cross-link now routes to Reference->CLI/IB in redesign mode (both fiber cross-links now redesign-aware). Flag-gated; field mode leaves pg-cli, the KNOW-tab CLI cross-link, and the voice router's showPage('cli') untouched. Reference tabs done: Optics, Hardware, CLI/IB, Know. Remaining: HW Ref (last Reference surface), then Step 3 (Workspace)."
+  "prevVersion": "phantom-v1.14.89",
+  "notes": "v1.14.90 - Redesign Step 2 COMPLETE (re-home Reference -> HW Ref, last surface): the HW Ref matrix was a modal sheet (#hw-matrix-sheet), not a page. Its .hwm-inner (search + model/category filter pills + count + list) is moved into Reference -> HW Ref (#rf-hwref) at boot (redesign_homeHWRef), dropping the sheet's title+CLOSE header; rendered once so the tab shows populated. hwMatrix_open() routes to the HW Ref tab in redesign mode (so the header-overflow HW REF entry opens the tab). Flag-gated; field mode leaves the sheet, its NOW tile, and the overflow launcher untouched. ALL 5 Reference tabs now re-homed: Optics, Hardware, CLI/IB, HW Ref, Know. Step 2 (Reference) done. Next: Step 3 (Workspace: Deploy/Scan/Handoff)."
 }
