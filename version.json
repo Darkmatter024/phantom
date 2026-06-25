@@ -1,6 +1,6 @@
 {
-  "version": "phantom-v1.14.75",
+  "version": "phantom-v1.14.76",
   "released": "2026-06-25",
-  "prevVersion": "phantom-v1.14.74",
-  "notes": "v1.14.75 - Optic Verify Rx-power check (roadmap next-1-3 #3): the Verify result now offers a gloved numeric keypad to enter measured Rx, judged against the matched optic's reach thresholds from OPTIC_DB (SR/DR/LR/ER) instead of universal hardcoded numbers - so a long-reach link (e.g. ER4 at -20 dBm) reads GREEN, not a false alarm. Verdict: below alarm=RED, below min=YELLOW(marginal), above max=YELLOW(high), in spec=GREEN; DAC/AOC/unknown reach hides the check (no Rx spec). 'Log Rx Reading' appends the reading + verdict to the audit trail. Logic unit-tested (12 cases), headless-verified. SKU-match verdict and the CLI-paste renderDOM path unchanged (renderDOM threshold fix deferred - optic unknown there)."
+  "prevVersion": "phantom-v1.14.75",
+  "notes": "v1.14.76 - Offline AI pre-check (roadmap P0 hardening): every AI surface funnels through phantomAI, which now fails fast with a clear 'Offline — AI unavailable' toast + a Response-shaped offline result when navigator.onLine is false, instead of ~23s of fetch timeout + retries ([8000,15000]ms x2). Honors the offline-first contract; existing resp.ok/resp.json callers short-circuit gracefully. No change when online."
 }

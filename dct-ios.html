@@ -10459,7 +10459,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.75';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.76';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -14726,6 +14726,18 @@ const AI_TOKENS = {
 // so callers can request a longer timeout (e.g. reasoning-heavy reviews, burndown extraction).
 // If omitted, phantomAPI uses its 30s default.
 function phantomAI(feature, system, userContent, ctx) {
+  // v1.14.76: offline pre-check — every AI surface funnels through here. With no signal, fail FAST with a
+  // clear message instead of ~23s of fetch timeout + retries ([8000,15000]ms x2). Returns a fetch-Response-shaped
+  // object so existing callers (resp.ok / resp.json) short-circuit gracefully. PHANTOM is offline-first; this
+  // honors that contract rather than spinning a gloved tech in a cold aisle.
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+    if (typeof phantomToast === 'function') phantomToast('Offline — AI features unavailable until connection is restored', 'warn');
+    return Promise.resolve({
+      ok: false, status: 0, offline: true,
+      json: function () { return Promise.resolve({ error: { type: 'offline', message: 'Device is offline — AI unavailable.' } }); },
+      text: function () { return Promise.resolve(''); }
+    });
+  }
   return phantomAPI({
     model: PHANTOM_MODEL,
     max_tokens: AI_TOKENS[feature] || 1000,
