@@ -1,6 +1,6 @@
 {
-  "version": "phantom-v1.14.76",
+  "version": "phantom-v1.14.77",
   "released": "2026-06-25",
-  "prevVersion": "phantom-v1.14.75",
-  "notes": "v1.14.76 - Offline AI pre-check (roadmap P0 hardening): every AI surface funnels through phantomAI, which now fails fast with a clear 'Offline — AI unavailable' toast + a Response-shaped offline result when navigator.onLine is false, instead of ~23s of fetch timeout + retries ([8000,15000]ms x2). Honors the offline-first contract; existing resp.ok/resp.json callers short-circuit gracefully. No change when online."
+  "prevVersion": "phantom-v1.14.76",
+  "notes": "v1.14.77 - Master + scope-snapshot portability (roadmap P0): the parsed Master source-of-truth (phantom_master_v1) and the Master-derived scope snapshot (phantom_jobsnap_v1) now travel in the full-backup bundle as their raw LZString-compressed strings, and restore writes them back verbatim under the existing quota-rollback. Completes the portability story (with v1.14.74 quirks): handing off a backup now carries the reference layer, not just the deployments derived from it. No re-compression, no schema change."
 }

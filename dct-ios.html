@@ -10459,7 +10459,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.76';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.77';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -40021,6 +40021,8 @@ function exportAllData() {
       sops: sops,
       ghostEcho: ghosts,
       ghostQuirks: (typeof ge_load === 'function') ? ge_load() : null,
+      master: localStorage.getItem('phantom_master_v1') || null,
+      jobsnap: localStorage.getItem('phantom_jobsnap_v1') || null,
       rackMaps: racks,
       burndown: burndown,
       rackHistory: safeParse(localStorage.getItem('phantom_rack_history') || '{}', {}),
@@ -40484,6 +40486,8 @@ function phantomImport() {
         if (Array.isArray(bundle.burndown) && bundle.burndown.length)  items.push(bundle.burndown.length + ' burndown jobs');
         if (Array.isArray(bundle.ghostEcho) && bundle.ghostEcho.length) items.push(bundle.ghostEcho.length + ' Ghost Echo entries');
         if (bundle.ghostQuirks) { var _qn = ((bundle.ghostQuirks.outgoing||[]).length + (bundle.ghostQuirks.incoming||[]).length); if (_qn) items.push(_qn + ' Ghost Echo quirks'); }
+        if (typeof bundle.master === 'string' && bundle.master) items.push('Master source-of-truth');
+        if (typeof bundle.jobsnap === 'string' && bundle.jobsnap) items.push('scope snapshot');
         if (Array.isArray(bundle.opticInventory) && bundle.opticInventory.length) items.push(bundle.opticInventory.length + ' optic scans');
         if (Array.isArray(bundle.deployments) && bundle.deployments.length) items.push(bundle.deployments.length + ' deployments');
         if (Array.isArray(bundle.deployOptics) && bundle.deployOptics.length) items.push(bundle.deployOptics.length + ' optic ledger records');
@@ -40526,6 +40530,9 @@ function phantomImport() {
         if (bundle.siteProfile && typeof bundle.siteProfile === 'object') _writes.push(['phantom_site_profile_v1', JSON.stringify(bundle.siteProfile)]);
         _writes.push(['phantom_handoff_v1', JSON.stringify(cleanHandoff)]);
         if (bundle.edpCache && typeof bundle.edpCache === 'object') _writes.push(['phantom_edp_cache_v1', JSON.stringify(bundle.edpCache)]);
+        // v1.14.77: Master source-of-truth + scope snapshot travel as their raw LZString-compressed strings (restored verbatim, under the same quota rollback).
+        if (typeof bundle.master === 'string' && bundle.master) _writes.push(['phantom_master_v1', bundle.master]);
+        if (typeof bundle.jobsnap === 'string' && bundle.jobsnap) _writes.push(['phantom_jobsnap_v1', bundle.jobsnap]);
 
         // Snapshot existing values for rollback (null = key absent → remove on rollback)
         var _snapshot = _writes.map(function(w) { return [w[0], localStorage.getItem(w[0])]; });
