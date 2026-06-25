@@ -1,6 +1,6 @@
 {
-  "version": "phantom-v1.14.67",
+  "version": "phantom-v1.14.68",
   "released": "2026-06-24",
-  "prevVersion": "phantom-v1.14.66",
-  "notes": "v1.14.67 - Removed the golden node pins (v1.14.66): pin overlay, orthographic projection module, dive-ride/landscape-hide rules, and the ?cal=1 pin tuner all pulled. Back to the clean responsive <picture> boot (globe, dual plates, tap-anywhere, TAP TO ENTER) unchanged. Reverts ba8a7de."
+  "prevVersion": "phantom-v1.14.67",
+  "notes": "v1.14.68 - Ghost Echo data restore: backup/transfer functions (exportGhostEcho, importGhostEcho, exportAllData, restore) were pointed at a non-existent 'incidents' store; realigned all 8 references to the canonical 'ghosts' store. Restores the Tribal Knowledge pillar (export / import / full-backup / restore now move data). No schema or DB-version change."
 }

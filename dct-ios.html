@@ -10552,7 +10552,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.67';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.68';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -40447,7 +40447,7 @@ function exportSOPs() {
 
 function exportGhostEcho() {
   const dbName = 'GhostEchoDB';
-  const storeName = 'incidents';
+  const storeName = 'ghosts';
   const req = indexedDB.open(dbName);
   req.onsuccess = function(e) {
     const db = e.target.result;
@@ -40481,9 +40481,9 @@ function importGhostEcho() {
         const req = indexedDB.open('GhostEchoDB', 1);
         req.onsuccess = function(ev2) {
           const db = ev2.target.result;
-          if (!db.objectStoreNames.contains('incidents')) { alert('Ghost Echo DB not ready.'); return; }
-          const tx = db.transaction('incidents', 'readwrite');
-          const store = tx.objectStore('incidents');
+          if (!db.objectStoreNames.contains('ghosts')) { alert('Ghost Echo DB not ready.'); return; }
+          const tx = db.transaction('ghosts', 'readwrite');
+          const store = tx.objectStore('ghosts');
           let added = 0, skipped = 0;
           let pending = entries.length;
           entries.forEach(function(entry) {
@@ -40513,7 +40513,7 @@ function exportAllData() {
   const burndown = safeParse(localStorage.getItem(BURNDOWN_KEY) || '[]', []);
 
   const dbName = 'GhostEchoDB';
-  const storeName = 'incidents';
+  const storeName = 'ghosts';
   const req = indexedDB.open(dbName);
 
   function buildBundle(ghosts) {
@@ -41060,9 +41060,9 @@ function phantomImport() {
           const req = indexedDB.open('GhostEchoDB', 1);
           req.onsuccess = function(ev2) {
             const db = ev2.target.result;
-            if (!db.objectStoreNames.contains('incidents')) { alert('Ghost Echo DB not ready — other data restored.'); return; }
-            const tx = db.transaction('incidents', 'readwrite');
-            const store = tx.objectStore('incidents');
+            if (!db.objectStoreNames.contains('ghosts')) { alert('Ghost Echo DB not ready — other data restored.'); return; }
+            const tx = db.transaction('ghosts', 'readwrite');
+            const store = tx.objectStore('ghosts');
             store.clear().onsuccess = function() {
               bundle.ghostEcho.forEach(function(entry) { store.put(entry); });
             };
