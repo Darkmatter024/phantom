@@ -1,6 +1,6 @@
 {
-  "version": "phantom-v1.14.87",
+  "version": "phantom-v1.14.88",
   "released": "2026-06-25",
-  "prevVersion": "phantom-v1.14.86",
-  "notes": "v1.14.87 - Redesign Step 2 cont. (re-home Reference -> Hardware, part 1 = pg-power): the rest of pg-power (Power / LED-GPU / Rack Map / Blast Radius / Thermal subtabs + panels, after the Runbook split that went to Know) is re-parented into Reference->Hardware (#rf-hw) at boot (redesign_homeHardware), the orphaned Runbook stab is hidden, and initSubtab defaults the Power subtab. Fixed a latent bug: pw-rb (now in Know) was still a pwr-sub member, so Hardware subtab switching would have stripped its stab-active and hidden the Know panel - homeKnow now drops pw-rb from the pwr-sub group in redesign mode. Search repointed: 10 POWER/HW hits -> rf-hw, plus the missed 'Incident note template' runbook hit -> rf-know (Step 2 had only caught 3 of 4 runbook entries). The fiber strip's Hardware cross-link now routes to Reference->Hardware in redesign mode. Flag-gated; field mode leaves pg-power whole. STILL TODO: fold the Cage Nut Compass (pg-compass) in as a Hardware tool (next commit)."
+  "prevVersion": "phantom-v1.14.87",
+  "notes": "v1.14.88 - Redesign Step 2 cont. (Reference -> Hardware, part 2 = Cage Nut Compass): the Cage Nut Compass (pg-compass) is folded into Hardware as a 'Cage Nut' subtab. redesign_homeCompass() builds a stab on the re-homed Hardware strip + a #pw-compass block panel and moves the compass tool's content in (dropping its Back-to-Triage header - the subtab strip is the nav now). compass_render's one #pg-compass-scoped chassis-button query is made global so the tool works in its new home; goCompass() routes to the Hardware Cage Nut subtab in redesign mode. Flag-gated; field mode leaves pg-compass + its launcher whole. This COMPLETES Reference -> Hardware (pg-power pt1 in v1.14.87 + Cage Nut here). Reference tabs done so far: Optics, Hardware, Know. Remaining: CLI/IB (pg-cli), HW Ref."
 }
