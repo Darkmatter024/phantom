@@ -1,6 +1,6 @@
 {
-  "version": "phantom-v1.14.71",
+  "version": "phantom-v1.14.72",
   "released": "2026-06-24",
-  "prevVersion": "phantom-v1.14.70",
-  "notes": "v1.14.71 - Removed the orphaned legacy shift-handoff cluster (deferred from v1.14.70): static #handoff-sheet markup, phantomHandoffOpen/Legacy/Close/Export, the nav_back styleSheets close-registry entry, HANDOFF_NOTES_KEY, and dead .handoff-sheet/.handoff-sheet-inner CSS. The live Shift Handoff (handoff_quick -> handoff_showGenerator + _handoffModal overlay) is untouched. Side benefit: resolves the duplicate id=handoff-sheet. 131 lines removed, no behavior change."
+  "prevVersion": "phantom-v1.14.71",
+  "notes": "v1.14.72 - Audit functional cleanups: removed the retired Rack Skyline orphan CSS (replaced by the Phase Pipeline in v1.14.0; ~20 dead lines), dropped the misleading hardcoded '0/0 tasks' per-phase label (no task data exists), and removed the unused 'type' param from deploy_scrollToPhase (the 5 pipeline diamonds intentionally share one rack-lookup scroll target). No behavior change. Deferred to a product decision: the #vaBtn floating push-to-talk mic (restore vs delete)."
 }

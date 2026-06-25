@@ -8368,7 +8368,7 @@ textarea.hud-input {
 .ta-foot-btn { flex:1; min-height:var(--tap-m); border-radius:10px; cursor:pointer; -webkit-appearance:none; font-family:var(--mono); font-size:var(--fs-caption); letter-spacing:1px; }
 .ta-foot-fix { background:linear-gradient(180deg, rgba(48,209,88,0.22), rgba(48,209,88,0.08)); border:1px solid rgba(48,209,88,0.5); color:var(--white); }
 .ta-foot-fix:active { transform:scale(0.98); }
-/* ━━━ HUD REDESIGN v1.6.99 — Skyline · Trace · Tiles (one bottom-up fill metaphor) ━━━ */
+/* ━━━ HUD REDESIGN v1.6.99 — Trace · Tiles (one bottom-up fill metaphor; Skyline retired v1.14.0) ━━━ */
 /* ── PHASE PIPELINE (v1.14.2) — NOW dashboard build-phase tracker ── */
 .pp-card { position:relative; background:linear-gradient(135deg,rgba(92,242,255,0.05),rgba(155,89,255,0.04)); border:1px solid rgba(92,242,255,0.2); border-radius:var(--hud-r12); padding:18px 16px 15px; margin-bottom:10px; overflow:hidden; }
 .pp-card::before { content:''; position:absolute; inset:0; background:radial-gradient(120% 80% at 50% -10%, rgba(92,242,255,0.07), transparent 60%); pointer-events:none; }
@@ -8398,25 +8398,6 @@ textarea.hud-input {
 @keyframes pp-pulse { 0%,100% { box-shadow:0 0 12px rgba(92,242,255,0.4), inset 0 0 8px rgba(92,242,255,0.2); } 50% { box-shadow:0 0 22px rgba(92,242,255,0.75), inset 0 0 10px rgba(92,242,255,0.3); } }
 @keyframes pp-pulse-r { 0%,100% { box-shadow:0 0 12px rgba(255,45,85,0.4); } 50% { box-shadow:0 0 22px rgba(255,45,85,0.75); } }
 @media (prefers-reduced-motion: reduce) { .pp-node.is-active .pp-dot, .pp-node.is-blocked .pp-dot { animation:none; } }
-.sky-card { background:linear-gradient(135deg,rgba(92,242,255,0.04),rgba(155,89,255,0.03)); border:1px solid rgba(92,242,255,0.18); border-radius:var(--hud-r12); padding:12px 14px; margin-bottom:10px; display:flex; align-items:stretch; gap:14px; }
-.sky-bars { flex:3 1 0; display:flex; align-items:flex-end; gap:2px; min-height:72px; min-width:0; }
-.sky-col { flex:1 1 0; min-width:5px; height:72px; display:flex; align-items:flex-end; justify-content:center; padding:0 1px; background:none; border:none; cursor:pointer; -webkit-appearance:none; -webkit-tap-highlight-color:transparent; }
-.sky-bar { position:relative; width:100%; max-width:34px; min-width:4px; height:100%; display:flex; align-items:flex-end; border:1px solid rgba(255,255,255,0.10); border-radius:3px 3px 0 0; overflow:hidden; background:rgba(255,255,255,0.02); }
-.sky-bar-fill { position:relative; width:100%; transition:height 0.5s ease; }
-.sky-bar.is-done .sky-bar-fill { background:var(--green); box-shadow:0 0 8px rgba(48,209,88,0.5); }
-.sky-bar.is-active .sky-bar-fill { background:var(--cyan); box-shadow:0 0 8px rgba(92,242,255,0.45); }
-.sky-bar.is-pending { border-style:dashed; }
-.sky-bar.is-pending .sky-bar-fill { background:rgba(180,194,208,0.18); }
-.sky-bar.is-blocked { border-color:var(--red); }
-.sky-bar.is-blocked .sky-bar-fill { background:var(--red); box-shadow:0 0 8px rgba(255,45,85,0.5); }
-.sky-bar.is-blocked::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:var(--red); box-shadow:0 0 6px var(--red); z-index:2; }
-.sky-bar.is-active .sky-bar-fill::after { content:''; position:absolute; left:0; right:0; top:0; height:2px; background:rgba(255,255,255,0.85); animation:skyScan 1.8s ease-in-out infinite; }
-@keyframes skyScan { 0%,100%{opacity:0.2} 50%{opacity:0.9} }
-.sky-readout { flex:2 1 0; min-width:0; display:flex; flex-direction:column; justify-content:center; }
-.sky-pct { font-family:var(--orb); font-weight:900; font-size:30px; line-height:1; }
-.sky-line { font-family:var(--mono); font-size:var(--fs-caption); color:var(--slate); letter-spacing:0.5px; margin-top:4px; }
-.sky-name { font-family:var(--raj); font-weight:700; font-size:13px; color:var(--white); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:4px; }
-.sky-disamb { font-family:var(--mono); font-size:9px; color:var(--slate); letter-spacing:0.5px; }
 .trace-run { display:flex; align-items:flex-start; margin-bottom:10px; }
 .trace-node-wrap { flex:1 1 0; min-width:0; display:flex; flex-direction:column; align-items:center; position:relative; }
 .trace-seg { position:absolute; top:9px; left:-50%; width:100%; height:2px; background:rgba(255,255,255,0.10); z-index:0; }
@@ -8468,7 +8449,6 @@ textarea.hud-input {
 .tile.is-active { box-shadow:0 0 0 1px rgba(92,242,255,0.22), 0 0 14px rgba(92,242,255,0.14); }
 .tile.is-blocked { border-color:var(--red); box-shadow:0 0 0 1px rgba(255,45,85,0.3), 0 0 14px rgba(255,45,85,0.14); }
 @media (prefers-reduced-motion: reduce) {
-  .sky-bar.is-active .sky-bar-fill::after { animation:none; opacity:0.9; }
   .trace-node.is-active { animation:none; box-shadow:0 0 10px var(--cyan); }
 }
 /* v1.7.2 — HORIZONTAL CHIP/TAB STRIP SCROLL LOCK. One pattern for every thin one-row
@@ -10502,7 +10482,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.71';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.72';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -26008,7 +25988,7 @@ function deploy_showDetail(id) {
     var lblCls = complete ? 'is-done' : (active ? 'is-active' : '');
     html += '<div class="trace-node-wrap">';
     html += '<div class="trace-seg ' + segHot + '"></div>';
-    html += '<div class="trace-node ' + nodeCls + '" onclick="deploy_scrollToPhase(\'' + type + '\')" aria-label="' + DEPLOY_PHASE_LABELS[type] + ' ' + agg.complete + ' of ' + agg.total + '"></div>';
+    html += '<div class="trace-node ' + nodeCls + '" onclick="deploy_scrollToPhase()" aria-label="' + DEPLOY_PHASE_LABELS[type] + ' ' + agg.complete + ' of ' + agg.total + '"></div>';
     html += '<div class="trace-label ' + lblCls + '">' + DEPLOY_PHASE_LABELS[type] + '</div>';
     html += '</div>';
   });
@@ -26173,8 +26153,8 @@ function deploy_togglePause(id, pause) {
   deploy_showDetail(id);
 }
 
-// ── Scroll to Phase — pipeline bar tap jumps to the rack lookup section ──
-function deploy_scrollToPhase(type) {
+// ── Scroll to Phase — pipeline bar tap jumps to the rack lookup section (phase-agnostic) ──
+function deploy_scrollToPhase() {
   var target = document.getElementById('deploy-rack-lookup');
   if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -27325,7 +27305,7 @@ function deploy_showRackDetail(deployId, rackId) {
     html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">';
     html += '<div>';
     html += '<div style="font-family:var(--orb);font-size: var(--fs-micro);letter-spacing:2px;color:' + (DEPLOY_PHASE_COLORS[ph.type] || 'var(--white)') + '">' + DEPLOY_PHASE_LABELS_FULL[ph.type] + '</div>';
-    html += '<div style="font-family:var(--mono);font-size: var(--fs-caption);color:var(--slate);margin-top:2px">Phase ' + ph.seqOrder + '/5 · 0/0 tasks</div>';
+    html += '<div style="font-family:var(--mono);font-size: var(--fs-caption);color:var(--slate);margin-top:2px">Phase ' + ph.seqOrder + '/5</div>';
     html += '</div>';
     html += '<span class="badge ' + (ph.status === 'complete' ? 'b-green' : ph.status === 'in_progress' ? 'b-cyan' : ph.status === 'blocked' ? 'b-red' : 'b-gold') + '" style="font-size: var(--fs-caption)">' + statusLabel + '</span>';
     html += '</div>';
