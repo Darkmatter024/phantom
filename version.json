@@ -1,6 +1,6 @@
 {
-  "version": "phantom-v1.14.86",
+  "version": "phantom-v1.14.87",
   "released": "2026-06-25",
-  "prevVersion": "phantom-v1.14.85",
-  "notes": "v1.14.86 - Redesign nav-chrome fix: the #mode-toggle (Command/Work/Ref) strip was position:sticky;top:8px;z-60, so on a scrolled page it floated over the active page's own sub-tab strip (e.g. Reference's Optics/Hardware/CLI-IB/HW Ref/Know) and the labels collided. Made #mode-toggle position:relative (scrolls with the page) so the two strips stack instead of overlapping. One inline-style edit; base .subtab-strip untouched, so the field app's sub-tabs are unaffected. (Handoff was authored against v1.14.84 targeting v1.14.85, but v1.14.85 already shipped the Optics re-home on a parallel build line - reconciled to v1.14.86.)"
+  "prevVersion": "phantom-v1.14.86",
+  "notes": "v1.14.87 - Redesign Step 2 cont. (re-home Reference -> Hardware, part 1 = pg-power): the rest of pg-power (Power / LED-GPU / Rack Map / Blast Radius / Thermal subtabs + panels, after the Runbook split that went to Know) is re-parented into Reference->Hardware (#rf-hw) at boot (redesign_homeHardware), the orphaned Runbook stab is hidden, and initSubtab defaults the Power subtab. Fixed a latent bug: pw-rb (now in Know) was still a pwr-sub member, so Hardware subtab switching would have stripped its stab-active and hidden the Know panel - homeKnow now drops pw-rb from the pwr-sub group in redesign mode. Search repointed: 10 POWER/HW hits -> rf-hw, plus the missed 'Incident note template' runbook hit -> rf-know (Step 2 had only caught 3 of 4 runbook entries). The fiber strip's Hardware cross-link now routes to Reference->Hardware in redesign mode. Flag-gated; field mode leaves pg-power whole. STILL TODO: fold the Cage Nut Compass (pg-compass) in as a Hardware tool (next commit)."
 }
