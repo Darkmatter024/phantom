@@ -1,6 +1,6 @@
 {
-  "version": "phantom-v1.14.81",
+  "version": "phantom-v1.14.82",
   "released": "2026-06-25",
-  "prevVersion": "phantom-v1.14.80",
-  "notes": "v1.14.81 - Browsable Ghost Echo quirk corpus (roadmap P1, final item): a 'Browse Quirks' button in the Ghost Echo sheet opens a searchable list of ALL captured quirks (own outgoing + imported incoming, newest first, PEER badge on imported) - so a tech can proactively read the team's accumulated gotchas instead of only seeing them reactively on a matching rack+phase. Inline-styled overlay matching the capture modal; live text search across hardware/phase/text; no new CSS. Completes the Ghost Echo quirk loop (capture -> portable -> browsable)."
+  "prevVersion": "phantom-v1.14.81",
+  "notes": "v1.14.82 - Command Center redesign Step 1 (scaffold, no re-home): flag-gated 3-way mode toggle (Command/Work/Ref) reusing the .subtab-strip/.stab component, plus three empty page shells (pg-cmd/pg-work/pg-ref). Hidden behind a redesign flag (?redesign=1, persisted to localStorage) so the live 5-tab field nav is completely unaffected. Routes through the existing showPage() plumbing. Nothing re-homed; both nav systems coexist. First step of the staged migration in MASTER SPEC sec 9."
 }

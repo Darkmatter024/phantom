@@ -10459,7 +10459,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.81';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.82';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -10944,6 +10944,36 @@ if (typeof window !== 'undefined') {
 
     <!-- SEARCH RESULTS -->
     <div id="page-search"></div>
+
+    <!-- ━━━ REDESIGN STEP 1 — 3-WAY MODE TOGGLE (Command · Work · Ref) ━━━
+         Flag-gated scaffold. Hidden until ?redesign=1 (persisted) so the live
+         5-tab field app is untouched. Reuses .subtab-strip/.stab (no new CSS).
+         Nothing re-homed yet — routes to the empty shells below. -->
+    <div id="mode-toggle" class="subtab-strip" style="display:none;position:sticky;top:8px;z-index:60;margin-bottom:10px">
+      <div class="stab active" id="mode-command" onclick="showMode('command')">Command</div>
+      <div class="stab" id="mode-work" onclick="showMode('work')">Work</div>
+      <div class="stab" id="mode-ref" onclick="showMode('ref')">Ref</div>
+    </div>
+
+    <!-- REDESIGN STEP 1 — 3-PAGE SHELL (empty scaffolds; nothing re-homed). -->
+    <div class="page" id="pg-cmd">
+      <div style="padding:28px 16px;text-align:center;color:var(--cyan)">
+        <div style="font-size:18px;font-weight:700;letter-spacing:1.5px">COMMAND CENTER</div>
+        <div style="margin-top:8px;opacity:0.6;font-size:var(--fs-caption)">Scaffold · Step 1 — awareness + routing land here.</div>
+      </div>
+    </div>
+    <div class="page" id="pg-work">
+      <div style="padding:28px 16px;text-align:center;color:var(--hud-orange,#ff8a00)">
+        <div style="font-size:18px;font-weight:700;letter-spacing:1.5px">WORKSPACE</div>
+        <div style="margin-top:8px;opacity:0.6;font-size:var(--fs-caption)">Scaffold · Step 1 — Deploy · Scan · Handoff land here.</div>
+      </div>
+    </div>
+    <div class="page" id="pg-ref">
+      <div style="padding:28px 16px;text-align:center;color:var(--gold)">
+        <div style="font-size:18px;font-weight:700;letter-spacing:1.5px">REFERENCE</div>
+        <div style="margin-top:8px;opacity:0.6;font-size:var(--fs-caption)">Scaffold · Step 1 — Optics · Hardware · CLI/IB · HW Ref · Know land here.</div>
+      </div>
+    </div>
 
     <!-- PAGE: TRIAGE -->
     <div class="page active" id="pg-triage">
@@ -15517,6 +15547,34 @@ function _session_startFresh() {
 //   - BUILD subtab strip → Power tab
 // Other navigation paths can adopt this wrapper if they exhibit similar
 // "tries to navigate then freezes" behavior.
+// ━━━ REDESIGN STEP 1 — 3-way mode toggle (flag-gated scaffold) ━━━
+// Coexists with the live 5-tab nav. Routes to the empty pg-cmd/pg-work/pg-ref
+// shells via the existing showPage() plumbing (no per-id special-casing needed).
+// Hidden until the redesign flag is set, so the field app is unaffected.
+function showMode(mode) {
+  var map = { command: 'cmd', work: 'work', ref: 'ref' };
+  var pid = map[mode];
+  if (!pid) return;
+  showPage(pid, null);
+  ['command', 'work', 'ref'].forEach(function(m) {
+    var el = document.getElementById('mode-' + m);
+    if (el) el.classList.toggle('active', m === mode);
+  });
+}
+function redesign_isOn() {
+  try {
+    if (location.search.indexOf('redesign=1') !== -1) localStorage.setItem('phantom_redesign', '1');
+    if (location.search.indexOf('redesign=0') !== -1) localStorage.removeItem('phantom_redesign');
+    return localStorage.getItem('phantom_redesign') === '1';
+  } catch (_) { return false; }
+}
+function redesign_initToggle() {
+  if (!redesign_isOn()) return;
+  var t = document.getElementById('mode-toggle');
+  if (t) t.style.display = 'flex';
+}
+document.addEventListener('DOMContentLoaded', redesign_initToggle);
+
 function showPageSafe(pageId, sourceTabId, opsTab) {
   var safeToast = function(msg, kind) {
     try {
