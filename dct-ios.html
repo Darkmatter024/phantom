@@ -10531,7 +10531,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.97';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.98';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -15954,6 +15954,7 @@ function cmd_render() {
   var handoffDraft = false;
   try { var hraw = localStorage.getItem('phantom_handoff_v1'); handoffDraft = !!(hraw && JSON.parse(hraw)); } catch (_) {}
   var rung = !confirmed ? 'A' : ((deployCount === 0 && rackCount === 0) ? 'B' : 'C');
+  var masterLoaded = (typeof master_hasMaster === 'function') ? master_hasMaster() : !!(typeof window !== 'undefined' && window._lastPhantomMaster);  // v1.14.98: gates the shift-start Load-Master cold state
 
   // ── status pills: the only honest real-time signals (§3.1) ──
   var online = (typeof navigator === 'undefined') || navigator.onLine !== false;
@@ -15964,7 +15965,7 @@ function cmd_render() {
   // ── lens: headline / copy / ghost brightness ──
   var lh, lp, ghostCls;
   if (rung === 'A') { lh = 'Set up<br>your site'; lp = 'Add your facility profile to begin capturing work.'; ghostCls = 'dim'; }
-  else if (rung === 'B') { lh = 'Ready.<br>Capture a rack.'; lp = 'Profile set. No work captured yet this shift.'; ghostCls = 'mid'; }
+  else if (rung === 'B') { if (!masterLoaded) { lh = 'Load your<br>Master.'; lp = 'Profile set. Load your Master file to start the shift.'; } else { lh = 'Ready.<br>Capture a rack.'; lp = 'Profile set. No work captured yet this shift.'; } ghostCls = 'mid'; }
   else { lh = escHtml(site) + '<br>Ready State'; lp = 'One-glance build, scan &amp; blocker awareness for this shift.'; ghostCls = ''; }
   E('cc-lh').innerHTML = lh; E('cc-lp').innerHTML = lp;
   var gh = E('cc-ghost'); if (gh) gh.className = 'ghosthero ' + ghostCls;
@@ -15984,7 +15985,7 @@ function cmd_render() {
   E('cc-stats').innerHTML = stats.map(function(s) { return '<div class="stat ' + s[2] + (s[3] ? ' zero' : '') + '"><div class="n">' + s[0] + '</div><div class="k">' + s[1] + '</div></div>'; }).join('');
 
   // ── Next Best Action (§3.3 routing tree, honest state) ──
-  var nba = cmd_nba(rung, { confirmed: confirmed, blockerCount: blockerCount, handoffDraft: handoffDraft, activeDep: activeDep, activePct: activePct, rackCount: rackCount });
+  var nba = cmd_nba(rung, { confirmed: confirmed, masterLoaded: masterLoaded, blockerCount: blockerCount, handoffDraft: handoffDraft, activeDep: activeDep, activePct: activePct, rackCount: rackCount });
   E('cc-nbah').textContent = nba.h; E('cc-nbap').textContent = nba.p;
   var nbar = E('cc-nbar'); nbar.innerHTML = nba.label + ' &rarr;'; nbar.onclick = nba.act;
 
@@ -16004,11 +16005,25 @@ function cmd_render() {
 }
 function cmd_nba(rung, st) {
   if (rung === 'A' || !st.confirmed) return { h: 'Set up your site profile.', p: 'PHANTOM needs your facility, switches, and rack naming before it can help.', label: 'SET UP SITE', act: function() { cmd_route('profile'); } };
+  if (rung === 'B' && !st.masterLoaded) return { h: 'Load your Master to start the shift.', p: 'PHANTOM reads cabinets and host assignments from your Master file. Load it to begin scoping and scanning.', label: 'LOAD MASTER', act: function() { cmd_loadMaster(); } };
   if (st.blockerCount >= 1) return { h: 'Resolve ' + st.blockerCount + ' open blocker' + (st.blockerCount !== 1 ? 's' : '') + '.', p: 'A blocker bites the next shift first. Capture the proof note and route it into a handoff.', label: 'GO TO HANDOFF', act: function() { cmd_route('work', 'handoff'); } };
   if (st.handoffDraft) return { h: 'Finish your shift handoff.', p: 'A handoff draft is open. Complete the summary before your shift ends.', label: 'GO TO HANDOFF', act: function() { cmd_route('work', 'handoff'); } };
   if (st.activeDep && st.activePct < 100) return { h: 'Continue ' + (st.activeDep.name || 'your deployment') + ' — ' + st.activePct + '% deployed.', p: 'Pick up where the build left off.', label: 'GO TO DEPLOY', act: function() { cmd_route('work', 'deploy'); } };
   if (st.rackCount === 0) return { h: 'Capture your first rack.', p: 'Start a rack trace so deploys, blockers and handoffs have something to build on.', label: 'GO TO SCAN', act: function() { cmd_route('work', 'scan'); } };
   return { h: 'Start a rack trace before deploy.', p: 'Keep the build moving — scan the next rack.', label: 'GO TO SCAN', act: function() { cmd_route('work', 'scan'); } };
+}
+// v1.14.98 — Load Master from the Command Center (New-UI shift-start, roadmap Step 2).
+// Reuses the existing async master_loadFile() loader, which opens the OS file picker
+// synchronously inside this tap gesture — so it MUST be called without an await before
+// it. No legacy showPage('master') jump out of the redesign frame. Re-renders Command
+// when the load resolves so the cold-start NBA advances (Load Master → Capture a rack).
+function cmd_loadMaster() {
+  if (typeof master_loadFile !== 'function') return;
+  try {
+    var r = master_loadFile();
+    if (r && typeof r.then === 'function') { r.then(function() { try { cmd_render(); } catch (_) {} }); }
+    else { try { cmd_render(); } catch (_) {} }
+  } catch (_) {}
 }
 // Route from a Command Center control. Step 3: 'work' deep-links the Workspace
 // subtab (Deploy/Scan/Handoff) via showWorkTab(); Scan is re-homed, Deploy/Handoff
