@@ -8658,6 +8658,8 @@ textarea.hud-input {
    node (e.g. pw-rb, class pwr-sub) provides its own responsive grid. */
 .ref-sub { display: none; }
 .ref-sub.stab-active { display: block; }
+.work-sub { display: none; }
+.work-sub.stab-active { display: block; }
 /* ━━━ REDESIGN STEP 4 — Command Center (pg-cmd). Ported from the cc-final mockup,
    every selector scoped under #pg-cmd so the generic class names (.lens/.stat/.nba/
    .route/.clock/.spill) can't collide with app classes or leak to other pages.
@@ -10529,7 +10531,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.95';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.96';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -11058,9 +11060,29 @@ if (typeof window !== 'undefined') {
       <div id="cc-sig"></div>
     </div>
     <div class="page" id="pg-work">
-      <div style="padding:28px 16px;text-align:center;color:var(--hud-orange,#ff8a00)">
-        <div style="font-size:18px;font-weight:700;letter-spacing:1.5px">WORKSPACE</div>
-        <div style="margin-top:8px;opacity:0.6;font-size:var(--fs-caption)">Scaffold · Step 1 — Deploy · Scan · Handoff land here.</div>
+      <!-- REDESIGN STEP 3 — Workspace subtab strip. Scan is re-homed for real:
+           pg-scan content is re-parented into #wk-scan at boot by redesign_homeScan().
+           Deploy/Handoff are overlay flows (deploy_quick/handoff_quick) with no page
+           node, so their panels are thin launchers that fire the existing flow — §1
+           re-home-don't-rebuild. Flag-gated; field app reaches all three via legacy nav. -->
+      <div class="subtab-strip">
+        <div class="stab active" data-wk="wk-deploy" onclick="showStab(this,'work-sub','wk-deploy')">Deploy</div>
+        <div class="stab" data-wk="wk-scan" onclick="showStab(this,'work-sub','wk-scan')">Scan</div>
+        <div class="stab" data-wk="wk-handoff" onclick="showStab(this,'work-sub','wk-handoff')">Handoff</div>
+      </div>
+      <div class="work-sub stab-active" id="wk-deploy">
+        <div style="padding:24px 16px;text-align:center">
+          <div style="font-size:var(--fs-caption);letter-spacing:1.5px;color:var(--slate);margin-bottom:14px">DEPLOYMENT COMMAND</div>
+          <button class="pt-btn pt-btn-primary" style="width:auto;padding:14px 28px" onclick="deploy_quick()" aria-label="Open deployment command">Open Deploy &rarr;</button>
+        </div>
+      </div>
+      <!-- Scan: pg-scan content re-parented in here at boot by redesign_homeScan(). Empty in source. -->
+      <div class="work-sub" id="wk-scan"></div>
+      <div class="work-sub" id="wk-handoff">
+        <div style="padding:24px 16px;text-align:center">
+          <div style="font-size:var(--fs-caption);letter-spacing:1.5px;color:var(--slate);margin-bottom:14px">SHIFT HANDOFF</div>
+          <button class="pt-btn pt-btn-primary" style="width:auto;padding:14px 28px" onclick="handoff_quick()" aria-label="Generate shift handoff">Open Handoff &rarr;</button>
+        </div>
       </div>
     </div>
     <div class="page" id="pg-ref">
@@ -14319,6 +14341,9 @@ const STAB_GROUPS = {
   // ops-knowledge) is re-parented into #rf-know at boot by redesign_homeKnow();
   // pw-rb stays a pwr-sub member so FIELD mode (flag off) is untouched.
   'ref-sub':   ['rf-optics','rf-hw','rf-cli','rf-hwref','rf-know'],
+  // Redesign Workspace page subtabs (Step 3). wk-scan receives the re-parented
+  // pg-scan surface at boot (redesign_homeScan); wk-deploy/wk-handoff are launchers.
+  'work-sub':  ['wk-deploy','wk-scan','wk-handoff'],
 };
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -15731,6 +15756,15 @@ function showRefTab(targetId) {
   var btn = document.querySelector('#pg-ref .subtab-strip .stab[data-rf="' + targetId + '"]');
   if (btn) showStab(btn, 'ref-sub', targetId);
 }
+// showWorkTab(): jump into Workspace and activate a subtab (Deploy/Scan/Handoff).
+// Used by the Command Center launcher + NBA routes via cmd_route('work', target).
+// No target -> Workspace opens on its markup default (Deploy).
+function showWorkTab(target) {
+  showMode('work');
+  var id = target ? 'wk-' + target : null;
+  var btn = id && document.querySelector('#pg-work .subtab-strip .stab[data-wk="' + id + '"]');
+  if (btn) showStab(btn, 'work-sub', id);
+}
 // redesign_homeKnow(): re-parent the live Runbook/ops-knowledge node (#pw-rb) out
 // of pg-power into Reference→Know (#rf-know). Re-parenting (not copying) keeps all
 // markup, handlers, and the pwr-sub responsive grid intact — §1 re-home-don't-
@@ -15776,6 +15810,21 @@ function redesign_homeOptics() {
   }
 }
 document.addEventListener('DOMContentLoaded', redesign_homeOptics);
+
+// redesign_homeScan(): re-parent the WHOLE pg-scan surface (scan hero, BT-gun row,
+// collected-scans list) into Workspace->Scan (#wk-scan). Re-parenting keeps the
+// ScanDispatch handlers + element ids byte-identical — §1 re-home-don't-rebuild.
+// Flag-gated so FIELD mode leaves pg-scan (still reached via the legacy nav) whole.
+function redesign_homeScan() {
+  if (!redesign_isOn()) return;
+  var src = document.getElementById('pg-scan');
+  var dest = document.getElementById('wk-scan');
+  if (src && dest && src.firstChild) {
+    dest.innerHTML = '';
+    while (src.firstChild) dest.appendChild(src.firstChild);
+  }
+}
+document.addEventListener('DOMContentLoaded', redesign_homeScan);
 
 // redesign_homeHardware(): re-parent the rest of pg-power (Power / LED-GPU / Rack
 // Map / Blast Radius / Thermal subtabs + panels) into Reference→Hardware (#rf-hw).
@@ -15947,13 +15996,14 @@ function cmd_nba(rung, st) {
   if (st.rackCount === 0) return { h: 'Capture your first rack.', p: 'Start a rack trace so deploys, blockers and handoffs have something to build on.', label: 'GO TO SCAN', act: function() { cmd_route('work', 'scan'); } };
   return { h: 'Start a rack trace before deploy.', p: 'Keep the build moving — scan the next rack.', label: 'GO TO SCAN', act: function() { cmd_route('work', 'scan'); } };
 }
-// Route from a Command Center control. Work surfaces aren't re-homed until Step 3,
-// so 'work' lands on the Workspace page (the target tab will deep-link once it exists).
+// Route from a Command Center control. Step 3: 'work' deep-links the Workspace
+// subtab (Deploy/Scan/Handoff) via showWorkTab(); Scan is re-homed, Deploy/Handoff
+// land on a launcher panel for their existing overlay flow.
 function cmd_route(mode, target) {
   try {
     if (mode === 'profile') { if (typeof firstRun_openProfile === 'function') return firstRun_openProfile(); return showPage('master'); }
     if (mode === 'ref') return showRefTab(target);
-    if (mode === 'work') { showMode('work'); return; }
+    if (mode === 'work') return showWorkTab(target);
     showMode('command');
   } catch (_) {}
 }

@@ -1,6 +1,6 @@
 {
-  "version": "phantom-v1.14.95",
+  "version": "phantom-v1.14.96",
   "released": "2026-06-26",
-  "prevVersion": "phantom-v1.14.94",
-  "notes": "v1.14.95 - Two redesign fixes. FIX A: #pg-cmd bottom reserve 24px -> calc(96px + safe-bottom) so OPS SIGNAL clears the fixed bottom nav. FIX B: search re-homed to Ref - the top search bar now shows ONLY on Ref in redesign (mock-clean Command/Work headers). showMode toggles body.mode-ref + clears the field/overlay when leaving Ref; CSS body.rd .search-wrap{display:none} + body.rd.mode-ref .search-wrap{display:flex}. Plus a handoff-gap fix: hideSearch's page-restore relied on an active .tn-item, which never exists in redesign (showMode passes null) - so clearing search on Ref would blank the view; hideSearch now re-activates the current redesign mode page from the active bottom-nav item (redesign-gated, legacy untouched). Field app (?redesign=0) unchanged."
+  "prevVersion": "phantom-v1.14.95",
+  "notes": "v1.14.96 - Redesign Step 3: Workspace re-home. pg-work goes from an empty scaffold to a Deploy/Scan/Handoff subtab hub (mirrors the Ref page). Scan is re-homed for real: redesign_homeScan() re-parents the whole pg-scan surface (scan hero, BT-gun, collected scans) into #wk-scan at boot, flag-gated, handlers/ids intact. Deploy and Handoff are overlay flows with no page node, so their tabs are launcher panels firing the existing deploy_quick()/handoff_quick(). cmd_route('work', target) now deep-links the subtab via new showWorkTab(); added .work-sub CSS + STAB_GROUPS['work-sub']. All under body.rd - field app (?redesign=0) reaches Deploy/Scan/Handoff via the legacy nav unchanged."
 }
