@@ -1,6 +1,6 @@
 {
-  "version": "phantom-v1.14.101",
+  "version": "phantom-v1.14.102",
   "released": "2026-06-26",
-  "prevVersion": "phantom-v1.14.100",
-  "notes": "v1.14.101 - ARCHIVE STEP (move roadmap Section C, 1+2): the redesign New UI is now the DEFAULT. The bare URL boots into body.rd (Command/Work/Ref) instead of the legacy 5-tab app. redesign_isOn() flipped: returns true by default; operators opt OUT to legacy with ?legacy=1 (persisted as phantom_legacy - the rip-cord). Back-compat: ?redesign=0 is an alias for ?legacy=1, ?redesign=1 / ?legacy=0 clears the opt-out. restore()'s boot guard now calls redesign_isOn() instead of the retired raw phantom_redesign key. Legacy is NOT removed - it stays a full, reachable fallback (?legacy=1) until clean shifts earn the cut of the old 5-tab nav (roadmap C.3/C.4, later). Reversible: revert this commit or use ?legacy=1. All New-UI surfaces verified reachable through v1.14.100."
+  "prevVersion": "phantom-v1.14.101",
+  "notes": "v1.14.102 - Ref redesign: card-grid landing + drill-in (a new nav layer OVER the existing rf-* panels; reuse, don't rebuild). Entering Ref via the bottom nav now shows a 6-card corner-bracket grid (Optics/Hardware/CLI-IB/HW Ref/Know/Compass) instead of the flat category pill-row. Cards route via the existing showRefTab('rf-...'); the Compass card deep-links its real home (Hardware 'Cage Nut' subtab #pw-compass, folded in by redesign_homeCompass - one surface, two entry points, no duplicate). showMode('ref') adds #pg-ref.rf-grid (grid view); showRefTab removes it to drill into a panel with its existing sub-nav + content intact. New ref_showGrid() back affordance (#ref-back header) + ref_setBackTitle + ref_openCompass. Search keeps the existing #srch (no new engine). Category pill-row hidden under body.rd; panel contents/sub-navs unedited. Legacy (?legacy=1 / ?redesign=0) byte-identical."
 }

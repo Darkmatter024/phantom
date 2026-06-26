@@ -8660,6 +8660,36 @@ textarea.hud-input {
 .ref-sub.stab-active { display: block; }
 .work-sub { display: none; }
 .work-sub.stab-active { display: block; }
+/* ━━━ REDESIGN v1.14.102 — Ref card-grid landing + drill-in. A new nav layer OVER the
+   existing rf-* panels (reuses showRefTab); the flat category pill-row is replaced by
+   the grid. Scoped under body.rd; legacy (?legacy=1 / ?redesign=0) untouched. */
+body.rd #pg-ref > .subtab-strip { display: none; }            /* category pill-row → replaced by the card grid */
+#ref-grid, #ref-back { display: none; }                        /* hidden by default everywhere (legacy-safe); shown only under body.rd below */
+body.rd #pg-ref.rf-grid #ref-grid { display: block; }
+body.rd #pg-ref.rf-grid .ref-sub { display: none !important; } /* hide drill-in panels while the grid shows */
+body.rd #pg-ref:not(.rf-grid) #ref-back { display: flex; }
+.rf-glabel { display:flex; align-items:center; gap:12px; margin:4px 2px 14px; font-family:var(--mono); font-weight:600; letter-spacing:.28em; font-size:11px; color:var(--slate); }
+.rf-glabel .dot { width:6px; height:6px; border-radius:50%; background:var(--cyan); box-shadow:0 0 10px var(--cyan); flex:0 0 auto; }
+.rf-glabel .ln { flex:1; height:1px; background:linear-gradient(90deg, rgba(120,150,200,.18), transparent); }
+.rf-grid-wrap { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.rf-card { position:relative; border-radius:18px; min-height:124px; padding:18px 12px 16px; background:linear-gradient(180deg, rgba(16,22,34,.55), rgba(8,11,18,.72)); border:1px solid rgba(120,150,200,.12); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; cursor:pointer; transition:transform .14s ease, border-color .2s, box-shadow .2s; overflow:hidden; -webkit-tap-highlight-color:transparent; }
+.rf-card::after { content:""; position:absolute; inset:0; border-radius:18px; pointer-events:none; background:radial-gradient(90% 70% at 50% 16%, color-mix(in srgb, var(--rfac) 18%, transparent), transparent 70%); opacity:0; transition:.2s; }
+.rf-card:active { transform:scale(.97); border-color:color-mix(in srgb, var(--rfac) 50%, transparent); box-shadow:0 0 24px color-mix(in srgb, var(--rfac) 16%, transparent) inset; }
+.rf-card:active::after { opacity:1; }
+.rf-cnr { position:absolute; width:14px; height:14px; border:2px solid var(--rfac); opacity:.85; }
+.rf-cnr.tl { top:9px; left:9px; border-right:0; border-bottom:0; border-top-left-radius:5px; }
+.rf-cnr.tr { top:9px; right:9px; border-left:0; border-bottom:0; border-top-right-radius:5px; }
+.rf-cnr.bl { bottom:9px; left:9px; border-right:0; border-top:0; border-bottom-left-radius:5px; }
+.rf-cnr.br { bottom:9px; right:9px; border-left:0; border-top:0; border-bottom-right-radius:5px; }
+.rf-card .rf-cic svg { width:36px; height:36px; color:var(--rfac); filter:drop-shadow(0 0 9px color-mix(in srgb, var(--rfac) 65%, transparent)); }
+.rf-card .rf-cname { font-family:var(--mono); font-weight:700; letter-spacing:.14em; font-size:15px; color:var(--white); }
+.rf-card .rf-cmeta { font-family:var(--mono); font-weight:600; font-size:11px; letter-spacing:.03em; color:var(--slate); text-align:center; line-height:1.2; }
+#ref-back { align-items:center; gap:12px; margin:4px 0 12px; }
+.rf-back-btn { width:40px; height:40px; border-radius:12px; border:1px solid rgba(120,150,200,.18); background:rgba(16,22,34,.55); display:grid; place-items:center; cursor:pointer; flex:0 0 auto; color:var(--white); -webkit-tap-highlight-color:transparent; }
+.rf-back-btn svg { width:20px; height:20px; }
+#ref-back .rf-back-title { font-family:var(--orb); font-weight:700; letter-spacing:.14em; font-size:18px; color:var(--white); }
+body.rd #pg-ref:not(.rf-grid) .ref-sub.stab-active { animation:rf-fade .22s ease both; }
+@keyframes rf-fade { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
 /* ━━━ REDESIGN STEP 4 — Command Center (pg-cmd). Ported from the cc-final mockup,
    every selector scoped under #pg-cmd so the generic class names (.lens/.stat/.nba/
    .route/.clock/.spill) can't collide with app classes or leak to other pages.
@@ -10531,7 +10561,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.101';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.102';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -11092,6 +11122,23 @@ if (typeof window !== 'undefined') {
     <div class="page" id="pg-ref">
       <!-- REDESIGN STEP 2 — Reference subtab strip. Surfaces re-home one at a time
            (Know first, §9). Optics/Hardware/CLI-IB/HW Ref are stubs until their step. -->
+      <!-- REDESIGN v1.14.102 — Ref card-grid landing (new nav layer; cards reuse showRefTab,
+           Compass deep-links the Hardware Cage-Nut subtab). Back header shows in drill-in only. -->
+      <div id="ref-back">
+        <button class="rf-back-btn" onclick="ref_showGrid()" aria-label="Back to Reference grid"><svg viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <span class="rf-back-title" id="ref-back-title">Reference</span>
+      </div>
+      <div id="ref-grid">
+        <div class="rf-glabel"><span class="dot"></span>REFERENCE LIBRARY<span class="ln"></span></div>
+        <div class="rf-grid-wrap">
+          <div class="rf-card" style="--rfac:#28e0ff" role="button" tabindex="0" onclick="showRefTab('rf-optics')" aria-label="Optics reference"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><svg viewBox="0 0 24 24" fill="none"><circle cx="6" cy="12" r="2.2" stroke="currentColor" stroke-width="1.6"/><circle cx="18" cy="6" r="2.2" stroke="currentColor" stroke-width="1.6"/><circle cx="18" cy="18" r="2.2" stroke="currentColor" stroke-width="1.6"/><path d="M8 11 16 7M8 13l8 4" stroke="currentColor" stroke-width="1.6"/></svg></div><div class="rf-cname">OPTICS</div><div class="rf-cmeta">Fiber · Form factors · MPO</div></div>
+          <div class="rf-card" style="--rfac:#39e09b" role="button" tabindex="0" onclick="showRefTab('rf-hw')" aria-label="Hardware reference"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="16" height="6" rx="1.5" stroke="currentColor" stroke-width="1.6"/><rect x="4" y="14" width="16" height="6" rx="1.5" stroke="currentColor" stroke-width="1.6"/><circle cx="8" cy="7" r="1" fill="currentColor"/><circle cx="8" cy="17" r="1" fill="currentColor"/></svg></div><div class="rf-cname">HARDWARE</div><div class="rf-cmeta">GPU · Switch · PDU</div></div>
+          <div class="rf-card" style="--rfac:#8a4bff" role="button" tabindex="0" onclick="showRefTab('rf-cli')" aria-label="CLI and InfiniBand reference"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="m7 10 3 2.5L7 15M13 15h4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="rf-cname">CLI / IB</div><div class="rf-cmeta">Fabric · Diagnostics</div></div>
+          <div class="rf-card" style="--rfac:#1fffd0" role="button" tabindex="0" onclick="showRefTab('rf-hwref')" aria-label="Hardware reference — cables and part numbers"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 3v18M4 7.5l8 4.5 8-4.5" stroke="currentColor" stroke-width="1.3"/></svg></div><div class="rf-cname">HW REF</div><div class="rf-cmeta">Cables · Part numbers</div></div>
+          <div class="rf-card" style="--rfac:#ffcb45" role="button" tabindex="0" onclick="showRefTab('rf-know')" aria-label="Know — SOPs and how-tos"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><svg viewBox="0 0 24 24" fill="none"><path d="M5 5a2 2 0 0 1 2-2h11v15H7a2 2 0 0 0-2 2z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M5 18a2 2 0 0 0 2 2h11" stroke="currentColor" stroke-width="1.6"/><path d="M9 7h6M9 10h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div><div class="rf-cname">KNOW</div><div class="rf-cmeta">SOPs · How-tos</div></div>
+          <div class="rf-card" style="--rfac:#ff2bd6" role="button" tabindex="0" onclick="ref_openCompass()" aria-label="Compass — cage nut and RU map"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="m15.5 8.5-2 5-5 2 2-5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg></div><div class="rf-cname">COMPASS</div><div class="rf-cmeta">Cage nut · RU map</div></div>
+        </div>
+      </div>
       <div class="subtab-strip">
         <div class="stab active" data-rf="rf-optics" onclick="showStab(this,'ref-sub','rf-optics')">Optics</div>
         <div class="stab" data-rf="rf-hw" onclick="showStab(this,'ref-sub','rf-hw')">Hardware</div>
@@ -15738,6 +15785,9 @@ function showMode(mode) {
   });
   // Search bar shows only on Ref in redesign (mock-clean Command/Work headers).
   document.body.classList.toggle('mode-ref', mode === 'ref');
+  // v1.14.102: entering Ref via the bottom nav lands on the card-grid landing.
+  // showRefTab() (deep-links / card taps) removes rf-grid to drill into a panel.
+  if (mode === 'ref') { var _pr = document.getElementById('pg-ref'); if (_pr) _pr.classList.add('rf-grid'); }
   if (mode !== 'ref') {
     var _s = document.getElementById('srch');
     if (_s) _s.value = '';
@@ -15775,10 +15825,28 @@ document.addEventListener('DOMContentLoaded', redesign_initToggle);
 // showRefTab(): jump into the Reference page and activate a subtab. Used by
 // EXTERNAL entry points (the old pg-power Runbook button, search results) so they
 // still reach the re-homed content. Direct tab taps use showStab(this,...).
+var REF_CAT_NAMES = { 'rf-optics':'OPTICS', 'rf-hw':'HARDWARE', 'rf-cli':'CLI / IB', 'rf-hwref':'HW REF', 'rf-know':'KNOW' };
 function showRefTab(targetId) {
   showMode('ref');
+  var pr = document.getElementById('pg-ref'); if (pr) pr.classList.remove('rf-grid');   // v1.14.102: deep-link / card tap → drill into the panel (out of the grid)
   var btn = document.querySelector('#pg-ref .subtab-strip .stab[data-rf="' + targetId + '"]');
   if (btn) showStab(btn, 'ref-sub', targetId);
+  ref_setBackTitle(REF_CAT_NAMES[targetId] || 'Reference');
+}
+// v1.14.102 — Ref card-grid helpers. ref_showGrid() returns to the landing; the Compass
+// card deep-links its real home (Hardware 'Cage Nut' = #pw-compass, folded in by
+// redesign_homeCompass) — one surface, two entry points, no duplicate.
+function ref_setBackTitle(t) { var e = document.getElementById('ref-back-title'); if (e) e.textContent = t || 'Reference'; }
+function ref_showGrid() {
+  var pr = document.getElementById('pg-ref'); if (pr) pr.classList.add('rf-grid');
+  var s = document.getElementById('srch'); if (s) s.value = '';
+  if (typeof hideSearch === 'function') { try { hideSearch(); } catch (_) {} }
+}
+function ref_openCompass() {
+  showRefTab('rf-hw');
+  var cs = document.getElementById('stab-pw-compass');
+  if (cs) { try { showStab(cs, 'pwr-sub', 'pw-compass'); if (typeof compass_render === 'function') compass_render(); } catch (_) {} }
+  ref_setBackTitle('COMPASS');
 }
 // showWorkTab(): jump into Workspace and activate a subtab (Deploy/Scan/Handoff).
 // Used by the Command Center launcher + NBA routes via cmd_route('work', target).
