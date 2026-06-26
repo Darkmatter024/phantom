@@ -8664,10 +8664,16 @@ textarea.hud-input {
    existing rf-* panels (reuses showRefTab); the flat category pill-row is replaced by
    the grid. Scoped under body.rd; legacy (?legacy=1 / ?redesign=0) untouched. */
 body.rd #pg-ref > .subtab-strip { display: none; }            /* category pill-row → replaced by the card grid */
-#ref-grid, #ref-back { display: none; }                        /* hidden by default everywhere (legacy-safe); shown only under body.rd below */
+#ref-grid, #ref-back, #work-grid, #work-back { display: none; } /* hidden by default everywhere (legacy-safe); shown only under body.rd below */
 body.rd #pg-ref.rf-grid #ref-grid { display: block; }
 body.rd #pg-ref.rf-grid .ref-sub { display: none !important; } /* hide drill-in panels while the grid shows */
 body.rd #pg-ref:not(.rf-grid) #ref-back { display: flex; }
+/* v1.14.105 — Work card-grid landing (mirrors Ref; reuses the .rf-card visual classes). */
+body.rd #pg-work > .subtab-strip { display: none; }            /* Deploy/Scan/Handoff/Issues tab strip → replaced by the card grid */
+body.rd #pg-work.wk-grid #work-grid { display: block; }
+body.rd #pg-work.wk-grid .work-sub { display: none !important; }
+body.rd #pg-work:not(.wk-grid) #work-back { display: flex; }
+body.rd #pg-work:not(.wk-grid) .work-sub.stab-active { animation: rf-fade .22s ease both; }
 .rf-glabel { display:flex; align-items:center; gap:12px; margin:4px 2px 14px; font-family:var(--mono); font-weight:600; letter-spacing:.28em; font-size:11px; color:var(--slate); }
 .rf-glabel .dot { width:6px; height:6px; border-radius:50%; background:var(--cyan); box-shadow:0 0 10px var(--cyan); flex:0 0 auto; }
 .rf-glabel .ln { flex:1; height:1px; background:linear-gradient(90deg, rgba(120,150,200,.18), transparent); }
@@ -10573,7 +10579,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.104';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.105';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -11123,6 +11129,21 @@ if (typeof window !== 'undefined') {
            Deploy/Handoff are overlay flows (deploy_quick/handoff_quick) with no page
            node, so their panels are thin launchers that fire the existing flow — §1
            re-home-don't-rebuild. Flag-gated; field app reaches all three via legacy nav. -->
+      <!-- REDESIGN v1.14.105 — Work card-grid landing (mirrors Ref). 4 corner-bracket cards over
+           the existing wk-* surfaces; cards route via showWorkTab. Back header shows in drill-in only. -->
+      <div id="work-back">
+        <button class="rf-back-btn" onclick="wk_showGrid()" aria-label="Back to Workspace grid"><svg viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <span class="rf-back-title" id="work-back-title">Workspace</span>
+      </div>
+      <div id="work-grid">
+        <div class="rf-glabel"><span class="dot"></span>FIELD WORK<span class="ln"></span></div>
+        <div class="rf-grid-wrap">
+          <div class="rf-card" style="--rfac:#8a4bff" role="button" tabindex="0" onclick="showWorkTab('deploy')" aria-label="Deploy"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><svg viewBox="0 0 24 24" fill="none"><rect x="5" y="3" width="14" height="18" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M5 8h14M5 13h14M5 18h14" stroke="currentColor" stroke-width="1.4"/><circle cx="8" cy="5.5" r=".8" fill="currentColor"/></svg></div><div class="rf-cname">DEPLOY</div><div class="rf-cmeta">Build · seed · rack detail</div></div>
+          <div class="rf-card" style="--rfac:#28e0ff" role="button" tabindex="0" onclick="showWorkTab('scan')" aria-label="Scan"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><svg viewBox="0 0 24 24" fill="none"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M4 12h16" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></div><div class="rf-cname">SCAN</div><div class="rf-cmeta">Racks · optics · serials</div></div>
+          <div class="rf-card" style="--rfac:#ff8a00" role="button" tabindex="0" onclick="showWorkTab('handoff')" aria-label="Handoff"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><svg viewBox="0 0 24 24" fill="none"><path d="M7 7h11l-3-3M17 17H6l3 3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="rf-cname">HANDOFF</div><div class="rf-cmeta">Shift handoff · blockers</div></div>
+          <div class="rf-card" style="--rfac:#ff2bd6" role="button" tabindex="0" onclick="showWorkTab('issues')" aria-label="Issues"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><svg viewBox="0 0 24 24" fill="none"><path d="M6 21V4h11l-2 4 2 4H6" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg></div><div class="rf-cname">ISSUES</div><div class="rf-cmeta">Deployment issue log</div></div>
+        </div>
+      </div>
       <div class="subtab-strip">
         <div class="stab active" data-wk="wk-deploy" onclick="showStab(this,'work-sub','wk-deploy')">Deploy</div>
         <div class="stab" data-wk="wk-scan" onclick="showStab(this,'work-sub','wk-scan')">Scan</div>
@@ -15817,6 +15838,9 @@ function showMode(mode) {
   // v1.14.102: entering Ref via the bottom nav lands on the card-grid landing.
   // showRefTab() (deep-links / card taps) removes rf-grid to drill into a panel.
   if (mode === 'ref') { var _pr = document.getElementById('pg-ref'); if (_pr) _pr.classList.add('rf-grid'); }
+  // v1.14.105: entering Work via the bottom nav lands on the card-grid landing.
+  // showWorkTab() (card taps / Command launcher deep-links) removes wk-grid to drill in.
+  if (mode === 'work') { var _pw = document.getElementById('pg-work'); if (_pw) _pw.classList.add('wk-grid'); }
   if (mode !== 'ref') {
     var _s = document.getElementById('srch');
     if (_s) _s.value = '';
@@ -15895,13 +15919,20 @@ function rd_closeProfile() {
 // showWorkTab(): jump into Workspace and activate a subtab (Deploy/Scan/Handoff).
 // Used by the Command Center launcher + NBA routes via cmd_route('work', target).
 // No target -> Workspace opens on its markup default (Deploy).
+var WK_CAT_NAMES = { 'deploy':'DEPLOY', 'scan':'SCAN', 'handoff':'HANDOFF', 'issues':'ISSUES' };
 function showWorkTab(target) {
-  showMode('work');
-  var id = target ? 'wk-' + target : null;
-  var btn = id && document.querySelector('#pg-work .subtab-strip .stab[data-wk="' + id + '"]');
+  showMode('work');                              // adds wk-grid → grid landing is the default
+  if (!target) return;                           // no target → stay on the grid
+  var pr = document.getElementById('pg-work'); if (pr) pr.classList.remove('wk-grid');   // v1.14.105: card tap / deep-link → drill into the panel
+  var id = 'wk-' + target;
+  var btn = document.querySelector('#pg-work .subtab-strip .stab[data-wk="' + id + '"]');
   if (btn) showStab(btn, 'work-sub', id);
   if (target === 'issues' && typeof issue_pageOpen === 'function') { try { issue_pageOpen(); } catch (_) {} }
+  wk_setBackTitle(WK_CAT_NAMES[target] || 'Workspace');
 }
+// v1.14.105 — Work card-grid helpers (mirror the Ref grid). wk_showGrid() returns to the landing.
+function wk_setBackTitle(t) { var e = document.getElementById('work-back-title'); if (e) e.textContent = t || 'Workspace'; }
+function wk_showGrid() { var pr = document.getElementById('pg-work'); if (pr) pr.classList.add('wk-grid'); }
 // redesign_homeKnow(): re-parent the live Runbook/ops-knowledge node (#pw-rb) out
 // of pg-power into Reference→Know (#rf-know). Re-parenting (not copying) keeps all
 // markup, handlers, and the pwr-sub responsive grid intact — §1 re-home-don't-
