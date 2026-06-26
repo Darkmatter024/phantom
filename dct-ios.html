@@ -10531,7 +10531,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.98';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.99';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -15959,8 +15959,14 @@ function cmd_render() {
   // ── status pills: the only honest real-time signals (§3.1) ──
   var online = (typeof navigator === 'undefined') || navigator.onLine !== false;
   var storageOk = true; try { localStorage.setItem('_cc_probe', '1'); localStorage.removeItem('_cc_probe'); } catch (_) { storageOk = false; }
-  var pills = [['Online', !online], ['Storage ready', !storageOk], [confirmed ? 'Profile ✓' : 'Profile', !confirmed]];
-  E('cc-statusrow').innerHTML = pills.map(function(p) { return '<div class="spill' + (p[1] ? ' bad' : '') + '"><span class="dot"></span>' + p[0] + '</div>'; }).join('');
+  // v1.14.99 (roadmap Step 5): the Profile pill is the PERSISTENT New-UI path to the
+  // site-profile editor. The legacy header overflow 'SITE PROFILE' item is hidden under
+  // body.rd, and the rung-A 'SET UP SITE' NBA disappears once configured — so without
+  // this, a set profile is unreachable/uneditable in redesign. firstRun_openProfile()
+  // opens the master profile section; frame-safe (back returns to redesign via the
+  // v1.14.97 nav_restore guard). 3rd pill slot carries an optional onclick.
+  var pills = [['Online', !online, null], ['Storage ready', !storageOk, null], [confirmed ? 'Profile ✓' : 'Profile', !confirmed, 'firstRun_openProfile()']];
+  E('cc-statusrow').innerHTML = pills.map(function(p) { return '<div class="spill' + (p[1] ? ' bad' : '') + (p[2] ? ' spill-tap' : '') + '"' + (p[2] ? ' role="button" tabindex="0" style="cursor:pointer" onclick="' + p[2] + '"' : '') + '><span class="dot"></span>' + p[0] + '</div>'; }).join('');
 
   // ── lens: headline / copy / ghost brightness ──
   var lh, lp, ghostCls;

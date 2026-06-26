@@ -1,6 +1,6 @@
 {
-  "version": "phantom-v1.14.98",
+  "version": "phantom-v1.14.99",
   "released": "2026-06-26",
-  "prevVersion": "phantom-v1.14.97",
-  "notes": "v1.14.98 - Move roadmap Step 2: Load Master into Command (New-UI shift-start). The Command Center cold-start now surfaces the Load-Master action so a shift can begin entirely in the New UI without the legacy NOW dashboard. cmd_render computes masterLoaded (via master_hasMaster); when profile is confirmed but no Master is loaded (rung B), the lens reads 'Load your Master' and the NBA becomes 'LOAD MASTER' -> new cmd_loadMaster(), which reuses the existing async master_loadFile() loader (opens the file picker in-gesture, no legacy showPage('master') jump) and re-renders Command when the load resolves so the NBA advances to 'Capture a rack'. Gated to the cold state (rung B) so work-aware NBAs in rung C are unchanged. Reuse-not-rebuild; legacy NOW 'LOAD MASTER ->' button and master_loadFile untouched; all under body.rd / Command which is redesign-only."
+  "prevVersion": "phantom-v1.14.98",
+  "notes": "v1.14.99 - Move roadmap Step 5: Profile reachable in the New UI. The legacy header overflow 'SITE PROFILE' item is hidden under body.rd and the rung-A 'SET UP SITE' NBA disappears once the profile is set, so a configured profile was unreachable/uneditable in redesign. Fix: the Command Center 'Profile' status pill is now a persistent, tappable path to the site-profile editor (firstRun_openProfile -> master profile section; frame-safe via the v1.14.97 nav_restore guard). cc-statusrow pill builder gains an optional onclick on the 3rd (Profile) slot; redesign-only (pg-cmd). Legacy NOW/overflow/profile editor untouched; ?redesign=0 byte-identical."
 }
