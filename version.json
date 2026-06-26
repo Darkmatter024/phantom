@@ -1,6 +1,6 @@
 {
-  "version": "phantom-v1.14.91",
+  "version": "phantom-v1.14.92",
   "released": "2026-06-25",
-  "prevVersion": "phantom-v1.14.90",
-  "notes": "v1.14.91 - Redesign Step 4: COMMAND CENTER built into pg-cmd (from the cc-final mockup). Zone stack: status pills, lens hero (clock + shift pill + headline + copy + ghost), 3 earned-count stats, Next Best Action, launcher row (Deploy/Scan/Handoff), ops-signal queue. Wired to HONEST app state only (cmd_render) - cold-start rung A/B/C from siteProfile_isConfirmed + captured counts; stats from deploy_loadAll/deploy_loadRacks/deploy_countBlockers; active deploy % from nowtab_resolveDep + deploy_computeDeployRollup; NBA = spec sec 3.3 tree; status pills from navigator.onLine + storage probe + profile; clock live. No demo data, no fake telemetry. CSS scoped under #pg-cmd (no collisions). Ghost hero mark compressed 497KB PNG -> 78KB cc-ghost.webp (precached). NBA + launcher Work-routes land on the Workspace stub until Step 3 re-homes Deploy/Scan/Handoff; Ref/profile routes live. Flag-gated; field app untouched."
+  "prevVersion": "phantom-v1.14.91",
+  "notes": "v1.14.92 - Redesign fix: the #mode-toggle (Command/Work/Ref strip) was inside <main>, but .page is position:absolute;inset:0 so the active page (pg-cmd) overlaid the in-flow toggle and its first row (#cc-statusrow) collided with it. Moved #mode-toggle OUT of <main> to persistent chrome - a sibling immediately before <main>, same model as .search-wrap (flex-shrink:0). Now main flexes below the toggle and the absolute page layers fill main beneath it: no overlap, for Command/Work/Ref alike. DOM-position move only (JS references the toggle by id, inert to the move); no CSS change; field app untouched (toggle stays display:none with the flag off)."
 }
