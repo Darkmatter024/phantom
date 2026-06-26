@@ -1,6 +1,6 @@
 {
-  "version": "phantom-v1.14.99",
+  "version": "phantom-v1.14.100",
   "released": "2026-06-26",
-  "prevVersion": "phantom-v1.14.98",
-  "notes": "v1.14.99 - Move roadmap Step 5: Profile reachable in the New UI. The legacy header overflow 'SITE PROFILE' item is hidden under body.rd and the rung-A 'SET UP SITE' NBA disappears once the profile is set, so a configured profile was unreachable/uneditable in redesign. Fix: the Command Center 'Profile' status pill is now a persistent, tappable path to the site-profile editor (firstRun_openProfile -> master profile section; frame-safe via the v1.14.97 nav_restore guard). cc-statusrow pill builder gains an optional onclick on the 3rd (Profile) slot; redesign-only (pg-cmd). Legacy NOW/overflow/profile editor untouched; ?redesign=0 byte-identical."
+  "prevVersion": "phantom-v1.14.99",
+  "notes": "v1.14.100 - Move roadmap Step 6 straggler: Deployment Issue Log (twin) re-homed into a new Work 'Issues' subtab. It was reachable only via the legacy NOW 'NERVE' tile, so it was lost in the New UI. redesign_homeIssues() re-parents the live #issue-page node out of pg-twin into #wk-issues at boot (flag-gated); the Issues subtab tap calls issue_pageOpen() to render the list. Added wk-issues to STAB_GROUPS['work-sub'] + showWorkTab issues-render for cmd_route entry. Reuse-not-rebuild; FIELD mode (?redesign=0) leaves pg-twin whole and the NOW tile/showPage('twin') unchanged. With this, every legacy 5-tab surface now has a New-UI path (Command/Work[Deploy/Scan/Handoff/Issues]/Ref[Optics/Hardware/CLI/HWRef/Know/Compass]/Profile/Load Master)."
 }

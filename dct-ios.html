@@ -10531,7 +10531,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.99';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.100';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -11069,6 +11069,7 @@ if (typeof window !== 'undefined') {
         <div class="stab active" data-wk="wk-deploy" onclick="showStab(this,'work-sub','wk-deploy')">Deploy</div>
         <div class="stab" data-wk="wk-scan" onclick="showStab(this,'work-sub','wk-scan')">Scan</div>
         <div class="stab" data-wk="wk-handoff" onclick="showStab(this,'work-sub','wk-handoff')">Handoff</div>
+        <div class="stab" data-wk="wk-issues" onclick="showStab(this,'work-sub','wk-issues');if(typeof issue_pageOpen==='function')issue_pageOpen()">Issues</div>
       </div>
       <div class="work-sub stab-active" id="wk-deploy">
         <div style="padding:24px 16px;text-align:center">
@@ -11084,6 +11085,9 @@ if (typeof window !== 'undefined') {
           <button class="pt-btn pt-btn-primary" style="width:auto;padding:14px 28px" onclick="handoff_quick()" aria-label="Generate shift handoff">Open Handoff &rarr;</button>
         </div>
       </div>
+      <!-- Issues: the Deployment Issue Log's #issue-page is re-parented in here at boot
+           by redesign_homeIssues(); issue_pageOpen() renders the list on tab tap. -->
+      <div class="work-sub" id="wk-issues"></div>
     </div>
     <div class="page" id="pg-ref">
       <!-- REDESIGN STEP 2 — Reference subtab strip. Surfaces re-home one at a time
@@ -14343,7 +14347,7 @@ const STAB_GROUPS = {
   'ref-sub':   ['rf-optics','rf-hw','rf-cli','rf-hwref','rf-know'],
   // Redesign Workspace page subtabs (Step 3). wk-scan receives the re-parented
   // pg-scan surface at boot (redesign_homeScan); wk-deploy/wk-handoff are launchers.
-  'work-sub':  ['wk-deploy','wk-scan','wk-handoff'],
+  'work-sub':  ['wk-deploy','wk-scan','wk-handoff','wk-issues'],
 };
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -15778,6 +15782,7 @@ function showWorkTab(target) {
   var id = target ? 'wk-' + target : null;
   var btn = id && document.querySelector('#pg-work .subtab-strip .stab[data-wk="' + id + '"]');
   if (btn) showStab(btn, 'work-sub', id);
+  if (target === 'issues' && typeof issue_pageOpen === 'function') { try { issue_pageOpen(); } catch (_) {} }
 }
 // redesign_homeKnow(): re-parent the live Runbook/ops-knowledge node (#pw-rb) out
 // of pg-power into Reference→Know (#rf-know). Re-parenting (not copying) keeps all
@@ -15839,6 +15844,20 @@ function redesign_homeScan() {
   }
 }
 document.addEventListener('DOMContentLoaded', redesign_homeScan);
+
+// redesign_homeIssues(): re-parent the Deployment Issue Log surface (#issue-page,
+// filled by the issue_* module) out of pg-twin into Workspace->Issues (#wk-issues).
+// Re-parenting the live node keeps issue_renderList's getElementById('issue-page')
+// target intact — §1 re-home-don't-rebuild. Flag-gated; FIELD mode leaves pg-twin
+// whole (still reached via the legacy NOW 'NERVE' tile -> showPage('twin')). The
+// Issues subtab tap calls issue_pageOpen() to render the list (dynamic surface).
+function redesign_homeIssues() {
+  if (!redesign_isOn()) return;
+  var src = document.getElementById('issue-page');
+  var dest = document.getElementById('wk-issues');
+  if (src && dest && src.parentNode !== dest) { dest.appendChild(src); }
+}
+document.addEventListener('DOMContentLoaded', redesign_homeIssues);
 
 // redesign_homeHardware(): re-parent the rest of pg-power (Power / LED-GPU / Rack
 // Map / Blast Radius / Thermal subtabs + panels) into Reference→Hardware (#rf-hw).
