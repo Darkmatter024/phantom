@@ -8690,6 +8690,18 @@ body.rd #pg-ref:not(.rf-grid) #ref-back { display: flex; }
 #ref-back .rf-back-title { font-family:var(--orb); font-weight:700; letter-spacing:.14em; font-size:18px; color:var(--white); }
 body.rd #pg-ref:not(.rf-grid) .ref-sub.stab-active { animation:rf-fade .22s ease both; }
 @keyframes rf-fade { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+/* ━━━ REDESIGN v1.14.104 — Site Profile in the New UI: SYS-panel entry + full-height sheet
+   (renders the REUSED siteProfile_showEditor). Frame-safe — sits above the bottom nav. */
+#hdr-agg-profile-row { display: none; }
+body.rd #hdr-agg-profile-row { display: flex; }
+#rd-profile-sheet { position: fixed; top: 0; left: 0; right: 0; bottom: calc(72px + var(--safe-bottom, 0px)); z-index: 60; display: none; flex-direction: column; background: linear-gradient(180deg, #06090f, #0a0e16); }
+body.rd #rd-profile-sheet.open { display: flex; }
+.rd-sheet-hdr { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: calc(12px + var(--safe-top, 0px)) 18px 12px; border-bottom: 1px solid rgba(120,150,200,0.14); }
+.rd-sheet-titles { min-width: 0; }
+.rd-sheet-titles .t { font-family: var(--orb); font-weight: 700; letter-spacing: .14em; font-size: 18px; color: var(--white); }
+.rd-sheet-titles .s { font-family: var(--mono); font-weight: 600; font-size: 10px; letter-spacing: .22em; color: var(--slate); margin-top: 3px; }
+.rd-sheet-close { width: 40px; height: 40px; border-radius: 11px; border: 1px solid rgba(120,150,200,0.18); background: rgba(16,22,34,0.55); color: var(--white); font-size: 17px; cursor: pointer; flex: 0 0 auto; -webkit-tap-highlight-color: transparent; }
+.rd-sheet-body { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 16px 18px 28px; }
 /* ━━━ REDESIGN STEP 4 — Command Center (pg-cmd). Ported from the cc-final mockup,
    every selector scoped under #pg-cmd so the generic class names (.lens/.stat/.nba/
    .route/.clock/.spill) can't collide with app classes or leak to other pages.
@@ -10561,7 +10573,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.103';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.104';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -11008,6 +11020,12 @@ if (typeof window !== 'undefined') {
               <span class="hdr-agg-row-name">STORAGE</span>
               <span class="hdr-agg-row-val" id="hs-store-val">—</span>
             </div>
+            <!-- v1.14.104: SYS → Site Profile (New-UI sheet). Redesign-only (gated in CSS); legacy panel unchanged. -->
+            <div class="hdr-agg-row" id="hdr-agg-profile-row" onclick="event.stopPropagation();var _p=document.getElementById('hdr-agg-panel');if(_p)_p.style.display='none';rd_openProfile()" style="cursor:pointer;border-top:1px solid rgba(120,150,200,0.12)">
+              <span class="hdr-agg-row-dot" style="background:var(--cyan)"></span>
+              <span class="hdr-agg-row-name">SITE PROFILE</span>
+              <span class="hdr-agg-row-val" style="color:var(--cyan)">EDIT &rarr;</span>
+            </div>
           </div>
           <!-- Legacy label reference kept for phantomUpdateNetPill() backward compat -->
           <span id="net-label" style="display:none">ONLINE</span>
@@ -11018,6 +11036,16 @@ if (typeof window !== 'undefined') {
 
   <!-- DCT-10: Toast container -->
   <div id="toast-container" style="position:fixed;bottom:90px;right:16px;z-index:var(--z-toast);display:flex;flex-direction:column;align-items:flex-end;pointer-events:none"></div>
+
+  <!-- v1.14.104 — New-UI Site Profile sheet (SYS → Profile + Command rung-A). Renders the
+       REUSED siteProfile_showEditor; frame-safe (above the bottom nav), no showPage('master'). -->
+  <div id="rd-profile-sheet" role="dialog" aria-modal="true" aria-label="Site Profile">
+    <div class="rd-sheet-hdr">
+      <div class="rd-sheet-titles"><div class="t">SITE PROFILE</div><div class="s">SYSTEM &middot; SITE CONFIGURATION</div></div>
+      <button class="rd-sheet-close" onclick="rd_closeProfile()" aria-label="Close site profile">&#10005;</button>
+    </div>
+    <div class="rd-sheet-body" id="rd-profile-body"></div>
+  </div>
 
   <!-- DCT-02: Storage warning banner -->
   <div id="storage-warn" style="display:none;background:rgba(255,59,59,0.12);border-bottom:1px solid rgba(255,59,59,0.3);color:var(--alert,#ff3b3b);font-family:var(--mono);font-size: var(--fs-caption);letter-spacing:var(--hud-track-mid);text-align:center;padding:6px 16px;cursor:pointer" onclick="exportAllData()" aria-live="polite"></div>
@@ -15770,6 +15798,7 @@ function showMode(mode) {
   var pid = map[mode];
   if (!pid) return;
   _rdMode = mode;   // v1.14.97: remember the active redesign mode for nav_restore stickiness
+  if (typeof rd_closeProfile === 'function') rd_closeProfile();   // v1.14.104: a bottom-nav tap dismisses the Profile sheet
   // Scaffold pages must NOT write nav/session-restore state. Without this,
   // showPage()'s nav_push persists p:'cmd', which a later normal-mode boot
   // would replay — flipping the live app onto the empty stub. Suppress via
@@ -15847,6 +15876,21 @@ function ref_openCompass() {
   var cs = document.getElementById('stab-pw-compass');
   if (cs) { try { showStab(cs, 'pwr-sub', 'pw-compass'); if (typeof compass_render === 'function') compass_render(); } catch (_) {} }
   ref_setBackTitle('COMPASS');
+}
+// v1.14.104 — New-UI Site Profile sheet (SYS → Profile + Command rung-A / pill). Renders
+// the REUSED siteProfile_showEditor into the sheet body (full edit + siteProfile_save
+// persistence reused, NOT rebuilt); no showPage('master') bounce. Frame-safe overlay
+// above the bottom nav; closed on close-tap or any showMode() navigation.
+function rd_openProfile() {
+  var sheet = document.getElementById('rd-profile-sheet');
+  var body = document.getElementById('rd-profile-body');
+  if (!sheet || !body) return;
+  if (typeof siteProfile_showEditor === 'function') { try { siteProfile_showEditor(body); } catch (_) {} }
+  sheet.classList.add('open');
+}
+function rd_closeProfile() {
+  var sheet = document.getElementById('rd-profile-sheet');
+  if (sheet) sheet.classList.remove('open');
 }
 // showWorkTab(): jump into Workspace and activate a subtab (Deploy/Scan/Handoff).
 // Used by the Command Center launcher + NBA routes via cmd_route('work', target).
@@ -19490,6 +19534,9 @@ function firstRun_renderChip() {
 }
 
 function firstRun_openProfile() {
+  // v1.14.104: in the New UI, open the Profile SHEET (reused editor) — never showPage('master')
+  // (that's the legacy bounce). Covers the Command 'Profile' pill + rung-A 'SET UP SITE' route.
+  if (typeof redesign_isOn === 'function' && redesign_isOn() && typeof rd_openProfile === 'function') { rd_openProfile(); return; }
   showPage('master');
   setTimeout(function() { if (typeof master_showSection === 'function') master_showSection('profile'); }, 10);
 }
@@ -21136,7 +21183,14 @@ function deploy_saveOptics(arr) { var ok = safeStore(DEPLOY_OPTICS_KEY, JSON.str
 
 // ── Stage 7: Site Profile Editor ──
 function siteProfile_showEditor(container) {
-  var c = container || document.getElementById('ops-content');
+  // v1.14.104: when no explicit container, prefer the New-UI Profile sheet body if it's
+  // open (so save/reset — which call this with no arg — re-render into the sheet, not the
+  // legacy deploy ops-content). Falls back to ops-content otherwise (legacy unchanged).
+  var c = container || (function() {
+    var b = document.getElementById('rd-profile-body');
+    var s = document.getElementById('rd-profile-sheet');
+    return (b && s && s.classList.contains('open')) ? b : document.getElementById('ops-content');
+  })();
   if (!c) return;
   var p = siteProfile_load();
   var isActive = localStorage.getItem(SITE_PROFILE_KEY) !== null;
