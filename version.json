@@ -1,6 +1,6 @@
 {
-  "version": "phantom-v1.14.90",
+  "version": "phantom-v1.14.91",
   "released": "2026-06-25",
-  "prevVersion": "phantom-v1.14.89",
-  "notes": "v1.14.90 - Redesign Step 2 COMPLETE (re-home Reference -> HW Ref, last surface): the HW Ref matrix was a modal sheet (#hw-matrix-sheet), not a page. Its .hwm-inner (search + model/category filter pills + count + list) is moved into Reference -> HW Ref (#rf-hwref) at boot (redesign_homeHWRef), dropping the sheet's title+CLOSE header; rendered once so the tab shows populated. hwMatrix_open() routes to the HW Ref tab in redesign mode (so the header-overflow HW REF entry opens the tab). Flag-gated; field mode leaves the sheet, its NOW tile, and the overflow launcher untouched. ALL 5 Reference tabs now re-homed: Optics, Hardware, CLI/IB, HW Ref, Know. Step 2 (Reference) done. Next: Step 3 (Workspace: Deploy/Scan/Handoff)."
+  "prevVersion": "phantom-v1.14.90",
+  "notes": "v1.14.91 - Redesign Step 4: COMMAND CENTER built into pg-cmd (from the cc-final mockup). Zone stack: status pills, lens hero (clock + shift pill + headline + copy + ghost), 3 earned-count stats, Next Best Action, launcher row (Deploy/Scan/Handoff), ops-signal queue. Wired to HONEST app state only (cmd_render) - cold-start rung A/B/C from siteProfile_isConfirmed + captured counts; stats from deploy_loadAll/deploy_loadRacks/deploy_countBlockers; active deploy % from nowtab_resolveDep + deploy_computeDeployRollup; NBA = spec sec 3.3 tree; status pills from navigator.onLine + storage probe + profile; clock live. No demo data, no fake telemetry. CSS scoped under #pg-cmd (no collisions). Ghost hero mark compressed 497KB PNG -> 78KB cc-ghost.webp (precached). NBA + launcher Work-routes land on the Workspace stub until Step 3 re-homes Deploy/Scan/Handoff; Ref/profile routes live. Flag-gated; field app untouched."
 }
