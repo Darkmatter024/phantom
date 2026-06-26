@@ -1,6 +1,6 @@
 {
-  "version": "phantom-v1.14.94",
-  "released": "2026-06-25",
-  "prevVersion": "phantom-v1.14.93",
-  "notes": "v1.14.94 - Redesign search decision reconciled to option B (re-home into Ref, sequenced). Reverts the v1.14.93 option-A search bits: the redesign search bar is NO LONGER hidden and the header search icon + rd_searchToggle + _rdMode + rd-search reveal logic are removed. Net: in redesign mode the top search bar stays visible (search keeps working as in legacy) until a separate Ref-search re-home handoff moves search into Ref and finally hides the bar - so search is never stranded. Rest of the frame (body.rd gate, chrome wordmark, COREWEAVE·{site} subtitle, bottom nav, cmd_setSiteLabel) unchanged. Field app untouched (?redesign=0)."
+  "version": "phantom-v1.14.95",
+  "released": "2026-06-26",
+  "prevVersion": "phantom-v1.14.94",
+  "notes": "v1.14.95 - Two redesign fixes. FIX A: #pg-cmd bottom reserve 24px -> calc(96px + safe-bottom) so OPS SIGNAL clears the fixed bottom nav. FIX B: search re-homed to Ref - the top search bar now shows ONLY on Ref in redesign (mock-clean Command/Work headers). showMode toggles body.mode-ref + clears the field/overlay when leaving Ref; CSS body.rd .search-wrap{display:none} + body.rd.mode-ref .search-wrap{display:flex}. Plus a handoff-gap fix: hideSearch's page-restore relied on an active .tn-item, which never exists in redesign (showMode passes null) - so clearing search on Ref would blank the view; hideSearch now re-activates the current redesign mode page from the active bottom-nav item (redesign-gated, legacy untouched). Field app (?redesign=0) unchanged."
 }

@@ -8704,7 +8704,7 @@ textarea.hud-input {
 #pg-cmd .sigrow .st small{display:block;color:var(--slate);font-size:11px;margin-top:2px}
 #pg-cmd .sigrow .sgo{font-family:var(--raj);font-weight:700;font-size:11px;letter-spacing:1px;color:var(--cyan);border:1px solid rgba(92,242,255,0.3);border-radius:16px;padding:7px 13px;white-space:nowrap}
 #pg-cmd .sig-empty{margin:0 16px;color:var(--slate-dim);font-size:13px;text-align:center;padding:18px;border:1px dashed rgba(92,242,255,0.15);border-radius:12px}
-#pg-cmd{padding-bottom:24px}
+#pg-cmd{padding-bottom:calc(96px + var(--safe-bottom))}
 /* ━━━ REDESIGN STEP 5 — frame (chrome wordmark + COREWEAVE·{site} subtitle + bottom
    nav + search icon). Hidden until body.rd; under body.rd the legacy chrome hides and
    the frame shows, so ?redesign=0 is byte-for-byte untouched. Selectors scoped to ids/
@@ -8719,7 +8719,8 @@ textarea.hud-input {
 #rd-botnav .botitem.active{color:var(--cyan);border:1px solid rgba(92,242,255,0.28);background:linear-gradient(180deg,rgba(92,242,255,0.10),rgba(92,242,255,0.02))}
 #rd-botnav .blabel{font-family:var(--raj);font-weight:700;font-size:11px;letter-spacing:1.5px;text-transform:uppercase}
 body.rd .app-logo,body.rd .app-loc,body.rd #mode-toggle,body.rd .tab-nav{display:none}
-/* NOTE: .search-wrap intentionally NOT hidden — the top search bar stays in redesign until search re-homes into Ref (separate handoff, §7). */
+body.rd .search-wrap{display:none}
+body.rd.mode-ref .search-wrap{display:flex}   /* search bar shows only on Ref; .search-wrap is display:flex — restore it, not block */
 body.rd .header-left-text .wmimg{display:block}
 body.rd #rd-sub{display:block}
 body.rd #rd-botnav{display:flex}
@@ -10528,7 +10529,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.94';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.95';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -15692,6 +15693,13 @@ function showMode(mode) {
     var b = document.getElementById('bn-' + m);   // mirror active in the bottom nav
     if (b) b.classList.toggle('active', m === mode);
   });
+  // Search bar shows only on Ref in redesign (mock-clean Command/Work headers).
+  document.body.classList.toggle('mode-ref', mode === 'ref');
+  if (mode !== 'ref') {
+    var _s = document.getElementById('srch');
+    if (_s) _s.value = '';
+    if (typeof hideSearch === 'function') hideSearch();   // dismiss any active overlay when leaving Ref
+  }
 }
 function redesign_isOn() {
   try {
@@ -34611,6 +34619,17 @@ function hideSearch() {
   // over the just-activated target. Fallback only runs when no page is
   // active (e.g. clearing search overlay as the only visible UI).
   if (document.querySelector('.page.active')) return;
+  // Redesign: showMode passes null tnEl, so no .tn-item is ever active and the
+  // legacy fallback below can't restore — clearing search would blank the view.
+  // Re-activate the current redesign mode page (from the active bottom-nav item)
+  // so clearing search on Ref returns to Ref. Redesign-gated → legacy unchanged.
+  if (document.body.classList.contains('rd')) {
+    var _rb = document.querySelector('#rd-botnav .botitem.active');
+    var _rmap = { 'bn-command': 'cmd', 'bn-work': 'work', 'bn-ref': 'ref' };
+    var _rpg = document.getElementById('pg-' + ((_rb && _rmap[_rb.id]) || 'cmd'));
+    if (_rpg) _rpg.classList.add('active');
+    return;
+  }
   const activeBtn = document.querySelector('.tn-item.active');
   if (activeBtn) {
     // Stage 3a: 4 visible tabs map to these page IDs in DOM order.
