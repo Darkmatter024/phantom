@@ -1,6 +1,6 @@
 {
-  "version": "phantom-v1.14.93",
+  "version": "phantom-v1.14.94",
   "released": "2026-06-25",
-  "prevVersion": "phantom-v1.14.92",
-  "notes": "v1.14.93 - Redesign frame (header + bottom nav, gated behind body.rd). Makes the whole redesign view match the mock: (1) chrome wordmark image (cc-wordmark.png, decoded losslessly from the handoff asset, precached) replaces the gradient text logo; (2) subtitle COREWEAVE · {site} (cyan, or SET UP SITE in gold when unconfirmed) via cmd_setSiteLabel; (3) top mode-toggle replaced by a fixed bottom nav (Command/Work/Ref), showMode mirrors the active item; (4) search bar hidden, with a header search icon (rd_searchToggle) that reveals it on demand and a clean close that restores the current mode (option A - search stays reachable). redesign_initToggle now adds body.rd and lets CSS gate everything (removed the inline mode-toggle/tab-nav display toggles; this also supersedes the v1.14.92 overlap fix). Frame CSS scoped to ids/descendants (#rd-sub, #rd-botnav, .header-left-text .wmimg) - NOT bare .sub/.wmimg/.botnav - so no collision with app classes. ?redesign=0 never adds .rd: legacy 5-tab field app 100% untouched."
+  "prevVersion": "phantom-v1.14.93",
+  "notes": "v1.14.94 - Redesign search decision reconciled to option B (re-home into Ref, sequenced). Reverts the v1.14.93 option-A search bits: the redesign search bar is NO LONGER hidden and the header search icon + rd_searchToggle + _rdMode + rd-search reveal logic are removed. Net: in redesign mode the top search bar stays visible (search keeps working as in legacy) until a separate Ref-search re-home handoff moves search into Ref and finally hides the bar - so search is never stranded. Rest of the frame (body.rd gate, chrome wordmark, COREWEAVE·{site} subtitle, bottom nav, cmd_setSiteLabel) unchanged. Field app untouched (?redesign=0)."
 }
