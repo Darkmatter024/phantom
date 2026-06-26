@@ -10531,7 +10531,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.96';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.97';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -15470,6 +15470,7 @@ function launch(fast) {
 var _navSuppressPush = false;  // popstate restore re-enters show*; suppress to avoid loops
 var _navInternalCall = false;  // showPage internally calls showOpsTab; suppress nested push
 var _navDepth = 0;             // increments on push, decrements on popstate; 0 = root
+var _rdMode = 'command';       // v1.14.97: last redesign mode (cmd/work/ref) — nav_restore uses it to return to the redesign frame instead of bouncing to a legacy page
 
 function nav_push(state) {
   if (_navSuppressPush || _navInternalCall) return;
@@ -15509,6 +15510,18 @@ function nav_back() {
 
 function nav_restore(state) {
   if (!state) return;
+  // v1.14.97 — redesign stickiness: in redesign, never replay a LEGACY top-level
+  // page. Backing out of a Work excursion (Deploy/Handoff open pg-sop) pops to the
+  // seeded root {p:'triage'} — that must return to the redesign frame, not the old
+  // app. Deeper flows (state.d) and the deploy dashboard (p:'sop') stay valid; only
+  // the bare root / default-legacy (triage, no o/d) is redirected. Flag-gated →
+  // legacy (?redesign=0) path is byte-identical.
+  try {
+    if (redesign_isOn() && !state.d && (state.root || (state.p === 'triage' && !state.o))) {
+      showMode(_rdMode || 'command');
+      return;
+    }
+  } catch (_) {}
   _navSuppressPush = true;
   try {
     var p = state.p;
@@ -15705,6 +15718,7 @@ function showMode(mode) {
   var map = { command: 'cmd', work: 'work', ref: 'ref' };
   var pid = map[mode];
   if (!pid) return;
+  _rdMode = mode;   // v1.14.97: remember the active redesign mode for nav_restore stickiness
   // Scaffold pages must NOT write nav/session-restore state. Without this,
   // showPage()'s nav_push persists p:'cmd', which a later normal-mode boot
   // would replay — flipping the live app onto the empty stub. Suppress via
