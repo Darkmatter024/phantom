@@ -10531,7 +10531,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.100';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.101';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -15661,7 +15661,7 @@ function _session_startFresh() {
     // can't flip away from pg-cmd or pop a resume banner over the scaffold. The
     // user's real session is left untouched (showMode suppresses nav writes), so
     // it resumes normally once redesign is turned off.
-    try { if (localStorage.getItem('phantom_redesign') === '1') return; } catch (_) {}
+    try { if (typeof redesign_isOn === 'function' && redesign_isOn()) return; } catch (_) {}
     var s = _session_read();
     if (!s || !s.p) return;
     // Skip restoring if it's just the default page with no deeper context.
@@ -15745,11 +15745,17 @@ function showMode(mode) {
   }
 }
 function redesign_isOn() {
+  // v1.14.101 — ARCHIVE STEP: the redesign IS now the default UI. Operators opt OUT
+  // to the legacy 5-tab app with ?legacy=1 (persisted as phantom_legacy — the
+  // rip-cord). Back-compat: ?redesign=0 is an alias for ?legacy=1; ?redesign=1 (or
+  // ?legacy=0) clears the opt-out. Returns true unless legacy was explicitly chosen.
+  // Legacy is NOT removed — it stays a full, reachable fallback until trust is earned.
   try {
-    if (location.search.indexOf('redesign=1') !== -1) localStorage.setItem('phantom_redesign', '1');
-    if (location.search.indexOf('redesign=0') !== -1) localStorage.removeItem('phantom_redesign');
-    return localStorage.getItem('phantom_redesign') === '1';
-  } catch (_) { return false; }
+    var s = location.search;
+    if (s.indexOf('legacy=1') !== -1 || s.indexOf('redesign=0') !== -1) localStorage.setItem('phantom_legacy', '1');
+    if (s.indexOf('redesign=1') !== -1 || s.indexOf('legacy=0') !== -1) localStorage.removeItem('phantom_legacy');
+    return localStorage.getItem('phantom_legacy') !== '1';
+  } catch (_) { return true; }
 }
 function redesign_initToggle() {
   if (!redesign_isOn()) return;
