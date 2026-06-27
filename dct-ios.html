@@ -10582,7 +10582,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.108';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.109';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -25056,7 +25056,7 @@ function mscope_groupByRow(m) {
 // Entry point — the new primary CTA from deploy_showList. Honors "Master
 // required": with no usable Master, prompts a load instead of an empty picker.
 function mscope_open() {
-  var c = document.getElementById('ops-content');
+  var c = deploy_opsHost();
   if (!c) return;
   if (typeof nav_push === 'function') nav_push({ p: 'sop', o: 'deploy', d: 'mscope' });
   var omniBar = document.getElementById('omni-bar');
@@ -25073,7 +25073,7 @@ function mscope_loadMaster() {
   if (typeof master_loadFromPicker !== 'function') { phantomToast('Master loader unavailable', 'error'); return; }
   master_loadFromPicker({}).then(function(site) {
     if (!site) return; // user cancelled the picker
-    var c = document.getElementById('ops-content');
+    var c = deploy_opsHost();
     if (!c) return;
     _mscopeState.selected = {};
     mscope_render(c, site);
@@ -25276,7 +25276,7 @@ function mscope_confirm() {
   }
   if (typeof haptic === 'function') haptic([10, 40, 10]);
   phantomToast('Scope staged · ' + capturedIds.length + ' cab' + (capturedIds.length === 1 ? '' : 's') + ' snapshotted', 'ok');
-  mscope_renderStaged(document.getElementById('ops-content'), snapshot);
+  mscope_renderStaged(deploy_opsHost(), snapshot);
 
   // ───────────────────────────────────────────────────────────────────────
   // SHIP 2 HOOK: route this staged snapshot (PHANTOM_JOBSNAP_STORE,
@@ -25391,7 +25391,7 @@ function mscope_createDeployment() {
 
 // Re-open the staged screen from a persisted pending snapshot (resume banner).
 function mscope_resumeStaged() {
-  var c = document.getElementById('ops-content');
+  var c = deploy_opsHost();
   if (!c) return;
   var snapshot = PHANTOM_JOBSNAP_STORE.load();
   if (!snapshot || !snapshot.cabs) { phantomToast('No staged scope found', 'warn'); deploy_showList(c); return; }
@@ -25412,7 +25412,7 @@ function mscope_discardStaged() {
     if (!ok) return;
     try { PHANTOM_JOBSNAP_STORE.clear(); } catch (e) {}
     phantomToast('Staged scope discarded', 'ok');
-    var c = document.getElementById('ops-content');
+    var c = deploy_opsHost();
     if (c) deploy_showList(c);
   });
 }
@@ -28319,7 +28319,7 @@ function deploy_confirmDelete(id) {
 
   haptic([10, 30, 10]);
   phantomToast('Deployment deleted', 'ok');
-  deploy_showList(document.getElementById('ops-content'));
+  deploy_showList(deploy_opsHost());
 }
 
 let _handoffDraft = null; // in-memory draft cache — avoids unsafe JSON in onclick attrs
@@ -28556,7 +28556,7 @@ function handoff_exportHTML(handoffId) {
 function deploy_showAuditLog(deploymentId) {
   var dep = deploy_getById(deploymentId);
   if (!dep) { phantomToast('Deployment not found', 'error'); return; }
-  var c = document.getElementById('ops-content');
+  var c = deploy_opsHost();
   if (!c) return;
 
   // Cut 14: push nav state for back navigation.
@@ -28676,7 +28676,7 @@ function deploy_showAuditLog(deploymentId) {
 function deploy_showOpticLedger(deploymentId) {
   var dep = deploy_getById(deploymentId);
   if (!dep) { phantomToast('Deployment not found', 'error'); return; }
-  var c = document.getElementById('ops-content');
+  var c = deploy_opsHost();
   if (!c) return;
 
   // Cut 14: push nav state for back navigation.
@@ -29048,7 +29048,7 @@ function deploy_markAcceptance(deploymentId, criterionId) {
 function deploy_showAcceptance(deploymentId) {
   var dep = deploy_getById(deploymentId);
   if (!dep) { phantomToast('Deployment not found', 'error'); return; }
-  var c = document.getElementById('ops-content');
+  var c = deploy_opsHost();
   if (!c) return;
 
   // Cut 14: push nav state for back navigation.
@@ -29170,7 +29170,7 @@ function deploy_completeDeployment(deploymentId) {
 
   haptic([10, 50, 10, 50, 30]);
   phantomToast('Deployment complete — ' + dep.name, 'ok');
-  deploy_showList(document.getElementById('ops-content'));
+  deploy_showList(deploy_opsHost());
 }
 // ── Stage 6: Completion Report — Data Assembly ──
 function deploy_generateReport(deploymentId) {
@@ -29691,7 +29691,7 @@ function deploy_renderCloseOutModal() {
   if (!s) return;
   var dep = deploy_getById(s.deployId);
   if (!dep) return;
-  var c = document.getElementById('ops-content');
+  var c = deploy_opsHost();
   if (!c) return;
 
   var typedOk = (s.typedText || '').toUpperCase() === 'CLOSE';
@@ -30072,7 +30072,7 @@ function closeOut_doPurge() {
   var ok = deploy_closeOut(s.deployId, s.format, s.exportFilenames);
   if (ok) {
     _closeOutState = null;
-    deploy_showList(document.getElementById('ops-content'));
+    deploy_showList(deploy_opsHost());
   } else {
     s.busy = false;
     deploy_renderCloseOutModal();
@@ -30086,7 +30086,7 @@ function deploy_showTombstone(deploymentId) {
   var dep = deploy_getById(deploymentId);
   if (!dep) {
     phantomToast('Deployment not found', 'error');
-    deploy_showList(document.getElementById('ops-content'));
+    deploy_showList(deploy_opsHost());
     return;
   }
   if (dep.status !== 'closed') {
@@ -30095,7 +30095,7 @@ function deploy_showTombstone(deploymentId) {
     return;
   }
 
-  var c = document.getElementById('ops-content');
+  var c = deploy_opsHost();
   if (!c) return;
 
   // Cut 14: push nav state for back navigation.
