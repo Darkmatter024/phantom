@@ -10594,7 +10594,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.111';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.112';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -16601,13 +16601,6 @@ function identity_getUser() {
 function identity_setUser(name) {
   safeStore(IDENTITY_USER_KEY, (name || '').trim());
 }
-// Returns true if current user is the build lead for a deployment.
-function identity_isLead(dep) {
-  var user = identity_getUser().toLowerCase();
-  if (!user) return false;
-  var lead = ((dep && dep.buildLead) || '').trim().toLowerCase();
-  return lead.length > 0 && user === lead;
-}
 function identity_promptUser() {
   var current = identity_getUser();
   (async function() {
@@ -21043,7 +21036,6 @@ var PHANTOM_EMPTY_SVG = {
 let _deployDashCache = {}; // in-memory rollup cache (per deployId)
 let _deployDashCacheGen = {}; // generation each cached entry was computed at
 let _deployRollupGen = 0;  // bumped by every save that affects rollup inputs
-let _deployFlushTimer = null;
 
 function deploy_loadAll() { var r = safeParse(localStorage.getItem(DEPLOY_KEY) || '[]', []); return Array.isArray(r) ? r : []; }
 function deploy_saveAll(arr) { var ok = safeStore(DEPLOY_KEY, JSON.stringify(arr)); if (ok) _deployRollupGen++; return ok; }
@@ -22420,14 +22412,6 @@ function hud_phaseClass(status) {
 }
 
 // ── Debounced Flush ──
-function deploy_flushState() {
-  if (_deployFlushTimer) clearTimeout(_deployFlushTimer);
-  _deployFlushTimer = setTimeout(function() {
-    // Racks and phases are already saved individually on change
-    _deployFlushTimer = null;
-  }, 500);
-}
-
 // ── Seed Racks & Phases on Deployment Creation ──
 function deploy_seedRacksAndPhases(deployment) {
   var edp = deployment.edpParsed || {};

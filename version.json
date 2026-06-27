@@ -1,6 +1,6 @@
 {
-  "version": "phantom-v1.14.111",
-  "released": "2026-06-26",
-  "prevVersion": "phantom-v1.14.110",
-  "notes": "v1.14.111 - Deploy dashboard glass PASS 2 (New-UI only): rack list/search + deployment list cards. rackLookup is class-based (not inline), so used body.rd CSS overrides: .rl-row gets the glass background ONLY (preserves its status border-left color - blocked=red/complete/inprog), .rl-search-input gets glass bg + cyan hairline border. Deploy list cards (deploy_showCommandCenter active card + deploy_showList cyan/gold/dimmed/active cards) are inline-styled; added a new gx-bg token = glass background + shadow with NO border override, so each card's own border survives - including the active list card's DYNAMIC status borderColor. Tokens added body-scoped (split/join asserting count===1) to dodge twin anchors in other deploy views. All body.rd-gated; legacy ?legacy=1 deploy dashboard + rack lookup byte-identical. Completes the deploy-dashboard glass polish (Pass 1 = deploy_showDetail v1.14.110). Watch (out of scope): cross-tab buttons (Rack Map/BOM/Manifest via showOpsTab) inside the dashboard still target legacy ops tabs - for the later full pg-sop re-home."
+  "version": "phantom-v1.14.112",
+  "released": "2026-06-27",
+  "prevVersion": "phantom-v1.14.111",
+  "notes": "v1.14.112 - Phase 0 dead-code removal (PARITY_AUDIT.md). Cut 2 verified def-only orphans: identity_isLead (build-lead boolean, 0 callers) and deploy_flushState (debounce no-op, 0 callers) plus its now-orphaned _deployFlushTimer var. NOTE: the audit's 3rd proposed orphan, hwMatrix_init, was NOT cut - it is a self-invoked IIFE (builds PHANTOM_HW_MATRIX._flat consumed by the HW Ref tab) and is LIVE boot code; cutting it would break the HW Ref matrix (same IIFE trap the audit correctly caught for _session_bootRestore). No behavior change; all 3 inline scripts parse clean. Legacy + redesign byte-identical at runtime."
 }
