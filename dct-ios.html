@@ -10582,7 +10582,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.107';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.108';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -16627,7 +16627,13 @@ function identity_refreshOverflowLabels() {
 
 // Navigate to a specific deployment dashboard from anywhere.
 function deploy_goToDashboard(depId) {
-  showPage('sop', getTnItem('sop'), 'deploy');
+  if (typeof redesign_isOn === 'function' && redesign_isOn()) {
+    if (typeof showWorkTab === 'function') showWorkTab('deploy');   // ensure Work->Deploy panel is active
+    deploy_showCommandCenter(deploy_opsHost());                        // render in-frame (host = #wk-deploy)
+    if (depId) { setTimeout(function() { deploy_showDetail(depId); }, 80); }
+    return;
+  }
+  showPage('sop', getTnItem('sop'), 'deploy');                        // legacy path UNCHANGED
   if (depId) {
     setTimeout(function() { deploy_showDetail(depId); }, 80);
   }
@@ -22748,8 +22754,20 @@ function deploy_renderPhaseMatrix(deploys) {
 }
 
 // Full command center view.
+// v1.14.108 New-UI deploy host: in redesign the deploy dashboard renders inside
+// Work->Deploy (#wk-deploy) instead of bouncing to legacy pg-sop. Falls back to
+// #ops-content so FIELD/legacy is byte-identical. Mirrors siteProfile_showEditor.
+function deploy_opsHost() {
+  try {
+    if (typeof redesign_isOn === 'function' && redesign_isOn()) {
+      var h = document.getElementById('wk-deploy');
+      if (h) return h;
+    }
+  } catch (_) {}
+  return document.getElementById('ops-content');
+}
 function deploy_showCommandCenter(container) {
-  var c = container || document.getElementById('ops-content');
+  var c = container || deploy_opsHost();
   if (!c) return;
 
   // Cut 11: push nav state for back navigation.
@@ -22765,7 +22783,7 @@ function deploy_showCommandCenter(container) {
   html += '<div style="display:flex;align-items:center;gap: 8px;margin-bottom:14px">';
   html += '<div style="flex:1"><div style="font-family:var(--orb);font-size:11px;letter-spacing:var(--hud-track-display);color:var(--cyan);text-transform:uppercase">BUILD LEAD</div>';
   html += '<div style="font-family:var(--raj);font-size:18px;font-weight:700;color:var(--white)">Command Center</div></div>';
-  html += '<button class="pt-btn pt-btn-ghost" style="width:auto;padding:10px 16px;font-size: var(--fs-caption)" onclick="deploy_showList(document.getElementById(\'ops-content\'))">' + _ico.list('#5cf2ff', 12) + ' LIST</button>';
+  html += '<button class="pt-btn pt-btn-ghost" style="width:auto;padding:10px 16px;font-size: var(--fs-caption)" onclick="deploy_showList(deploy_opsHost())">' + _ico.list('#5cf2ff', 12) + ' LIST</button>';
   html += '<button class="pt-btn pt-btn-primary" style="width:auto;padding:10px 16px;clip-path:none;font-size: var(--fs-caption)" onclick="mscope_open()">＋ NEW</button>';
   html += '</div>';
 
@@ -22844,6 +22862,7 @@ function deploy_showCommandCenter(container) {
 }
 
 function deploy_showList(container) {
+  container = container || deploy_opsHost();
   var deploys = deploy_loadAll();
   var html = '';
   triage_renderDeployCard(); // keep triage card in sync
@@ -22851,7 +22870,7 @@ function deploy_showList(container) {
   html += '<div style="display:flex;align-items:center;gap: 8px;margin-bottom:14px">';
   html += '<div style="flex:1;min-width:0"><div style="font-family:var(--orb);font-size:11px;letter-spacing:var(--hud-track-display);color:var(--cyan);text-transform:uppercase">BUILD LEAD</div>';
   html += '<div style="font-family:var(--raj);font-size:18px;font-weight:700;color:var(--white)">Deployment Command</div></div>';
-  html += '<button class="pt-btn pt-btn-ghost" style="flex-shrink:0;width:auto;padding:12px;white-space:nowrap" aria-label="Command Center" onclick="deploy_showCommandCenter(document.getElementById(\'ops-content\'))">' + _ico.grid('#5cf2ff', 14) + '</button>';
+  html += '<button class="pt-btn pt-btn-ghost" style="flex-shrink:0;width:auto;padding:12px;white-space:nowrap" aria-label="Command Center" onclick="deploy_showCommandCenter(deploy_opsHost())">' + _ico.grid('#5cf2ff', 14) + '</button>';
   html += '<button class="pt-btn pt-btn-ghost" style="flex-shrink:0;width:auto;padding:12px;white-space:nowrap" aria-label="Rack Map" onclick="showOpsTab(\'rackmap\')">' + _ico.server('#5cf2ff', 14) + '</button>';
   html += '</div>';
 
@@ -26684,7 +26703,7 @@ async function _deploy_create_postIntake(_results, name, lead, raw, precomputedH
 function deploy_showDetail(id) {
   wakeLock_release();
   var dep = deploy_getById(id);
-  if (!dep) { phantomToast('Deployment not found', 'error'); deploy_showList(document.getElementById('ops-content')); return; }
+  if (!dep) { phantomToast('Deployment not found', 'error'); deploy_showList(deploy_opsHost()); return; }
 
   // Closed deployments are tombstones — no racks/phases/audit exist anymore.
   // Route to the read-only summary view. (Tombstone pushes its own nav state.)
@@ -26710,7 +26729,7 @@ function deploy_showDetail(id) {
     deploy_seedAcceptance(dep.id);
   }
 
-  var c = document.getElementById('ops-content');
+  var c = deploy_opsHost();
   if (!c) return;
 
   var r = dep.edpParsed || {};
@@ -27941,7 +27960,7 @@ function deploy_showRackDetail(deployId, rackId) {
   // Stale Phase Surfacer — load audit once, pass into per-phase badge render.
   var rackAudit = deploy_loadAudit(deployId) || [];
 
-  var c = document.getElementById('ops-content');
+  var c = deploy_opsHost();
   if (!c) return;
 
   var ru = deploy_computeRackRollup(rackId, allPhases);
