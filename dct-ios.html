@@ -10594,7 +10594,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.112';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.113';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -16550,7 +16550,15 @@ function showOpsTab(tab) {
   document.querySelectorAll('#ops-tab-strip .stab').forEach(b => {
     b.classList.toggle('active', b.dataset.tab === tab);
   });
-  const c = document.getElementById('ops-content');
+  // v1.14.113: route the deploy-cluster render host through deploy_opsHost() so in-frame
+  // dashboard actions (job-complete->burndown, audits, sops) land in the VISIBLE #wk-deploy
+  // under redesign instead of the hidden legacy #ops-content (the "frozen dashboard" bug,
+  // HEALTH B2). EXCEPT the un-homed ops-tabs (rackmap/bom/manifest/portmap/crashcart) have
+  // no redesign home yet (Stage 3b) — keep them on #ops-content so they stay byte-identical
+  // to today (no un-styled surface punched into the dashboard; the Rack Map button @22870 is
+  // redesign-reachable). Under legacy, deploy_opsHost() returns #ops-content too = unchanged.
+  var _unhomedOps = (tab === 'rackmap' || tab === 'bom' || tab === 'manifest' || tab === 'portmap' || tab === 'crashcart');
+  const c = _unhomedOps ? document.getElementById('ops-content') : deploy_opsHost();
   if (c && OPS_TABS[tab]) OPS_TABS[tab](c);
 
   // Cut 7: Scroll active stab into view if not visible. Defer one frame so
