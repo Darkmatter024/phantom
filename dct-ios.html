@@ -10594,7 +10594,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.113';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.114';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -23049,164 +23049,6 @@ function deploy_setCachedParse(hash, parsed) {
 }
 
 // ── EDP Preprocessor (compress before API call) ──
-function deploy_preprocessEDP(raw) {
-  var lines = raw.split('\n');
-  var headerLines = [];
-  var deviceRows = [];
-  var fiberRows = [];
-  var otherLines = [];
-  var seenLines = {};
-  var originalSize = raw.length;
-
-  for (var i = 0; i < lines.length; i++) {
-    var line = lines[i];
-    // Strip trailing commas and whitespace
-    var trimmed = line.replace(/,+\s*$/, '').replace(/\s+$/, '');
-    // Remove lines that are only commas, spaces, dashes, or empty
-    var stripped = trimmed.replace(/[,\s\-_=]/g, '');
-    if (!stripped) continue;
-    // Skip exact duplicate lines
-    if (seenLines[trimmed]) continue;
-    seenLines[trimmed] = true;
-
-    // Detect fiber connection rows (FC-XXX patterns)
-    if (/^FC[-_]?\d{2,}/i.test(trimmed) || /^fiber[-_]?\d{2,}/i.test(trimmed)) {
-      fiberRows.push(trimmed);
-      continue;
-    }
-
-    // Detect device/rack rows: starts with rack ID pattern (L-XX, R-XX, Rack-XX)
-    // and contains device info (GPU Server, Switch, PDU, Patch Panel, etc.)
-    var cols = deploy_parseCSVLine(trimmed);
-    if (cols.length >= 4 && /^[LR][-_]?\d{1,3}$/i.test(cols[0])) {
-      deviceRows.push({ raw: trimmed, cols: cols, rack: cols[0] });
-      continue;
-    }
-
-    // Header/metadata lines (project info, section headers, etc.)
-    if (/project|engineer|date|design|completion|revision|section|header|optic|power|network|cable|schedule/i.test(trimmed) && cols.length <= 8) {
-      headerLines.push(trimmed);
-      continue;
-    }
-
-    otherLines.push(trimmed);
-  }
-
-  // ── Aggregate device rows by type ──
-  var cleaned = [];
-
-  // Keep headers
-  headerLines.forEach(function(h) { cleaned.push(h); });
-
-  if (deviceRows.length > 0) {
-    cleaned.push('');
-    cleaned.push('== RACK DEVICE MANIFEST ==');
-
-    // Group by device type (look for keywords in columns)
-    var deviceGroups = {};
-    var rackSet = {};
-    deviceRows.forEach(function(d) {
-      // Find the device type column — look for known keywords
-      var devType = 'Other';
-      var model = '';
-      var hostname = '';
-      var notes = '';
-      for (var j = 1; j < d.cols.length; j++) {
-        var val = d.cols[j];
-        if (/gpu\s*server|compute\s*tray|compute\s*node/i.test(val)) devType = 'GPU Server';
-        else if (/leaf\s*switch|tor\s*switch/i.test(val)) devType = 'Leaf Switch';
-        else if (/spine\s*switch/i.test(val)) devType = 'Spine Switch';
-        else if (/mgmt|management\s*switch/i.test(val)) devType = 'Mgmt Switch';
-        else if (/^pdu/i.test(val) || /power\s*dist/i.test(val)) devType = 'PDU';
-        else if (/patch\s*panel/i.test(val)) devType = 'Patch Panel';
-        else if (/fiber\s*dist/i.test(val)) devType = 'Fiber Distribution';
-        else if (/cable\s*mgmt|cable\s*management/i.test(val)) devType = 'Cable Mgmt';
-        else if (/console|oob|out.of.band/i.test(val)) devType = 'OOB/Console';
-        else if (/GB\d{3}|NVL\d{2}|H100|H200|A100|B200|B300/i.test(val)) model = val;
-        else if (/AUS\d{2}|GPU-\d{3}|SPINE|LEAF/i.test(val)) hostname = val;
-        else if (/\d+kW|DLC|air.cool/i.test(val)) notes = val;
-      }
-      var groupKey = devType + '|' + model;
-      if (!deviceGroups[groupKey]) {
-        deviceGroups[groupKey] = { type: devType, model: model, count: 0, racks: {}, hostnames: [], notes: notes, sampleRow: d.raw };
-      }
-      deviceGroups[groupKey].count++;
-      deviceGroups[groupKey].racks[d.rack] = 1;
-      if (hostname) deviceGroups[groupKey].hostnames.push(hostname);
-    });
-
-    // Output aggregated device groups
-    Object.keys(deviceGroups).forEach(function(key) {
-      var g = deviceGroups[key];
-      var rackList = Object.keys(g.racks).sort();
-      var rackStr = rackList.length > 3 ? rackList[0] + ' to ' + rackList[rackList.length - 1] + ' (' + rackList.length + ' racks)' : rackList.join(', ');
-      var line = g.count + '× ' + g.type;
-      if (g.model) line += ' [' + g.model + ']';
-      line += ' in ' + rackStr;
-      if (g.notes) line += ' — ' + g.notes;
-      if (g.hostnames.length > 0) {
-        var hn = g.hostnames.sort();
-        line += ' | hosts: ' + hn[0] + (hn.length > 1 ? ' to ' + hn[hn.length - 1] : '');
-      }
-      cleaned.push(line);
-    });
-
-    // Include 3 sample raw rows for AI context
-    cleaned.push('Sample device rows: ' + deviceRows.slice(0, 3).map(function(d) { return d.raw; }).join(' | '));
-
-    // Track unique racks
-    deviceRows.forEach(function(d) { rackSet[d.rack] = 1; });
-    cleaned.push('Total unique racks: ' + Object.keys(rackSet).sort().join(', '));
-  }
-
-  // ── Aggregate fiber connections ──
-  if (fiberRows.length > 0) {
-    cleaned.push('');
-    cleaned.push('== FIBER CONNECTION SUMMARY (' + fiberRows.length + ' total runs) ==');
-    var fiberAgg = {};
-    fiberRows.forEach(function(row) {
-      var cols = deploy_parseCSVLine(row);
-      var srcRack = cols[1] || '?';
-      var dstRack = cols[4] || '?';
-      var fiberType = '', fiberLen = '';
-      for (var j = 6; j < cols.length; j++) {
-        if (/single.?mode|multi.?mode|om[234]|os[12]/i.test(cols[j])) fiberType = cols[j];
-        else if (/\d+\s*m$/i.test(cols[j])) fiberLen = cols[j];
-      }
-      var routeKey = srcRack + '>' + dstRack + '|' + (fiberType || 'unknown');
-      if (!fiberAgg[routeKey]) {
-        fiberAgg[routeKey] = { srcRack: srcRack, dstRack: dstRack, fiberType: fiberType, count: 0, lengths: {} };
-      }
-      fiberAgg[routeKey].count++;
-      if (fiberLen) fiberAgg[routeKey].lengths[fiberLen] = (fiberAgg[routeKey].lengths[fiberLen] || 0) + 1;
-    });
-    Object.keys(fiberAgg).forEach(function(key) {
-      var r = fiberAgg[key];
-      var lengthStr = Object.keys(r.lengths).map(function(l) { return l + '×' + r.lengths[l]; }).join(', ');
-      cleaned.push(r.count + '× fibers: ' + r.srcRack + ' → ' + r.dstRack + ' [' + (r.fiberType || 'unspecified') + ']' + (lengthStr ? ' lengths: ' + lengthStr : ''));
-    });
-    cleaned.push('Sample rows: ' + fiberRows.slice(0, 3).join(' | '));
-  }
-
-  // ── Other lines ──
-  if (otherLines.length > 0) {
-    cleaned.push('');
-    // Cap other lines at 50 to prevent oversized payloads
-    var cap = Math.min(otherLines.length, 50);
-    for (var k = 0; k < cap; k++) { cleaned.push(otherLines[k]); }
-    if (otherLines.length > 50) cleaned.push('... and ' + (otherLines.length - 50) + ' more lines omitted');
-  }
-
-  var result = cleaned.join('\n');
-
-  // Hard cap at 12KB — if still too big, truncate
-  if (result.length > 12000) {
-    result = result.slice(0, 12000) + '\n\n[TRUNCATED — original EDP was ' + Math.round(originalSize / 1024) + 'KB]';
-  }
-
-  var reduction = originalSize > 0 ? Math.round((1 - result.length / originalSize) * 100) : 0;
-  return { text: result, originalSize: originalSize, compressedSize: result.length, reduction: reduction, fiberCount: fiberRows.length };
-}
 
 // ━━━ Stage 3.5: CLIENT-SIDE EDP PARSER ━━━
 // Deterministic CSV parser — zero API calls, zero latency, works offline.
@@ -35474,18 +35316,6 @@ function _rmDisplayName(rack) {
   return { text: fallback, unnamed: true };
 }
 
-// ── Last-viewed chip render ──
-function _rmRenderLastViewed(rack) {
-  var mount = document.getElementById('rm-last-viewed-mount');
-  if (!mount || !rack) return;
-  var d = _rmDisplayName(rack);
-  mount.innerHTML =
-    '<div class="rm-last-viewed" onclick="renderRackMap()">' +
-      '<span class="rm-last-viewed-label">Loaded</span>' +
-      '<span class="rm-last-viewed-name' + (d.unnamed ? ' unnamed' : '') + '">' + escHtml(d.text) + '</span>' +
-    '</div>';
-}
-
 // ── Rack header — prepended to elevation area whenever a rack loads ──
 // Big rack ID + meta line. Replaces the small "Loaded" chip as the
 // primary indicator of which rack is being viewed.
@@ -41030,7 +40860,6 @@ function hdr_refreshAggregate() {
   function isRed(c)   { return c.indexOf('255, 59') !== -1 || c === '#ff3b3b'; }
   function isAmber(c) { return c.indexOf('255, 214') !== -1 || c === '#ffd60a' ||
                                c.indexOf('255, 150') !== -1 || c === '#ff9600'; }
-  function isCyan(c)  { return c.indexOf('92, 242') !== -1 || c === '#5cf2ff'; }
   function isGrey(c)  { return c.indexOf('102, 102') !== -1 || c === '#666'; }
 
   var net = read('net'), api = read('api'), sw = read('sw'), store = read('store');
