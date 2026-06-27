@@ -8683,6 +8683,13 @@ body.rd #pg-work:not(.wk-grid) .work-sub.stab-active { animation: rf-fade .22s e
 .rf-card { position:relative; filter:saturate(1.40); border-radius:16px; min-height:124px; padding:18px 12px 16px; border:1px solid color-mix(in srgb, var(--rfac) 36%, transparent); background:linear-gradient(160deg, #0a0d13 0%, #070809 100%); box-shadow:0 8px 20px -14px rgba(0,0,0,.85), inset 0 0 26px -4px color-mix(in srgb, var(--rfac) 14%, transparent); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; cursor:pointer; transition:transform .14s ease, border-color .2s, box-shadow .2s; overflow:hidden; -webkit-tap-highlight-color:transparent; }
 .rf-card:active { transform:scale(.97); box-shadow:0 8px 20px -14px rgba(0,0,0,.85), inset 0 0 30px -2px color-mix(in srgb, var(--rfac) 26%, transparent); }
 body.rd .rf-cnr { display: none; }   /* unified recipe has no corner brackets */
+
+/* v1.14.110 — deploy dashboard glass (New-UI only). Inline styles stay for legacy;
+   these override the 4 surface props under body.rd so the dashboard cards match the
+   glass recipe. Calm (no saturate) for data density. Accent banners keep their left spine. */
+body.rd .gx{background:linear-gradient(160deg,#0a0d13,#070809)!important;border:1px solid rgba(255,255,255,.07)!important;border-radius:14px!important;box-shadow:0 8px 20px -14px rgba(0,0,0,.85),inset 0 0 26px -4px color-mix(in srgb,var(--cyan) 10%,transparent)!important;}
+body.rd .gx-green{border-color:color-mix(in srgb,var(--green) 36%,transparent)!important;box-shadow:0 8px 20px -14px rgba(0,0,0,.85),inset 0 0 26px -4px color-mix(in srgb,var(--green) 14%,transparent)!important;}
+body.rd .gx-gold{border-color:color-mix(in srgb,var(--gold) 36%,transparent)!important;box-shadow:0 8px 20px -14px rgba(0,0,0,.85),inset 0 0 26px -4px color-mix(in srgb,var(--gold) 14%,transparent)!important;}
 .rf-cnr { position:absolute; width:14px; height:14px; border:2px solid var(--rfac); opacity:.85; }
 .rf-cnr.tl { top:9px; left:9px; border-right:0; border-bottom:0; border-top-left-radius:5px; }
 .rf-cnr.tr { top:9px; right:9px; border-left:0; border-bottom:0; border-top-right-radius:5px; }
@@ -10582,7 +10589,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.109';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.110';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -26753,14 +26760,14 @@ function deploy_showDetail(id) {
   //    EDP-paste path (has edpParsed but is not Master-scoped). Read-only notice;
   //    new deployments come from the Master only.
   if (dep.edpParsed && !(dep.scope && dep.scope.source === 'master')) {
-    html += '<div style="background:rgba(255,214,10,0.08);border:1px solid rgba(255,214,10,0.30);border-radius:var(--hud-r12,12px);padding:10px 14px;margin-bottom:10px;font-family:var(--mono);font-size:var(--fs-caption);color:var(--gold,#ffd60a);line-height:1.5">This deployment was created with an older method — still readable, but new deployments are created from the Master (“NEW DEPLOYMENT FROM MASTER”).</div>';
+    html += '<div class="gx gx-gold" style="background:rgba(255,214,10,0.08);border:1px solid rgba(255,214,10,0.30);border-radius:var(--hud-r12,12px);padding:10px 14px;margin-bottom:10px;font-family:var(--mono);font-size:var(--fs-caption);color:var(--gold,#ffd60a);line-height:1.5">This deployment was created with an older method — still readable, but new deployments are created from the Master (“NEW DEPLOYMENT FROM MASTER”).</div>';
   }
 
   // ── Role Banner ──
   var roleLead = rbac_isLead(dep);
   var hasPIN   = !!dep.leadPinHash;
   if (roleLead) {
-    html += '<div style="background:rgba(48,209,88,0.07);border:1px solid rgba(48,209,88,0.3);border-radius:var(--hud-r12);padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;gap: 8px;position:relative;overflow:hidden">';
+    html += '<div class="gx gx-green" style="background:rgba(48,209,88,0.07);border:1px solid rgba(48,209,88,0.3);border-radius:var(--hud-r12);padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;gap: 8px;position:relative;overflow:hidden">';
     html += '<div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--green)"></div>';
     html += '<div style="flex:1"><span style="font-family:var(--orb);font-size: var(--fs-micro);letter-spacing:2px;color:var(--green)">' + _ico.key('#32d74b', 14) + ' LEAD MODE ACTIVE</span>';
     html += '<div style="font-family:var(--mono);font-size: var(--fs-caption);color:var(--slate);margin-top:2px">Full access — ACCEPTANCE, DELETE, and COMPLETE unlocked</div></div>';
@@ -26772,7 +26779,7 @@ function deploy_showDetail(id) {
     }
     html += '</div>';
   } else {
-    html += '<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:var(--hud-r12);padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;gap: 8px;position:relative;overflow:hidden">';
+    html += '<div class="gx" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:var(--hud-r12);padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;gap: 8px;position:relative;overflow:hidden">';
     html += '<div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--slate)"></div>';
     html += '<div style="flex:1"><span style="font-family:var(--orb);font-size: var(--fs-micro);letter-spacing:2px;color:var(--slate-readable)">' + _ico.wrench('#8AAFBF', 14) + ' FLOOR TECH</span>';
     html += '<div style="font-family:var(--mono);font-size: var(--fs-caption);color:var(--slate);margin-top:2px">Viewing + field work enabled · Lead-only actions locked</div></div>';
@@ -26788,7 +26795,7 @@ function deploy_showDetail(id) {
   var warnings = (r.warnings && r.warnings.length) ? r.warnings : [];
   var blockerCount = deploy_countBlockers(dep.id);
   if (warnings.length > 0) {
-    html += '<div style="background:rgba(255,214,10,0.06);border:1px solid rgba(255,214,10,0.25);border-radius:var(--hud-r12);padding:12px 16px;margin-bottom:10px;position:relative;overflow:hidden;cursor:pointer" onclick="this.querySelector(\'.deploy-warn-list\').style.display=this.querySelector(\'.deploy-warn-list\').style.display===\'none\'?\'block\':\'none\'">';
+    html += '<div class="gx gx-gold" style="background:rgba(255,214,10,0.06);border:1px solid rgba(255,214,10,0.25);border-radius:var(--hud-r12);padding:12px 16px;margin-bottom:10px;position:relative;overflow:hidden;cursor:pointer" onclick="this.querySelector(\'.deploy-warn-list\').style.display=this.querySelector(\'.deploy-warn-list\').style.display===\'none\'?\'block\':\'none\'">';
     html += '<div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--gold)"></div>';
     html += '<div style="display:flex;align-items:center;justify-content:space-between">';
     html += '<div style="font-family:var(--orb);font-size: var(--fs-micro);letter-spacing:2px;color:var(--gold)"><span class="ico ico-md ico-warning"></span> EDP WARNINGS</div>';
@@ -26820,7 +26827,7 @@ function deploy_showDetail(id) {
   }
 
   // ── Phase Pipeline Bar ──
-  html += '<div style="background:var(--surf-1);border:1px solid var(--cyan-border-lo);border-radius:var(--hud-r12);padding:14px 16px;margin-bottom:10px">';
+  html += '<div class="gx" style="background:var(--surf-1);border:1px solid var(--cyan-border-lo);border-radius:var(--hud-r12);padding:14px 16px;margin-bottom:10px">';
   html += '<div style="font-family:var(--orb);font-size: var(--fs-micro);letter-spacing:3px;color:var(--cyan);margin-bottom:10px;text-transform:uppercase">PHASE PIPELINE</div>';
   // ENERGIZED TRACE (v1.6.99) — 5 node ports on a conduit run; segment INTO a node
   // energizes when that phase is reached. Same roll.phaseAgg, no new math.
@@ -26871,7 +26878,7 @@ function deploy_showDetail(id) {
     var tapAttrs = s.tap
       ? ('onclick="' + s.tap + '" ontouchstart="this.style.opacity=\'0.75\'" ontouchend="this.style.opacity=\'1\'" style="cursor:pointer;text-align:center;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:10px 6px"')
       : 'style="text-align:center;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:10px 6px"';
-    html += '<div ' + tapAttrs + '>';
+    html += '<div class="gx" ' + tapAttrs + '>';
     html += '<div style="font-family:var(--orb);font-size:' + (s.val.length > 10 ? '9' : '13') + 'px;font-weight:700;' + s.cls + '">' + s.val + '</div>';
     html += '<div style="font-family:var(--mono);font-size: var(--fs-micro);letter-spacing:1.5px;color:var(--slate);margin-top:3px">' + s.lbl + '</div>';
     html += '</div>';
@@ -26897,7 +26904,7 @@ function deploy_showDetail(id) {
   // and legible labels). Auto-layout parses rack IDs into row/col positions.
   // List view remains primary (search-first); floor map is the "where am I in
   // trouble?" overview. Toggle preference persists per session.
-  html += '<div style="display:flex;gap:6px;margin-bottom:10px;padding:4px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:8px">';
+  html += '<div class="gx" style="display:flex;gap:6px;margin-bottom:10px;padding:4px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:8px">';
   html += '<button id="rv-tab-list" class="rv-tab" onclick="deploy_setRackView(\'list\',\'' + id + '\')" style="flex:1;padding:9px 12px;background:transparent;border:none;border-radius:6px;font-family:var(--mono);font-size:11px;letter-spacing:1.5px;cursor:pointer;-webkit-appearance:none;color:var(--slate)">📋 RACK LIST</button>';
   html += '<button id="rv-tab-map" class="rv-tab" onclick="deploy_setRackView(\'map\',\'' + id + '\')" style="flex:1;padding:9px 12px;background:transparent;border:none;border-radius:6px;font-family:var(--mono);font-size:11px;letter-spacing:1.5px;cursor:pointer;-webkit-appearance:none;color:var(--slate)">▦ FLOOR MAP</button>';
   html += '</div>';
