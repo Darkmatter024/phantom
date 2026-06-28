@@ -10636,7 +10636,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.124';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.125';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -22927,6 +22927,7 @@ function deploy_showCommandCenter(container) {
 
 function deploy_showList(container) {
   container = container || deploy_opsHost();
+  document.body.classList.remove('ops-detail');   // Rule A/B (v1.14.125): list view shows the grid-back (#work-back)
   var deploys = deploy_loadAll();
   var html = '';
   triage_renderDeployCard(); // keep triage card in sync
@@ -25010,6 +25011,7 @@ function mscope_renderLoadPrompt(c) {
 }
 
 function mscope_render(c, m) {
+  document.body.classList.add('ops-detail');   // Rule B (v1.14.125): scope picker is a discard-selection sub-flow — CANCEL is the single exit; hide the redundant grid-back (#work-back). Cleared on return to the list/CC (deploy_showList/deploy_showCommandCenter) or a mode switch (showMode).
   if (!_mscopeState.selected) _mscopeState.selected = {};
   var groups = mscope_groupByRow(m);
   var totalCabs = 0, totalHosts = 0, totalCables = 0;
@@ -25027,7 +25029,8 @@ function mscope_render(c, m) {
 
   var html = '<div class="msc-wrap">';
   html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">';
-  html += '<button class="pt-btn pt-btn-ghost" style="width:auto;padding:10px 16px" onclick="nav_back()">‹ Back</button>';
+  /* Rule B (v1.14.125): dropped the '‹ Back' pill here — it was a twin of the CANCEL button in the
+     action bar (both nav_back/exit the picker). CANCEL is the single discard control for this sub-flow. */
   html += '<div style="flex:1;min-width:0">';
   html += '<div style="font-family:var(--orb);font-size:var(--fs-micro);letter-spacing:3px;color:var(--cyan);text-transform:uppercase">NEW DEPLOYMENT · FROM MASTER</div>';
   html += '<div style="font-family:var(--raj);font-size:16px;font-weight:700;color:var(--white);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + mscope_escHtml(m.siteName || m.siteCode || 'Master') + '</div>';
