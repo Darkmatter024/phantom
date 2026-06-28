@@ -8767,7 +8767,7 @@ body.rd #rd-profile-sheet.open { display: flex; }
    neutral .gx border / cyan glow), prism contained in a 56px violet-tinted box with a
    36px mark (was a 64px uncontained 62px image), and typography scaled to the surface
    (title 18px not 23px, 11px mono label, 13px desc). body.rd-only; legacy untouched. */
-body.rd .ask{--ax:var(--vio);display:flex;align-items:center;gap:14px;padding:18px;margin:0 16px 12px;width:auto;text-align:left;border:1px solid color-mix(in srgb,var(--vio) 42%,transparent)!important}
+body.rd .ask{--ax:var(--vio);display:flex;align-items:center;gap:14px;padding:18px;margin:0 16px 14px;width:auto;text-align:left;filter:saturate(1.40);border:1px solid color-mix(in srgb,var(--vio) 42%,transparent);border-radius:16px;background:linear-gradient(160deg,#0a0d13 0%,#070809 100%);box-shadow:0 8px 20px -14px rgba(0,0,0,.85),inset 0 0 26px -4px color-mix(in srgb,var(--vio) 14%,transparent)}   /* Rule F (v1.14.128): match the Command-surface card recipe (.nba/.lens) — radius 16, saturate, violet accent glow — not the .gx grid recipe (radius 14, cyan glow). .gx dropped from markup. */
 body.rd .ask .prism{flex:0 0 auto;width:56px;height:56px;display:grid;place-items:center;background:color-mix(in srgb,var(--vio) 15%,transparent);border:1px solid color-mix(in srgb,var(--vio) 30%,transparent);border-radius:8px}
 body.rd .ask .prism img{width:36px;height:auto;animation:askBreathe 4.6s ease-in-out infinite}
 body.rd .ask .ey{color:var(--vio);font-family:var(--mono);font-size:11px;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:4px}
@@ -10640,7 +10640,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.127';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.128';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -11192,7 +11192,7 @@ if (typeof window !== 'undefined') {
         <p id="cc-nbap">&mdash;</p>
         <span class="route" id="cc-nbar" role="button" tabindex="0"></span>
       </div>
-      <button class="ask gx" onclick="openVaSheet('listening');vaStart()" aria-label="Ask PHANTOM for assistance">
+      <button class="ask" onclick="openVaSheet('listening');vaStart()" aria-label="Ask PHANTOM for assistance">
         <span class="prism"><img src="phantom-prism.png" alt="PHANTOM" width="62"></span>
         <div>
           <div class="ey">Ask PHANTOM</div>
