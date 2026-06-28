@@ -8743,7 +8743,7 @@ body.rd #rd-profile-sheet.open { display: flex; }
 #pg-cmd .lens .clock{position:absolute;top:16px;right:18px;text-align:right}
 #pg-cmd .lens .clock .t{font-family:var(--mono);font-size:30px;font-weight:700;letter-spacing:1px}
 #pg-cmd .lens .clock .l{font-family:var(--mono);font-size:11px;letter-spacing:3px;color:var(--slate)}
-#pg-cmd .shiftpill{position:absolute;top:74px;right:18px;z-index:3;display:inline-flex;align-items:center;gap:7px;padding:6px 12px;border-radius:16px;border:1px solid rgba(57,224,155,0.30);background:rgba(57,224,155,0.06);font-family:var(--mono);font-size:12px;letter-spacing:1.5px;color:#39e09b}
+#pg-cmd .shiftpill{display:inline-flex;align-items:center;gap:7px;margin-top:12px;padding:6px 12px;border-radius:16px;border:1px solid rgba(57,224,155,0.30);background:rgba(57,224,155,0.06);font-family:var(--mono);font-size:12px;letter-spacing:1.5px;color:#39e09b}   /* B2 (v1.14.127): in-flow below the description, left-aligned — was absolute top:74px/right:18px floating over the title */
 #pg-cmd .shiftpill .dot{width:7px;height:7px;border-radius:50%;background:#39e09b;box-shadow:0 0 6px #39e09b}
 #pg-cmd .ghosthero{position:absolute;right:8px;bottom:-6px;width:150px;height:auto;pointer-events:none;transition:filter .4s,opacity .4s}
 #pg-cmd .ghosthero.dim{filter:grayscale(.9) brightness(.42);opacity:.4}
@@ -8816,6 +8816,10 @@ body.rd .search-wrap{display:none}
 body.rd.mode-ref .search-wrap{display:flex}   /* search bar shows only on Ref; .search-wrap is display:flex — restore it, not block */
 body.rd .header-left-text .wmimg{display:block}
 body.rd #rd-sub{display:block}
+/* Rule E (v1.14.127): the left chrome is a 2-line stack (wordmark + COREWEAVE·site subtitle) while
+   the right (shield + SYS) centers on the tall shield, so the wordmark rode ~10px above the SYS pill.
+   Align the shield/SYS group to the wordmark's line so the header reads on one baseline. */
+body.rd .header-right{position:relative;top:-9px}
 .hdr-shield-img{display:none}
 body.rd .hdr-ghost-img{display:none}
 body.rd .hdr-shield-img{display:inline-block}
@@ -10636,7 +10640,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.126';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.127';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -11175,10 +11179,10 @@ if (typeof window !== 'undefined') {
       <div class="statusrow" id="cc-statusrow"></div>
       <div class="lens">
         <div class="clock"><div class="t" id="cc-clock">--:--</div><div class="l">LOCAL</div></div>
-        <div class="shiftpill" id="cc-shiftpill" style="display:none"><span class="dot"></span>ON SHIFT</div>
         <div class="llabel">COMMAND LENS</div>
         <h1 id="cc-lh">&mdash;</h1>
         <p id="cc-lp">&mdash;</p>
+        <div class="shiftpill" id="cc-shiftpill" style="display:none"><span class="dot"></span>ON SHIFT</div>
         <img class="ghosthero" id="cc-ghost" src="cc-ghost.webp" alt="" aria-hidden="true">
       </div>
       <div class="stats" id="cc-stats"></div>
