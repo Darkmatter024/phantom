@@ -10623,7 +10623,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.119';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.120';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -11207,7 +11207,7 @@ if (typeof window !== 'undefined') {
       <div id="work-grid">
         <div class="rf-glabel"><span class="dot"></span>FIELD WORK<span class="ln"></span></div>
         <div class="rf-grid-wrap">
-          <div class="rf-card" style="--rfac:#8a4bff" role="button" tabindex="0" onclick="showWorkTab('deploy')" aria-label="Deploy"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><svg class="rf-i"><use href="#ph-deploy"/></svg></div><div class="rf-cname">DEPLOY</div><div class="rf-cmeta">Build · seed · rack detail</div></div>
+          <div class="rf-card" style="--rfac:#8a4bff" role="button" tabindex="0" onclick="deploy_goToDashboard(null)" aria-label="Deploy"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><svg class="rf-i"><use href="#ph-deploy"/></svg></div><div class="rf-cname">DEPLOY</div><div class="rf-cmeta">Build · seed · rack detail</div></div>
           <div class="rf-card" style="--rfac:#28e0ff" role="button" tabindex="0" onclick="showWorkTab('scan')" aria-label="Scan"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><svg class="rf-i"><use href="#ph-scan"/></svg></div><div class="rf-cname">SCAN</div><div class="rf-cmeta">Racks · optics · serials</div></div>
           <div class="rf-card" style="--rfac:#ff8a00" role="button" tabindex="0" onclick="showWorkTab('handoff')" aria-label="Handoff"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><svg class="rf-i"><use href="#ph-handoff"/></svg></div><div class="rf-cname">HANDOFF</div><div class="rf-cmeta">Shift handoff · blockers</div></div>
           <div class="rf-card" style="--rfac:#ff2bd6" role="button" tabindex="0" onclick="showWorkTab('issues')" aria-label="Issues"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><svg class="rf-i"><use href="#ph-issues"/></svg></div><div class="rf-cname">ISSUES</div><div class="rf-cmeta">Deployment issue log</div></div>
