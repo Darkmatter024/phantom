@@ -8799,6 +8799,13 @@ body.rd .subtab-strip .stab.active{filter:drop-shadow(0 0 6px color-mix(in srgb,
 #rd-botnav .botitem.active{color:var(--cyan);border:1px solid rgba(92,242,255,0.28);background:linear-gradient(180deg,rgba(92,242,255,0.10),rgba(92,242,255,0.02))}
 #rd-botnav .blabel{font-family:var(--raj);font-weight:700;font-size:11px;letter-spacing:1.5px;text-transform:uppercase}
 body.rd .app-logo,body.rd .app-loc,body.rd #mode-toggle,body.rd .tab-nav{display:none}
+/* Rule A (v1.14.122) — one back control per surface. The legacy header chevron (#nav-back-btn,
+   nav_back/history.back) is hidden in the New UI: the redesign provides its own context-back on
+   every surface (the per-page #work-back/#ref-back grid-back on panels, the inline '‹ Back' pill
+   in deploy/rack/sop detail views). This kills the "two app-backs at once" stacking (scope picker)
+   and the chevron overlapping the header band/title (deploy detail). !important beats the inline
+   display toggled by the legacy nav code. Legacy (?legacy=1) keeps the chevron — byte-identical. */
+body.rd #nav-back-btn{display:none!important}
 body.rd .search-wrap{display:none}
 body.rd.mode-ref .search-wrap{display:flex}   /* search bar shows only on Ref; .search-wrap is display:flex — restore it, not block */
 body.rd .header-left-text .wmimg{display:block}
@@ -10623,7 +10630,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.121';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.122';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
