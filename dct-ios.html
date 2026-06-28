@@ -10623,7 +10623,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.117';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.118';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -11047,7 +11047,7 @@ if (typeof window !== 'undefined') {
             <!-- v1.6.30: HW REF re-homed here when MASTER took its bottom-nav slot.
                  Reachable from anywhere; hwMatrix_open() is unchanged. -->
             <button onclick="hwMatrix_open();document.getElementById('hdr-overflow-menu').classList.remove('hdr-menu-open')" class="hdr-menu-item" style="color:var(--cyan)" aria-label="Open hardware reference"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5cf2ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5"/><line x1="12" y1="22" x2="12" y2="15.5"/><polyline points="22 8.5 12 15.5 2 8.5"/></svg> &nbsp;HW REF</button>
-            <button onclick="showPage('master');setTimeout(function(){master_showSection('profile');},10);document.getElementById('hdr-overflow-menu').classList.remove('hdr-menu-open')" class="hdr-menu-item" style="color:var(--violet-bright,#b58cff)" aria-label="Open site profile editor"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#b58cff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> &nbsp;SITE PROFILE</button>
+            <button onclick="if(redesign_isOn()){rd_openProfile();document.getElementById('hdr-overflow-menu').classList.remove('hdr-menu-open');return;}showPage('master');setTimeout(function(){master_showSection('profile');},10);document.getElementById('hdr-overflow-menu').classList.remove('hdr-menu-open')" class="hdr-menu-item" style="color:var(--violet-bright,#b58cff)" aria-label="Open site profile editor"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#b58cff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> &nbsp;SITE PROFILE</button>
           </div>
         </div>
         <button id="phantom-tab-pill" class="tab-pill" onclick="tab_pillTap()" aria-label="PHANTOM open in another tab — tap for details">
@@ -34531,6 +34531,13 @@ async function runParser2() {
 
 // ━━━ QUICK NAV ━━━
 function goOptic() {
+  if (redesign_isOn()) {   // Stage 2 (B1.1): optics re-homed to Ref>Optics (#rf-optics) via redesign_homeOptics
+    showRefTab('rf-optics');
+    var ob = document.querySelector('#rf-optics .subtab-strip .stab[onclick*="fs-optic"]');
+    if (ob) showStab(ob, 'fiber-sub', 'fs-optic');
+    if (typeof OpticScore !== 'undefined' && OpticScore.activateMode) OpticScore.activateMode('reference');
+    return;
+  }
   showPage('fiber', getTnItem('fiber'));
   const stabs = document.querySelectorAll('#pg-fiber .subtab-strip .stab');
   if (stabs[4]) showStab(stabs[4], 'fiber-sub', 'fs-optic');
@@ -34541,6 +34548,13 @@ function goOptic() {
 }
 // Gate 31: shortcut to Verify mode — used by SCAN-page discoverability hint
 function goOpticVerify() {
+  if (redesign_isOn()) {   // Stage 2 (B1.2): optics re-homed to Ref>Optics (#rf-optics)
+    showRefTab('rf-optics');
+    var ob = document.querySelector('#rf-optics .subtab-strip .stab[onclick*="fs-optic"]');
+    if (ob) showStab(ob, 'fiber-sub', 'fs-optic');
+    if (typeof OpticScore !== 'undefined' && OpticScore.activateMode) OpticScore.activateMode('verify');
+    return;
+  }
   showPage('fiber', getTnItem('fiber'));
   const stabs = document.querySelectorAll('#pg-fiber .subtab-strip .stab');
   if (stabs[4]) showStab(stabs[4], 'fiber-sub', 'fs-optic');
@@ -34549,6 +34563,10 @@ function goOpticVerify() {
   }
 }
 function goOpsTab(tab) {
+  // Stage 2 (HEALTH B1.4): chokepoint for 4 callers. The ops cluster (SOP/portmap/
+  // rackmap) has no redesign home until Stage 3 — graceful-degrade to Work>Deploy
+  // (where Stage 3 re-homes them), never a legacy showPage bounce out of the frame.
+  if (redesign_isOn()) { if (typeof showWorkTab === 'function') showWorkTab('deploy'); return; }
   showPage('sop', getTnItem('sop'), tab);
 }
 
@@ -34561,6 +34579,12 @@ function goFiberTriage() {
 }
 
 function goCliParser() {
+  if (redesign_isOn()) {   // Stage 2 (B1.1): CLI re-homed to Ref>CLI (#rf-cli) via redesign_homeCLI
+    showRefTab('rf-cli');
+    var pb = document.querySelector('#rf-cli .subtab-strip .stab[onclick*="cs-parser"]');
+    if (pb) { showStab(pb, 'cli-sub', 'cs-parser'); selTypeVal2 = 'auto'; }
+    return;
+  }
   // CLI is hidden in 4-verb layout — pass null tnEl, page still routes via showPage
   showPage('cli', getTnItem('cli'));
   setTimeout(function() {
@@ -34622,15 +34646,15 @@ function toggleChk(item) {
 const INTENT_MAP = [
   { keywords: ['optic','qsfp','sfp','transceiver','osfp','dac','aoc','sr4','lr4','mpo','mmf','smf','fiber type','reach'], action: () => goOptic() },
   { keywords: ['port map','port validator','cabling','cable map','cable plan','validate port','ne sign'], action: () => goOpsTab('portmap') },
-  { keywords: ['voice','ask','assistant','speak','question','help me'], action: () => { showPage('triage', getTnItem('triage')); setTimeout(() => openVaSheet('listening'), 100); } },
+  { keywords: ['voice','ask','assistant','speak','question','help me'], action: () => { if (redesign_isOn()) { openVaSheet('listening'); if (typeof vaStart === 'function') vaStart(); return; } showPage('triage', getTnItem('triage')); setTimeout(() => openVaSheet('listening'), 100); } },
   { keywords: ['parser','analyze','paste','cli output','dom','fcs','crc','ibperf','perfquery','port-channel'], action: () => goCliParser() },
   { keywords: ['sop','procedure','runbook','handover','shift'], action: () => goOpsTab('sops') },
-  { keywords: ['rack map','elevation','rack','u-slot','rack layout'], action: () => { showPage('sop', getTnItem('sop'), 'rackmap'); } },
-  { keywords: ['triage','down link','link down','port down','interface down'], action: () => { showPage('triage', getTnItem('triage')); } },
-  { keywords: ['oob','idrac','ilo','ipmi','bmc','out of band'], action: () => { showPage('cli', getTnItem('cli')); setTimeout(() => showStab(document.querySelector('#pg-cli .stab:nth-child(2)'), 'cli-sub', 'cs-oob'), 50); } },
-  { keywords: ['console','baud','serial','rollover','putty','minicom'], action: () => { showPage('cli', getTnItem('cli')); setTimeout(() => showStab(document.querySelector('#pg-cli .stab:nth-child(3)'), 'cli-sub', 'cs-console'), 50); } },
-  { keywords: ['power','pdu','derate','phase','cord','c19','c20','l6-30','iec 60309','gb300 power','h100 power'], action: () => { showPage('power', getTnItem('power')); } },
-  { keywords: ['led','fault','xid','ecc','nvme','drive','psu','dimm','hardware'], action: () => { showPage('power', getTnItem('power')); setTimeout(() => { const s = document.querySelector('#pg-power .subtab-strip .stab:nth-child(2)'); if(s) s.click(); }, 50); } },
+  { keywords: ['rack map','elevation','rack','u-slot','rack layout'], action: () => { if (redesign_isOn()) { if (typeof showWorkTab === 'function') showWorkTab('deploy'); return; } showPage('sop', getTnItem('sop'), 'rackmap'); } },
+  { keywords: ['triage','down link','link down','port down','interface down'], action: () => { if (redesign_isOn()) { if (typeof showWorkTab === 'function') showWorkTab('deploy'); return; } showPage('triage', getTnItem('triage')); } },
+  { keywords: ['oob','idrac','ilo','ipmi','bmc','out of band'], action: () => { if (redesign_isOn()) { showRefTab('rf-cli'); var b = document.querySelector('#rf-cli .subtab-strip .stab[onclick*="cs-oob"]'); if (b) showStab(b, 'cli-sub', 'cs-oob'); return; } showPage('cli', getTnItem('cli')); setTimeout(() => showStab(document.querySelector('#pg-cli .stab:nth-child(2)'), 'cli-sub', 'cs-oob'), 50); } },
+  { keywords: ['console','baud','serial','rollover','putty','minicom'], action: () => { if (redesign_isOn()) { showRefTab('rf-cli'); var b = document.querySelector('#rf-cli .subtab-strip .stab[onclick*="cs-console"]'); if (b) showStab(b, 'cli-sub', 'cs-console'); return; } showPage('cli', getTnItem('cli')); setTimeout(() => showStab(document.querySelector('#pg-cli .stab:nth-child(3)'), 'cli-sub', 'cs-console'), 50); } },
+  { keywords: ['power','pdu','derate','phase','cord','c19','c20','l6-30','iec 60309','gb300 power','h100 power'], action: () => { if (redesign_isOn()) { showRefTab('rf-hw'); return; } showPage('power', getTnItem('power')); } },
+  { keywords: ['led','fault','xid','ecc','nvme','drive','psu','dimm','hardware'], action: () => { if (redesign_isOn()) { showRefTab('rf-hw'); return; } showPage('power', getTnItem('power')); setTimeout(() => { const s = document.querySelector('#pg-power .subtab-strip .stab:nth-child(2)'); if(s) s.click(); }, 50); } },
 ];
 
 // ── Search input behavior — debounce + immediate-commit (Cut 4a) ──
@@ -40188,6 +40212,14 @@ function qrDeepLink(val) {
     var dlRackId = parts[2] || '';
     var dlDepId  = parts[3] || '';
     if (dlRackId && dlDepId) {
+      // Stage 2 (B1.3): redesign deploy dashboard hosts rack detail in-frame
+      // (deploy_showRackDetail renders via deploy_opsHost → #wk-deploy). No legacy bounce.
+      if (redesign_isOn()) {
+        if (typeof showWorkTab === 'function') showWorkTab('deploy');
+        setTimeout(function() { deploy_showRackDetail(dlDepId, dlRackId); }, 100);
+        phantomToast('Opening rack: ' + dlRackId, 'ok');
+        return;
+      }
       showPage('sop', getTnItem('sop'), 'deploy');
       setTimeout(function() { deploy_showRackDetail(dlDepId, dlRackId); }, 100);
       phantomToast('Opening rack: ' + dlRackId, 'ok');
@@ -40200,6 +40232,13 @@ function qrDeepLink(val) {
   const rackMatch = racks.find(r => r.name.toLowerCase().includes(q) || r.id === val);
   if (rackMatch) {
     currentRackId = rackMatch.id;
+    // Stage 2 (B1.3): rackmap has no redesign home until Stage 3 — graceful-degrade to
+    // Work>Deploy (not a legacy bounce). Full rack-map render lands when Stage 3 re-homes it.
+    if (redesign_isOn()) {
+      if (typeof showWorkTab === 'function') showWorkTab('deploy');
+      phantomToast('Rack found: ' + rackMatch.name + ' — open it in Deploy', 'ok');
+      return;
+    }
     showPage('sop', null, 'portmap'); // go to BUILD page
     // Navigate to rack map subtab
     setTimeout(function() {
@@ -40217,6 +40256,13 @@ function qrDeepLink(val) {
   const sops = loadSOPs();
   const sopMatch = sops.find(s => s.title.toLowerCase().includes(q) || s.id === val);
   if (sopMatch) {
+    // Stage 2 (B1.3): SOPs (openSopDetail renders into legacy #ops-content) have no
+    // redesign home until Stage 3 — graceful-degrade to Work>Deploy, not a legacy bounce.
+    if (redesign_isOn()) {
+      if (typeof showWorkTab === 'function') showWorkTab('deploy');
+      phantomToast('SOP found: ' + sopMatch.title + ' — SOPs move into Deploy in the next build', 'ok');
+      return;
+    }
     showPage('sop', null, 'sops');
     setTimeout(function() { openSopDetail(sopMatch.id); }, 150);
     phantomToast('SOP found: ' + sopMatch.title, 'ok');
