@@ -8673,6 +8673,12 @@ body.rd #pg-work > .subtab-strip { display: none; }            /* Deploy/Scan/Ha
 body.rd #pg-work.wk-grid #work-grid { display: block; }
 body.rd #pg-work.wk-grid .work-sub { display: none !important; }
 body.rd #pg-work:not(.wk-grid) #work-back { display: flex; }
+/* Rule A (v1.14.123) — deep deploy DETAIL views (deployment/rack detail) render their own
+   inline '‹ Back' step-back pill, so the per-page grid-back (#work-back) is a redundant 2nd
+   back there. Hide it on detail views; the inline pill is the single back (steps up one level).
+   body.ops-detail is added by deploy_showDetail/deploy_showRackDetail and cleared by showMode +
+   deploy_showCommandCenter (the Command Center has NO inline pill, so it keeps #work-back). */
+body.rd.ops-detail #pg-work:not(.wk-grid) #work-back { display: none !important; }
 body.rd #pg-work:not(.wk-grid) .work-sub.stab-active { animation: rf-fade .22s ease both; }
 .rf-glabel { display:flex; align-items:center; gap:12px; margin:4px 2px 14px; font-family:var(--mono); font-weight:600; letter-spacing:.28em; font-size:11px; color:var(--slate); }
 .rf-glabel .dot { width:6px; height:6px; border-radius:50%; background:var(--cyan); box-shadow:0 0 10px var(--cyan); flex:0 0 auto; }
@@ -10630,7 +10636,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.122';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.123';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -15895,6 +15901,7 @@ function showMode(mode) {
   var pid = map[mode];
   if (!pid) return;
   _rdMode = mode;   // v1.14.97: remember the active redesign mode for nav_restore stickiness
+  document.body.classList.remove('ops-detail');   // Rule A (v1.14.123): leaving any detail view → grid-back is valid again
   if (typeof rd_closeProfile === 'function') rd_closeProfile();   // v1.14.104: a bottom-nav tap dismisses the Profile sheet
   // Scaffold pages must NOT write nav/session-restore state. Without this,
   // showPage()'s nav_push persists p:'cmd', which a later normal-mode boot
@@ -22825,6 +22832,7 @@ function deploy_opsHost() {
 function deploy_showCommandCenter(container) {
   var c = container || deploy_opsHost();
   if (!c) return;
+  document.body.classList.remove('ops-detail');   // Rule A (v1.14.123): Command Center has no inline back → keep #work-back (grid-back)
 
   // Cut 11: push nav state for back navigation.
   nav_push({ p: 'sop', o: 'deploy', d: 'command' });
@@ -26602,6 +26610,7 @@ function deploy_showDetail(id) {
   wakeLock_release();
   var dep = deploy_getById(id);
   if (!dep) { phantomToast('Deployment not found', 'error'); deploy_showList(deploy_opsHost()); return; }
+  document.body.classList.add('ops-detail');   // Rule A (v1.14.123): this detail renders its own inline '‹ Back' step-back → suppress the redundant grid-back
 
   // Closed deployments are tombstones — no racks/phases/audit exist anymore.
   // Route to the read-only summary view. (Tombstone pushes its own nav state.)
@@ -27834,6 +27843,7 @@ function scrubbar_openSnapped() {
 function deploy_showRackDetail(deployId, rackId) {
   var dep = deploy_getById(deployId);
   if (!dep) { phantomToast('Deployment not found', 'error'); return; }
+  document.body.classList.add('ops-detail');   // Rule A (v1.14.123): rack detail renders its own inline '‹ Back' step-back → suppress the redundant grid-back
 
   var racks = deploy_loadRacks(deployId);
   var rack = racks.find(function(r) { return r.id === rackId; });
