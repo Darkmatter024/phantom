@@ -8755,13 +8755,19 @@ body.rd #rd-profile-sheet.open { display: flex; }
 #pg-cmd .nba h2{font-size:23px;font-weight:700;margin:8px 0 6px;line-height:1.1}
 #pg-cmd .nba p{color:var(--slate);font-size:13px;line-height:1.4;margin:0 0 12px}
 #pg-cmd .nba .route{display:inline-flex;align-items:center;gap:8px;font-family:var(--raj);font-weight:700;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--cyan);border:1px solid rgba(92,242,255,0.35);border-radius:20px;padding:9px 16px;background:rgba(92,242,255,0.05)}
-body.rd .ask{--ax:var(--vio);display:flex;align-items:center;gap:14px;padding:16px 18px;margin:14px 0;width:100%;text-align:left}
-body.rd .ask .prism{flex:0 0 auto;width:64px;height:64px;display:grid;place-items:center}
-body.rd .ask .prism img{width:62px;height:auto;animation:askBreathe 4.6s ease-in-out infinite}
-body.rd .ask .ey{color:var(--vio)}
-body.rd .ask h3{font-weight:700;font-size:23px;margin:4px 0 0;color:#fff;line-height:1}
-body.rd .ask p{margin:6px 0 0;color:var(--dim);font-size:13.5px;line-height:1.3}
-body.rd .ask .arw{margin-left:auto;color:var(--vio);font-size:24px;align-self:center}
+/* Rule F (v1.14.117) — Ask card aligned to the Command surface vocabulary (corrected
+   mock phantom-ask-card-corrected-mock.html): inset to match the NBA card width (16px
+   sides, was full-bleed), 18px padding / 12px margin, violet accent border (not the
+   neutral .gx border / cyan glow), prism contained in a 56px violet-tinted box with a
+   36px mark (was a 64px uncontained 62px image), and typography scaled to the surface
+   (title 18px not 23px, 11px mono label, 13px desc). body.rd-only; legacy untouched. */
+body.rd .ask{--ax:var(--vio);display:flex;align-items:center;gap:14px;padding:18px;margin:0 16px 12px;width:auto;text-align:left;border:1px solid color-mix(in srgb,var(--vio) 42%,transparent)!important}
+body.rd .ask .prism{flex:0 0 auto;width:56px;height:56px;display:grid;place-items:center;background:color-mix(in srgb,var(--vio) 15%,transparent);border:1px solid color-mix(in srgb,var(--vio) 30%,transparent);border-radius:8px}
+body.rd .ask .prism img{width:36px;height:auto;animation:askBreathe 4.6s ease-in-out infinite}
+body.rd .ask .ey{color:var(--vio);font-family:var(--mono);font-size:11px;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:4px}
+body.rd .ask h3{font-weight:700;font-size:18px;margin:0;color:#fff;line-height:1.1}
+body.rd .ask p{margin:4px 0 0;color:var(--dim);font-size:13px;line-height:1.3}
+body.rd .ask .arw{margin-left:auto;color:var(--vio);font-size:20px;align-self:center}
 @keyframes askBreathe{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-1.5px) scale(1.025)}}
 @media (prefers-reduced-motion:reduce){body.rd .ask .prism img{animation:none}}
 #pg-cmd .lrow{display:flex;gap:10px;padding:0 16px 14px}
@@ -10617,7 +10623,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.116';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.117';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
