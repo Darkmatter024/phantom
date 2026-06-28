@@ -34,7 +34,7 @@
 // a clean v1.13.3 — dropping the prior -N cache-iteration suffix — so this real
 // version bump busts every client's cache and the three stamps (app const /
 // version.json / this key) line up again. Patch bumps continue from here.
-const CACHE_VERSION = 'phantom-v1.14.131';
+const CACHE_VERSION = 'phantom-v1.14.132';
 
 // Assets to precache on install. Keep this minimal — single-file PWA means
 // most of PHANTOM is in dct-ios.html itself.
@@ -51,7 +51,27 @@ const PRECACHE_URLS = [
   'cc-ghost.webp',
   'cc-wordmark.png',
   'phantom-prism.png',
-  'phantom-shield.png'
+  'phantom-shield.png',
+  // v1.14.132: branded icon system (Stage 1 ships the 6 Ref glyphs; full 17-file
+  // batch precached up front so Stages 2-3 are HTML-only). Offline-first: without
+  // these the cards 404 in the cold aisle.
+  'icons/phantom-nav-command-96.webp',
+  'icons/phantom-nav-work-96.webp',
+  'icons/phantom-nav-ref-96.webp',
+  'icons/phantom-action-deploy-upload-256.webp',
+  'icons/phantom-action-scan-radar-256.webp',
+  'icons/phantom-action-handoff-link-256.webp',
+  'icons/phantom-action-issues-alert-256.webp',
+  'icons/phantom-ref-optics-burst-256.webp',
+  'icons/phantom-ref-hardware-chip-256.webp',
+  'icons/phantom-ref-cli-terminal-256.webp',
+  'icons/phantom-ref-hw-barcode-256.webp',
+  'icons/phantom-ref-know-cap-256.webp',
+  'icons/phantom-ref-compass-256.webp',
+  'icons/phantom-status-racks-cabinet-96.webp',
+  'icons/phantom-status-blockers-stack-96.webp',
+  'icons/phantom-status-deploys-stack-96.webp',
+  'icons/phantom-assistant-mark-256.webp'
 ];
 
 // v1.6.29: One source of truth for "is this Request URL cacheable?".
