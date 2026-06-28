@@ -10640,7 +10640,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.129';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.130';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -19890,7 +19890,54 @@ function activeContext_getContextBlock() {
     blocks.push(lines.join('\n'));
   }
 
+  // BUILD-2 (v1.14.130): inject the tech's captured Ghost-Echo quirks (tribal fixes) so the
+  // assistant can USE the corrections this tool logged — previously they were only whispered
+  // under phase dots, never in any AI prompt. Relevance-sorted by the active rack's hardware,
+  // token-capped. See activeContext_getQuirksBlock.
+  try {
+    var _qhw = (ctx && ctx.rack && ctx.rack.platform) ? ctx.rack.platform : '';
+    var _qb = activeContext_getQuirksBlock(_qhw);
+    if (_qb) blocks.push(_qb);
+  } catch (_) {}
+
   return blocks.length > 0 ? blocks.join('\n\n') : '';
+}
+
+// BUILD-2 (v1.14.130): compact "field quirks" block from the Ghost-Echo store for the AI context.
+// Own quirks are site-scoped (tolerant normalize); imported peer quirks are cross-site (same rule
+// as ge_findQuirks). Sorted active-hardware-first → corroborated (echoes) → recency; capped to keep
+// the prompt lean. Returns '' when there are no quirks.
+function activeContext_getQuirksBlock(activeHwType) {
+  try {
+    if (typeof ge_load !== 'function') return '';
+    var cache = ge_load();
+    var currentSite = (typeof siteProfile_load === 'function') ? (siteProfile_load().facilityId || '') : '';
+    var seen = {}, quirks = [];
+    [cache.outgoing, cache.incoming].forEach(function(arr, layer) {
+      (arr || []).forEach(function(q) {
+        if (!q || !q.scope || !q.text || seen[q.id]) return;
+        if (layer === 0 && currentSite && ge_normSite(q.siteId) !== ge_normSite(currentSite)) return;
+        seen[q.id] = true; quirks.push(q);
+      });
+    });
+    if (!quirks.length) return '';
+    quirks.sort(function(a, b) {
+      var am = (activeHwType && a.scope.hardwareType === activeHwType) ? 1 : 0;
+      var bm = (activeHwType && b.scope.hardwareType === activeHwType) ? 1 : 0;
+      if (am !== bm) return bm - am;
+      if ((b.echoes || 0) !== (a.echoes || 0)) return (b.echoes || 0) - (a.echoes || 0);
+      return (b.ts || 0) - (a.ts || 0);
+    });
+    var MAX = 8;
+    var lines = quirks.slice(0, MAX).map(function(q) {
+      var hw = q.scope.hardwareType || 'general';
+      var ph = q.scope.phase ? (' · ' + q.scope.phase) : '';
+      var t = String(q.text).slice(0, GHOST_ECHO_TEXT_MAX);
+      return '- [' + hw + ph + '] ' + t + (q.author ? (' — ' + q.author) : '');
+    });
+    var more = quirks.length > MAX ? ('\n  (+' + (quirks.length - MAX) + ' more logged at this site)') : '';
+    return 'FIELD QUIRKS — tribal fixes logged by techs on this floor. Real corrections captured in-app; when one applies to the question, trust it over generic specs and cite it:\n' + lines.join('\n') + more;
+  } catch (_) { return ''; }
 }
 
 // ── Wake Lock — keep screen awake during active rack work ──
