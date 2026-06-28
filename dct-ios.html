@@ -8707,12 +8707,13 @@ body.rd .rl-search-input{background:linear-gradient(160deg,#0a0d13,#070809)!impo
 .rf-cnr.bl { bottom:9px; left:9px; border-right:0; border-top:0; border-bottom-left-radius:5px; }
 .rf-cnr.br { bottom:9px; right:9px; border-left:0; border-top:0; border-bottom-right-radius:5px; }
 .rf-card .rf-cic svg { width:36px; height:36px; color:var(--rfac); fill:currentColor; stroke:none; filter:drop-shadow(0 0 5px color-mix(in srgb, var(--rfac) 40%, transparent)); }   /* v1.14.107: Phosphor fill-paths in accent; calmer resting glow */
-/* v1.14.132 — branded WebP icon system. The art carries its own color; the card keeps its --rfac
-   accent (brackets + glow). Stage 1 wires the 6 Ref-grid glyphs at 96px; .rf-i-img fills its sized
-   container, so the per-surface size lives on .rf-cic (Ref grid only here — Work cards keep the svg
-   until Stage 2). Redesign-only scope (body.rd) → legacy byte-identical. */
-.rf-i-img { width:100%; height:100%; object-fit:contain; filter:drop-shadow(0 4px 12px rgba(0,0,0,.5)); }
-body.rd #ref-grid .rf-card .rf-cic { width:96px; height:96px; }
+/* v1.14.132/133 — branded WebP icon system. The art carries its own color; the card keeps its --rfac
+   accent (brackets + glow). v1.14.133: v2 art (reflections stripped) + the icon renders at 76px to
+   BREATHE, centered inside the 96px Ref cell (was filling 100% → crowded). 76px is the tunable knob
+   (~70 = more air, ~84 = more presence). Work cards keep their 36px svg until Stage 2.
+   Redesign-only scope (body.rd / #ref-grid) → legacy byte-identical. */
+.rf-i-img { width:76px; height:76px; object-fit:contain; filter:drop-shadow(0 5px 13px rgba(0,0,0,.55)); }
+body.rd #ref-grid .rf-card .rf-cic { width:96px; height:96px; display:grid; place-items:center; }
 .rf-card .rf-cname { font-family:var(--mono); font-weight:700; letter-spacing:.14em; font-size:15px; color:var(--white); }
 .rf-card .rf-cmeta { font-family:var(--mono); font-weight:600; font-size:11px; letter-spacing:.03em; color:var(--slate); text-align:center; line-height:1.2; }
 #ref-back { align-items:center; gap:12px; margin:4px 0 12px; }
@@ -10649,7 +10650,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.132';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.133';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -11275,11 +11276,11 @@ if (typeof window !== 'undefined') {
       <div id="ref-grid">
         <div class="rf-glabel"><span class="dot"></span>REFERENCE LIBRARY<span class="ln"></span></div>
         <div class="rf-grid-wrap">
-          <div class="rf-card" style="--rfac:#28e0ff" role="button" tabindex="0" onclick="showRefTab('rf-optics')" aria-label="Optics reference"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-ref-optics-burst-256.webp" alt="" loading="eager"></div><div class="rf-cname">OPTICS</div><div class="rf-cmeta">Fiber · Form factors · MPO</div></div>
-          <div class="rf-card" style="--rfac:#39e09b" role="button" tabindex="0" onclick="showRefTab('rf-hw')" aria-label="Hardware reference"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-ref-hardware-chip-256.webp" alt="" loading="eager"></div><div class="rf-cname">HARDWARE</div><div class="rf-cmeta">GPU · Switch · PDU</div></div>
-          <div class="rf-card" style="--rfac:#8a4bff" role="button" tabindex="0" onclick="showRefTab('rf-cli')" aria-label="CLI and InfiniBand reference"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-ref-cli-terminal-256.webp" alt="" loading="eager"></div><div class="rf-cname">CLI / IB</div><div class="rf-cmeta">Fabric · Diagnostics</div></div>
-          <div class="rf-card" style="--rfac:#1fffd0" role="button" tabindex="0" onclick="showRefTab('rf-hwref')" aria-label="Hardware reference — cables and part numbers"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-ref-hw-barcode-256.webp" alt="" loading="eager"></div><div class="rf-cname">HW REF</div><div class="rf-cmeta">Cables · Part numbers</div></div>
-          <div class="rf-card" style="--rfac:#ffcb45" role="button" tabindex="0" onclick="showRefTab('rf-know')" aria-label="Know — SOPs and how-tos"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-ref-know-cap-256.webp" alt="" loading="eager"></div><div class="rf-cname">KNOW</div><div class="rf-cmeta">SOPs · How-tos</div></div>
+          <div class="rf-card" style="--rfac:#28e0ff" role="button" tabindex="0" onclick="showRefTab('rf-optics')" aria-label="Optics reference"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-ref-optics-256.webp" alt="" loading="eager"></div><div class="rf-cname">OPTICS</div><div class="rf-cmeta">Fiber · Form factors · MPO</div></div>
+          <div class="rf-card" style="--rfac:#39e09b" role="button" tabindex="0" onclick="showRefTab('rf-hw')" aria-label="Hardware reference"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-ref-hardware-256.webp" alt="" loading="eager"></div><div class="rf-cname">HARDWARE</div><div class="rf-cmeta">GPU · Switch · PDU</div></div>
+          <div class="rf-card" style="--rfac:#8a4bff" role="button" tabindex="0" onclick="showRefTab('rf-cli')" aria-label="CLI and InfiniBand reference"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-ref-cli-256.webp" alt="" loading="eager"></div><div class="rf-cname">CLI / IB</div><div class="rf-cmeta">Fabric · Diagnostics</div></div>
+          <div class="rf-card" style="--rfac:#1fffd0" role="button" tabindex="0" onclick="showRefTab('rf-hwref')" aria-label="Hardware reference — cables and part numbers"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-ref-hwref-256.webp" alt="" loading="eager"></div><div class="rf-cname">HW REF</div><div class="rf-cmeta">Cables · Part numbers</div></div>
+          <div class="rf-card" style="--rfac:#ffcb45" role="button" tabindex="0" onclick="showRefTab('rf-know')" aria-label="Know — SOPs and how-tos"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-ref-know-256.webp" alt="" loading="eager"></div><div class="rf-cname">KNOW</div><div class="rf-cmeta">SOPs · How-tos</div></div>
           <div class="rf-card" style="--rfac:#ff2bd6" role="button" tabindex="0" onclick="ref_openCompass()" aria-label="Compass — cage nut and RU map"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-ref-compass-256.webp" alt="" loading="eager"></div><div class="rf-cname">COMPASS</div><div class="rf-cmeta">Cage nut · RU map</div></div>
         </div>
       </div>
