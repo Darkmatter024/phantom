@@ -34,7 +34,7 @@
 // a clean v1.13.3 — dropping the prior -N cache-iteration suffix — so this real
 // version bump busts every client's cache and the three stamps (app const /
 // version.json / this key) line up again. Patch bumps continue from here.
-const CACHE_VERSION = 'phantom-v1.14.114';
+const CACHE_VERSION = 'phantom-v1.14.115';
 
 // Assets to precache on install. Keep this minimal — single-file PWA means
 // most of PHANTOM is in dct-ios.html itself.
@@ -49,7 +49,9 @@ const PRECACHE_URLS = [
   'plate.webp',
   'plate-wide.webp',
   'cc-ghost.webp',
-  'cc-wordmark.png'
+  'cc-wordmark.png',
+  'phantom-prism.png',
+  'phantom-shield.png'
 ];
 
 // v1.6.29: One source of truth for "is this Request URL cacheable?".
