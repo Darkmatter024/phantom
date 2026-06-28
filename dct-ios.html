@@ -8710,8 +8710,8 @@ body.rd .rl-search-input{background:linear-gradient(160deg,#0a0d13,#070809)!impo
 .rf-card .rf-cname { font-family:var(--mono); font-weight:700; letter-spacing:.14em; font-size:15px; color:var(--white); }
 .rf-card .rf-cmeta { font-family:var(--mono); font-weight:600; font-size:11px; letter-spacing:.03em; color:var(--slate); text-align:center; line-height:1.2; }
 #ref-back { align-items:center; gap:12px; margin:4px 0 12px; }
-.rf-back-btn { width:40px; height:40px; border-radius:12px; border:1px solid rgba(120,150,200,.18); background:rgba(16,22,34,.55); display:grid; place-items:center; cursor:pointer; flex:0 0 auto; color:var(--white); -webkit-tap-highlight-color:transparent; }
-.rf-back-btn svg { width:20px; height:20px; }
+.rf-back-btn { width:56px; height:56px; border-radius:14px; border:1px solid rgba(120,150,200,.18); background:rgba(16,22,34,.55); display:grid; place-items:center; cursor:pointer; flex:0 0 auto; color:var(--white); -webkit-tap-highlight-color:transparent; }   /* Rule A (v1.14.124): >=56px tap target (gloved hands) */
+.rf-back-btn svg { width:24px; height:24px; }
 #ref-back .rf-back-title { font-family:var(--orb); font-weight:700; letter-spacing:.14em; font-size:18px; color:var(--white); }
 body.rd #pg-ref:not(.rf-grid) .ref-sub.stab-active { animation:rf-fade .22s ease both; }
 @keyframes rf-fade { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
@@ -10636,7 +10636,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.123';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.124';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
