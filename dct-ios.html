@@ -10640,7 +10640,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.128';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.129';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -15733,6 +15733,10 @@ function nav_restore(state) {
       var d = state.d;
       if (d === 'command' && typeof deploy_showCommandCenter === 'function') {
         deploy_showCommandCenter(document.getElementById('ops-content'));
+      } else if (d === 'tools' && typeof deploy_showTools === 'function') {   // Stage 3
+        deploy_showTools(deploy_opsHost());
+      } else if (d.indexOf('tool:') === 0 && typeof deploy_showOpsTool === 'function') {   // Stage 3
+        deploy_showOpsTool(d.substring(5));
       } else if (d === 'ingest' && typeof mscope_open === 'function') {
         mscope_open();
       } else if (d.indexOf('deploy:') === 0 && typeof deploy_showDetail === 'function') {
@@ -22852,8 +22856,9 @@ function deploy_showCommandCenter(container) {
   html += '<div style="display:flex;align-items:center;gap: 8px;margin-bottom:14px">';
   html += '<div style="flex:1"><div style="font-family:var(--orb);font-size:11px;letter-spacing:var(--hud-track-display);color:var(--cyan);text-transform:uppercase">BUILD LEAD</div>';
   html += '<div style="font-family:var(--raj);font-size:18px;font-weight:700;color:var(--white)">Command Center</div></div>';
-  html += '<button class="pt-btn pt-btn-ghost" style="width:auto;padding:10px 16px;font-size: var(--fs-caption)" onclick="deploy_showList(deploy_opsHost())">' + _ico.list('#5cf2ff', 12) + ' LIST</button>';
-  html += '<button class="pt-btn pt-btn-primary" style="width:auto;padding:10px 16px;clip-path:none;font-size: var(--fs-caption)" onclick="mscope_open()">＋ NEW</button>';
+  if (typeof redesign_isOn === 'function' && redesign_isOn()) html += '<button class="pt-btn pt-btn-ghost" style="width:auto;padding:10px 13px;font-size: var(--fs-caption)" onclick="deploy_showTools(deploy_opsHost())" aria-label="Deploy tools">⚙ TOOLS</button>';   // Stage 3 (redesign-only; legacy uses the #ops-tab-strip → byte-identical): BOM/Manifest/PortMap/RackMap/CrashCart/SOPs + Blocker
+  html += '<button class="pt-btn pt-btn-ghost" style="width:auto;padding:10px 13px;font-size: var(--fs-caption)" onclick="deploy_showList(deploy_opsHost())">' + _ico.list('#5cf2ff', 12) + ' LIST</button>';
+  html += '<button class="pt-btn pt-btn-primary" style="width:auto;padding:10px 13px;clip-path:none;font-size: var(--fs-caption)" onclick="mscope_open()">＋ NEW</button>';
   html += '</div>';
 
   if (!deploys.length) {
@@ -22928,6 +22933,57 @@ function deploy_showCommandCenter(container) {
   html += deploy_renderPhaseMatrix(deploys);
 
   c.innerHTML = html;
+}
+
+// ━━━ STAGE 3 — Work›Deploy "Tools" surface (card grid; John picked Option B). ━━━
+// Re-homes the legacy ops-tabs (BOM/Manifest/PortMap/RackMap/CrashCart) + SOPs-CRUD +
+// the Blocker one-tap into #wk-deploy, clearing the PARITY §7 MISSING-IN-REDESIGN blocker.
+// Reuses the live OPS_TABS render fns (don't rebuild) — deploy_showOpsTool renders a tab
+// into deploy_opsHost() with a single "‹ Back" (body.ops-detail hides #work-back per Rule A).
+// nav-pushed so history-back steps Tool → Tools grid → Command Center. Legacy showOpsTab
+// is untouched → ?legacy=1 byte-identical.
+var DEPLOY_TOOLS = [
+  { tab:'bom',       name:'BOM',        meta:'PARTS',      ac:'#28e0ff', icon:'<path d="M3 6h18M3 12h18M3 18h12"/>' },
+  { tab:'manifest',  name:'MANIFEST',   meta:'GEAR',       ac:'#8a4bff', icon:'<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 7h6M9 11h6M9 15h4"/>' },
+  { tab:'portmap',   name:'PORT MAP',   meta:'CABLING',    ac:'#30d158', icon:'<rect x="3" y="4" width="18" height="6" rx="1"/><rect x="3" y="14" width="18" height="6" rx="1"/><path d="M7 7h.01M7 17h.01"/>' },
+  { tab:'rackmap',   name:'RACK MAP',   meta:'ELEVATION',  ac:'#ffcb45', icon:'<rect x="5" y="3" width="14" height="18" rx="1"/><path d="M8 7h8M8 11h8M8 15h8"/>' },
+  { tab:'crashcart', name:'CRASH-CART', meta:'4FT VIEW',   ac:'#ff8a00', icon:'<rect x="3" y="5" width="18" height="11" rx="1"/><path d="M9 20h6M12 16v4"/>' },
+  { tab:'sops',      name:'SOPS',       meta:'PROCEDURES', ac:'#28e0ff', icon:'<path d="M5 4h11l3 3v13H5z"/><path d="M9 9h6M9 13h6"/>' }
+];
+function _deploy_toolsBackHdr(title, backOnclick) {
+  return '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">' +
+    '<button class="pt-btn pt-btn-ghost" style="width:auto;padding:10px 16px" onclick="' + backOnclick + '">‹ Back</button>' +
+    '<div style="font-family:var(--orb);font-size:var(--fs-micro);letter-spacing:3px;color:var(--cyan);text-transform:uppercase">' + title + '</div>' +
+    '</div>';
+}
+function deploy_showTools(host) {
+  host = host || deploy_opsHost(); if (!host) return;
+  document.body.classList.add('ops-detail');   // single back = inline "‹ Back" (Rule A)
+  if (typeof nav_push === 'function') nav_push({ p:'sop', o:'deploy', d:'tools' });
+  var html = '<div class="msc-wrap">';
+  html += _deploy_toolsBackHdr('DEPLOY · TOOLS', 'nav_back()');
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">';
+  DEPLOY_TOOLS.forEach(function(t) {
+    html += '<div class="rf-card" style="--rfac:' + t.ac + '" role="button" tabindex="0" onclick="deploy_showOpsTool(\'' + t.tab + '\')" aria-label="' + t.name + '">' +
+      '<div class="rf-cic"><svg viewBox="0 0 24 24" fill="none" stroke="' + t.ac + '" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="width:26px;height:26px">' + t.icon + '</svg></div>' +
+      '<div class="rf-cname">' + t.name + '</div><div class="rf-cmeta">' + t.meta + '</div></div>';
+  });
+  html += '</div>';
+  html += '<div onclick="blocker_quick()" role="button" tabindex="0" aria-label="Log a Blocker" style="margin-top:12px;display:flex;align-items:center;gap:10px;border-radius:14px;padding:13px 16px;background:linear-gradient(160deg,rgba(255,69,58,.12),rgba(255,69,58,.04));border:1px solid color-mix(in srgb,var(--red) 42%,transparent)">' +
+    '<svg viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;flex:0 0 auto"><path d="M12 9v4M12 17h.01M10.3 3.9 2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>' +
+    '<div><div style="font-family:var(--raj);font-weight:700;font-size:13.5px;color:var(--white)">Log a Blocker</div><div style="font-family:var(--mono);font-size:11px;color:var(--slate)">One tap · routes into handoff</div></div></div>';
+  html += '</div>';
+  host.innerHTML = html;
+}
+function deploy_showOpsTool(tab) {
+  var host = deploy_opsHost(); if (!host || !OPS_TABS[tab]) return;
+  document.body.classList.add('ops-detail');
+  currentOpsTab = tab;
+  if (typeof nav_push === 'function') nav_push({ p:'sop', o:'deploy', d:'tool:' + tab });
+  var meta = DEPLOY_TOOLS.filter(function(t){ return t.tab === tab; })[0];
+  host.innerHTML = _deploy_toolsBackHdr((meta ? meta.name : 'TOOL'), 'deploy_showTools(deploy_opsHost())') + '<div id="ops-tool-host"></div>';
+  var sub = document.getElementById('ops-tool-host');
+  try { OPS_TABS[tab](sub); } catch (e) { try { console.warn('deploy_showOpsTool render failed', tab, e); } catch (_) {} }
 }
 
 function deploy_showList(container) {
