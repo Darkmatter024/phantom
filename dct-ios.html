@@ -8715,6 +8715,9 @@ body.rd .rl-search-input{background:linear-gradient(160deg,#0a0d13,#070809)!impo
    Redesign-only scope (body.rd / #ref-grid + #work-grid) → legacy byte-identical. */
 .rf-i-img { width:76px; height:76px; object-fit:contain; filter:drop-shadow(0 5px 13px rgba(0,0,0,.55)); }
 body.rd #ref-grid .rf-card .rf-cic, body.rd #work-grid .rf-card .rf-cic { width:96px; height:96px; display:grid; place-items:center; }
+/* v1.14.137 (photoreal icon rollout B1+): branded-WebP icon utilities. .ico-photoreal = base host (per-surface rule sets the size); .icon-glow = the John-approved cyan/violet bloom — drop-shadow follows the transparent webp alpha so it haloes the art shape. Both classes are global but UNREFERENCED by legacy markup, so ?legacy=1 stays byte-identical. */
+.ico-photoreal { display:block; object-fit:contain; }
+.icon-glow { filter:drop-shadow(0 0 7px rgba(40,224,255,.55)) drop-shadow(0 0 15px rgba(138,75,255,.35)); }
 .rf-card .rf-cname { font-family:var(--mono); font-weight:700; letter-spacing:.14em; font-size:15px; color:var(--white); }
 .rf-card .rf-cmeta { font-family:var(--mono); font-weight:600; font-size:11px; letter-spacing:.03em; color:var(--slate); text-align:center; line-height:1.2; }
 #ref-back { align-items:center; gap:12px; margin:4px 0 12px; }
@@ -8809,6 +8812,7 @@ body.rd .ask .arw{margin-left:auto;color:var(--vio);font-size:20px;align-self:ce
 #rd-botnav .botitem{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;padding:6px 4px;border-radius:14px;color:var(--slate);border:1px solid transparent}
 #rd-botnav .botitem svg{width:22px;height:22px;fill:currentColor;stroke:none;filter:drop-shadow(0 0 4px color-mix(in srgb, currentColor 35%, transparent))}   /* v1.14.107: Phosphor fill-paths + resting glow */
 #rd-botnav .botitem.active svg{filter:drop-shadow(0 0 7px color-mix(in srgb, currentColor 70%, transparent)) drop-shadow(0 0 13px color-mix(in srgb, currentColor 32%, transparent))}   /* active mode reads lit */
+#rd-botnav .botitem img.ico-photoreal{width:26px;height:26px}   /* v1.14.137 B1: photoreal mode icons sized for the nav (~svg's 22px, +4 for the art to read); active state still shown by the .botitem.active chrome (cyan border+bg) */
 body.rd .subtab-strip .stab.active{filter:drop-shadow(0 0 6px color-mix(in srgb, var(--cyan) 45%, transparent))}   /* current drill-in sub-tab glows */
 #rd-botnav .botitem.active{color:var(--cyan);border:1px solid rgba(92,242,255,0.28);background:linear-gradient(180deg,rgba(92,242,255,0.10),rgba(92,242,255,0.02))}
 #rd-botnav .blabel{font-family:var(--raj);font-weight:700;font-size:11px;letter-spacing:1.5px;text-transform:uppercase}
@@ -10651,7 +10655,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.136';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.137';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -13690,9 +13694,9 @@ if (typeof window !== 'undefined') {
   <!-- ━━━ REDESIGN BOTTOM NAV (Command · Work · Ref) — shown only under body.rd;
        replaces the top mode-toggle as the redesign primary nav. ━━━ -->
   <div class="botnav" id="rd-botnav">
-    <div class="botitem active" id="bn-command" role="button" tabindex="0" onclick="showMode('command')" aria-label="Command"><svg><use href="#ph-command"/></svg><span class="blabel">Command</span></div>
-    <div class="botitem" id="bn-work" role="button" tabindex="0" onclick="showMode('work')" aria-label="Work"><svg><use href="#ph-work"/></svg><span class="blabel">Work</span></div>
-    <div class="botitem" id="bn-ref" role="button" tabindex="0" onclick="showMode('ref')" aria-label="Ref"><svg><use href="#ph-ref"/></svg><span class="blabel">Ref</span></div>
+    <div class="botitem active" id="bn-command" role="button" tabindex="0" onclick="showMode('command')" aria-label="Command"><img class="ico-photoreal icon-glow" src="icons/phantom-mode-command-256.webp" alt=""><span class="blabel">Command</span></div>
+    <div class="botitem" id="bn-work" role="button" tabindex="0" onclick="showMode('work')" aria-label="Work"><img class="ico-photoreal icon-glow" src="icons/phantom-mode-work-256.webp" alt=""><span class="blabel">Work</span></div>
+    <div class="botitem" id="bn-ref" role="button" tabindex="0" onclick="showMode('ref')" aria-label="Ref"><img class="ico-photoreal icon-glow" src="icons/phantom-mode-ref-256.webp" alt=""><span class="blabel">Ref</span></div>
   </div>
 
   <nav class="tab-nav">
