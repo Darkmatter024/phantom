@@ -8707,13 +8707,14 @@ body.rd .rl-search-input{background:linear-gradient(160deg,#0a0d13,#070809)!impo
 .rf-cnr.bl { bottom:9px; left:9px; border-right:0; border-top:0; border-bottom-left-radius:5px; }
 .rf-cnr.br { bottom:9px; right:9px; border-left:0; border-top:0; border-bottom-right-radius:5px; }
 .rf-card .rf-cic svg { width:36px; height:36px; color:var(--rfac); fill:currentColor; stroke:none; filter:drop-shadow(0 0 5px color-mix(in srgb, var(--rfac) 40%, transparent)); }   /* v1.14.107: Phosphor fill-paths in accent; calmer resting glow */
-/* v1.14.132/133 — branded WebP icon system. The art carries its own color; the card keeps its --rfac
+/* v1.14.132/133/134 — branded WebP icon system. The art carries its own color; the card keeps its --rfac
    accent (brackets + glow). v1.14.133: v2 art (reflections stripped) + the icon renders at 76px to
-   BREATHE, centered inside the 96px Ref cell (was filling 100% → crowded). 76px is the tunable knob
-   (~70 = more air, ~84 = more presence). Work cards keep their 36px svg until Stage 2.
-   Redesign-only scope (body.rd / #ref-grid) → legacy byte-identical. */
+   BREATHE, centered inside the 96px cell (was filling 100% → crowded). 76px is the tunable knob
+   (~70 = more air, ~84 = more presence). v1.14.134 (Stage 2): the 4 Work cards (Deploy/Scan/Handoff/
+   Issues) join the same path — #ph-* svg → phantom-action-*-256.webp, same 76px/96px cell.
+   Redesign-only scope (body.rd / #ref-grid + #work-grid) → legacy byte-identical. */
 .rf-i-img { width:76px; height:76px; object-fit:contain; filter:drop-shadow(0 5px 13px rgba(0,0,0,.55)); }
-body.rd #ref-grid .rf-card .rf-cic { width:96px; height:96px; display:grid; place-items:center; }
+body.rd #ref-grid .rf-card .rf-cic, body.rd #work-grid .rf-card .rf-cic { width:96px; height:96px; display:grid; place-items:center; }
 .rf-card .rf-cname { font-family:var(--mono); font-weight:700; letter-spacing:.14em; font-size:15px; color:var(--white); }
 .rf-card .rf-cmeta { font-family:var(--mono); font-weight:600; font-size:11px; letter-spacing:.03em; color:var(--slate); text-align:center; line-height:1.2; }
 #ref-back { align-items:center; gap:12px; margin:4px 0 12px; }
@@ -10650,7 +10651,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.133';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.134';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -11234,10 +11235,10 @@ if (typeof window !== 'undefined') {
       <div id="work-grid">
         <div class="rf-glabel"><span class="dot"></span>FIELD WORK<span class="ln"></span></div>
         <div class="rf-grid-wrap">
-          <div class="rf-card" style="--rfac:#8a4bff" role="button" tabindex="0" onclick="showWorkTab('deploy')" aria-label="Deploy"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><svg class="rf-i"><use href="#ph-deploy"/></svg></div><div class="rf-cname">DEPLOY</div><div class="rf-cmeta">Build · seed · rack detail</div></div>
-          <div class="rf-card" style="--rfac:#28e0ff" role="button" tabindex="0" onclick="showWorkTab('scan')" aria-label="Scan"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><svg class="rf-i"><use href="#ph-scan"/></svg></div><div class="rf-cname">SCAN</div><div class="rf-cmeta">Racks · optics · serials</div></div>
-          <div class="rf-card" style="--rfac:#ff8a00" role="button" tabindex="0" onclick="handoff_quick()" aria-label="Handoff"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><svg class="rf-i"><use href="#ph-handoff"/></svg></div><div class="rf-cname">HANDOFF</div><div class="rf-cmeta">Shift handoff · blockers</div></div>
-          <div class="rf-card" style="--rfac:#ff2bd6" role="button" tabindex="0" onclick="showWorkTab('issues')" aria-label="Issues"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><svg class="rf-i"><use href="#ph-issues"/></svg></div><div class="rf-cname">ISSUES</div><div class="rf-cmeta">Deployment issue log</div></div>
+          <div class="rf-card" style="--rfac:#8a4bff" role="button" tabindex="0" onclick="showWorkTab('deploy')" aria-label="Deploy"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-action-deploy-upload-256.webp" alt="" loading="eager"></div><div class="rf-cname">DEPLOY</div><div class="rf-cmeta">Build · seed · rack detail</div></div>
+          <div class="rf-card" style="--rfac:#28e0ff" role="button" tabindex="0" onclick="showWorkTab('scan')" aria-label="Scan"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-action-scan-radar-256.webp" alt="" loading="eager"></div><div class="rf-cname">SCAN</div><div class="rf-cmeta">Racks · optics · serials</div></div>
+          <div class="rf-card" style="--rfac:#ff8a00" role="button" tabindex="0" onclick="handoff_quick()" aria-label="Handoff"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-action-handoff-link-256.webp" alt="" loading="eager"></div><div class="rf-cname">HANDOFF</div><div class="rf-cmeta">Shift handoff · blockers</div></div>
+          <div class="rf-card" style="--rfac:#ff2bd6" role="button" tabindex="0" onclick="showWorkTab('issues')" aria-label="Issues"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-action-issues-alert-256.webp" alt="" loading="eager"></div><div class="rf-cname">ISSUES</div><div class="rf-cmeta">Deployment issue log</div></div>
         </div>
       </div>
       <div class="subtab-strip">
