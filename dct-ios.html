@@ -3097,6 +3097,26 @@ code { font-family:var(--mono); font-size: var(--fs-caption); color:var(--cyan2)
 .ico-tile-green { --ico-tile-color: rgba(48,209,88,0.45);   --ico-tile-glow: rgba(48,209,88,0.18);  color: var(--green); }
 .ico-tile-gold  { --ico-tile-color: rgba(255,214,10,0.45);  --ico-tile-glow: rgba(255,214,10,0.18); color: var(--gold); }
 .ico-tile-red   { --ico-tile-color: rgba(255,69,58,0.50);   --ico-tile-glow: rgba(255,69,58,0.20);  color: var(--red); }
+/* v1.14.139 — B4 photoreal fiber tiles (John-approved mock: 56px + per-color glow). pg-fiber is
+   LEGACY-SHARED (re-parents into Reference>Optics under redesign), so this is a PURE body.rd CSS
+   treatment with ZERO markup change → ?legacy=1 keeps the 38px line tiles byte-identical. The optic
+   art is layered over a per-color radial glow + the tile gradient; the line-svg is hidden under
+   redesign; per-color border + box-shadow (boosted) are kept. nth-child maps the FIXED grade order
+   in #fs-fiber: child 1 = .sh header, then OM3 / OM4 / OM5 / OS2 / LC. */
+body.rd #fs-fiber > .card:nth-child(n+2):nth-child(-n+6) .ico-tile {
+  width:56px; height:56px; border-radius:13px;
+  background-image: var(--optic, none), radial-gradient(circle at 50% 48%, var(--ico-tile-glow), transparent 62%), linear-gradient(180deg, rgba(255,255,255,0.05), rgba(0,0,0,0.30));
+  background-size: 42px 42px, 100% 100%, cover;
+  background-position: center, center, center;
+  background-repeat: no-repeat, no-repeat, no-repeat;
+  box-shadow: 0 0 16px var(--ico-tile-glow), inset 0 1px 0 rgba(255,255,255,0.05);
+}
+body.rd #fs-fiber > .card:nth-child(n+2):nth-child(-n+6) .ico-tile > svg { display:none; }   /* only the 5 grade tiles (2-6); IEC inspection card (7+) keeps its line-svg */
+body.rd #fs-fiber > .card:nth-child(2) .ico-tile { --optic: url("icons/phantom-optic-om3-256.webp"); }
+body.rd #fs-fiber > .card:nth-child(3) .ico-tile { --optic: url("icons/phantom-optic-om4-256.webp"); }
+body.rd #fs-fiber > .card:nth-child(4) .ico-tile { --optic: url("icons/phantom-optic-om5-256.webp"); }
+body.rd #fs-fiber > .card:nth-child(5) .ico-tile { --optic: url("icons/phantom-optic-os2-256.webp"); }
+body.rd #fs-fiber > .card:nth-child(6) .ico-tile { --optic: url("icons/phantom-optic-lc-256.webp"); }
 /* Card header gets a flex layout so the tile sits left of the title block */
 .card-hdr {
   display: flex;
@@ -10655,7 +10675,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.138';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.139';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
