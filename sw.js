@@ -34,7 +34,7 @@
 // a clean v1.13.3 — dropping the prior -N cache-iteration suffix — so this real
 // version bump busts every client's cache and the three stamps (app const /
 // version.json / this key) line up again. Patch bumps continue from here.
-const CACHE_VERSION = 'phantom-v1.14.141';
+const CACHE_VERSION = 'phantom-v1.14.142';
 
 // Assets to precache on install. Keep this minimal — single-file PWA means
 // most of PHANTOM is in dct-ios.html itself.
@@ -52,6 +52,7 @@ const PRECACHE_URLS = [
   'cc-wordmark.png',
   'phantom-prism.png',
   'phantom-shield.png',
+  'icons/phantom-shield-256.webp',
   // v1.14.132: branded icon system (Stage 1 ships the 6 Ref glyphs; full 17-file
   // batch precached up front so Stages 2-3 are HTML-only). Offline-first: without
   // these the cards 404 in the cold aisle.
