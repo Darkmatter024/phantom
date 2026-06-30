@@ -8734,12 +8734,13 @@ body.rd .rl-search-input{background:linear-gradient(160deg,#0a0d13,#070809)!impo
    (~70 = more air, ~84 = more presence). v1.14.134 (Stage 2): the 4 Work cards (Deploy/Scan/Handoff/
    Issues) join the same path — #ph-* svg → phantom-action-*-256.webp, same 76px/96px cell.
    Redesign-only scope (body.rd / #ref-grid + #work-grid) → legacy byte-identical. */
-.rf-i-img { width:76px; height:76px; object-fit:contain; filter:drop-shadow(0 5px 13px rgba(0,0,0,.55)); }
+:root{ --icon-glow: drop-shadow(0 0 5.1px rgba(40,224,255,0.55)) drop-shadow(0 0 12.75px rgba(40,224,255,0.29)); }   /* v1.14.146 blue Stage 6: locked 0.85x cyan bloom — single source of truth for every photoreal icon (tune here once) */
+.rf-i-img { width:76px; height:76px; object-fit:contain; filter:var(--icon-glow); }
 body.rd #ref-grid .rf-card .rf-cic, body.rd #work-grid .rf-card .rf-cic { width:96px; height:96px; display:grid; place-items:center; }
 body.rd .deploy-tools-grid .rf-card .rf-cic { width:96px; height:96px; display:grid; place-items:center; }   /* v1.14.144 blue Stage 3: deploy Tools tiles render the 76px branded webp like Ref/Work (the 96px cell rule above is #ref-grid/#work-grid-scoped) */
 /* v1.14.137 (photoreal icon rollout B1+): branded-WebP icon utilities. .ico-photoreal = base host (per-surface rule sets the size); .icon-glow = the John-approved cyan/violet bloom — drop-shadow follows the transparent webp alpha so it haloes the art shape. Both classes are global but UNREFERENCED by legacy markup, so ?legacy=1 stays byte-identical. */
 .ico-photoreal { display:block; object-fit:contain; }
-.icon-glow { filter:drop-shadow(0 0 7px rgba(40,224,255,.55)) drop-shadow(0 0 15px rgba(138,75,255,.35)); }
+.icon-glow { filter:var(--icon-glow); }   /* v1.14.146 blue Stage 6: was cyan+violet 7/15px; now the locked 0.85x cyan bloom (shared --icon-glow) for one consistent glow across nav + cards + launcher */
 .rf-card .rf-cname { font-family:var(--mono); font-weight:700; letter-spacing:.14em; font-size:15px; color:var(--white); }
 .rf-card .rf-cmeta { font-family:var(--mono); font-weight:600; font-size:11px; letter-spacing:.03em; color:var(--slate); text-align:center; line-height:1.2; }
 #ref-back { align-items:center; gap:12px; margin:4px 0 12px; }
@@ -8812,7 +8813,7 @@ body.rd .ask .arw{margin-left:auto;color:var(--vio);font-size:20px;align-self:ce
 #pg-cmd .lrow{display:flex;gap:10px;padding:0 16px 14px}
 #pg-cmd .lbtn{flex:1;display:flex;flex-direction:column;align-items:center;gap:7px;filter:saturate(1.40);border:1px solid color-mix(in srgb,var(--cyan) 36%,transparent);border-radius:16px;background:linear-gradient(160deg,#0a0d13 0%,#070809 100%);box-shadow:0 8px 20px -14px rgba(0,0,0,.85),inset 0 0 26px -4px color-mix(in srgb,var(--cyan) 14%,transparent);padding:14px 6px;color:var(--white)}
 #pg-cmd .lbtn svg{width:22px;height:22px;stroke:var(--cyan);fill:none;stroke-width:1.7}
-#pg-cmd .lbtn-img{width:48px;height:48px;object-fit:contain}   /* v1.14.145 blue Stage 4: launcher tiles render branded action webp (svg rule kept as dead/legacy fallback) */
+#pg-cmd .lbtn-img{width:48px;height:48px;object-fit:contain;filter:var(--icon-glow)}   /* v1.14.145 blue Stage 4 launcher tiles; .146 Stage 6 added the shared glow */
 #pg-cmd .lbtn .ll{font-family:var(--raj);font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase}
 #pg-cmd .lbtn .lt{font-family:var(--mono);font-size:9px;letter-spacing:1px;color:var(--slate-dim)}
 #pg-cmd .sig-h{font-family:var(--mono);font-size:12px;letter-spacing:3px;color:var(--slate);padding:2px 16px 8px;display:flex;align-items:center;gap:10px}
@@ -10683,7 +10684,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.145';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.146';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
