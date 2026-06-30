@@ -10684,7 +10684,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.149';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.150';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -44033,5 +44033,129 @@ var ScanDispatch = (function() {
 <!-- Crash-Cart Mode overlay — populated by crashcart_render() on activate -->
 <div id="crashcart-layer" aria-label="Crash-Cart Mode display" role="region"></div>
 
+<!-- GLOWTUNE-DEV BEGIN — remove before prod -->
+<script>
+/* v1.14.150 — flag-gated THROWAWAY glow tuner dev tool. Active ONLY with ?glowtune=1.
+   Drives the single :root --icon-glow var live (every icon reads var(--icon-glow));
+   deleting this whole GLOWTUNE-DEV region reverts to the locked 8737 value instantly.
+   Normal users + ?legacy=1 (without glowtune) inject NOTHING -> legacy byte-identical.
+   CARD GLOW intentionally skipped (Fork A) — icon glow only. */
+(function(){
+  if (location.search.indexOf('glowtune=1') === -1) return;   /* flag gate (mirrors the redesign_isOn legacy parse) */
+
+  var NL = String.fromCharCode(10);
+  var FIELDS = [
+    { k:'intensity', label:'Intensity',  min:0,   max:250, step:5,    def:100,   unit:'%'  },
+    { k:'saturate',  label:'Saturate',   min:0.8, max:2,   step:0.05, def:1.40,  unit:'x'  },
+    { k:'depthY',    label:'Depth Y',    min:0,   max:20,  step:1,    def:5,     unit:'px' },
+    { k:'depthBlur', label:'Depth Blur', min:0,   max:40,  step:1,    def:13,    unit:'px' },
+    { k:'depthOp',   label:'Depth Op',   min:0,   max:1,   step:0.05, def:0.55,  unit:''   },
+    { k:'innerBlur', label:'Inner Blur', min:0,   max:30,  step:0.5,  def:5.1,   unit:'px' },
+    { k:'innerOp',   label:'Inner Op',   min:0,   max:1,   step:0.05, def:0.55,  unit:''   },
+    { k:'outerBlur', label:'Outer Blur', min:0,   max:60,  step:0.5,  def:12.75, unit:'px' },
+    { k:'outerOp',   label:'Outer Op',   min:0,   max:1,   step:0.05, def:0.29,  unit:''   }
+  ];
+  var COL = '40,224,255';                 /* cyan — one fixed color across every icon */
+  var PAGES = ['command','work','ref'];
+
+  function clamp01(x){ return Math.max(0, Math.min(1, x)); }
+  function round(n){ return Math.round(n * 1000) / 1000; }
+  function defaults(){ var o = {}; FIELDS.forEach(function(f){ o[f.k] = f.def; }); return o; }
+  var profiles = { command: defaults(), work: defaults(), ref: defaults() };
+  var current = (typeof window._rdMode === 'string' && profiles[window._rdMode]) ? window._rdMode : 'command';
+
+  function valueFor(g){
+    var k = g.intensity / 100;
+    return 'saturate(' + g.saturate + ') ' +
+      'drop-shadow(0 ' + g.depthY + 'px ' + g.depthBlur + 'px rgba(0,0,0,' + g.depthOp + ')) ' +
+      'drop-shadow(0 0 ' + round(g.innerBlur * k) + 'px rgba(' + COL + ',' + round(clamp01(g.innerOp * k)) + ')) ' +
+      'drop-shadow(0 0 ' + round(g.outerBlur * k) + 'px rgba(' + COL + ',' + round(clamp01(g.outerOp * k)) + '))';
+  }
+  function apply(){ document.documentElement.style.setProperty('--icon-glow', valueFor(profiles[current])); }
+
+  var css = [
+    '#glowtune{position:fixed;right:calc(10px + env(safe-area-inset-right,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:99999;width:286px;max-width:calc(100vw - 20px);max-height:80vh;overflow:auto;background:linear-gradient(180deg,rgba(12,18,27,.97),rgba(7,11,17,.97));border:1px solid rgba(92,242,255,.28);border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.6);font-family:ui-monospace,Menlo,Consolas,monospace;color:#cfe6f2;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}',
+    '#glowtune *{box-sizing:border-box}',
+    '#glowtune .gt-hd{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;cursor:pointer;border-bottom:1px solid rgba(92,242,255,.16);position:sticky;top:0;background:rgba(8,12,18,.97)}',
+    '#glowtune .gt-ti{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#28e0ff;font-weight:700}',
+    '#glowtune .gt-cr{font-size:14px;line-height:1;color:#7fa8bb}',
+    '#glowtune.gt-collapsed .gt-bd{display:none}',
+    '#glowtune .gt-bd{padding:10px 12px 12px}',
+    '#glowtune .gt-tabs{display:flex;gap:6px;margin-bottom:10px}',
+    '#glowtune .gt-tab{flex:1;padding:6px 0;text-align:center;font-size:10.5px;letter-spacing:1px;text-transform:uppercase;border:1px solid rgba(120,160,190,.22);border-radius:8px;background:transparent;color:#9cc0d4;cursor:pointer}',
+    '#glowtune .gt-tab.on{background:#28e0ff;border-color:#28e0ff;color:#04060a;font-weight:700}',
+    '#glowtune .gt-row{margin:8px 0}',
+    '#glowtune .gt-lab{display:flex;justify-content:space-between;font-size:10.5px;margin-bottom:3px;color:#a9c6d6}',
+    '#glowtune .gt-val{color:#eaf7ff}',
+    '#glowtune input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:3px;background:rgba(120,160,190,.25);outline:none;margin:0}',
+    '#glowtune input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;border-radius:50%;background:#eaf7ff;border:2px solid #28e0ff;box-shadow:0 0 8px rgba(40,224,255,.7);cursor:pointer}',
+    '#glowtune input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:50%;background:#eaf7ff;border:2px solid #28e0ff;box-shadow:0 0 8px rgba(40,224,255,.7);cursor:pointer}',
+    '#glowtune .gt-bts{display:flex;gap:8px;margin-top:12px}',
+    '#glowtune .gt-bt{flex:1;padding:9px 0;text-align:center;font-size:11px;border-radius:9px;border:1px solid rgba(120,160,190,.28);background:rgba(255,255,255,.03);color:#cfe6f2;cursor:pointer}',
+    '#glowtune .gt-bt.pri{border:0;color:#04060a;background:linear-gradient(90deg,#28e0ff,#1fffd0);font-weight:700}'
+  ].join('');
+  var st = document.createElement('style'); st.id = 'glowtune-style'; st.textContent = css; document.head.appendChild(st);
+
+  var panel = document.createElement('div'); panel.id = 'glowtune';
+  panel.innerHTML =
+    '<div class="gt-hd"><span class="gt-ti">GLOW TUNER</span><span class="gt-cr">[-]</span></div>' +
+    '<div class="gt-bd">' +
+      '<div class="gt-tabs">' + PAGES.map(function(p){ return '<button class="gt-tab" data-pg="' + p + '">' + p + '</button>'; }).join('') + '</div>' +
+      FIELDS.map(function(f){
+        return '<div class="gt-row"><div class="gt-lab"><span>' + f.label + '</span><span class="gt-val" data-val="' + f.k + '"></span></div>' +
+          '<input type="range" data-k="' + f.k + '" min="' + f.min + '" max="' + f.max + '" step="' + f.step + '"></div>';
+      }).join('') +
+      '<div class="gt-bts"><button class="gt-bt" data-act="reset">Reset page</button><button class="gt-bt pri" data-act="copy">Copy CSS</button></div>' +
+    '</div>';
+  document.body.appendChild(panel);
+
+  function syncInputs(){
+    var g = profiles[current];
+    FIELDS.forEach(function(f){
+      var inp = panel.querySelector('input[data-k="' + f.k + '"]');
+      var out = panel.querySelector('[data-val="' + f.k + '"]');
+      if (inp) inp.value = g[f.k];
+      if (out) out.textContent = g[f.k] + f.unit;
+    });
+    PAGES.forEach(function(p){
+      var t = panel.querySelector('.gt-tab[data-pg="' + p + '"]');
+      if (t) t.classList.toggle('on', p === current);
+    });
+  }
+
+  panel.addEventListener('input', function(e){
+    var inp = e.target;
+    if (inp && inp.dataset && inp.dataset.k){ profiles[current][inp.dataset.k] = parseFloat(inp.value); apply(); syncInputs(); }
+  });
+  panel.addEventListener('click', function(e){
+    var t = e.target;
+    if (t.dataset && t.dataset.pg){ current = t.dataset.pg; apply(); syncInputs(); return; }
+    if (t.dataset && t.dataset.act === 'reset'){ profiles[current] = defaults(); apply(); syncInputs(); return; }
+    if (t.dataset && t.dataset.act === 'copy'){
+      var out = PAGES.map(function(p){ return 'body.pg-' + p + '{ --icon-glow: ' + valueFor(profiles[p]) + '; }'; }).join(NL + NL);
+      try { navigator.clipboard.writeText(out); t.textContent = 'Copied'; setTimeout(function(){ t.textContent = 'Copy CSS'; }, 1200); }
+      catch (_) { window.prompt('Copy CSS:', out); }
+      return;
+    }
+  });
+  panel.querySelector('.gt-hd').addEventListener('click', function(){
+    var col = panel.classList.toggle('gt-collapsed');
+    var cr = panel.querySelector('.gt-cr'); if (cr) cr.textContent = col ? '[+]' : '[-]';
+  });
+
+  if (typeof window.showMode === 'function'){
+    var _origShowMode = window.showMode;
+    window.showMode = function(mode){
+      var r = _origShowMode.apply(this, arguments);
+      try { if (mode && profiles[mode]){ current = mode; apply(); syncInputs(); } } catch (_) {}
+      return r;
+    };
+  }
+
+  syncInputs();
+  apply();
+})();
+</script>
+<!-- GLOWTUNE-DEV END -->
 </body>
 </html>
