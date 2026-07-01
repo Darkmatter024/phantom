@@ -8883,6 +8883,30 @@ body.rd .hdr-shield-img{display:inline-block}
    so the shield+SYS header pair reads as one unit. body.rd-scoped → legacy keeps the violet base border,
    byte-identical. :not(.alert) preserves the gold identity-unset alert cue when no operator is set. */
 body.rd .hdr-ghost-btn:not(.alert){border-color:rgba(92,242,255,0.4)}
+/* ━━━ v1.14.156 — SYS pill ambient state-glow + medallion retire (redesign only).
+   Legacy (?legacy=1) header untouched: medallion + un-glowed pill remain. ━━━ */
+body.rd #hdr-overflow-wrap { display: none; }
+body.rd .hdr-agg-pill { position: relative; overflow: hidden; border-radius: var(--hud-r8); }
+body.rd .hdr-agg-pill[data-state="ok"]       { box-shadow: 0 0 15px -3px rgba(92,242,255,0.55), inset 0 1px 0 rgba(255,255,255,0.06); border-color: rgba(92,242,255,0.5); }
+body.rd .hdr-agg-pill[data-state="warn"]     { box-shadow: 0 0 15px -3px rgba(255,214,10,0.55), inset 0 1px 0 rgba(255,255,255,0.06); border-color: rgba(255,214,10,0.6); }
+body.rd .hdr-agg-pill[data-state="critical"] { box-shadow: 0 0 16px -2px rgba(255,59,59,0.60), inset 0 1px 0 rgba(255,255,255,0.06); border-color: rgba(255,59,59,0.7); }
+body.rd .hdr-agg-pill[data-state="checking"] { box-shadow: none; }
+body.rd .hdr-agg-label { text-shadow: 0 0 8px currentColor; }
+.hdr-agg-sweep { display: none; }
+body.rd .hdr-agg-sweep {
+  display: block; position: absolute; bottom: 0; left: 0; width: 42px; height: 2px;
+  transform: translateX(-52px); pointer-events: none; will-change: transform;
+  background: radial-gradient(ellipse 21px 2px at center, #fff, currentColor 40%, transparent 72%);
+  animation: hdr-agg-sweep-x 3.8s linear infinite;
+}
+body.rd .hdr-agg-pill[data-state="warn"]     .hdr-agg-sweep { animation-duration: 2.4s; }
+body.rd .hdr-agg-pill[data-state="critical"] .hdr-agg-sweep { animation-duration: 1.15s; }
+body.rd .hdr-agg-pill[data-state="checking"] .hdr-agg-sweep { display: none; }
+@keyframes hdr-agg-sweep-x { from { transform: translateX(-52px); } to { transform: translateX(120px); } }
+@media (prefers-reduced-motion: reduce) { body.rd .hdr-agg-sweep { animation: none; opacity: 0.5; } }
+/* ACTIONS rows relocated into SYS panel — redesign only, mirrors #hdr-agg-profile-row gating */
+.hdr-agg-act { display: none; }
+body.rd .hdr-agg-act { display: flex; }
 body.rd #rd-botnav{display:flex}
 
 /* ━━━ BOM PROGRESS (Cut 4a) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
@@ -10700,7 +10724,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.155';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.156';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -11139,7 +11163,7 @@ if (typeof window !== 'undefined') {
           <!-- Aggregate status pill — quiet when healthy, shouts when not -->
           <button class="hdr-agg-pill" id="hdr-agg-pill" onclick="hdr_aggToggle(event)" aria-label="System status — tap for details" aria-expanded="false" data-state="checking">
             <svg class="hdr-agg-ekg" id="hdr-agg-ekg" viewBox="0 0 44 16" aria-hidden="true"><polyline class="hdr-agg-trace" points="0,8 9,8 13,8 16,2 20,14 24,5 28,8 44,8"/></svg>
-            <span class="hdr-agg-label" id="hdr-agg-label">SYS</span>
+            <span class="hdr-agg-label" id="hdr-agg-label">SYS</span><span class="hdr-agg-sweep" aria-hidden="true"></span>
           </button>
           <!-- Expandable detail panel — 4 subsystems with tap-to-recheck -->
           <div class="hdr-agg-panel" id="hdr-agg-panel" style="display:none" role="region" aria-label="Subsystem health details">
@@ -11163,6 +11187,12 @@ if (typeof window !== 'undefined') {
               <span class="hdr-agg-row-name">STORAGE</span>
               <span class="hdr-agg-row-val" id="hs-store-val">—</span>
             </div>
+            <!-- v1.14.156: overflow ACTIONS relocated into SYS panel (redesign only; legacy still uses the medallion menu). -->
+            <div class="hdr-agg-act" aria-hidden="true" style="height:1px;background:rgba(255,255,255,0.08);margin:5px 0"></div>
+            <button onclick="exportAllData();var _p=document.getElementById('hdr-agg-panel');if(_p)_p.style.display='none'" class="hdr-menu-item hdr-agg-act" style="color:var(--violet)" aria-label="Export all data"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9b59ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> &nbsp;BACKUP</button>
+            <button onclick="phantomImport();var _p=document.getElementById('hdr-agg-panel');if(_p)_p.style.display='none'" class="hdr-menu-item hdr-agg-act" style="color:var(--slate-readable)" aria-label="Restore from backup"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8AAFBF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> &nbsp;RESTORE</button>
+            <button onclick="identity_promptUser();var _p=document.getElementById('hdr-agg-panel');if(_p)_p.style.display='none'" class="hdr-menu-item hdr-agg-act" style="color:var(--cyan)" aria-label="Set identity"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5cf2ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> &nbsp;<span id="hdr-identity-label-rd">SET IDENTITY</span></button>
+            <button onclick="hwMatrix_open();var _p=document.getElementById('hdr-agg-panel');if(_p)_p.style.display='none'" class="hdr-menu-item hdr-agg-act" style="color:var(--cyan)" aria-label="Open hardware reference"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5cf2ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5"/><line x1="12" y1="22" x2="12" y2="15.5"/><polyline points="22 8.5 12 15.5 2 8.5"/></svg> &nbsp;HW REF</button>
             <!-- v1.14.104: SYS → Site Profile (New-UI sheet). Redesign-only (gated in CSS); legacy panel unchanged. -->
             <div class="hdr-agg-row" id="hdr-agg-profile-row" onclick="event.stopPropagation();var _p=document.getElementById('hdr-agg-panel');if(_p)_p.style.display='none';rd_openProfile()" style="cursor:pointer;border-top:1px solid rgba(120,150,200,0.12)">
               <span class="hdr-agg-row-dot" style="background:var(--cyan)"></span>
@@ -16759,6 +16789,8 @@ function identity_refreshOverflowLabels() {
   var user    = identity_getUser();
   var lbl     = document.getElementById('hdr-identity-label');
   if (lbl)      lbl.textContent     = user ? 'IDENTITY: ' + user.toUpperCase() : 'SET IDENTITY';
+  var lblRd = document.getElementById('hdr-identity-label-rd');
+  if (lblRd)    lblRd.textContent   = user ? 'IDENTITY: ' + user.toUpperCase() : 'SET IDENTITY';
   // PHANTOM glyph alert state: ghost eyes glow amber when identity
   // isn't set. Reads as the phantom "watching" — surfaces buried
   // state without bloating the header.
