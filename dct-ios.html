@@ -8709,6 +8709,17 @@ body.rd #pg-work:not(.wk-grid) .work-sub.stab-active { animation: rf-fade .22s e
    border, subtle inset glow, boosted saturation. No white-top fill, no ::after radial, no brackets. */
 .rf-card { position:relative; filter:saturate(1.40); border-radius:16px; min-height:124px; padding:18px 12px 16px; border:1px solid color-mix(in srgb, var(--rfac) 36%, transparent); background:linear-gradient(160deg, #0a0d13 0%, #070809 100%); box-shadow:0 8px 20px -14px rgba(0,0,0,.85), inset 0 0 26px -4px color-mix(in srgb, var(--rfac) 14%, transparent); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; cursor:pointer; transition:transform .14s ease, border-color .2s, box-shadow .2s; overflow:hidden; -webkit-tap-highlight-color:transparent; }
 .rf-card:active { transform:scale(.97); box-shadow:0 8px 20px -14px rgba(0,0,0,.85), inset 0 0 30px -2px color-mix(in srgb, var(--rfac) 26%, transparent); }
+/* v1.14.157 — responsive card grids + centered nav. Phone (<640) unchanged (2-col). */
+@media (min-width: 640px) {
+  body.rd #work-grid, body.rd #ref-grid { max-width: 760px; margin-inline: auto; }
+  body.rd .rf-grid-wrap { grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  body.rd #rd-botnav { max-width: 760px; margin-inline: auto; }
+}
+@media (min-width: 980px) {
+  body.rd #work-grid, body.rd #ref-grid { max-width: 1080px; }
+  body.rd .rf-grid-wrap { grid-template-columns: repeat(4, 1fr); gap: 18px; }
+  body.rd #rd-botnav { max-width: 1080px; }
+}
 body.rd .rf-cnr { display: none; }   /* unified recipe has no corner brackets */
 
 /* v1.14.110 — deploy dashboard glass (New-UI only). Inline styles stay for legacy;
@@ -10724,7 +10735,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.156';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.157';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -11314,10 +11325,18 @@ if (typeof window !== 'undefined') {
       <div id="work-grid">
         <div class="rf-glabel"><span class="dot"></span>FIELD WORK<span class="ln"></span></div>
         <div class="rf-grid-wrap">
-          <div class="rf-card" style="--rfac:#8a4bff" role="button" tabindex="0" onclick="showWorkTab('deploy')" aria-label="Deploy"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-action-deploy-upload-256.webp" alt="" loading="eager"></div><div class="rf-cname">DEPLOY</div><div class="rf-cmeta">Build · seed · rack detail</div></div>
-          <div class="rf-card" style="--rfac:#28e0ff" role="button" tabindex="0" onclick="showWorkTab('scan')" aria-label="Scan"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-action-scan-radar-256.webp" alt="" loading="eager"></div><div class="rf-cname">SCAN</div><div class="rf-cmeta">Racks · optics · serials</div></div>
-          <div class="rf-card" style="--rfac:#ff8a00" role="button" tabindex="0" onclick="handoff_quick()" aria-label="Handoff"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-action-handoff-link-256.webp" alt="" loading="eager"></div><div class="rf-cname">HANDOFF</div><div class="rf-cmeta">Shift handoff · blockers</div></div>
-          <div class="rf-card" style="--rfac:#ff2bd6" role="button" tabindex="0" onclick="showWorkTab('issues')" aria-label="Issues"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-action-issues-alert-256.webp" alt="" loading="eager"></div><div class="rf-cname">ISSUES</div><div class="rf-cmeta">Deployment issue log</div></div>
+          <div class="rf-card" style="--rfac:#28e0ff" role="button" tabindex="0" onclick="deploy_quick()" aria-label="Deploy"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-action-deploy-upload-256.webp" alt="" loading="eager"></div><div class="rf-cname">DEPLOY</div><div class="rf-cmeta">Build · seed · rack</div></div>
+          <div class="rf-card" style="--rfac:#8a4bff" role="button" tabindex="0" onclick="rd_openProfile()" aria-label="Master doc"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-tool-masterdoc-256.webp" alt="" loading="eager"></div><div class="rf-cname">MASTER DOC</div><div class="rf-cmeta">Deployment auth</div></div>
+          <div class="rf-card" style="--rfac:#1fffd0" role="button" tabindex="0" onclick="showWorkTab('scan')" aria-label="Scan"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-action-scan-radar-256.webp" alt="" loading="eager"></div><div class="rf-cname">SCAN</div><div class="rf-cmeta">Racks · optics · serials</div></div>
+          <div class="rf-card" style="--rfac:#8a4bff" role="button" tabindex="0" onclick="handoff_quick()" aria-label="Handoff"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-action-handoff-link-256.webp" alt="" loading="eager"></div><div class="rf-cname">HANDOFF</div><div class="rf-cmeta">Shift pass · notes</div></div>
+          <div class="rf-card" style="--rfac:#28e0ff" role="button" tabindex="0" onclick="deploy_showOpsTool('sops')" aria-label="SOP"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-tool-sops-256.webp" alt="" loading="eager"></div><div class="rf-cname">SOP</div><div class="rf-cmeta">Procedures</div></div>
+          <div class="rf-card" style="--rfac:#28e0ff" role="button" tabindex="0" onclick="deploy_showOpsTool('bom')" aria-label="BOM"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-tool-bom-256.webp" alt="" loading="eager"></div><div class="rf-cname">BOM</div><div class="rf-cmeta">Parts</div></div>
+          <div class="rf-card" style="--rfac:#8a4bff" role="button" tabindex="0" onclick="deploy_showOpsTool('manifest')" aria-label="Manifest"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-tool-manifest-256.webp" alt="" loading="eager"></div><div class="rf-cname">MANIFEST</div><div class="rf-cmeta">Gear</div></div>
+          <div class="rf-card" style="--rfac:#30d158" role="button" tabindex="0" onclick="deploy_showOpsTool('portmap')" aria-label="Port map"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-tool-portmap-256.webp" alt="" loading="eager"></div><div class="rf-cname">PORT MAP</div><div class="rf-cmeta">Cabling</div></div>
+          <div class="rf-card" style="--rfac:#ffcb45" role="button" tabindex="0" onclick="deploy_showOpsTool('rackmap')" aria-label="Rack map"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-tool-rackmap-256.webp" alt="" loading="eager"></div><div class="rf-cname">RACK MAP</div><div class="rf-cmeta">Elevation</div></div>
+          <div class="rf-card" style="--rfac:#ff8a00" role="button" tabindex="0" onclick="deploy_showOpsTool('crashcart')" aria-label="Crash cart"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-tool-crashcart-256.webp" alt="" loading="eager"></div><div class="rf-cname">CRASH CART</div><div class="rf-cmeta">4ft view</div></div>
+          <div class="rf-card" style="--rfac:#5cf2ff" role="button" tabindex="0" onclick="showRefTab('rf-optics')" aria-label="Optics"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-ref-optics-256.webp" alt="" loading="eager"></div><div class="rf-cname">OPTICS</div><div class="rf-cmeta">Fiber types</div></div>
+          <div class="rf-card" style="--rfac:#4b9bff" role="button" tabindex="0" onclick="rd_openPower()" aria-label="Power"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-tool-power-256.webp" alt="" loading="eager"></div><div class="rf-cname">POWER</div><div class="rf-cmeta">PSU · hardware</div></div>
         </div>
       </div>
       <div class="subtab-strip">
@@ -16096,6 +16115,22 @@ function rd_openProfile() {
 function rd_closeProfile() {
   var sheet = document.getElementById('rd-profile-sheet');
   if (sheet) sheet.classList.remove('open');
+}
+// rd_openPower(): POWER card → Reference→Hardware, defaulting to the Blast Radius
+// sub-tab (PDU / Power is the sibling tab). Under body.rd, pg-power's sub-tabs are
+// re-homed into #rf-hw by redesign_homeHardware(); we open that surface then click
+// the re-homed Blast Radius stab (runs showStab + renderBlastRadius). Re-home-safe:
+// no new markup, just drives the existing stab. FIELD mode: no #rf-hw, no-op tail.
+function rd_openPower() {
+  if (typeof showRefTab === 'function') { try { showRefTab('rf-hw'); } catch (_) {} }
+  setTimeout(function () {
+    var strip = document.querySelector('#rf-hw .subtab-strip');
+    if (!strip) return;
+    var btn = Array.prototype.slice.call(strip.querySelectorAll('.stab')).filter(function (b) {
+      return /pw-blast/.test(b.getAttribute('onclick') || '');
+    })[0];
+    if (btn) btn.click();
+  }, 20);
 }
 // showWorkTab(): jump into Workspace and activate a subtab (Deploy/Scan/Handoff).
 // Used by the Command Center launcher + NBA routes via cmd_route('work', target).
