@@ -8828,8 +8828,8 @@ body.rd #rd-profile-sheet.open { display: flex; }
    neutral .gx border / cyan glow), prism contained in a 56px violet-tinted box with a
    36px mark (was a 64px uncontained 62px image), and typography scaled to the surface
    (title 18px not 23px, 11px mono label, 13px desc). body.rd-only; legacy untouched. */
-body.rd .ask{--ax:var(--vio);display:flex;align-items:center;gap:14px;padding:18px;margin:0 16px 14px;width:auto;text-align:left;filter:saturate(1.40);border:1px solid color-mix(in srgb,var(--vio) 42%,transparent);border-radius:16px;background:linear-gradient(160deg,#0a0d13 0%,#070809 100%);box-shadow:0 8px 20px -14px rgba(0,0,0,.85),inset 0 0 26px -4px color-mix(in srgb,var(--vio) 14%,transparent)}   /* Rule F (v1.14.128): match the Command-surface card recipe (.nba/.lens) — radius 16, saturate, violet accent glow — not the .gx grid recipe (radius 14, cyan glow). .gx dropped from markup. */
-body.rd .ask .prism{flex:0 0 auto;width:56px;height:56px;display:grid;place-items:center;background:color-mix(in srgb,var(--vio) 15%,transparent);border:1px solid color-mix(in srgb,var(--vio) 30%,transparent);border-radius:8px}
+body.rd .ask{--ax:var(--vio);display:flex;align-items:center;gap:14px;padding:18px;margin:0 16px 14px;width:auto;text-align:left;filter:saturate(1.40);border:1px solid color-mix(in srgb,#a66bff 58%,transparent);border-radius:16px;background:linear-gradient(160deg,#0a0d13 0%,#070809 100%);box-shadow:0 8px 20px -14px rgba(0,0,0,.85),inset 0 0 26px -4px color-mix(in srgb,var(--vio) 26%,transparent),0 0 18px -6px color-mix(in srgb,var(--vio) 35%,transparent)}   /* Rule F (v1.14.128): match the Command-surface card recipe (.nba/.lens) — radius 16, saturate, violet accent glow — not the .gx grid recipe (radius 14, cyan glow). .gx dropped from markup. v1.14.159 T2: luminance lift — border #a66bff 58%, inset 26% + outer bloom; prism bg 22%/border #a66bff 45%/inner glow — into OLED-visible range. */
+body.rd .ask .prism{flex:0 0 auto;width:56px;height:56px;display:grid;place-items:center;background:color-mix(in srgb,var(--vio) 22%,transparent);border:1px solid color-mix(in srgb,#a66bff 45%,transparent);border-radius:8px;box-shadow:inset 0 0 12px color-mix(in srgb,var(--vio) 25%,transparent)}
 body.rd .ask .prism img{width:36px;height:auto;animation:askBreathe 4.6s ease-in-out infinite}
 body.rd .ask .ey{color:var(--vio);font-family:var(--mono);font-size:11px;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:4px}
 body.rd .ask h3{font-weight:700;font-size:18px;margin:0;color:#fff;line-height:1.1}
@@ -8837,12 +8837,21 @@ body.rd .ask p{margin:4px 0 0;color:var(--dim);font-size:13px;line-height:1.3}
 body.rd .ask .arw{margin-left:auto;color:var(--vio);font-size:20px;align-self:center}
 @keyframes askBreathe{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-1.5px) scale(1.025)}}
 @media (prefers-reduced-motion:reduce){body.rd .ask .prism img{animation:none}}
-#pg-cmd .lrow{display:flex;gap:10px;padding:0 16px 14px}
-#pg-cmd .lbtn{flex:1;display:flex;flex-direction:column;align-items:center;gap:7px;filter:saturate(1.40);border:1px solid color-mix(in srgb,var(--cyan) 36%,transparent);border-radius:16px;background:linear-gradient(160deg,#0a0d13 0%,#070809 100%);box-shadow:0 8px 20px -14px rgba(0,0,0,.85),inset 0 0 26px -4px color-mix(in srgb,var(--cyan) 14%,transparent);padding:14px 6px;color:var(--white)}
-#pg-cmd .lbtn svg{width:22px;height:22px;stroke:var(--cyan);fill:none;stroke-width:1.7}
-#pg-cmd .lbtn-img{width:48px;height:48px;object-fit:contain;filter:var(--icon-glow)}   /* v1.14.145 blue Stage 4 launcher tiles; .146 Stage 6 added the shared glow */
-#pg-cmd .lbtn .ll{font-family:var(--raj);font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase}
-#pg-cmd .lbtn .lt{font-family:var(--mono);font-size:9px;letter-spacing:1px;color:var(--slate-dim)}
+/* v1.14.159 Shift Telemetry tiles (mock-telemetry-tiles) — replace the old launcher row. */
+#pg-cmd .trow{display:flex;gap:10px;padding:0 16px 14px}
+#pg-cmd .tile{flex:1;--tc:#33465a;display:flex;flex-direction:column;gap:6px;min-height:96px;filter:saturate(1.4);border:1px solid color-mix(in srgb,var(--tc) 36%,transparent);border-radius:16px;background:linear-gradient(160deg,#0a0d13 0%,#070809 100%);box-shadow:0 8px 20px -14px rgba(0,0,0,.85),inset 0 0 26px -4px color-mix(in srgb,var(--tc) 14%,transparent);padding:13px 12px 12px;position:relative;overflow:hidden;color:var(--white)}
+#pg-cmd .tile.hot{--tc:var(--cyan)}
+#pg-cmd .tile.hot-teal{--tc:var(--teal)}
+#pg-cmd .tile.hot-gold{--tc:var(--gold)}
+#pg-cmd .tile .ey{font-family:var(--mono);font-size:9.5px;letter-spacing:2px;color:var(--slate);text-transform:uppercase;display:flex;align-items:center;gap:6px}
+#pg-cmd .tile .ey .led{width:5px;height:5px;border-radius:50%;background:var(--slate-dim);flex:0 0 auto}
+#pg-cmd .tile.hot .ey .led,#pg-cmd .tile.hot-teal .ey .led,#pg-cmd .tile.hot-gold .ey .led{background:var(--tc);box-shadow:0 0 6px var(--tc)}
+#pg-cmd .tile .val{font-family:var(--orb);font-weight:700;font-size:19px;letter-spacing:.5px;color:#f2fbff;line-height:1;margin-top:auto}
+#pg-cmd .tile .val small{font-size:11px;font-weight:600;color:var(--slate);letter-spacing:1px}
+#pg-cmd .tile .sub{font-family:var(--raj);font-weight:600;font-size:11px;letter-spacing:.8px;color:color-mix(in srgb,var(--tc) 75%,#fff 10%);text-transform:uppercase}
+#pg-cmd .tile:not(.hot):not(.hot-teal):not(.hot-gold) .val{color:var(--slate-dim);font-size:15px}
+#pg-cmd .tile .bar{height:3px;border-radius:2px;background:rgba(255,255,255,0.06);overflow:hidden;margin-top:6px}
+#pg-cmd .tile .bar i{display:block;height:100%;border-radius:2px;background:linear-gradient(90deg,color-mix(in srgb,var(--tc) 60%,transparent),var(--tc));box-shadow:0 0 8px var(--tc)}
 #pg-cmd .sig-h{font-family:var(--mono);font-size:12px;letter-spacing:3px;color:var(--slate);padding:2px 16px 8px;display:flex;align-items:center;gap:10px}
 #pg-cmd .sig-h::after{content:"";flex:1;height:1px;background:rgba(92,242,255,0.10)}
 #pg-cmd .sigrow{margin:0 16px 8px;border:1px solid rgba(92,242,255,0.10);border-radius:12px;background:rgba(255,255,255,0.015);padding:13px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px}
@@ -8859,14 +8868,17 @@ body.rd .ask .arw{margin-left:auto;color:var(--vio);font-size:20px;align-self:ce
 #rd-sub{display:none;font-family:var(--mono);font-size:11px;letter-spacing:3px;color:var(--slate);margin-top:7px}
 #rd-sub .site{color:var(--cyan)}
 #rd-sub .site.warn{color:var(--gold)}
-#rd-botnav{display:none;position:fixed;left:0;right:0;bottom:0;z-index:40;background:linear-gradient(180deg,rgba(10,16,24,0.96),rgba(4,7,11,0.99));border-top:1px solid rgba(92,242,255,0.14);gap:6px;padding:8px 10px calc(10px + var(--safe-bottom))}
-#rd-botnav .botitem{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;padding:6px 4px;border-radius:14px;color:var(--slate);border:1px solid transparent}
-#rd-botnav .botitem svg{width:22px;height:22px;fill:currentColor;stroke:none;filter:drop-shadow(0 0 4px color-mix(in srgb, currentColor 35%, transparent))}   /* v1.14.107: Phosphor fill-paths + resting glow */
-#rd-botnav .botitem.active svg{filter:drop-shadow(0 0 7px color-mix(in srgb, currentColor 70%, transparent)) drop-shadow(0 0 13px color-mix(in srgb, currentColor 32%, transparent))}   /* active mode reads lit */
-#rd-botnav .botitem img.ico-photoreal{width:26px;height:26px}   /* v1.14.137 B1: photoreal mode icons sized for the nav (~svg's 22px, +4 for the art to read); active state still shown by the .botitem.active chrome (cyan border+bg) */
+#rd-botnav{display:none;overflow:hidden;position:fixed;left:0;right:0;bottom:0;z-index:40;background:linear-gradient(180deg,rgba(10,16,24,0.96),rgba(4,7,11,0.99));border-top:1px solid rgba(92,242,255,0.14);gap:6px;padding:8px 10px calc(10px + var(--safe-bottom))}
+/* v1.14.159 C1 Reactor Rail — pure-type nav, sliding core underline (no images). */
+#bn-core{position:absolute;top:0;height:3px;width:33.333%;left:0;transition:left .38s cubic-bezier(.3,.8,.3,1);background:linear-gradient(90deg,transparent 8%,var(--cyan) 50%,transparent 92%);box-shadow:0 0 16px var(--cyan),0 2px 24px rgba(40,224,255,.35);pointer-events:none}
+#bn-core::after{content:'';position:absolute;inset:-1px 30%;background:#eaffff;filter:blur(3px);opacity:.8}
+#rd-botnav .botitem{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:56px;padding:10px 4px;border:none;background:none;border-radius:0}
 body.rd .subtab-strip .stab.active{filter:drop-shadow(0 0 6px color-mix(in srgb, var(--cyan) 45%, transparent))}   /* current drill-in sub-tab glows */
-#rd-botnav .botitem.active{color:var(--cyan);border:1px solid rgba(92,242,255,0.28);background:linear-gradient(180deg,rgba(92,242,255,0.10),rgba(92,242,255,0.02))}
-#rd-botnav .blabel{font-family:var(--raj);font-weight:700;font-size:11px;letter-spacing:1.5px;text-transform:uppercase}
+#rd-botnav .blabel{font-family:var(--orb);font-weight:600;font-size:12.5px;letter-spacing:3.5px;color:#3d4f61;text-transform:uppercase;transition:color .3s,text-shadow .3s,letter-spacing .3s}
+#rd-botnav .btick{width:14px;height:1.5px;background:#3d4f61;transition:background .3s,box-shadow .3s,width .3s}
+#rd-botnav .botitem.active .blabel{color:#f2fbff;letter-spacing:4.2px;text-shadow:0 0 14px rgba(40,224,255,.55)}
+#rd-botnav .botitem.active .btick{width:26px;background:var(--cyan);box-shadow:0 0 8px var(--cyan)}
+@media (prefers-reduced-motion:reduce){#bn-core{transition:none}}
 body.rd .app-logo,body.rd .app-loc,body.rd #mode-toggle,body.rd .tab-nav{display:none}
 /* Rule A (v1.14.122) — one back control per surface. The legacy header chevron (#nav-back-btn,
    nav_back/history.back) is hidden in the New UI: the redesign provides its own context-back on
@@ -10735,7 +10747,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.158';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.159';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -11302,10 +11314,10 @@ if (typeof window !== 'undefined') {
         </div>
         <span class="arw">&rarr;</span>
       </button>
-      <div class="lrow">
-        <div class="lbtn" role="button" tabindex="0" onclick="cmd_route('work','deploy')" aria-label="Go to Deploy"><img class="lbtn-img" src="icons/phantom-action-deploy-upload-256.webp" alt=""><span class="ll">Deploy</span><span class="lt">WORK</span></div>
-        <div class="lbtn" role="button" tabindex="0" onclick="cmd_route('work','scan')" aria-label="Go to Scan"><img class="lbtn-img" src="icons/phantom-action-scan-radar-256.webp" alt=""><span class="ll">Scan</span><span class="lt">WORK</span></div>
-        <div class="lbtn" role="button" tabindex="0" onclick="cmd_route('work','handoff')" aria-label="Go to Handoff"><img class="lbtn-img" src="icons/phantom-action-handoff-link-256.webp" alt=""><span class="ll">Handoff</span><span class="lt">WORK</span></div>
+      <div class="trow">
+        <div class="tile" id="tt-deploy" role="button" tabindex="0" onclick="cmd_route('work','deploy')" aria-label="Deploy status — tap to open Deploy"><span class="ey"><span class="led"></span>Deploy</span><span class="val" id="tt-deploy-val">—</span><span class="sub" id="tt-deploy-sub"></span><div class="bar" id="tt-deploy-bar" style="display:none"><i id="tt-deploy-fill"></i></div></div>
+        <div class="tile" id="tt-scan" role="button" tabindex="0" onclick="cmd_route('work','scan')" aria-label="Scan count — tap to open Scan"><span class="ey"><span class="led"></span>Scanned</span><span class="val" id="tt-scan-val">—</span><span class="sub" id="tt-scan-sub"></span></div>
+        <div class="tile" id="tt-handoff" role="button" tabindex="0" onclick="cmd_route('work','handoff')" aria-label="Handoff status — tap to open Handoff"><span class="ey"><span class="led"></span>Handoff</span><span class="val" id="tt-handoff-val">—</span><span class="sub" id="tt-handoff-sub"></span></div>
       </div>
       <div class="sig-h">OPS SIGNAL</div>
       <div id="cc-sig"></div>
@@ -13786,9 +13798,10 @@ if (typeof window !== 'undefined') {
   <!-- ━━━ REDESIGN BOTTOM NAV (Command · Work · Crash Cart) — shown only under body.rd;
        replaces the top mode-toggle as the redesign primary nav. ━━━ -->
   <div class="botnav" id="rd-botnav">
-    <div class="botitem active" id="bn-command" role="button" tabindex="0" onclick="showMode('command')" aria-label="Command"><img class="ico-photoreal icon-glow" src="icons/phantom-mode-command-256.webp" alt=""><span class="blabel">Command</span></div>
-    <div class="botitem" id="bn-work" role="button" tabindex="0" onclick="showMode('work')" aria-label="Work"><img class="ico-photoreal icon-glow" src="icons/phantom-mode-work-256.webp" alt=""><span class="blabel">Work</span></div>
-    <div class="botitem" id="bn-ref" role="button" tabindex="0" onclick="showMode('ref')" aria-label="Crash Cart"><img class="ico-photoreal icon-glow" src="icons/phantom-tool-crashcart-256.webp" alt=""><span class="blabel">Crash Cart</span></div>
+    <span id="bn-core" aria-hidden="true"></span>
+    <div class="botitem active" id="bn-command" role="button" tabindex="0" onclick="showMode('command')" aria-label="Command"><span class="blabel">Command</span><span class="btick"></span></div>
+    <div class="botitem" id="bn-work" role="button" tabindex="0" onclick="showMode('work')" aria-label="Work"><span class="blabel">Work</span><span class="btick"></span></div>
+    <div class="botitem" id="bn-ref" role="button" tabindex="0" onclick="showMode('ref')" aria-label="Crash Cart"><span class="blabel">Crash Cart</span><span class="btick"></span></div>
   </div>
 
   <nav class="tab-nav">
@@ -16031,6 +16044,9 @@ function showMode(mode) {
     var b = document.getElementById('bn-' + m);   // mirror active in the bottom nav
     if (b) b.classList.toggle('active', m === mode);
   });
+  var _bnIdx = { command:0, work:1, ref:2 }[mode];
+  var _core = document.getElementById('bn-core');
+  if (_core && _bnIdx !== undefined) _core.style.left = (_bnIdx * 33.333) + '%';
   // Search bar shows only on Ref in redesign (mock-clean Command/Work headers).
   document.body.classList.toggle('mode-ref', mode === 'ref');
   // v1.14.102: entering Ref via the bottom nav lands on the card-grid landing.
@@ -16394,8 +16410,48 @@ function cmd_render() {
   } else {
     sw.innerHTML = '<div class="sig-empty">No signals — you&rsquo;re clear.</div>';
   }
+  cmd_telemetry(activeDep, activePct, handoffDraft);
   cmd_setSiteLabel();
   cmd_clock();
+}
+// v1.14.159 D3 — Shift Telemetry: read-only over live state (reuses cmd_render's
+// activeDep/activePct/handoffDraft). DEPLOY shows activePct+bar (the dep object carries
+// no rack done/total). SCANNED counts today from phantom_scan_collection items (ts:Date.now()).
+function cmd_telemetry(activeDep, activePct, handoffDraft) {
+  function E2(id){ return document.getElementById(id); }
+  var td = E2('tt-deploy'), ts = E2('tt-scan'), th = E2('tt-handoff');
+  if (!td || !ts || !th) return;   // legacy / not rendered
+  if (activeDep && activePct < 100) {
+    td.classList.add('hot');
+    E2('tt-deploy-val').innerHTML = activePct + '<small>%</small>';
+    E2('tt-deploy-sub').textContent = (activeDep.name || 'DEPLOY') + ' · ACTIVE';
+    E2('tt-deploy-bar').style.display = 'block';
+    E2('tt-deploy-fill').style.width = Math.max(2, Math.min(100, activePct)) + '%';
+  } else {
+    td.classList.remove('hot');
+    E2('tt-deploy-val').textContent = 'NO ACTIVE';
+    E2('tt-deploy-sub').textContent = 'Tap to start';
+    E2('tt-deploy-bar').style.display = 'none';
+  }
+  var scans = safeParse(localStorage.getItem('phantom_scan_collection') || '[]', []);
+  var dayKey = new Date().toDateString();
+  var n = 0;
+  for (var i = 0; i < scans.length; i++) {
+    var t = scans[i] && scans[i].ts;
+    if (t && new Date(t).toDateString() === dayKey) n++;
+  }
+  ts.classList.toggle('hot-teal', n > 0);
+  E2('tt-scan-val').textContent = String(n);
+  E2('tt-scan-sub').textContent = 'Today';
+  if (handoffDraft) {
+    th.classList.add('hot-gold');
+    E2('tt-handoff-val').textContent = 'DRAFT';
+    E2('tt-handoff-sub').textContent = 'Pending send';
+  } else {
+    th.classList.remove('hot-gold');
+    E2('tt-handoff-val').textContent = 'CLEAR';
+    E2('tt-handoff-sub').textContent = 'Nothing pending';
+  }
 }
 function cmd_nba(rung, st) {
   if (rung === 'A' || !st.confirmed) return { h: 'Set up your site profile.', p: 'PHANTOM needs your facility, switches, and rack naming before it can help.', label: 'SET UP SITE', act: function() { cmd_route('profile'); } };
