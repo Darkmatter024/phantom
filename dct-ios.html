@@ -8900,12 +8900,7 @@ body.rd #rd-sub{display:block}
 body.rd .header-right{position:relative;top:-9px}
 .hdr-shield-img{display:none}
 body.rd .hdr-ghost-img{display:none}
-body.rd .hdr-shield-img{display:inline-block}
-/* v1.14.142 blue rebrand Stage 2: in redesign the shield replaces the ghost in the shared #hdr-ghost-btn,
-   so give that button the SYS pill's cyan border (rgba(92,242,255,0.4) = the pill's data-state="ok" value)
-   so the shield+SYS header pair reads as one unit. body.rd-scoped → legacy keeps the violet base border,
-   byte-identical. :not(.alert) preserves the gold identity-unset alert cue when no operator is set. */
-body.rd .hdr-ghost-btn:not(.alert){border-color:rgba(92,242,255,0.4)}
+/* v1.14.162 — retired dead redesign-only medallion cosmetics (shield-img inline-block + ghost-btn cyan border): #hdr-overflow-wrap is display:none under body.rd since .156, so these styled a hidden element. Legacy base rules untouched. */
 /* ━━━ v1.14.156 — SYS pill ambient state-glow + medallion retire (redesign only).
    Legacy (?legacy=1) header untouched: medallion + un-glowed pill remain. ━━━ */
 body.rd #hdr-overflow-wrap { display: none; }
@@ -10747,7 +10742,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.161';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.162';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
