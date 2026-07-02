@@ -8906,7 +8906,7 @@ body.rd .hdr-ghost-img{display:none}
 /* v1.14.162 — retired dead redesign-only medallion cosmetics (shield-img inline-block + ghost-btn cyan border): #hdr-overflow-wrap is display:none under body.rd since .156, so these styled a hidden element. Legacy base rules untouched. */
 /* ━━━ v1.14.156 — SYS pill ambient state-glow + medallion retire (redesign only).
    Legacy (?legacy=1) header untouched: medallion + un-glowed pill remain. ━━━ */
-body.rd #hdr-overflow-wrap { display: none; }
+body.rd #hdr-overflow-wrap { display: none !important; }   /* v1.14.165 — !important: the inline style="display:inline-block" on #hdr-overflow-wrap (+ a JS display:block) silently defeated the plain rule since .156, so the legacy ghost/overflow button leaked as an empty gold .alert box left of the SYS pill under redesign. !important finally lands the intended hide. Legacy (?legacy=1) still shows the button. */
 body.rd .hdr-agg-pill { position: relative; overflow: hidden; border-radius: var(--hud-r8); }
 body.rd .hdr-agg-pill[data-state="ok"]       { box-shadow: 0 0 15px -3px rgba(92,242,255,0.55), inset 0 1px 0 rgba(255,255,255,0.06); border-color: rgba(92,242,255,0.5); }
 body.rd .hdr-agg-pill[data-state="warn"]     { box-shadow: 0 0 15px -3px rgba(255,214,10,0.55), inset 0 1px 0 rgba(255,255,255,0.06); border-color: rgba(255,214,10,0.6); }
@@ -10745,7 +10745,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.164';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.165';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
