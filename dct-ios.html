@@ -8719,6 +8719,8 @@ body.rd #pg-work:not(.wk-grid) .work-sub.stab-active { animation: rf-fade .22s e
   body.rd #work-grid, body.rd #ref-grid { max-width: 1080px; }
   body.rd .rf-grid-wrap { grid-template-columns: repeat(4, 1fr); gap: 18px; }
   body.rd #rd-botnav { max-width: 1080px; }
+  /* v1.14.164 — Command page grows up on desktop: cap + center its column at 1080 like Work/Ref (was ~⅔-width Ask + sprawling telemetry). */
+  #pg-cmd .lens, #pg-cmd .trow, #pg-cmd .nba, body.rd .ask, #pg-cmd .statusrow { max-width: 1080px; margin-left: auto; margin-right: auto; }
 }
 body.rd .rf-cnr { display: none; }   /* unified recipe has no corner brackets */
 
@@ -8746,6 +8748,7 @@ body.rd .rl-search-input{background:linear-gradient(160deg,#0a0d13,#070809)!impo
    Issues) join the same path — #ph-* svg → phantom-action-*-256.webp, same 76px/96px cell.
    Redesign-only scope (body.rd / #ref-grid + #work-grid) → legacy byte-identical. */
 :root{ --icon-glow: drop-shadow(0 5px 13px rgba(0,0,0,0.55)) drop-shadow(0 0 5.1px rgba(40,224,255,0.55)) drop-shadow(0 0 12.75px rgba(40,224,255,0.29)); }   /* v1.14.146 blue Stage 6: locked 0.85x cyan bloom — single source of truth for every photoreal icon (tune here once) */
+:root{ --glow-outer:22px; --glow-a:34%; --glow-inner:24%; --glow-border:52%; }   /* v1.14.164 — UNIFORM card/pill glow: ONE knob for the whole app (mock-uniform-glow, John-approved). Referenced by rf-card / #pg-cmd .tile / .ask / .spill. Tune these 4 numbers only — never per-selector. */
 .rf-i-img { width:76px; height:76px; object-fit:contain; filter:var(--icon-glow); }
 body.rd #ref-grid .rf-card .rf-cic, body.rd #work-grid .rf-card .rf-cic { width:96px; height:96px; display:grid; place-items:center; }
 body.rd .deploy-tools-grid .rf-card .rf-cic { width:96px; height:96px; display:grid; place-items:center; }   /* v1.14.144 blue Stage 3: deploy Tools tiles render the 76px branded webp like Ref/Work (the 96px cell rule above is #ref-grid/#work-grid-scoped) */
@@ -8756,7 +8759,7 @@ body.rd .deploy-tools-grid .rf-card .rf-cic { width:96px; height:96px; display:g
 .rf-card .rf-cmeta { font-family:var(--mono); font-weight:600; font-size:11px; letter-spacing:.03em; color:var(--slate); text-align:center; line-height:1.2; }
 /* ━━━ v1.14.155 — REF/WORK/TOOLS SQUARE cards POLISH (John-approved on-device: kills the inherited saturate(1.40) that muddied the neon art, flows title/meta so long metas don't collide, burn to full punch).
    TUNES the .155... (was .154) square treatment — same square 1:1 / icon 90% top-right / BLEED 0 layout, four property groups changed: (1) card filter:none — drops the base .rf-card saturate(1.40) which crushed the saturated blues dark; (2) title+meta now FLOW in the card's flex column bottom-left (position:relative, not pinned absolutes) over a full-width bottom scrim → 2-line metas (OPTICS "Fiber · Form factors · MPO", DEPLOY "Build · seed · rack detail") stack under the title instead of overlapping it; (3) icon opacity 0.52→1.0 (full punch, matches the mock — active differentiates by glow now, not opacity); (4) scrim → to-top bottom band for reliable bottom-left legibility. Card padding 0→"0 0 14px 15px" gives the text its inset while the top:0/right:0 icon still reaches the corner (top/right padding stay 0). Base .rf-card untouched; all body.rd redesign-grid-scoped → ?legacy=1 byte-identical. CSS-ONLY, no asset/markup change → SW precache LIST unchanged, CACHE_VERSION bump busts the HTML. */
-body.rd #ref-grid .rf-card, body.rd #work-grid .rf-card, body.rd .deploy-tools-grid .rf-card { aspect-ratio:1/1; min-height:0; padding:0 0 14px 15px; filter:none; gap:2px; justify-content:flex-end; align-items:flex-start; text-align:left; background:radial-gradient(circle at 82% 16%, color-mix(in srgb, var(--rfac) 20%, transparent), transparent 50%), linear-gradient(160deg, #0b0e15 0%, #070809 100%); box-shadow:inset 0 1px 0 rgba(255,255,255,.055), inset 0 0 30px -6px color-mix(in srgb, var(--rfac) 18%, transparent), 0 0 18px -2px color-mix(in srgb, var(--rfac) 20%, transparent), 0 14px 30px -14px rgba(0,0,0,.9); }
+body.rd #ref-grid .rf-card, body.rd #work-grid .rf-card, body.rd .deploy-tools-grid .rf-card { aspect-ratio:1/1; min-height:0; padding:0 0 14px 15px; filter:none; gap:2px; justify-content:flex-end; align-items:flex-start; text-align:left; background:radial-gradient(circle at 82% 16%, color-mix(in srgb, var(--rfac) 20%, transparent), transparent 50%), linear-gradient(160deg, #0b0e15 0%, #070809 100%); box-shadow:inset 0 1px 0 rgba(255,255,255,.06), inset 0 0 30px -6px color-mix(in srgb, var(--rfac) var(--glow-inner), transparent), 0 0 var(--glow-outer) -2px color-mix(in srgb, var(--rfac) var(--glow-a), transparent), 0 12px 26px -14px rgba(0,0,0,.9); }
 body.rd #ref-grid .rf-card::before, body.rd #work-grid .rf-card::before, body.rd .deploy-tools-grid .rf-card::before { content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none; z-index:3; background:linear-gradient(115deg, transparent 42%, rgba(255,255,255,.10) 50%, transparent 58%); transform:translateX(-120%); animation:rfCardSweep 6s ease-in-out infinite; }
 body.rd #ref-grid .rf-card:nth-child(2n)::before, body.rd #work-grid .rf-card:nth-child(2n)::before, body.rd .deploy-tools-grid .rf-card:nth-child(2n)::before { animation-delay:1.1s; }
 body.rd #ref-grid .rf-card:nth-child(3n)::before, body.rd .deploy-tools-grid .rf-card:nth-child(3n)::before { animation-delay:2.2s; }
@@ -8793,7 +8796,7 @@ body.rd #rd-profile-sheet.open { display: flex; }
    .route/.clock/.spill) can't collide with app classes or leak to other pages.
    Green kept at the mockup's #39e09b (app --green is a different shade). ━━━ */
 #pg-cmd .statusrow{display:flex;gap:8px;padding:6px 16px 12px;flex-wrap:wrap}
-#pg-cmd .spill{display:flex;align-items:center;gap:7px;border:1px solid rgba(92,242,255,0.14);border-radius:18px;padding:7px 13px;font-size:12px;color:var(--slate)}
+#pg-cmd .spill{display:flex;align-items:center;gap:7px;border:1px solid color-mix(in srgb,var(--cyan) var(--glow-border),transparent);border-radius:18px;padding:7px 13px;font-size:12px;color:var(--slate);box-shadow:inset 0 1px 0 rgba(255,255,255,.06),inset 0 0 30px -6px color-mix(in srgb,var(--cyan) var(--glow-inner),transparent),0 0 var(--glow-outer) -2px color-mix(in srgb,var(--cyan) var(--glow-a),transparent),0 12px 26px -14px rgba(0,0,0,.9)}
 #pg-cmd .spill .dot{width:7px;height:7px;border-radius:50%;background:#39e09b;box-shadow:0 0 6px #39e09b}
 #pg-cmd .spill.bad .dot{background:var(--gold);box-shadow:0 0 6px var(--gold)}
 #pg-cmd .spill.bad{color:var(--gold)}
@@ -8828,7 +8831,7 @@ body.rd #rd-profile-sheet.open { display: flex; }
    neutral .gx border / cyan glow), prism contained in a 56px violet-tinted box with a
    36px mark (was a 64px uncontained 62px image), and typography scaled to the surface
    (title 18px not 23px, 11px mono label, 13px desc). body.rd-only; legacy untouched. */
-body.rd .ask{--ax:var(--vio);display:flex;align-items:center;gap:14px;padding:18px;margin:0 16px 14px;width:auto;text-align:left;filter:saturate(1.40);border:1px solid color-mix(in srgb,#a66bff 58%,transparent);border-radius:16px;background:linear-gradient(160deg,#0a0d13 0%,#070809 100%);box-shadow:0 8px 20px -14px rgba(0,0,0,.85),inset 0 0 26px -4px color-mix(in srgb,var(--vio) 26%,transparent),0 0 18px -6px color-mix(in srgb,var(--vio) 35%,transparent)}   /* Rule F (v1.14.128): match the Command-surface card recipe (.nba/.lens) — radius 16, saturate, violet accent glow — not the .gx grid recipe (radius 14, cyan glow). .gx dropped from markup. v1.14.159 T2: luminance lift — border #a66bff 58%, inset 26% + outer bloom; prism bg 22%/border #a66bff 45%/inner glow — into OLED-visible range. */
+body.rd .ask{--ax:var(--vio);display:flex;align-items:center;gap:14px;padding:18px;margin:0 16px 14px;width:auto;text-align:left;filter:saturate(1.40);border:1px solid color-mix(in srgb,var(--vio) var(--glow-border),transparent);border-radius:16px;background:linear-gradient(160deg,#0a0d13 0%,#070809 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.06),inset 0 0 30px -6px color-mix(in srgb,var(--vio) var(--glow-inner),transparent),0 0 var(--glow-outer) -2px color-mix(in srgb,var(--vio) var(--glow-a),transparent),0 12px 26px -14px rgba(0,0,0,.9)}   /* Rule F (v1.14.128): match the Command-surface card recipe (.nba/.lens) — radius 16, saturate, violet accent glow — not the .gx grid recipe (radius 14, cyan glow). .gx dropped from markup. v1.14.159 T2: luminance lift — border #a66bff 58%, inset 26% + outer bloom; prism bg 22%/border #a66bff 45%/inner glow — into OLED-visible range. */
 body.rd .ask .prism{flex:0 0 auto;width:56px;height:56px;display:grid;place-items:center;background:color-mix(in srgb,var(--vio) 22%,transparent);border:1px solid color-mix(in srgb,#a66bff 45%,transparent);border-radius:8px;box-shadow:inset 0 0 12px color-mix(in srgb,var(--vio) 25%,transparent)}
 body.rd .ask .prism img{width:36px;height:auto;animation:askBreathe 4.6s ease-in-out infinite}
 body.rd .ask .ey{color:var(--vio);font-family:var(--mono);font-size:11px;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:4px}
@@ -8839,7 +8842,7 @@ body.rd .ask .arw{margin-left:auto;color:var(--vio);font-size:20px;align-self:ce
 @media (prefers-reduced-motion:reduce){body.rd .ask .prism img{animation:none}}
 /* v1.14.159 Shift Telemetry tiles (mock-telemetry-tiles) — replace the old launcher row. */
 #pg-cmd .trow{display:flex;gap:10px;padding:0 16px 14px}
-#pg-cmd .tile{flex:1;--tc:#33465a;display:flex;flex-direction:column;gap:6px;min-height:96px;filter:saturate(1.4);border:1px solid color-mix(in srgb,var(--tc) 36%,transparent);border-radius:16px;background:linear-gradient(160deg,#0a0d13 0%,#070809 100%);box-shadow:0 8px 20px -14px rgba(0,0,0,.85),inset 0 0 26px -4px color-mix(in srgb,var(--tc) 14%,transparent);padding:13px 12px 12px;position:relative;overflow:hidden;color:var(--white)}
+#pg-cmd .tile{flex:1;--tc:#33465a;display:flex;flex-direction:column;gap:6px;min-height:96px;filter:saturate(1.4);border:1px solid color-mix(in srgb,var(--tc) var(--glow-border),transparent);border-radius:16px;background:linear-gradient(160deg,#0a0d13 0%,#070809 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.06),inset 0 0 30px -6px color-mix(in srgb,var(--tc) var(--glow-inner),transparent),0 0 var(--glow-outer) -2px color-mix(in srgb,var(--tc) var(--glow-a),transparent),0 12px 26px -14px rgba(0,0,0,.9);padding:13px 12px 12px;position:relative;overflow:hidden;color:var(--white)}
 #pg-cmd .tile.hot{--tc:var(--cyan)}
 #pg-cmd .tile.hot-teal{--tc:var(--teal)}
 #pg-cmd .tile.hot-gold{--tc:var(--gold)}
@@ -10742,7 +10745,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.163';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.164';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
