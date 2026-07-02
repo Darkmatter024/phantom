@@ -10735,7 +10735,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.157';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.158';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -11334,9 +11334,6 @@ if (typeof window !== 'undefined') {
           <div class="rf-card" style="--rfac:#8a4bff" role="button" tabindex="0" onclick="deploy_showOpsTool('manifest')" aria-label="Manifest"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-tool-manifest-256.webp" alt="" loading="eager"></div><div class="rf-cname">MANIFEST</div><div class="rf-cmeta">Gear</div></div>
           <div class="rf-card" style="--rfac:#30d158" role="button" tabindex="0" onclick="deploy_showOpsTool('portmap')" aria-label="Port map"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-tool-portmap-256.webp" alt="" loading="eager"></div><div class="rf-cname">PORT MAP</div><div class="rf-cmeta">Cabling</div></div>
           <div class="rf-card" style="--rfac:#ffcb45" role="button" tabindex="0" onclick="deploy_showOpsTool('rackmap')" aria-label="Rack map"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-tool-rackmap-256.webp" alt="" loading="eager"></div><div class="rf-cname">RACK MAP</div><div class="rf-cmeta">Elevation</div></div>
-          <div class="rf-card" style="--rfac:#ff8a00" role="button" tabindex="0" onclick="deploy_showOpsTool('crashcart')" aria-label="Crash cart"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-tool-crashcart-256.webp" alt="" loading="eager"></div><div class="rf-cname">CRASH CART</div><div class="rf-cmeta">4ft view</div></div>
-          <div class="rf-card" style="--rfac:#5cf2ff" role="button" tabindex="0" onclick="showRefTab('rf-optics')" aria-label="Optics"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-ref-optics-256.webp" alt="" loading="eager"></div><div class="rf-cname">OPTICS</div><div class="rf-cmeta">Fiber types</div></div>
-          <div class="rf-card" style="--rfac:#4b9bff" role="button" tabindex="0" onclick="rd_openPower()" aria-label="Power"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-tool-power-256.webp" alt="" loading="eager"></div><div class="rf-cname">POWER</div><div class="rf-cmeta">PSU · hardware</div></div>
         </div>
       </div>
       <div class="subtab-strip">
@@ -11369,11 +11366,11 @@ if (typeof window !== 'undefined') {
       <!-- REDESIGN v1.14.102 — Ref card-grid landing (new nav layer; cards reuse showRefTab,
            Compass deep-links the Hardware Cage-Nut subtab). Back header shows in drill-in only. -->
       <div id="ref-back">
-        <button class="rf-back-btn" onclick="ref_showGrid()" aria-label="Back to Reference grid"><svg viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-        <span class="rf-back-title" id="ref-back-title">Reference</span>
+        <button class="rf-back-btn" onclick="ref_showGrid()" aria-label="Back to Crash Cart grid"><svg viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <span class="rf-back-title" id="ref-back-title">Crash Cart</span>
       </div>
       <div id="ref-grid">
-        <div class="rf-glabel"><span class="dot"></span>REFERENCE LIBRARY<span class="ln"></span></div>
+        <div class="rf-glabel"><span class="dot"></span>CRASH CART<span class="ln"></span></div>
         <div class="rf-grid-wrap">
           <div class="rf-card" style="--rfac:#28e0ff" role="button" tabindex="0" onclick="showRefTab('rf-optics')" aria-label="Optics reference"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-ref-optics-256.webp" alt="" loading="eager"></div><div class="rf-cname">OPTICS</div><div class="rf-cmeta">Fiber · Form factors · MPO</div></div>
           <div class="rf-card" style="--rfac:#39e09b" role="button" tabindex="0" onclick="showRefTab('rf-hw')" aria-label="Hardware reference"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-ref-hardware-256.webp" alt="" loading="eager"></div><div class="rf-cname">HARDWARE</div><div class="rf-cmeta">GPU · Switch · PDU</div></div>
@@ -11381,6 +11378,7 @@ if (typeof window !== 'undefined') {
           <div class="rf-card" style="--rfac:#1fffd0" role="button" tabindex="0" onclick="showRefTab('rf-hwref')" aria-label="Hardware reference — cables and part numbers"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-ref-hwref-256.webp" alt="" loading="eager"></div><div class="rf-cname">HW REF</div><div class="rf-cmeta">Cables · Part numbers</div></div>
           <div class="rf-card" style="--rfac:#ffcb45" role="button" tabindex="0" onclick="showRefTab('rf-know')" aria-label="Know — SOPs and how-tos"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-ref-know-256.webp" alt="" loading="eager"></div><div class="rf-cname">KNOW</div><div class="rf-cmeta">SOPs · How-tos</div></div>
           <div class="rf-card" style="--rfac:#ff2bd6" role="button" tabindex="0" onclick="ref_openCompass()" aria-label="Compass — cage nut and RU map"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-ref-compass-256.webp" alt="" loading="eager"></div><div class="rf-cname">COMPASS</div><div class="rf-cmeta">Cage nut · RU map</div></div>
+          <div class="rf-card" style="--rfac:#4b9bff" role="button" tabindex="0" onclick="rd_openPower()" aria-label="Power"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-tool-power-256.webp" alt="" loading="eager"></div><div class="rf-cname">POWER</div><div class="rf-cmeta">Blast radius · PDU</div></div>
         </div>
       </div>
       <div class="subtab-strip">
@@ -13785,12 +13783,12 @@ if (typeof window !== 'undefined') {
          · pg-power (Hardware/Rack Map — reachable via SCAN dispatch + deep link)
          · pg-twin  (Memory/Twin — Stage 4 will re-home its data)
   -->
-  <!-- ━━━ REDESIGN BOTTOM NAV (Command · Work · Ref) — shown only under body.rd;
+  <!-- ━━━ REDESIGN BOTTOM NAV (Command · Work · Crash Cart) — shown only under body.rd;
        replaces the top mode-toggle as the redesign primary nav. ━━━ -->
   <div class="botnav" id="rd-botnav">
     <div class="botitem active" id="bn-command" role="button" tabindex="0" onclick="showMode('command')" aria-label="Command"><img class="ico-photoreal icon-glow" src="icons/phantom-mode-command-256.webp" alt=""><span class="blabel">Command</span></div>
     <div class="botitem" id="bn-work" role="button" tabindex="0" onclick="showMode('work')" aria-label="Work"><img class="ico-photoreal icon-glow" src="icons/phantom-mode-work-256.webp" alt=""><span class="blabel">Work</span></div>
-    <div class="botitem" id="bn-ref" role="button" tabindex="0" onclick="showMode('ref')" aria-label="Ref"><img class="ico-photoreal icon-glow" src="icons/phantom-mode-ref-256.webp" alt=""><span class="blabel">Ref</span></div>
+    <div class="botitem" id="bn-ref" role="button" tabindex="0" onclick="showMode('ref')" aria-label="Crash Cart"><img class="ico-photoreal icon-glow" src="icons/phantom-tool-crashcart-256.webp" alt=""><span class="blabel">Crash Cart</span></div>
   </div>
 
   <nav class="tab-nav">
@@ -16084,12 +16082,12 @@ function showRefTab(targetId) {
   var pr = document.getElementById('pg-ref'); if (pr) pr.classList.remove('rf-grid');   // v1.14.102: deep-link / card tap → drill into the panel (out of the grid)
   var btn = document.querySelector('#pg-ref .subtab-strip .stab[data-rf="' + targetId + '"]');
   if (btn) showStab(btn, 'ref-sub', targetId);
-  ref_setBackTitle(REF_CAT_NAMES[targetId] || 'Reference');
+  ref_setBackTitle(REF_CAT_NAMES[targetId] || 'Crash Cart');
 }
 // v1.14.102 — Ref card-grid helpers. ref_showGrid() returns to the landing; the Compass
 // card deep-links its real home (Hardware 'Cage Nut' = #pw-compass, folded in by
 // redesign_homeCompass) — one surface, two entry points, no duplicate.
-function ref_setBackTitle(t) { var e = document.getElementById('ref-back-title'); if (e) e.textContent = t || 'Reference'; }
+function ref_setBackTitle(t) { var e = document.getElementById('ref-back-title'); if (e) e.textContent = t || 'Crash Cart'; }
 function ref_showGrid() {
   var pr = document.getElementById('pg-ref'); if (pr) pr.classList.add('rf-grid');
   var s = document.getElementById('srch'); if (s) s.value = '';
@@ -23110,7 +23108,7 @@ function deploy_showCommandCenter(container) {
 }
 
 // ━━━ STAGE 3 — Work›Deploy "Tools" surface (card grid; John picked Option B). ━━━
-// Re-homes the legacy ops-tabs (BOM/Manifest/PortMap/RackMap/CrashCart) + SOPs-CRUD +
+// Re-homes the legacy ops-tabs (BOM/Manifest/PortMap/RackMap) + SOPs-CRUD +
 // the Blocker one-tap into #wk-deploy, clearing the PARITY §7 MISSING-IN-REDESIGN blocker.
 // Reuses the live OPS_TABS render fns (don't rebuild) — deploy_showOpsTool renders a tab
 // into deploy_opsHost() with a single "‹ Back" (body.ops-detail hides #work-back per Rule A).
@@ -23121,7 +23119,6 @@ var DEPLOY_TOOLS = [
   { tab:'manifest',  name:'MANIFEST',   meta:'GEAR',       ac:'#8a4bff', img:'icons/phantom-tool-manifest-256.webp', icon:'<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 7h6M9 11h6M9 15h4"/>' },
   { tab:'portmap',   name:'PORT MAP',   meta:'CABLING',    ac:'#30d158', img:'icons/phantom-tool-portmap-256.webp', icon:'<rect x="3" y="4" width="18" height="6" rx="1"/><rect x="3" y="14" width="18" height="6" rx="1"/><path d="M7 7h.01M7 17h.01"/>' },
   { tab:'rackmap',   name:'RACK MAP',   meta:'ELEVATION',  ac:'#ffcb45', img:'icons/phantom-tool-rackmap-256.webp', icon:'<rect x="5" y="3" width="14" height="18" rx="1"/><path d="M8 7h8M8 11h8M8 15h8"/>' },
-  { tab:'crashcart', name:'CRASH-CART', meta:'4FT VIEW',   ac:'#ff8a00', img:'icons/phantom-tool-crashcart-256.webp', icon:'<rect x="3" y="5" width="18" height="11" rx="1"/><path d="M9 20h6M12 16v4"/>' },
   { tab:'sops',      name:'SOPS',       meta:'PROCEDURES', ac:'#28e0ff', img:'icons/phantom-tool-sops-256.webp', icon:'<path d="M5 4h11l3 3v13H5z"/><path d="M9 9h6M9 13h6"/>' }
 ];
 function _deploy_toolsBackHdr(title, backOnclick) {
