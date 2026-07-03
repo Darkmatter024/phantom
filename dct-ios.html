@@ -10745,7 +10745,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.166';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.167';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -11344,6 +11344,7 @@ if (typeof window !== 'undefined') {
         <div class="rf-grid-wrap">
           <div class="rf-card" style="--rfac:#28e0ff" role="button" tabindex="0" onclick="deploy_quick()" aria-label="Deploy"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-action-deploy-upload-256.webp" alt="" loading="eager"></div><div class="rf-cname">DEPLOY</div><div class="rf-cmeta">Build · seed · rack</div></div>
           <div class="rf-card" style="--rfac:#8a4bff" role="button" tabindex="0" onclick="rd_openProfile()" aria-label="Master doc"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-tool-masterdoc-256.webp" alt="" loading="eager"></div><div class="rf-cname">MASTER DOC</div><div class="rf-cmeta">Deployment auth</div></div>
+          <div class="rf-card" style="--rfac:#28e0ff" role="button" tabindex="0" onclick="rd_openMasterFile()" aria-label="Master file — cabinet search, host map and elevation"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-tool-masterdoc-256.webp" alt="" loading="eager"></div><div class="rf-cname">MASTER FILE</div><div class="rf-cmeta">Cabinet · Host map · Elevation</div></div>
           <div class="rf-card" style="--rfac:#1fffd0" role="button" tabindex="0" onclick="showWorkTab('scan')" aria-label="Scan"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-action-scan-radar-256.webp" alt="" loading="eager"></div><div class="rf-cname">SCAN</div><div class="rf-cmeta">Racks · optics · serials</div></div>
           <div class="rf-card" style="--rfac:#8a4bff" role="button" tabindex="0" onclick="handoff_quick()" aria-label="Handoff"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-action-handoff-link-256.webp" alt="" loading="eager"></div><div class="rf-cname">HANDOFF</div><div class="rf-cmeta">Shift pass · notes</div></div>
           <div class="rf-card" style="--rfac:#28e0ff" role="button" tabindex="0" onclick="deploy_showOpsTool('sops')" aria-label="SOP"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-tool-sops-256.webp" alt="" loading="eager"></div><div class="rf-cname">SOP</div><div class="rf-cmeta">Procedures</div></div>
@@ -16135,6 +16136,18 @@ function rd_openProfile() {
 function rd_closeProfile() {
   var sheet = document.getElementById('rd-profile-sheet');
   if (sheet) sheet.classList.remove('open');
+}
+// v1.14.167 — New-UI Master FILE entry (Phase 0.5 un-strand). Gives the cabinet-search /
+// host-map / elevation BROWSE a redesign door (additive; mirrors rd_openPower driving an
+// existing surface — no new sheet, no CSS). showPage('master') activates pg-master in the
+// rd frame (runs master_initTab()+master_render(), which force-hides #master-profile-state
+// and flips the section pills to 'file'), so we land on the FILE browse — never the Profile
+// half (that stays live via rd_openProfile). master_showSection('file') is a defensive echo.
+// Reuses window._lastPhantomMaster (empty-state = the LOAD MASTER FILE CTA); does NOT touch
+// SITE_PROFILE_KEY / siteProfile_save. BACK returns to the launching rd home (.161 nav_restore).
+function rd_openMasterFile() {
+  if (typeof showPage === 'function') { try { showPage('master'); } catch (_) {} }
+  if (typeof master_showSection === 'function') { try { master_showSection('file'); } catch (_) {} }
 }
 // rd_openPower(): POWER card → Reference→Hardware, defaulting to the Blast Radius
 // sub-tab (PDU / Power is the sibling tab). Under body.rd, pg-power's sub-tabs are
