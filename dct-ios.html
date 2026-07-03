@@ -10586,6 +10586,11 @@ body.has-resume-banner #boot {
   box-shadow:0 0 14px rgba(92,242,255,0.18), inset 0 1px 0 rgba(255,255,255,0.04);
 }
 .master-section-pill:not(.active):hover { color:rgba(220,234,249,0.8); border-color:rgba(92,242,255,0.32); }
+/* v1.14.168 — redesign has its own Site Profile door (rd_openProfile / SITE PROFILE card),
+   so pg-master's own Profile section pill is a redundant 2nd door. Hide it under body.rd only
+   (id+class+attr specificity beats .master-section-pill; the pill has no inline/JS-set display,
+   so plain display:none wins). Legacy (?legacy=1, no body.rd) keeps both pills — byte-identical. */
+body.rd #master-section-bar [data-section="profile"] { display:none; }
 
 /* Step B: host-less cab cabling list (grouped, capped, Cold-Aisle-Filtered) */
 .master-cbl-wrap { width:100%; box-sizing:border-box; }
@@ -10745,7 +10750,7 @@ body.has-resume-banner #boot {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.167';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.168';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -11343,15 +11348,15 @@ if (typeof window !== 'undefined') {
         <div class="rf-glabel"><span class="dot"></span>FIELD WORK<span class="ln"></span></div>
         <div class="rf-grid-wrap">
           <div class="rf-card" style="--rfac:#28e0ff" role="button" tabindex="0" onclick="deploy_quick()" aria-label="Deploy"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-action-deploy-upload-256.webp" alt="" loading="eager"></div><div class="rf-cname">DEPLOY</div><div class="rf-cmeta">Build · seed · rack</div></div>
-          <div class="rf-card" style="--rfac:#8a4bff" role="button" tabindex="0" onclick="rd_openProfile()" aria-label="Master doc"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-tool-masterdoc-256.webp" alt="" loading="eager"></div><div class="rf-cname">MASTER DOC</div><div class="rf-cmeta">Deployment auth</div></div>
+          <div class="rf-card" style="--rfac:#8a4bff" role="button" tabindex="0" onclick="rd_openProfile()" aria-label="Site profile — facility config and AI context"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-tool-masterdoc-256.webp" alt="" loading="eager"></div><div class="rf-cname">SITE PROFILE</div><div class="rf-cmeta">Facility config · AI context</div></div>
           <div class="rf-card" style="--rfac:#28e0ff" role="button" tabindex="0" onclick="rd_openMasterFile()" aria-label="Master file — cabinet search, host map and elevation"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-tool-masterdoc-256.webp" alt="" loading="eager"></div><div class="rf-cname">MASTER FILE</div><div class="rf-cmeta">Cabinet · Host map · Elevation</div></div>
           <div class="rf-card" style="--rfac:#1fffd0" role="button" tabindex="0" onclick="showWorkTab('scan')" aria-label="Scan"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-action-scan-radar-256.webp" alt="" loading="eager"></div><div class="rf-cname">SCAN</div><div class="rf-cmeta">Racks · optics · serials</div></div>
           <div class="rf-card" style="--rfac:#8a4bff" role="button" tabindex="0" onclick="handoff_quick()" aria-label="Handoff"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-action-handoff-link-256.webp" alt="" loading="eager"></div><div class="rf-cname">HANDOFF</div><div class="rf-cmeta">Shift pass · notes</div></div>
-          <div class="rf-card" style="--rfac:#28e0ff" role="button" tabindex="0" onclick="deploy_showOpsTool('sops')" aria-label="SOP"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-tool-sops-256.webp" alt="" loading="eager"></div><div class="rf-cname">SOP</div><div class="rf-cmeta">Procedures</div></div>
-          <div class="rf-card" style="--rfac:#28e0ff" role="button" tabindex="0" onclick="deploy_showOpsTool('bom')" aria-label="BOM"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-tool-bom-256.webp" alt="" loading="eager"></div><div class="rf-cname">BOM</div><div class="rf-cmeta">Parts</div></div>
-          <div class="rf-card" style="--rfac:#8a4bff" role="button" tabindex="0" onclick="deploy_showOpsTool('manifest')" aria-label="Manifest"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-tool-manifest-256.webp" alt="" loading="eager"></div><div class="rf-cname">MANIFEST</div><div class="rf-cmeta">Gear</div></div>
-          <div class="rf-card" style="--rfac:#30d158" role="button" tabindex="0" onclick="deploy_showOpsTool('portmap')" aria-label="Port map"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-tool-portmap-256.webp" alt="" loading="eager"></div><div class="rf-cname">PORT MAP</div><div class="rf-cmeta">Cabling</div></div>
-          <div class="rf-card" style="--rfac:#ffcb45" role="button" tabindex="0" onclick="deploy_showOpsTool('rackmap')" aria-label="Rack map"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-tool-rackmap-256.webp" alt="" loading="eager"></div><div class="rf-cname">RACK MAP</div><div class="rf-cmeta">Elevation</div></div>
+          <div class="rf-card" style="--rfac:#28e0ff" role="button" tabindex="0" onclick="rd_openOpsTool('sops')" aria-label="SOP"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-tool-sops-256.webp" alt="" loading="eager"></div><div class="rf-cname">SOP</div><div class="rf-cmeta">Procedures</div></div>
+          <div class="rf-card" style="--rfac:#28e0ff" role="button" tabindex="0" onclick="rd_openOpsTool('bom')" aria-label="BOM"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-tool-bom-256.webp" alt="" loading="eager"></div><div class="rf-cname">BOM</div><div class="rf-cmeta">Parts</div></div>
+          <div class="rf-card" style="--rfac:#8a4bff" role="button" tabindex="0" onclick="rd_openOpsTool('manifest')" aria-label="Manifest"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-tool-manifest-256.webp" alt="" loading="eager"></div><div class="rf-cname">MANIFEST</div><div class="rf-cmeta">Gear</div></div>
+          <div class="rf-card" style="--rfac:#30d158" role="button" tabindex="0" onclick="rd_openOpsTool('portmap')" aria-label="Port map"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-tool-portmap-256.webp" alt="" loading="eager"></div><div class="rf-cname">PORT MAP</div><div class="rf-cmeta">Cabling</div></div>
+          <div class="rf-card" style="--rfac:#ffcb45" role="button" tabindex="0" onclick="rd_openOpsTool('rackmap')" aria-label="Rack map"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-tool-rackmap-256.webp" alt="" loading="eager"></div><div class="rf-cname">RACK MAP</div><div class="rf-cmeta">Elevation</div></div>
         </div>
       </div>
       <div class="subtab-strip">
@@ -23239,6 +23244,37 @@ function deploy_showOpsTool(tab) {
   host.innerHTML = _deploy_toolsBackHdr((meta ? meta.name : 'TOOL'), 'deploy_showTools(deploy_opsHost())') + '<div id="ops-tool-host"></div>';
   var sub = document.getElementById('ops-tool-host');
   try { OPS_TABS[tab](sub); } catch (e) { try { console.warn('deploy_showOpsTool render failed', tab, e); } catch (_) {} }
+}
+// v1.14.168 — Work-grid canonical door for ops tools (SOP/BOM/Manifest/PortMap/RackMap).
+// Unlike deploy_showOpsTool (which assumes you're already in Work>Deploy), this switches to
+// Work, drills out of the card grid, activates the Deploy subtab, then renders the tool inline
+// into the redesign host (#wk-deploy via deploy_opsHost) — never the legacy #ops-content.
+// Fixes D1 (silent-fail → phantomToast + logs), D2 (legacy nav poisoning) and D3 (wrong BACK).
+// D2 NOTE: nav_push uses p:'work', NOT p:'sop'. On restore, showPage('sop') runs
+// showOpsTab() (16583) which paints the legacy #ops-tab-strip pills — the confirmed leak;
+// showPage('work') just activates #pg-work (exists) with no legacy render. BACK target is the
+// Work grid via the tool header's wk_showGrid(). Legacy path untouched → ?legacy=1 byte-identical.
+function rd_openOpsTool(tab) {
+  if (typeof redesign_isOn === 'function' && !redesign_isOn()) return;   // redesign-only; legacy uses #ops-tab-strip
+  if (!OPS_TABS || !OPS_TABS[tab]) { if (typeof phantomToast === 'function') phantomToast('Unknown tool: ' + tab, 'error'); return; }
+  var host = deploy_opsHost(); if (!host) return;                        // #wk-deploy under redesign
+
+  // Activation (mirrors showWorkTab): land on Work, leave the grid, activate wk-deploy.
+  // showMode('work') REMOVES ops-detail + ADDS wk-grid, so undo both AFTER it.
+  showMode('work');
+  var pw = document.getElementById('pg-work'); if (pw) pw.classList.remove('wk-grid');
+  var stab = document.querySelector('#pg-work .subtab-strip .stab[data-wk="wk-deploy"]');
+  if (stab) showStab(stab, 'work-sub', 'wk-deploy');
+
+  // Detail render (mirrors deploy_showOpsTool's body).
+  document.body.classList.add('ops-detail');
+  currentOpsTab = tab;
+  if (typeof nav_push === 'function') nav_push({ p: 'work', o: 'deploy', d: 'tool:' + tab });
+  var meta = DEPLOY_TOOLS.filter(function (t) { return t.tab === tab; })[0];
+  host.innerHTML = _deploy_toolsBackHdr((meta ? meta.name : 'TOOL'),
+    "wk_showGrid();document.body.classList.remove('ops-detail')") + '<div id="ops-tool-host"></div>';
+  var sub2 = document.getElementById('ops-tool-host');
+  try { OPS_TABS[tab](sub2); } catch (e) { try { console.warn('rd_openOpsTool render failed', tab, e); } catch (_) {} }
 }
 
 function deploy_showList(container) {
