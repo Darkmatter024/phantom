@@ -10750,7 +10750,7 @@ body.rd #master-section-bar [data-section="profile"] { display:none; }
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.169';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.170';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -23275,6 +23275,28 @@ function rd_openOpsTool(tab) {
   try { OPS_TABS[tab](sub2); } catch (e) { try { console.warn('rd_openOpsTool render failed', tab, e); } catch (_) {} }
 }
 
+// ── Deployment-detail-hosted ops tool (v1.14.170 · Master-Reorg R-2a) ──────────────
+// Renders an OPS_TABS ops-tool (BURNDOWN/AUDITS) into the detail host with a single
+// '‹ Back' that returns to the detail we came from — not the TOOLS grid. NOTE: the
+// burndown/audits renderers show a GLOBAL list (BD.renderList/AUDIT.renderList read
+// loadJobs()/load(), NOT filtered by id) — this door improves reachability, it does
+// not scope the data; true per-deployment scoping is a separate, later change.
+// Unlike deploy_showOpsTool it deliberately does NOT nav_push: the header back is the
+// sole exit and deploy_showDetail already owns the {d:'deploy:id'} history entry, so no
+// shared-router (nav_restore) change is needed. Redesign-only; legacy reaches burndown/
+// audits via the #ops-tab-strip → ?legacy=1 byte-identical.
+function deploy_detailTool(id, tab) {
+  if (typeof redesign_isOn === 'function' && !redesign_isOn()) return;
+  var host = deploy_opsHost(); if (!host || !OPS_TABS[tab]) return;
+  document.body.classList.add('ops-detail');
+  currentOpsTab = tab;
+  var meta = DEPLOY_TOOLS.filter(function (t) { return t.tab === tab; })[0];
+  host.innerHTML = _deploy_toolsBackHdr((meta ? meta.name : 'TOOL'),
+    "deploy_showDetail('" + id + "')") + '<div id="ops-tool-host"></div>';
+  var sub = document.getElementById('ops-tool-host');
+  try { OPS_TABS[tab](sub); } catch (e) { try { console.warn('deploy_detailTool render failed', tab, e); } catch (_) {} }
+}
+
 function deploy_showList(container) {
   container = container || deploy_opsHost();
   document.body.classList.remove('ops-detail');   // Rule A/B (v1.14.125): list view shows the grid-back (#work-back)
@@ -27196,6 +27218,19 @@ function deploy_showDetail(id) {
   html += '<button class="pt-btn pt-btn-ghost" style="flex:1;color:var(--gold);border-color:rgba(255,214,10,0.25)" onclick="handoff_showGenerator(\'' + dep.id + '\')">' + _ico.swap('#ffd60a', 13) + ' HANDOFF</button>';
   html += '<button class="pt-btn pt-btn-ghost" style="flex:1" onclick="deploy_showAuditLog(\'' + dep.id + '\')">' + _ico.clipboard('#5cf2ff', 13) + ' HISTORY</button>';
   html += '</div>';
+
+  // Row 2.4 — Deployment Tools (v1.14.170 · Master-Reorg R-2a). The reorg spec homes
+  //   BURNDOWN + AUDITS in the deployment detail; this adds that door. (Heads-up: the
+  //   current renderers show a GLOBAL burndown/audit list, not a dep.id filter — see
+  //   deploy_detailTool; scoping is a separate change.) Redesign-only gate keeps
+  //   ?legacy=1 byte-identical (legacy reaches them via the #ops-tab-strip). The TOOLS
+  //   grid stays this ship — two doors tolerated; its deletion is R-2b, after verify.
+  if (typeof redesign_isOn === 'function' && redesign_isOn()) {
+    html += '<div style="display:flex;gap:8px">';
+    html += '<button class="pt-btn pt-btn-ghost" style="flex:1;color:var(--gold);border-color:rgba(255,203,69,0.28)" onclick="deploy_detailTool(\'' + dep.id + '\',\'burndown\')">' + _ico.zap('#ffcb45', 13) + ' BURNDOWN</button>';
+    html += '<button class="pt-btn pt-btn-ghost" style="flex:1;color:#ff8a00;border-color:rgba(255,138,0,0.28)" onclick="deploy_detailTool(\'' + dep.id + '\',\'audits\')">' + _ico.clipboard('#ff8a00', 13) + ' AUDITS</button>';
+    html += '</div>';
+  }
 
   // AS-BUILT export (v1.7.3) — always available (Master-scoped and legacy; the join just has
   // fewer sources on legacy). Plan-vs-built-vs-verified truth out, on-device CSV.
