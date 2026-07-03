@@ -10750,7 +10750,7 @@ body.rd #master-section-bar [data-section="profile"] { display:none; }
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.171';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.172';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -28528,6 +28528,16 @@ function deploy_showRackDetail(deployId, rackId) {
   html += '<button class="pt-btn pt-btn-ghost" style="width:auto;padding:6px 12px;font-size: var(--fs-caption)" onclick="deploy_assignRack(\'' + deployId + '\',\'' + rackId + '\')">' + _ico.pencil('#5cf2ff', 12) + ' ASSIGN</button>';
   html += '<button class="pt-btn pt-btn-ghost" style="width:auto;padding:6px 12px;font-size: var(--fs-caption);color:var(--cyan);border-color:rgba(92,242,255,0.2)" onclick="deploy_generateRackQR(\'' + deployId + '\',\'' + rackId + '\')" title="Generate QR label for this rack">' + _ico.qr('#5cf2ff', 12) + ' QR</button>';
   html += '</div>';
+
+  // ── Log Note (v1.14.172 · Master-Reorg R-2c) — the rack-scoped LOG NOTE was STRANDED under the
+  //    redesign: it lived ONLY in the legacy #action-stripe rack toolbar, which is display:none under
+  //    body.rd (L8895). Re-home it here in the redesign rack detail — its natural, rack-scoped home;
+  //    the note lands in the same audit trail the Handoff report reads. Redesign-only gate → ?legacy=1
+  //    byte-identical (legacy keeps its #action-stripe LOG NOTE). stripeRack_logNote is async; the
+  //    onclick fires it exactly as the legacy stripe did (fire-and-forget; it awaits its own prompt).
+  if (typeof redesign_isOn === 'function' && redesign_isOn()) {
+    html += '<button class="pt-btn pt-btn-ghost" style="width:100%;box-sizing:border-box;margin-top:10px;color:var(--cyan);border-color:rgba(92,242,255,0.25)" onclick="stripeRack_logNote(\'' + deployId + '\',\'' + rackId + '\')">' + _ico.file('#5cf2ff', 13) + ' &nbsp;LOG NOTE</button>';
+  }
 
   // ── Anomaly Detection — flag any in-progress phase running long ──
   var anomalyHtml = '';
