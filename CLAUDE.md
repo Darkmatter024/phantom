@@ -35,12 +35,12 @@ PHANTOM is an offline-first, single-file iOS Safari PWA (`dct-ios.html`, ~44k li
 6. Site data flows from the master; the app carries only fleet truth. One master load hydrates Site Profile, Rack Map, Port Map. Profiles are per-facility; switching masters switches context.
 
 ## Current state & queue (update this section every ship)
-- Live: `v1.14.172` (pushed; **awaiting John device-verify — cork 6 deep: .167–.172 all shipped on faith**).
+- Live: `v1.14.172` — **device-verified .167–.172 by John (2026-07-03), all good. Cork cleared.**
 - Governing docs: `PHASE0-CENSUS.md` (in repo; LIVE/RE-HOMED/STRANDED/RETIRED verdicts — source of truth for R1 deletion). `PHANTOM-MASTER-REORG-SPEC.md` (roadmap + decision log; currently Downloads-only — copy into repo if it should govern sessions).
 - DONE: Phase-0 census (38 surfaces; awaiting John SIGN-OFF) · R-1 `.169` (Work re-sort, 8 shift cards) · R-2a `.170` (Deploy detail absorbs BURNDOWN/AUDITS via `deploy_detailTool`) · R-2b `.171` (retire the TOOLS grid from live nav; ⚙ TOOLS → ⚑ BLOCKER; zero router touch) · R-2c `.172` (re-home stranded rack LOG NOTE; Phase Work resolved-by-existing). All Phase-0.5 strands now resolved or folded.
 - Queue: **Ship B** (router gating; John gate sign-off REQUIRED — also carries the deferred `deploy_showTools`/`deploy_showOpsTool` deletion + `nav_restore` `'tools'`/`'tool:'` cleanup) → **R-3** (PLATFORMS: merge HARDWARE+POWER into one platform-first card; Blast Radius lands here) → **R1 deletion pass** (RETIRED incl. Crash-Cart Mode, after Ship B device-verified).
 - ⚠️ Prior queue also listed **R-2.5** and **F-1** — no specs for these in the reorg spec I hold; John to define or confirm they're superseded by the R-2a/b/c split.
-- Open decisions on John: device-verify `.167–.172` · census SIGN-OFF · R-3 (GB200 fifth card vs "GB NVL" fold / keep-or-prune GB-series ref at a Hopper site / Ship B go-no-go).
+- Open decisions on John (device-verify DONE): census SIGN-OFF · **Ship B go/no-go + router sign-off** · R-3 (GB200 fifth card vs "GB NVL" fold / keep-or-prune GB-series ref at a Hopper site) · define R-2.5/F-1 or confirm superseded.
 - RETIRED by owner decision: Crash-Cart Mode (do NOT build doors for it; physical deletion waits for R1).
 
 ## Communication style
