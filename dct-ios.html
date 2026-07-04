@@ -10750,7 +10750,7 @@ body.rd #master-section-bar [data-section="profile"] { display:none; }
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.172';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.173';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -11394,18 +11394,17 @@ if (typeof window !== 'undefined') {
         <div class="rf-glabel"><span class="dot"></span>CRASH CART<span class="ln"></span></div>
         <div class="rf-grid-wrap">
           <div class="rf-card" style="--rfac:#28e0ff" role="button" tabindex="0" onclick="showRefTab('rf-optics')" aria-label="Optics reference"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-ref-optics-256.webp" alt="" loading="eager"></div><div class="rf-cname">OPTICS</div><div class="rf-cmeta">Fiber · Form factors · MPO</div></div>
-          <div class="rf-card" style="--rfac:#39e09b" role="button" tabindex="0" onclick="showRefTab('rf-hw')" aria-label="Hardware reference"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-ref-hardware-256.webp" alt="" loading="eager"></div><div class="rf-cname">HARDWARE</div><div class="rf-cmeta">GPU · Switch · PDU</div></div>
+          <div class="rf-card" style="--rfac:#4b9bff" role="button" tabindex="0" onclick="rd_openPlatforms()" aria-label="Platforms — GPU platforms, cooling and power"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-ref-hardware-256.webp" alt="" loading="eager"></div><div class="rf-cname">PLATFORMS</div><div class="rf-cmeta">GPU · Cooling · Power</div></div>
           <div class="rf-card" style="--rfac:#8a4bff" role="button" tabindex="0" onclick="showRefTab('rf-cli')" aria-label="CLI and InfiniBand reference"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-ref-cli-256.webp" alt="" loading="eager"></div><div class="rf-cname">CLI / IB</div><div class="rf-cmeta">Fabric · Diagnostics</div></div>
           <div class="rf-card" style="--rfac:#1fffd0" role="button" tabindex="0" onclick="showRefTab('rf-hwref')" aria-label="Parts — cables and part numbers"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-ref-hwref-256.webp" alt="" loading="eager"></div><div class="rf-cname">PARTS</div><div class="rf-cmeta">Cables · Part numbers</div></div>
           <div class="rf-card" style="--rfac:#ffcb45" role="button" tabindex="0" onclick="showRefTab('rf-know')" aria-label="Know — SOPs and how-tos"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-ref-know-256.webp" alt="" loading="eager"></div><div class="rf-cname">KNOW</div><div class="rf-cmeta">SOPs · How-tos</div></div>
           <div class="rf-card" style="--rfac:#ff2bd6" role="button" tabindex="0" onclick="ref_openCompass()" aria-label="Compass — cage nut and RU map"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-ref-compass-256.webp" alt="" loading="eager"></div><div class="rf-cname">COMPASS</div><div class="rf-cmeta">Cage nut · RU map</div></div>
-          <div class="rf-card" style="--rfac:#4b9bff" role="button" tabindex="0" onclick="rd_openPower()" aria-label="Power"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-tool-power-256.webp" alt="" loading="eager"></div><div class="rf-cname">POWER</div><div class="rf-cmeta">Blast radius · PDU</div></div>
           <div class="rf-card" style="--rfac:#9b59ff" role="button" tabindex="0" onclick="geOpen()" aria-label="Ghost Echo — fix log and pattern replay"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-ref-ghostecho-256.webp" alt="" loading="eager"></div><div class="rf-cname">GHOST ECHO</div><div class="rf-cmeta">Fix log · Replay</div></div>
         </div>
       </div>
       <div class="subtab-strip">
         <div class="stab active" data-rf="rf-optics" onclick="showStab(this,'ref-sub','rf-optics')">Optics</div>
-        <div class="stab" data-rf="rf-hw" onclick="showStab(this,'ref-sub','rf-hw')">Hardware</div>
+        <div class="stab" data-rf="rf-hw" onclick="showStab(this,'ref-sub','rf-hw')">Platforms</div>
         <div class="stab" data-rf="rf-cli" onclick="showStab(this,'ref-sub','rf-cli')">CLI/IB</div>
         <div class="stab" data-rf="rf-hwref" onclick="showStab(this,'ref-sub','rf-hwref')">HW Ref</div>
         <div class="stab" data-rf="rf-know" onclick="showStab(this,'ref-sub','rf-know')">Know</div>
@@ -16102,7 +16101,7 @@ document.addEventListener('DOMContentLoaded', redesign_initToggle);
 // showRefTab(): jump into the Reference page and activate a subtab. Used by
 // EXTERNAL entry points (the old pg-power Runbook button, search results) so they
 // still reach the re-homed content. Direct tab taps use showStab(this,...).
-var REF_CAT_NAMES = { 'rf-optics':'OPTICS', 'rf-hw':'HARDWARE', 'rf-cli':'CLI / IB', 'rf-hwref':'HW REF', 'rf-know':'KNOW' };
+var REF_CAT_NAMES = { 'rf-optics':'OPTICS', 'rf-hw':'PLATFORMS', 'rf-cli':'CLI / IB', 'rf-hwref':'HW REF', 'rf-know':'KNOW' };
 function showRefTab(targetId) {
   showMode('ref');
   var pr = document.getElementById('pg-ref'); if (pr) pr.classList.remove('rf-grid');   // v1.14.102: deep-link / card tap → drill into the panel (out of the grid)
@@ -16290,6 +16289,71 @@ function redesign_homeHardware() {
   }
 }
 document.addEventListener('DOMContentLoaded', redesign_homeHardware);
+
+// ── PLATFORMS (v1.14.173 · Master-Reorg R-3a) ─────────────────────────────────────
+// Collapses the redundant HARDWARE + POWER Crash-Cart cards (both opened #rf-hw — a
+// "one door per feature" violation) into ONE platform-first PLATFORMS card. The landing
+// is a compact platform reference (H100/H200/B200/GB-NVL: generation + AIR/DLC cooling)
+// prepended into #rf-hw; the existing re-homed pg-power function tabs (Power/LED/Rack
+// Map/Blast/Thermal) stay BELOW as the deep content — a framing layer, NO content
+// rewrite (Design Law 3 / R4 rule). Cooling facts: H100/H200/B200 HGX = AIR; the GB-
+// series NVL racks = DLC (liquid). GB200 folded into the GB-NVL card (John's call). A
+// platform/SHARED tap routes into the existing PDU & Power Math content (pw-power) — no
+// per-platform partition (that needs data + is an R4 rewrite). Blast-Radius→Deploy + the
+// Blast Radius / Rack Map pill cleanup are R-3b. Redesign-only → ?legacy=1 byte-identical.
+var RD_PLATFORMS = [
+  { name: 'H100',   gen: 'Hopper',                 cool: 'AIR', cc: 'var(--cyan)' },
+  { name: 'H200',   gen: 'Hopper',                 cool: 'AIR', cc: 'var(--cyan)' },
+  { name: 'B200',   gen: 'Blackwell',              cool: 'AIR', cc: 'var(--cyan)' },
+  { name: 'GB NVL', gen: 'Blackwell · GB200/GB300', cool: 'DLC', cc: 'var(--vio)' }
+];
+function _rd_platformsLandingHtml() {
+  var cards = RD_PLATFORMS.map(function (p) {
+    return '<div role="button" tabindex="0" onclick="rd_platformShowPower()" ' +
+      'style="background:var(--surf-1);border:1px solid rgba(138,175,191,0.18);border-radius:var(--hud-r12,12px);padding:12px;cursor:pointer;-webkit-tap-highlight-color:transparent">' +
+      '<div style="font-family:var(--orb);font-size:15px;font-weight:700;color:var(--white);letter-spacing:1px">' + p.name + '</div>' +
+      '<div style="font-family:var(--mono);font-size:var(--fs-micro);color:var(--slate);margin-top:2px">' + p.gen + '</div>' +
+      '<div style="margin-top:8px"><span style="display:inline-block;font-family:var(--mono);font-size:var(--fs-micro);letter-spacing:1.5px;padding:3px 8px;border-radius:6px;color:' + p.cc + ';border:1px solid ' + p.cc + ';background:color-mix(in srgb,' + p.cc + ' 12%,transparent)">' + p.cool + '</span></div>' +
+      '</div>';
+  }).join('');
+  return '<div id="rf-platforms" style="margin-bottom:6px">' +
+    '<div class="rf-glabel"><span class="dot"></span>PLATFORMS<span class="ln"></span></div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">' + cards + '</div>' +
+    '<div role="button" tabindex="0" onclick="rd_platformShowPower()" ' +
+      'style="background:linear-gradient(160deg,rgba(31,255,208,0.08),rgba(31,255,208,0.02));border:1px solid color-mix(in srgb,var(--teal) 30%,transparent);border-radius:var(--hud-r12,12px);padding:11px 13px;cursor:pointer;-webkit-tap-highlight-color:transparent;margin-bottom:10px">' +
+      '<div style="font-family:var(--orb);font-size:12px;font-weight:700;color:var(--teal);letter-spacing:2px">SHARED</div>' +
+      '<div style="font-family:var(--mono);font-size:var(--fs-micro);color:var(--slate);margin-top:3px">80% derate (NEC 210.20) · 3-phase balance · DLC/CDU · thermal · cage nut</div>' +
+    '</div>' +
+    '</div>';
+}
+// Route a platform/SHARED tap into the existing PDU & Power Math content (pw-power).
+function rd_platformShowPower() {
+  var host = document.getElementById('rf-hw'); if (!host) return;
+  var strip = host.querySelector('.subtab-strip');
+  if (strip) {
+    var pw = Array.prototype.slice.call(strip.querySelectorAll('.stab')).filter(function (b) {
+      return /pw-power/.test(b.getAttribute('onclick') || '');
+    })[0];
+    if (pw) pw.click();
+  }
+  var panel = document.getElementById('pw-power');
+  if (panel && panel.scrollIntoView) { try { panel.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (_) {} }
+}
+// PLATFORMS card → open the (now platform-first) Hardware surface; ensure the landing.
+function rd_openPlatforms() {
+  if (typeof showRefTab === 'function') { try { showRefTab('rf-hw'); } catch (_) {} }
+  redesign_addPlatformsLanding();
+  var host = document.getElementById('rf-hw'); if (host) host.scrollTop = 0;
+}
+// Prepend the PLATFORMS landing into #rf-hw once, after redesign_homeHardware fills it.
+// Redesign-only (FIELD mode leaves #rf-hw the stub); idempotent (guarded on #rf-platforms).
+function redesign_addPlatformsLanding() {
+  if (typeof redesign_isOn === 'function' && !redesign_isOn()) return;
+  var host = document.getElementById('rf-hw');
+  if (!host || document.getElementById('rf-platforms')) return;
+  host.insertAdjacentHTML('afterbegin', _rd_platformsLandingHtml());
+}
+document.addEventListener('DOMContentLoaded', redesign_addPlatformsLanding);
 
 // redesign_homeCompass(): fold the Cage Nut Compass (pg-compass) into Hardware as a
 // 'Cage Nut' subtab. Builds a stab on the re-homed Hardware strip + a #pw-compass
