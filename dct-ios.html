@@ -8779,6 +8779,16 @@ body.rd #ref-grid .rf-card:active .rf-i-img, body.rd #work-grid .rf-card:active 
 #ref-back .rf-back-title { font-family:var(--orb); font-weight:700; letter-spacing:.14em; font-size:18px; color:var(--white); }
 body.rd #pg-ref:not(.rf-grid) .ref-sub.stab-active { animation:rf-fade .22s ease both; }
 @keyframes rf-fade { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+/* ━━━ v1.14.175 — R-3b PLATFORMS drill-in (redesign-only). A platform tap swaps the
+   #rf-hw view for a filtered reference panel; the hide-siblings rule keeps the source
+   content MOUNTED (no mutation) while only the detail shows. BACK removes the class. */
+#rf-plat-detail { display:none; }
+body.rd #rf-hw.plat-detail-open > #rf-plat-detail { display:block; animation:rf-fade .22s ease both; }
+body.rd #rf-hw.plat-detail-open > :not(#rf-plat-detail) { display:none !important; }
+.plat-det-hdr { display:flex; align-items:center; gap:12px; margin:2px 2px 16px; }
+.plat-det-hdr .t { font-family:var(--orb); font-weight:700; letter-spacing:.1em; font-size:20px; color:var(--white); line-height:1; }
+.plat-det-hdr .s { font-family:var(--mono); font-weight:600; font-size:11px; letter-spacing:.12em; color:var(--slate); margin-top:4px; }
+.plat-det-empty { padding:26px 16px; text-align:center; color:var(--slate); font-family:var(--mono); font-size:13px; line-height:1.6; }
 /* ━━━ REDESIGN v1.14.104 — Site Profile in the New UI: SYS-panel entry + full-height sheet
    (renders the REUSED siteProfile_showEditor). Frame-safe — sits above the bottom nav. */
 #hdr-agg-profile-row { display: none; }
@@ -10750,7 +10760,7 @@ body.rd #master-section-bar [data-section="profile"] { display:none; }
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.174';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.175';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -16290,45 +16300,122 @@ function redesign_homeHardware() {
 }
 document.addEventListener('DOMContentLoaded', redesign_homeHardware);
 
-// ── PLATFORMS (v1.14.173 · Master-Reorg R-3a) ─────────────────────────────────────
-// Collapses the redundant HARDWARE + POWER Crash-Cart cards (both opened #rf-hw — a
-// "one door per feature" violation) into ONE platform-first PLATFORMS card. The landing
-// is a compact platform reference (H100/H200/B200/GB-NVL: generation + AIR/DLC cooling)
-// prepended into #rf-hw; the existing re-homed pg-power function tabs (Power/LED/Rack
-// Map/Blast/Thermal) stay BELOW as the deep content — a framing layer, NO content
-// rewrite (Design Law 3 / R4 rule). Cooling facts: H100/H200/B200 HGX = AIR; the GB-
-// series NVL racks = DLC (liquid). GB200 folded into the GB-NVL card (John's call). A
-// platform/SHARED tap routes into the existing PDU & Power Math content (pw-power) — no
-// per-platform partition (that needs data + is an R4 rewrite). Blast-Radius→Deploy + the
-// Blast Radius / Rack Map pill cleanup are R-3b. Redesign-only → ?legacy=1 byte-identical.
+// ── PLATFORMS (v1.14.175 · Master-Reorg R-3b) ─────────────────────────────────────
+// Collapses the redundant HARDWARE + POWER Crash-Cart cards into ONE platform-first
+// PLATFORMS card (a "one door per feature" fix). The landing is a photoreal rf-card
+// grid (five platforms + SHARED) prepended into #rf-hw, speaking the exact Crash-Cart
+// card language (.rf-card + the .155 square treatment, inherited via .deploy-tools-grid).
+// The re-homed pg-power function tabs (Power/LED/Rack Map/Blast/Thermal) stay BELOW as
+// the deep content — a framing layer, NO content rewrite (Design Law 3 / R4 rule).
+// FIVE cards per the logged decision (H100 · H200 · B200 · GB200 · GB300); the .173
+// "GB200 folded into GB-NVL" comment was a MIS-LOG and is reverted here. Cooling facts:
+// H100/H200/B200 HGX = AIR; GB200/GB300 NVL racks = DLC. Each platform tap
+// (rd_platformOpen) shows a filtered panel of the matching reference cards (title/badge
+// regex, CLONED — no source mutation, honest empty-state, BACK→landing); SHARED scrolls
+// the shared PDU & Power Math content (pw-power). Redesign-only → ?legacy=1 byte-identical.
 var RD_PLATFORMS = [
-  { name: 'H100',   gen: 'Hopper',                 cool: 'AIR', cc: 'var(--cyan)' },
-  { name: 'H200',   gen: 'Hopper',                 cool: 'AIR', cc: 'var(--cyan)' },
-  { name: 'B200',   gen: 'Blackwell',              cool: 'AIR', cc: 'var(--cyan)' },
-  { name: 'GB NVL', gen: 'Blackwell · GB200/GB300', cool: 'DLC', cc: 'var(--vio)' }
+  { key:'h100',  name:'H100',   gen:'Hopper',          cool:'AIR', cc:'var(--cyan)', icon:'icons/phantom-plat-h100-256.webp' },
+  { key:'h200',  name:'H200',   gen:'Hopper',          cool:'AIR', cc:'var(--cyan)', icon:'icons/phantom-plat-h200-256.webp' },
+  { key:'b200',  name:'B200',   gen:'Blackwell',       cool:'AIR', cc:'var(--cyan)', icon:'icons/phantom-plat-b200-256.webp' },
+  { key:'gb200', name:'GB200',  gen:'Blackwell · NVL', cool:'DLC', cc:'var(--vio)',  icon:'icons/phantom-plat-gb200-256.webp' },
+  { key:'gb300', name:'GB300',  gen:'Blackwell · NVL', cool:'DLC', cc:'var(--vio)',  icon:'icons/phantom-plat-gb300-256.webp' }
 ];
-function _rd_platformsLandingHtml() {
-  var cards = RD_PLATFORMS.map(function (p) {
-    return '<div role="button" tabindex="0" onclick="rd_platformShowPower()" ' +
-      'style="background:var(--surf-1);border:1px solid rgba(138,175,191,0.18);border-radius:var(--hud-r12,12px);padding:12px;cursor:pointer;-webkit-tap-highlight-color:transparent">' +
-      '<div style="font-family:var(--orb);font-size:15px;font-weight:700;color:var(--white);letter-spacing:1px">' + p.name + '</div>' +
-      '<div style="font-family:var(--mono);font-size:var(--fs-micro);color:var(--slate);margin-top:2px">' + p.gen + '</div>' +
-      '<div style="margin-top:8px"><span style="display:inline-block;font-family:var(--mono);font-size:var(--fs-micro);letter-spacing:1.5px;padding:3px 8px;border-radius:6px;color:' + p.cc + ';border:1px solid ' + p.cc + ';background:color-mix(in srgb,' + p.cc + ' 12%,transparent)">' + p.cool + '</span></div>' +
-      '</div>';
-  }).join('');
-  return '<div id="rf-platforms" style="margin-bottom:6px">' +
-    '<div class="rf-glabel"><span class="dot"></span>PLATFORMS<span class="ln"></span></div>' +
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">' + cards + '</div>' +
-    '<div role="button" tabindex="0" onclick="rd_platformShowPower()" ' +
-      'style="background:linear-gradient(160deg,rgba(31,255,208,0.08),rgba(31,255,208,0.02));border:1px solid color-mix(in srgb,var(--teal) 30%,transparent);border-radius:var(--hud-r12,12px);padding:11px 13px;cursor:pointer;-webkit-tap-highlight-color:transparent;margin-bottom:10px">' +
-      '<div style="font-family:var(--orb);font-size:12px;font-weight:700;color:var(--teal);letter-spacing:2px">SHARED</div>' +
-      '<div style="font-family:var(--mono);font-size:var(--fs-micro);color:var(--slate);margin-top:3px">80% derate (NEC 210.20) · 3-phase balance · DLC/CDU · thermal · cage nut</div>' +
-    '</div>' +
+// Platform token matchers — \b before B200 excludes the "B200" inside "GB200".
+var RD_PLAT_RE = { h100:/\bH100/i, h200:/\bH200/i, b200:/\bB200/i, gb200:/GB200/i, gb300:/GB300/i };
+// Content panels scanned for platform-specific reference cards (Power / LED-GPU /
+// Thermal). Rack Map + Blast Radius are interactive tools, not reference — skipped.
+var RD_PLAT_PANELS = ['pw-power', 'pw-hw', 'pw-thermal'];
+
+function _rd_platformCard(p) {
+  return '<div class="rf-card" style="--rfac:' + p.cc + '" role="button" tabindex="0" ' +
+    'onclick="rd_platformOpen(\'' + p.key + '\')" aria-label="' + p.name + ' — ' + p.gen + ', ' + p.cool + ' cooled">' +
+    '<span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span>' +
+    '<div class="rf-cic"><img class="rf-i-img" src="' + p.icon + '" alt="" loading="eager"></div>' +
+    '<div class="rf-cname">' + p.name + '</div>' +
+    '<div class="rf-cmeta">' + p.gen + ' · ' + p.cool + '</div>' +
     '</div>';
 }
-// Route a platform/SHARED tap into the existing PDU & Power Math content (pw-power).
-function rd_platformShowPower() {
+function _rd_platformsLandingHtml() {
+  var cards = RD_PLATFORMS.map(_rd_platformCard).join('');
+  // SHARED — sixth rf-card (teal accent); routes to the shared PDU & Power Math content.
+  var shared = '<div class="rf-card" style="--rfac:var(--teal)" role="button" tabindex="0" ' +
+    'onclick="rd_platformOpen(\'shared\')" aria-label="Shared — cross-platform power, thermal and cage-nut reference">' +
+    '<span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span>' +
+    '<div class="rf-cic"><img class="rf-i-img" src="icons/phantom-plat-shared-256.webp" alt="" loading="eager"></div>' +
+    '<div class="rf-cname">SHARED</div>' +
+    '<div class="rf-cmeta">Derate · 3-phase · DLC/CDU</div>' +
+    '</div>';
+  return '<div id="rf-platforms" style="margin-bottom:6px">' +
+    '<div class="rf-glabel"><span class="dot"></span>PLATFORMS<span class="ln"></span></div>' +
+    '<div class="rf-grid-wrap deploy-tools-grid">' + cards + shared + '</div>' +
+    '</div>';
+}
+// Collect the reference cards whose title/badge names this platform (never mutated).
+function rd_platformMatches(key) {
+  var re = RD_PLAT_RE[key]; var out = [];
+  if (!re) return out;
+  RD_PLAT_PANELS.forEach(function (pid) {
+    var panel = document.getElementById(pid); if (!panel) return;
+    Array.prototype.forEach.call(panel.querySelectorAll('.card'), function (card) {
+      var t = card.querySelector('.card-title'); var b = card.querySelector('.badge');
+      var txt = ((t ? t.textContent : '') + ' ' + (b ? b.textContent : ''));
+      if (re.test(txt)) out.push(card);
+    });
+  });
+  return out;
+}
+// The reusable detail host (last child of #rf-hw; CSS hides its siblings when open).
+function _rd_platformDetailEl() {
+  var host = document.getElementById('rf-hw'); if (!host) return null;
+  var det = document.getElementById('rf-plat-detail');
+  if (!det) { det = document.createElement('div'); det.id = 'rf-plat-detail'; host.appendChild(det); }
+  return det;
+}
+// Platform tap → filtered reference panel (or honest empty state). BACK → landing.
+function rd_platformOpen(key) {
   var host = document.getElementById('rf-hw'); if (!host) return;
+  if (key === 'shared') { rd_platformShowShared(); return; }
+  var meta = RD_PLATFORMS.filter(function (p) { return p.key === key; })[0]; if (!meta) return;
+  var det = _rd_platformDetailEl(); if (!det) return;
+  var chipCol = meta.cool === 'DLC' ? 'var(--vio)' : 'var(--cyan)';
+  det.innerHTML = '<div class="plat-det-hdr">' +
+    '<button class="rf-back-btn" onclick="rd_platformBack()" aria-label="Back to Platforms">' +
+    '<svg viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>' +
+    '<div><div class="t">' + meta.name + '</div>' +
+    '<div class="s">' + meta.gen + ' · <span style="color:' + chipCol + '">' + meta.cool + '</span></div></div></div>';
+  var body = document.createElement('div'); body.className = 'pwr-sub stab-active';
+  var matches = rd_platformMatches(key);
+  if (!matches.length) {
+    body.innerHTML = '<div class="plat-det-empty">No ' + meta.name + '-specific reference yet.<br>' +
+      '<span role="button" tabindex="0" onclick="rd_platformOpen(\'shared\')" style="color:var(--teal);cursor:pointer">See SHARED reference ›</span></div>';
+  } else {
+    matches.forEach(function (card, i) {
+      var c = card.cloneNode(true);
+      c.classList.remove('open');
+      // Re-id any [data-pdu] diagram to a fresh unique id (pdu_render targets el.id) and
+      // clear its rendered flag so it draws into THIS clone; strip every other id to
+      // avoid duplicate-id collisions with the still-mounted (hidden) source cards.
+      Array.prototype.forEach.call(c.querySelectorAll('[id]'), function (e, k) {
+        if (e.hasAttribute('data-pdu')) { e.id = 'pdu-plat-' + key + '-' + i + '-' + k; delete e.dataset.pduRendered; }
+        else { e.removeAttribute('id'); }
+      });
+      body.appendChild(c);
+    });
+  }
+  det.appendChild(body);
+  host.classList.add('plat-detail-open');
+  host.scrollTop = 0;
+  if (typeof haptic === 'function') { try { haptic(6); } catch (_) {} }
+}
+function rd_platformBack() {
+  var host = document.getElementById('rf-hw'); if (!host) return;
+  host.classList.remove('plat-detail-open');
+  host.scrollTop = 0;
+}
+// SHARED → the existing shared PDU & Power Math content (pw-power), scrolled into view.
+function rd_platformShowShared() {
+  var host = document.getElementById('rf-hw'); if (!host) return;
+  host.classList.remove('plat-detail-open');
   var strip = host.querySelector('.subtab-strip');
   if (strip) {
     var pw = Array.prototype.slice.call(strip.querySelectorAll('.stab')).filter(function (b) {
@@ -16339,11 +16426,12 @@ function rd_platformShowPower() {
   var panel = document.getElementById('pw-power');
   if (panel && panel.scrollIntoView) { try { panel.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (_) {} }
 }
-// PLATFORMS card → open the (now platform-first) Hardware surface; ensure the landing.
+// PLATFORMS card → open the platform-first Hardware surface; ensure the landing + reset drill-in.
 function rd_openPlatforms() {
   if (typeof showRefTab === 'function') { try { showRefTab('rf-hw'); } catch (_) {} }
   redesign_addPlatformsLanding();
-  var host = document.getElementById('rf-hw'); if (host) host.scrollTop = 0;
+  var host = document.getElementById('rf-hw');
+  if (host) { host.classList.remove('plat-detail-open'); host.scrollTop = 0; }
 }
 // Prepend the PLATFORMS landing into #rf-hw once, after redesign_homeHardware fills it.
 // Redesign-only (FIELD mode leaves #rf-hw the stub); idempotent (guarded on #rf-platforms).
