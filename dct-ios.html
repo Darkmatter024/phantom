@@ -10760,7 +10760,7 @@ body.rd #master-section-bar [data-section="profile"] { display:none; }
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.176';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.177';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -16278,7 +16278,7 @@ document.addEventListener('DOMContentLoaded', redesign_homeIssues);
 // redesign_homeHardware(): re-parent the rest of pg-power (Power / LED-GPU / Rack
 // Map / Blast Radius / Thermal subtabs + panels) into Reference→Hardware (#rf-hw).
 // Runs AFTER homeKnow (registered earlier), so pw-rb is already moved to Know and
-// dropped from pwr-sub. Hides the now-orphaned Runbook stab + the Rack Map stab (R-3b: Rack Map's canonical door is the Work RACK MAP card, rd_openOpsTool('rackmap'); the ref-strip pill was a duplicate), then defaults
+// dropped from pwr-sub. Hides the now-orphaned Runbook stab + the Rack Map stab (R-3b: Rack Map's canonical door is the Work RACK MAP card, rd_openOpsTool('rackmap'); the ref-strip pill was a duplicate). v1.14.177: also hides the Blast Radius stab — Blast Radius is re-homed to the Deploy detail (deployment-scoped, Design Law 2) via a settable renderBlastRadius target + OPS_TABS.blast; its dead rd_openPower door is orphaned (R1 delete), then defaults
 // the inner Power subtab. Flag-gated → FIELD mode leaves pg-power whole.
 function redesign_homeHardware() {
   if (!redesign_isOn()) return;
@@ -16290,7 +16290,7 @@ function redesign_homeHardware() {
     var strip = dest.querySelector('.subtab-strip');
     if (strip) {
       strip.querySelectorAll('.stab').forEach(function(b) {
-        if (/pw-rb|pw-rm/.test(b.getAttribute('onclick') || '')) b.style.display = 'none';  // v1.14.176 R-3b: hide the Rack Map pill too (dup of the Work RACK MAP card)
+        if (/pw-rb|pw-rm|pw-blast/.test(b.getAttribute('onclick') || '')) b.style.display = 'none';  // v1.14.176/.177 R-3b: hide Rack Map + Blast Radius pills (Rack Map = Work card; Blast Radius = Deploy detail)
       });
     }
     if (typeof initSubtab === 'function') {
@@ -16807,6 +16807,7 @@ function initSubtab(groupClass, defaultId, stabSelector) {
 let currentOpsTab = 'sops';
 
 const OPS_TABS = {
+  blast:    function(c) { c.innerHTML = ''; var w = document.createElement('div'); w.className = 'br-wrap'; c.appendChild(w); if (typeof renderBlastRadius === 'function') renderBlastRadius(w); },
   sops:     function(c) {
     c.innerHTML = `
       <div class="sop-toolbar">
@@ -23359,7 +23360,8 @@ var DEPLOY_TOOLS = [
   { tab:'rackmap',   name:'RACK MAP',   meta:'ELEVATION',  ac:'#ffcb45', img:'icons/phantom-tool-rackmap-256.webp', icon:'<rect x="5" y="3" width="14" height="18" rx="1"/><path d="M8 7h8M8 11h8M8 15h8"/>' },
   { tab:'sops',      name:'SOPS',       meta:'PROCEDURES', ac:'#28e0ff', img:'icons/phantom-tool-sops-256.webp', icon:'<path d="M5 4h11l3 3v13H5z"/><path d="M9 9h6M9 13h6"/>' },
   { tab:'burndown',  name:'BURNDOWN',   meta:'PROGRESS',   ac:'#ffcb45', img:'icons/phantom-tool-burndown-256.webp', icon:'<path d="M3 3v18h18"/><path d="M7 15l4-4 3 2 5-7"/>' },
-  { tab:'audits',    name:'AUDITS',     meta:'SERIALS',    ac:'#ff8a00', img:'icons/phantom-tool-audits-256.webp', icon:'<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 9h6M9 13h4M9 4V3h6v1"/>' }
+  { tab:'audits',    name:'AUDITS',     meta:'SERIALS',    ac:'#ff8a00', img:'icons/phantom-tool-audits-256.webp', icon:'<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 9h6M9 13h4M9 4V3h6v1"/>' },
+  { tab:'blast',     name:'BLAST RADIUS', meta:'POWER MAP',  ac:'#ff453a', img:'icons/phantom-tool-power-256.webp', icon:'<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>' }
 ];
 function _deploy_toolsBackHdr(title, backOnclick) {
   return '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">' +
@@ -27392,6 +27394,7 @@ function deploy_showDetail(id) {
     html += '<button class="pt-btn pt-btn-ghost" style="flex:1;color:var(--gold);border-color:rgba(255,203,69,0.28)" onclick="deploy_detailTool(\'' + dep.id + '\',\'burndown\')">' + _ico.zap('#ffcb45', 13) + ' BURNDOWN</button>';
     html += '<button class="pt-btn pt-btn-ghost" style="flex:1;color:#ff8a00;border-color:rgba(255,138,0,0.28)" onclick="deploy_detailTool(\'' + dep.id + '\',\'audits\')">' + _ico.clipboard('#ff8a00', 13) + ' AUDITS</button>';
     html += '</div>';
+    html += '<button class="pt-btn pt-btn-ghost" style="width:100%;box-sizing:border-box;margin-top:8px;color:var(--red);border-color:rgba(255,69,58,0.28)" onclick="deploy_detailTool(\'' + dep.id + '\',\'blast\')">' + _ico.zap('#ff453a', 13) + ' BLAST RADIUS</button>';
   }
 
   // AS-BUILT export (v1.7.3) — always available (Master-scoped and legacy; the join just has
@@ -42507,8 +42510,15 @@ document.addEventListener('visibilitychange', function() {
 // Lead-gated CSV paste UI ships in the empty state.
 // Drawer + simulation arrive in 2.C / 2.D.
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-function renderBlastRadius() {
-  var wrap = document.getElementById('br-wrap');
+// v1.14.177 (R-3b Path A) — settable Blast Radius render target. renderBlastRadius + its
+// sub-renders (brCsvReopen, _br_applySimDecoration) draw into _br_wrap(); default = the legacy
+// #br-wrap, but the Deploy-detail 'blast' tab passes its own container so Blast Radius lives in
+// the Deploy flow (Design Law 2 - deployment-scoped). contains() guard falls back if torn down.
+var _br_target = null;
+function _br_wrap() { return (_br_target && document.body.contains(_br_target)) ? _br_target : document.getElementById('br-wrap'); }
+function renderBlastRadius(targetEl) {
+  if (targetEl && targetEl.nodeType === 1) _br_target = targetEl;
+  var wrap = _br_wrap();
   if (!wrap) return;
   var dep = (typeof omni_getActiveDeployment === 'function') ? omni_getActiveDeployment() : null;
   if (!dep) {
@@ -42690,7 +42700,7 @@ function brCsvReopen() {
     phantomToast('Lead Mode required to re-import', 'warn');
     return;
   }
-  var wrap = document.getElementById('br-wrap');
+  var wrap = _br_wrap();
   if (!wrap) return;
   wrap.innerHTML = _br_renderEmpty(dep, true);
 }
@@ -42831,7 +42841,7 @@ function _br_renderSimBanner(state) {
 
 // Post-render decoration pass. Idempotent. Self-cleans stale state.
 function _br_applySimDecoration() {
-  var wrap = document.getElementById('br-wrap');
+  var wrap = _br_wrap();
   if (!wrap) return;
 
   // Strip prior decoration unconditionally
