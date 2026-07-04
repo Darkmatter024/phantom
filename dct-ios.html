@@ -10760,7 +10760,7 @@ body.rd #master-section-bar [data-section="profile"] { display:none; }
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.175';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.176';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -16278,7 +16278,7 @@ document.addEventListener('DOMContentLoaded', redesign_homeIssues);
 // redesign_homeHardware(): re-parent the rest of pg-power (Power / LED-GPU / Rack
 // Map / Blast Radius / Thermal subtabs + panels) into Reference→Hardware (#rf-hw).
 // Runs AFTER homeKnow (registered earlier), so pw-rb is already moved to Know and
-// dropped from pwr-sub. Hides the now-orphaned Runbook stab button, then defaults
+// dropped from pwr-sub. Hides the now-orphaned Runbook stab + the Rack Map stab (R-3b: Rack Map's canonical door is the Work RACK MAP card, rd_openOpsTool('rackmap'); the ref-strip pill was a duplicate), then defaults
 // the inner Power subtab. Flag-gated → FIELD mode leaves pg-power whole.
 function redesign_homeHardware() {
   if (!redesign_isOn()) return;
@@ -16290,7 +16290,7 @@ function redesign_homeHardware() {
     var strip = dest.querySelector('.subtab-strip');
     if (strip) {
       strip.querySelectorAll('.stab').forEach(function(b) {
-        if (/pw-rb/.test(b.getAttribute('onclick') || '')) b.style.display = 'none';
+        if (/pw-rb|pw-rm/.test(b.getAttribute('onclick') || '')) b.style.display = 'none';  // v1.14.176 R-3b: hide the Rack Map pill too (dup of the Work RACK MAP card)
       });
     }
     if (typeof initSubtab === 'function') {
