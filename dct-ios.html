@@ -10750,7 +10750,7 @@ body.rd #master-section-bar [data-section="profile"] { display:none; }
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.173';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.174';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -11406,7 +11406,7 @@ if (typeof window !== 'undefined') {
         <div class="stab active" data-rf="rf-optics" onclick="showStab(this,'ref-sub','rf-optics')">Optics</div>
         <div class="stab" data-rf="rf-hw" onclick="showStab(this,'ref-sub','rf-hw')">Platforms</div>
         <div class="stab" data-rf="rf-cli" onclick="showStab(this,'ref-sub','rf-cli')">CLI/IB</div>
-        <div class="stab" data-rf="rf-hwref" onclick="showStab(this,'ref-sub','rf-hwref')">HW Ref</div>
+        <div class="stab" data-rf="rf-hwref" onclick="showStab(this,'ref-sub','rf-hwref')">Parts</div>
         <div class="stab" data-rf="rf-know" onclick="showStab(this,'ref-sub','rf-know')">Know</div>
       </div>
       <!-- Optics: pg-fiber surface re-parented in here at boot by redesign_homeOptics(). -->
@@ -16101,7 +16101,7 @@ document.addEventListener('DOMContentLoaded', redesign_initToggle);
 // showRefTab(): jump into the Reference page and activate a subtab. Used by
 // EXTERNAL entry points (the old pg-power Runbook button, search results) so they
 // still reach the re-homed content. Direct tab taps use showStab(this,...).
-var REF_CAT_NAMES = { 'rf-optics':'OPTICS', 'rf-hw':'PLATFORMS', 'rf-cli':'CLI / IB', 'rf-hwref':'HW REF', 'rf-know':'KNOW' };
+var REF_CAT_NAMES = { 'rf-optics':'OPTICS', 'rf-hw':'PLATFORMS', 'rf-cli':'CLI / IB', 'rf-hwref':'PARTS', 'rf-know':'KNOW' };
 function showRefTab(targetId) {
   showMode('ref');
   var pr = document.getElementById('pg-ref'); if (pr) pr.classList.remove('rf-grid');   // v1.14.102: deep-link / card tap → drill into the panel (out of the grid)
