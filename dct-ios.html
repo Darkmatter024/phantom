@@ -10760,7 +10760,7 @@ body.rd #master-section-bar [data-section="profile"] { display:none; }
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.178';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.179';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -15872,10 +15872,8 @@ function nav_restore(state) {
       var d = state.d;
       if (d === 'command' && typeof deploy_showCommandCenter === 'function') {
         deploy_showCommandCenter(document.getElementById('ops-content'));
-      } else if (d === 'tools' && typeof deploy_showTools === 'function') {   // Stage 3
-        deploy_showTools(deploy_opsHost());
-      } else if (d.indexOf('tool:') === 0 && typeof deploy_showOpsTool === 'function') {   // Stage 3
-        deploy_showOpsTool(d.substring(5));
+      } else if (d.indexOf('tool:') === 0 && typeof rd_openOpsTool === 'function') {   // Ship B2 (.179): 'tools' branch dropped (deploy_showTools deleted); 'tool:' repointed to the canonical p:'work' door — condition AND call
+        rd_openOpsTool(d.substring(5));
       } else if (d === 'ingest' && typeof mscope_open === 'function') {
         mscope_open();
       } else if (d.indexOf('deploy:') === 0 && typeof deploy_showDetail === 'function') {
@@ -23264,9 +23262,9 @@ function deploy_showCommandCenter(container) {
   // Deploy detail (deploy_detailTool, .170). The ONE tenant with no other redesign door was the 'Log a Blocker'
   // one-tap (its #cmd-blocker-card sibling lives in LEGACY pg-triage, which the redesign never shows — verified),
   // so the ⚙ TOOLS button is REPLACED here by a direct ⚑ BLOCKER button (one-tap; was 2-tap via the grid).
-  // blocker_quick() is context-graceful (resolves active deploy/rack or prompts). deploy_showTools/
-  // deploy_showOpsTool kept as nav-restore shims; their full deletion + the nav_restore 'tools'/'tool:' cleanup
-  // is a shared-router touch, held for the router-gating ship (Ship B) / R1.
+  // blocker_quick() is context-graceful (resolves active deploy/rack or prompts). deploy_showTools +
+  // deploy_showOpsTool were DELETED in Ship B2 (.179) — the nav_restore 'tools' branch removed and
+  // 'tool:' repointed to rd_openOpsTool; DEPLOY_TOOLS + _deploy_toolsBackHdr survive them.
   if (typeof redesign_isOn === 'function' && redesign_isOn()) html += '<button class="pt-btn pt-btn-ghost" style="width:auto;padding:10px 13px;font-size: var(--fs-caption);color:var(--red);border-color:color-mix(in srgb,var(--red) 42%,transparent)" onclick="blocker_quick()" aria-label="Log a Blocker">' + _ico.block('#ff453a', 12) + ' BLOCKER</button>';   // redesign-only (legacy uses the #ops-tab-strip) → ?legacy=1 byte-identical
   html += '<button class="pt-btn pt-btn-ghost" style="width:auto;padding:10px 13px;font-size: var(--fs-caption)" onclick="deploy_showList(deploy_opsHost())">' + _ico.list('#5cf2ff', 12) + ' LIST</button>';
   html += '<button class="pt-btn pt-btn-primary" style="width:auto;padding:10px 13px;clip-path:none;font-size: var(--fs-caption)" onclick="mscope_open()">＋ NEW</button>';
@@ -23346,13 +23344,11 @@ function deploy_showCommandCenter(container) {
   c.innerHTML = html;
 }
 
-// ━━━ STAGE 3 — Work›Deploy "Tools" surface (card grid; John picked Option B). ━━━
-// Re-homes the legacy ops-tabs (BOM/Manifest/PortMap/RackMap/Burndown/Audits) + SOPs-CRUD +
-// the Blocker one-tap into #wk-deploy, clearing the PARITY §7 MISSING-IN-REDESIGN blocker.
-// Reuses the live OPS_TABS render fns (don't rebuild) — deploy_showOpsTool renders a tab
-// into deploy_opsHost() with a single "‹ Back" (body.ops-detail hides #work-back per Rule A).
-// nav-pushed so history-back steps Tool → Tools grid → Command Center. Legacy showOpsTab
-// is untouched → ?legacy=1 byte-identical.
+// ━━━ DEPLOY_TOOLS — shared ops-tool registry (tab / name / meta / accent / icon). ━━━
+// Consumed by rd_openOpsTool (the Work-card ops tools) and deploy_detailTool (Deploy-detail
+// BURNDOWN/AUDITS/BLAST). The old deploy_showTools card-grid + deploy_showOpsTool shim this once
+// fed were deleted in Ship B2 (.179, dead since R-2b); this registry + _deploy_toolsBackHdr
+// survive them. Legacy showOpsTab/#ops-tab-strip untouched → ?legacy=1 byte-identical.
 var DEPLOY_TOOLS = [
   { tab:'bom',       name:'BOM',        meta:'PARTS',      ac:'#28e0ff', img:'icons/phantom-tool-bom-256.webp', icon:'<path d="M3 6h18M3 12h18M3 18h12"/>' },
   { tab:'manifest',  name:'MANIFEST',   meta:'GEAR',       ac:'#8a4bff', img:'icons/phantom-tool-manifest-256.webp', icon:'<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 7h6M9 11h6M9 15h4"/>' },
@@ -23369,46 +23365,16 @@ function _deploy_toolsBackHdr(title, backOnclick) {
     '<div style="font-family:var(--orb);font-size:var(--fs-micro);letter-spacing:3px;color:var(--cyan);text-transform:uppercase">' + title + '</div>' +
     '</div>';
 }
-function deploy_showTools(host) {
-  host = host || deploy_opsHost(); if (!host) return;
-  document.body.classList.add('ops-detail');   // single back = inline "‹ Back" (Rule A)
-  if (typeof nav_push === 'function') nav_push({ p:'sop', o:'deploy', d:'tools' });
-  var html = '<div class="msc-wrap">';
-  html += _deploy_toolsBackHdr('DEPLOY · TOOLS', 'nav_back()');
-  var _rd = document.body.classList.contains('rd');
-  html += '<div class="deploy-tools-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">';
-  DEPLOY_TOOLS.forEach(function(t) {
-    var _ic = (t.img && _rd)
-      ? '<img class="rf-i-img" src="' + t.img + '" alt="" loading="eager">'
-      : '<svg viewBox="0 0 24 24" fill="none" stroke="' + t.ac + '" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="width:26px;height:26px">' + t.icon + '</svg>';
-    html += '<div class="rf-card" style="--rfac:' + t.ac + '" role="button" tabindex="0" onclick="deploy_showOpsTool(\'' + t.tab + '\')" aria-label="' + t.name + '">' +
-      '<div class="rf-cic">' + _ic + '</div>' +
-      '<div class="rf-cname">' + t.name + '</div><div class="rf-cmeta">' + t.meta + '</div></div>';
-  });
-  html += '</div>';
-  var _blkMark = _rd
-    ? '<img src="icons/phantom-action-blocker-256.webp" alt="" style="width:46px;height:46px;object-fit:contain;flex:0 0 auto">'
-    : '<svg viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;flex:0 0 auto"><path d="M12 9v4M12 17h.01M10.3 3.9 2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>';
-  html += '<div onclick="blocker_quick()" role="button" tabindex="0" aria-label="Log a Blocker" style="margin-top:12px;display:flex;align-items:center;gap:10px;border-radius:14px;padding:13px 16px;background:linear-gradient(160deg,rgba(255,69,58,.12),rgba(255,69,58,.04));border:1px solid color-mix(in srgb,var(--red) 42%,transparent)">' +
-    _blkMark +
-    '<div><div style="font-family:var(--raj);font-weight:700;font-size:13.5px;color:var(--white)">Log a Blocker</div><div style="font-family:var(--mono);font-size:11px;color:var(--slate)">One tap · routes into handoff</div></div></div>';
-  html += '</div>';
-  host.innerHTML = html;
-}
-function deploy_showOpsTool(tab) {
-  var host = deploy_opsHost(); if (!host || !OPS_TABS[tab]) return;
-  document.body.classList.add('ops-detail');
-  currentOpsTab = tab;
-  if (typeof nav_push === 'function') nav_push({ p:'sop', o:'deploy', d:'tool:' + tab });
-  var meta = DEPLOY_TOOLS.filter(function(t){ return t.tab === tab; })[0];
-  // v1.14.171 R-2b: back → Work grid (the TOOLS grid retired). Only live caller is nav_restore's 'tool:'
-  // restore of a Work-card tool; this harmonizes its back with rd_openOpsTool (both → wk_showGrid).
-  host.innerHTML = _deploy_toolsBackHdr((meta ? meta.name : 'TOOL'), "wk_showGrid();document.body.classList.remove('ops-detail')") + '<div id="ops-tool-host"></div>';
-  var sub = document.getElementById('ops-tool-host');
-  try { OPS_TABS[tab](sub); } catch (e) { try { console.warn('deploy_showOpsTool render failed', tab, e); } catch (_) {} }
-}
+// ━━━ Ship B2 (.179): deploy_showTools + deploy_showOpsTool DELETED. ━━━
+// Already dead code — their only live door (the ⚙ TOOLS button) became a direct ⛑ BLOCKER
+// button in R-2b, and no redesign door has fed them since. TOOLS-grid tenants with a live redesign
+// door: bom/manifest/portmap/rackmap → rd_openOpsTool (Work cards); burndown/audits/blast →
+// deploy_detailTool (Deploy-detail buttons); Log-a-Blocker → blocker_quick. The 'sops' ops-tool
+// still renders into the inert hidden #ops-content under rd — a pre-existing deferred R-2b/R4 gap,
+// NOT introduced here. nav_restore's 'tools' branch is removed; 'tool:' restores via rd_openOpsTool.
+// DEPLOY_TOOLS + _deploy_toolsBackHdr are KEPT (shared by rd_openOpsTool + deploy_detailTool).
 // v1.14.168 — Work-grid canonical door for ops tools (SOP/BOM/Manifest/PortMap/RackMap).
-// Unlike deploy_showOpsTool (which assumes you're already in Work>Deploy), this switches to
+// Unlike the deleted deploy_showOpsTool shim (which assumed you were already in Work>Deploy), this switches to
 // Work, drills out of the card grid, activates the Deploy subtab, then renders the tool inline
 // into the redesign host (#wk-deploy via deploy_opsHost) — never the legacy #ops-content.
 // Fixes D1 (silent-fail → phantomToast + logs), D2 (legacy nav poisoning) and D3 (wrong BACK).
@@ -23428,7 +23394,7 @@ function rd_openOpsTool(tab) {
   var stab = document.querySelector('#pg-work .subtab-strip .stab[data-wk="wk-deploy"]');
   if (stab) showStab(stab, 'work-sub', 'wk-deploy');
 
-  // Detail render (mirrors deploy_showOpsTool's body).
+  // Detail render (the canonical tool-into-host body; formerly mirrored by the deleted deploy_showOpsTool).
   document.body.classList.add('ops-detail');
   currentOpsTab = tab;
   if (typeof nav_push === 'function') nav_push({ p: 'work', o: 'deploy', d: 'tool:' + tab });
@@ -23445,7 +23411,7 @@ function rd_openOpsTool(tab) {
 // burndown/audits renderers show a GLOBAL list (BD.renderList/AUDIT.renderList read
 // loadJobs()/load(), NOT filtered by id) — this door improves reachability, it does
 // not scope the data; true per-deployment scoping is a separate, later change.
-// Unlike deploy_showOpsTool it deliberately does NOT nav_push: the header back is the
+// Unlike the deleted deploy_showOpsTool it deliberately does NOT nav_push: the header back is the
 // sole exit and deploy_showDetail already owns the {d:'deploy:id'} history entry, so no
 // shared-router (nav_restore) change is needed. Redesign-only; legacy reaches burndown/
 // audits via the #ops-tab-strip → ?legacy=1 byte-identical.
