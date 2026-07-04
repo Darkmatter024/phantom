@@ -10760,7 +10760,7 @@ body.rd #master-section-bar [data-section="profile"] { display:none; }
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.180';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.181';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -15871,11 +15871,19 @@ function nav_restore(state) {
     if (state.d) {
       var d = state.d;
       if (d === 'command' && typeof deploy_showCommandCenter === 'function') {
-        deploy_showCommandCenter(document.getElementById('ops-content'));
+        deploy_showCommandCenter(deploy_opsHost());   // Ship B4 (.181): mode-correct host (rd: #wk-deploy; legacy: #ops-content — identical). Was hard-coded to the hidden legacy host under rd.
       } else if (d.indexOf('tool:') === 0 && typeof rd_openOpsTool === 'function') {   // Ship B2 (.179): 'tools' branch dropped (deploy_showTools deleted); 'tool:' repointed to the canonical p:'work' door — condition AND call
         rd_openOpsTool(d.substring(5));
-      } else if (d === 'ingest' && typeof mscope_open === 'function') {
+      } else if (redesign_isOn() && d === 'mscope' && typeof mscope_open === 'function') {
+        // Ship B4 (.181): the old d==='ingest' branch was orphaned (no pusher anywhere);
+        // mscope_open / mscope_resumeStaged push d:'mscope' / 'mscope-staged'. rd-GATED:
+        // legacy pushes the same d keys but has never re-dispatched them on restore —
+        // an ungated rewire would change ?legacy=1 back-nav behavior (Rule 7).
+        if (typeof showWorkTab === 'function') showWorkTab('deploy');   // drill out of a possible wk-grid so the wizard paints VISIBLY (verify-pass fix)
         mscope_open();
+      } else if (redesign_isOn() && d === 'mscope-staged' && typeof mscope_resumeStaged === 'function') {
+        if (typeof showWorkTab === 'function') showWorkTab('deploy');   // drill out of a possible wk-grid (verify-pass fix)
+        mscope_resumeStaged();
       } else if (d.indexOf('deploy:') === 0 && typeof deploy_showDetail === 'function') {
         deploy_showDetail(d.substring(7));
       } else if (d.indexOf('rack:') === 0 && typeof deploy_showRackDetail === 'function') {
@@ -16710,6 +16718,37 @@ function showPageSafe(pageId, sourceTabId, opsTab) {
 }
 
 function showPage(id, tnEl, opsTab) {
+  // ━━ Ship B4 (.181) — central redesign guard. Under body.rd, showPage may only
+  // activate the rd frame (cmd/work/ref) or the ONE sanctioned legacy door ('master'
+  // — rd_openMasterFile, .167). Every other legacy id — stale pre-Ship-B history
+  // replays, the Ref-search INDEX fallthrough (the 5 TRIAGE entries carry no ref:),
+  // ungated direct callers (goFiberTriage) — redirects to its redesign home and
+  // returns BEFORE the page swap and the nav_push at the bottom, so a legacy surface
+  // can never paint and a legacy p: can never re-enter nav state. Redirects reuse
+  // the proven doors: goOpsTab's showWorkTab('deploy') degrade for the ops cluster
+  // (stale deploy-flow d: dispatches then paint into the drilled, VISIBLE wk-deploy
+  // host), and showRefTab deep-links for the re-homed reference strips (nav_restore's
+  // g/t replay then lands the exact panel). Every redirect re-enters showPage exactly
+  // once via a whitelisted id, so the original side effects (scanner close, wake
+  // lock, search clear) still run once — no recursion. Under ?legacy=1
+  // redesign_isOn() is false → this block is inert → legacy byte-identical.
+  if (redesign_isOn() && ['cmd', 'work', 'ref', 'master'].indexOf(id) === -1) {
+    try { console.warn('[rd] showPage guard: legacy id "' + id + '" -> redesign frame'); } catch (_) {}
+    try {
+      if (id === 'sop' && opsTab && ['bom', 'manifest', 'portmap', 'rackmap'].indexOf(opsTab) !== -1 && typeof rd_openOpsTool === 'function') { rd_openOpsTool(opsTab); }   // named tool (OPS search hits, stale o: states) → the canonical Work door
+      else if (id === 'sop' && typeof showWorkTab === 'function')   { showWorkTab('deploy'); }
+      else if (id === 'fiber' && typeof showRefTab === 'function')  { showRefTab('rf-optics'); }
+      else if (id === 'cli' && typeof showRefTab === 'function')    { showRefTab('rf-cli'); }
+      else if (id === 'power' && typeof rd_openPlatforms === 'function') { rd_openPlatforms(); }   // canonical PLATFORMS door (.175) — also clears a stale open plat detail
+      else if (id === 'scan' && typeof showWorkTab === 'function')  { showWorkTab('scan'); }
+      else if (id === 'twin' && typeof showWorkTab === 'function')  { showWorkTab('issues'); }
+      else if (typeof showMode === 'function')                      {   // triage / compass / anything unknown → sticky rd frame, loudly (no-silent-failure rule)
+        if (typeof phantomToast === 'function') { try { phantomToast('Not in the new UI yet: ' + String(id).toUpperCase(), 'warn'); } catch (_) {} }
+        showMode(_rdMode || 'command');
+      }
+    } catch (e) { try { console.warn('[rd] showPage guard redirect failed', e); } catch (_) {} }
+    return;
+  }
   if (typeof nowDot_update === 'function') { try { nowDot_update(); } catch(_){} }
   wakeLock_release();
   PhantomScanner.close();
@@ -17597,6 +17636,21 @@ function _handoff_launch(deployId) {
   // Close any open handoff modal, navigate to SOP (where #ops-content lives),
   // then render the handoff generator. Mirrors deploy_goToDashboard's pattern.
   handoff_close();
+  // Ship B4 (.181): redesign gate — mirrors deploy_goToDashboard. Pre-B4 this leaned on
+  // the pg-sop LEAK (showPage('sop') painted the legacy page and the generator rendered
+  // into #ops-content inside it); the central showPage guard closes that leak, so the rd
+  // path is routed explicitly: drill Work>Deploy, render into deploy_opsHost(). Legacy
+  // path below is byte-identical.
+  if (typeof redesign_isOn === 'function' && redesign_isOn()) {
+    if (typeof showWorkTab === 'function') showWorkTab('deploy');
+    setTimeout(function() {
+      try { handoff_showGenerator(deployId); }
+      catch (e) {
+        if (typeof phantomToast === 'function') phantomToast('Handoff render failed: ' + (e.message || e), 'error');
+      }
+    }, 80);
+    return;
+  }
   try {
     if (typeof showPage === 'function' && typeof getTnItem === 'function') {
       showPage('sop', getTnItem('sop'), 'deploy');
@@ -28765,7 +28819,7 @@ let _handoffDraft = null; // in-memory draft cache — avoids unsafe JSON in onc
 function handoff_showGenerator(deploymentId) {
   var dep = deploy_getById(deploymentId);
   if (!dep) { phantomToast('Deployment not found', 'error'); return; }
-  var c = document.getElementById('ops-content');
+  var c = (typeof deploy_opsHost === 'function') ? deploy_opsHost() : document.getElementById('ops-content');   // Ship B4 (.181): mode-correct host (rd: #wk-deploy; legacy: the same #ops-content)
   if (!c) return;
 
   var draft = handoff_generate(deploymentId);
@@ -28862,7 +28916,7 @@ function handoff_saveRecord(deploymentId) {
 function handoff_showLog(deploymentId) {
   var dep = deploy_getById(deploymentId);
   if (!dep) { phantomToast('Deployment not found', 'error'); return; }
-  var c = document.getElementById('ops-content');
+  var c = (typeof deploy_opsHost === 'function') ? deploy_opsHost() : document.getElementById('ops-content');   // Ship B4 (.181): mode-correct host (rd: #wk-deploy; legacy: the same #ops-content)
   if (!c) return;
 
   // Cut 14: push nav state for back navigation.
@@ -35166,7 +35220,13 @@ function showStab(el, groupClass, targetId) {
   // Suppressed when called from popstate restore (via _navSuppressPush).
   var groupToPage = { 'fiber-sub': 'fiber', 'cli-sub': 'cli', 'pwr-sub': 'power' };
   var pageId = groupToPage[groupClass] || null;
-  if (pageId) nav_push({ p: pageId, g: groupClass, t: targetId });
+  // Ship B4 (.181): under redesign these strips live re-homed inside Ref; pushing their
+  // legacy p: violated the no-legacy-p hard rule (every Back then leaned on the showPage
+  // guard). Sub-pill flips are lateral — the Ref grid-back is the in-page back — so the
+  // push is suppressed under rd. Stale legacy g/t states still restore correctly: the
+  // showPage guard lands the right Ref tab, then nav_restore's g/t replay re-activates
+  // the exact panel. ?legacy=1 pushes exactly as before.
+  if (pageId && !redesign_isOn()) nav_push({ p: pageId, g: groupClass, t: targetId });
 }
 
 // ━━━ CARDS — tap to open, tap again to close, one open at a time per section ━━━
