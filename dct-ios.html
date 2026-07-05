@@ -10756,11 +10756,83 @@ body.rd #master-section-bar [data-section="profile"] { display:none; }
 @keyframes peDiveFade { to { opacity:0; } }
 @media (prefers-reduced-motion:reduce){ #boot.pe-dive .pe-plate, #boot.pe-dive .pe-uz, #boot.pe-dive .pe-tapcatch { animation:none; } }
 
+/* ━━━ v1.14.186 PILL SKIN v2 — machined capsule, fleet-wide selector pills ━━━
+   Locked: cyan 186/100/69 · violet 285/100/64 · core #f2d9ff · tube .20 · spill .40 · halo OFF
+   Appended override layer — legacy pill CSS above is intentionally left in place (rip-cord safe).
+   body.rd-scoped (house pattern: body.rd .hdr-agg-pill) so ?legacy=1 pills stay untouched.
+   Channel via --pg custom prop: cyan default; add .ch-vio to a strip/chip for violet (P-3 gate).
+   Census notes vs handoff: .tc/.sop-cat-opt actives = .sel, .sop-tag-chip = .active (JS-verified,
+   no legacy active CSS existed for these three); .rm-rack-chip + .rl-recent-chip have NO active
+   class (base housing only); .dl-chip severity channels preserved below. */
+:root{
+  --pill-cy: 186 100% 69%;
+  --pill-vi: 285 100% 64%;
+  --pill-vi-core: #f2d9ff;
+  --pill-tube: .20;
+  --pill-spill: .40;
+}
+body.rd .stab, body.rd .tc, body.rd .sop-tag-chip, body.rd .sop-cat-opt,
+body.rd .rm-rack-chip, body.rd .os-chip, body.rd .rl-chip, body.rd .rl-recent-chip,
+body.rd .audit-type-chip, body.rd .dl-chip, body.rd .disc-chip, body.rd .mf-switcher-chip {
+  --pg: var(--pill-cy);
+  position: relative;
+  border-radius: 999px;
+  border: 2.5px solid transparent;
+  background:
+    /* well */
+    radial-gradient(130% 220% at 50% -70%, rgba(140,172,206,.11) 0%, transparent 44%) padding-box,
+    linear-gradient(180deg,#0b1019,#05080e 55%,#0a0f1a) padding-box,
+    /* machined ring */
+    linear-gradient(175deg, rgba(255,255,255,.24) 0%, rgba(200,220,240,.08) 16%,
+      rgba(28,38,52,.9) 45%, rgba(7,11,17,1) 76%, rgba(90,112,138,.30) 100%) border-box;
+  box-shadow:
+    inset 0 2px 4px rgba(0,0,0,.85),
+    inset 0 -1px 0 rgba(160,190,220,.08),
+    0 5px 10px rgba(0,0,0,.5);
+}
+body.rd .ch-vio { --pg: var(--pill-vi); }
+/* ACTIVE — cyan/violet tube + spill. Every class grep-verified against live .185:
+   .active = stab/rl-chip/dl-chip/disc-chip/mf-switcher-chip/sop-tag-chip ·
+   .sel = os-chip/audit-type-chip/tc/sop-cat-opt */
+body.rd .stab.active, body.rd .os-chip.sel, body.rd .audit-type-chip.sel,
+body.rd .rl-chip.active, body.rd .dl-chip.active, body.rd .disc-chip.active,
+body.rd .mf-switcher-chip.active, body.rd .tc.sel, body.rd .sop-tag-chip.active,
+body.rd .sop-cat-opt.sel {
+  color: hsl(var(--pg));
+  background:
+    radial-gradient(130% 220% at 50% -70%, rgba(140,172,206,.11) 0%, transparent 44%) padding-box,
+    linear-gradient(180deg,#0b1019,#05080e 55%,#0a0f1a) padding-box,
+    linear-gradient(175deg, rgba(255,255,255,.34) 0%, rgba(210,240,255,.12) 16%,
+      rgba(28,44,60,.95) 45%, rgba(8,12,18,1) 74%,
+      hsl(var(--pg) / calc(.55 * var(--pill-spill))) 100%) border-box;
+  box-shadow:
+    inset 0 2px 4px rgba(0,0,0,.7),
+    inset 0 -3px calc(10px * var(--pill-spill)) hsl(var(--pg) / calc(.30 * var(--pill-spill))),
+    inset 0 0 calc(20px * var(--pill-spill)) hsl(var(--pg) / calc(.16 * var(--pill-spill))),
+    0 5px 10px rgba(0,0,0,.5);
+  text-shadow:
+    0 0 calc(.45em * var(--pill-tube)) hsl(var(--pg) / calc(.95 * var(--pill-tube))),
+    0 0 calc(1.3em * var(--pill-tube)) hsl(var(--pg) / calc(.5 * var(--pill-tube)));
+}
+/* violet actives run the hot core */
+body.rd .ch-vio.active, body.rd .ch-vio.sel { color: var(--pill-vi-core);
+  text-shadow: 0 0 .3em hsl(var(--pg)/.9), 0 0 .8em hsl(var(--pg)/.6), 0 0 1.6em hsl(var(--pg)/.3); }
+/* semantic sub-states — machined housing, field-safety hues preserved */
+body.rd .rl-chip.rl-chip-blocked.active { --pg: 348 100% 63%; color: hsl(var(--pg)); }
+body.rd .rl-chip.rl-chip-active.active  { --pg: 48 100% 58%;  color: hsl(var(--pg)); }
+/* dl-chip severity system (census gap in handoff): same locked semantic channels */
+body.rd .dl-chip.sev-high.active { --pg: 348 100% 63%; color: hsl(var(--pg)); }
+body.rd .dl-chip.sev-med.active  { --pg: 48 100% 58%;  color: hsl(var(--pg)); }
+body.rd .dl-chip.sev-low.active  { --pg: 210 23% 76%;  color: hsl(var(--pg)); }
+/* legacy square left edge-bar breaks capsule geometry; severity hue now rides the text channel */
+body.rd .dl-chip.active::before { content: none; }
+/* ━━━ end PILL SKIN v2 ━━━ */
+
 </style>
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.185';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.186';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
