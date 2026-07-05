@@ -10760,7 +10760,7 @@ body.rd #master-section-bar [data-section="profile"] { display:none; }
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.183';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.184';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -14602,11 +14602,11 @@ const INCIDENTS = [
 // ── Search Index ─────────────────────────────────────
 // Pure static strings — title, snip, cat, page. No UI logic.
 const INDEX = [
-  {cat:'TRIAGE',title:'Down link triage flowchart',snip:'Physical → clean → DOM → FEC → loopback → swap',page:'triage'},
-  {cat:'TRIAGE',title:'Link up but dropping packets',snip:'Marginal signal — dirty fiber, rising FEC correctable errors',page:'triage'},
-  {cat:'TRIAGE',title:'–40 dBm / LOS — hard down',snip:'No light received. Check Tx, polarity, break in strand',page:'triage'},
-  {cat:'TRIAGE',title:'Interface flapping',snip:'Intermittent — thermal, dirty, loose LC, bad optic',page:'triage'},
-  {cat:'TRIAGE',title:'Optic not recognized by switch',snip:'Vendor lock, EEPROM blank, 3rd party key required',page:'triage'},
+  {cat:'TRIAGE',title:'Down link triage flowchart',snip:'Physical → clean → DOM → FEC → loopback → swap',page:'triage',ref:'rf-optics'},
+  {cat:'TRIAGE',title:'Link up but dropping packets',snip:'Marginal signal — dirty fiber, rising FEC correctable errors',page:'triage',ref:'rf-optics'},
+  {cat:'TRIAGE',title:'–40 dBm / LOS — hard down',snip:'No light received. Check Tx, polarity, break in strand',page:'triage',ref:'rf-optics'},
+  {cat:'TRIAGE',title:'Interface flapping',snip:'Intermittent — thermal, dirty, loose LC, bad optic',page:'triage',ref:'rf-optics'},
+  {cat:'TRIAGE',title:'Optic not recognized by switch',snip:'Vendor lock, EEPROM blank, 3rd party key required',page:'triage',ref:'rf-optics'},
   {cat:'FIBER',title:'OM3 Multimode reach table',snip:'10G/40G/100G/400G max distances, aqua jacket',page:'fiber',ref:'rf-optics'},
   {cat:'FIBER',title:'OM4 Multimode reach table',snip:'10G/25G/40G/100G/400G max distances, magenta jacket',page:'fiber',ref:'rf-optics'},
   {cat:'FIBER',title:'OM5 Wideband Multimode SWDM',snip:'LC duplex at 100G+, lime green jacket, 150m',page:'fiber',ref:'rf-optics'},
@@ -14647,12 +14647,12 @@ const INDEX = [
   {cat:'TEST',title:'Fluke DTX cable certifier PASS PASS* FAIL',snip:'Link vs channel, wire map, NEXT, insertion loss, return loss',page:'cli',ref:'rf-cli'},
   {cat:'TEST',title:'OLTS fiber certification loss budget',snip:'OM4 3.5dB/km, OS2 0.4dB/km, connector budget 0.75dB',page:'cli',ref:'rf-cli'},
   {cat:'TEST',title:'Multimeter DC safety rules CAT III',snip:'One hand in pocket, 208V readings, DCT vs electrician scope',page:'cli',ref:'rf-cli'},
-  {cat:'OPS',title:'CLI output analyzer paste parser',snip:'DOM, errors, port-channel, port map validator, IB perfquery',page:'sop'},
-  {cat:'OPS',title:'Port map validator error detection',snip:'Duplicate ports, speed mismatch, fiber conflicts, NE escalation',page:'sop'},
-  {cat:'OPS',title:'SOPs saved procedures field reference',snip:'Save and retrieve site SOPs, searchable by category',page:'sop'},
-  {cat:'OPS',title:'Optic scanner barcode inventory',snip:'Scan optic barcode, auto-identify part number, build site inventory',page:'sop'},
-  {cat:'OPS',title:'Optic inventory field audit',snip:'Track scanned optics by rack, platform, type, export inventory',page:'sop'},
-  {cat:'OPS',title:'BOM EDP analyzer bill of materials engineering design plan',snip:'Upload BOM or EDP, auto-extract racks, optics, port maps, burndown jobs, SOPs',page:'sop'},
+  {cat:'OPS',title:'CLI output analyzer paste parser',snip:'DOM, errors, port-channel, port map validator, IB perfquery',page:'sop',ref:'rf-cli'},
+  {cat:'OPS',title:'Port map validator error detection',snip:'Duplicate ports, speed mismatch, fiber conflicts, NE escalation',page:'sop',tool:'portmap'},
+  {cat:'OPS',title:'SOPs saved procedures field reference',snip:'Save and retrieve site SOPs, searchable by category',page:'sop',ref:'rf-know'},
+  {cat:'OPS',title:'Optic scanner barcode inventory',snip:'Scan optic barcode, auto-identify part number, build site inventory',page:'sop',wk:'scan'},
+  {cat:'OPS',title:'Optic inventory field audit',snip:'Track scanned optics by rack, platform, type, export inventory',page:'sop',wk:'scan'},
+  {cat:'OPS',title:'BOM EDP analyzer bill of materials engineering design plan',snip:'Upload BOM or EDP, auto-extract racks, optics, port maps, burndown jobs, SOPs',page:'sop',tool:'bom'},
 ];
 
 // ── Subtab Group Registry ──────────────────────────────
@@ -35379,6 +35379,11 @@ function doSearch(q) {
         let opsTab = 'sops';
         if (h.cat === 'OPS' && h.snip.includes('port map')) opsTab = 'portmap';
         if (h.cat === 'OPS' && h.snip.includes('BOM')) opsTab = 'bom';
+        // Data pass (.184): rd-only routing keys, mirroring ref:. tool: opens the
+        // canonical Work ops-tool door (rd_openOpsTool); wk: opens a Work tab
+        // (showWorkTab). Read ONLY under redesign — field mode never sees them.
+        if (redesign_isOn() && h.tool && typeof rd_openOpsTool === 'function') { rd_openOpsTool(h.tool); return; }
+        if (redesign_isOn() && h.wk && typeof showWorkTab === 'function') { showWorkTab(h.wk); return; }
         // Redesign mode only: runbook/ops-knowledge hits open the re-homed
         // Reference→Know. Field mode keeps the original page route untouched.
         if (redesign_isOn() && h.ref) { showRefTab(h.ref); return; }
