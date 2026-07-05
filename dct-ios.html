@@ -10760,7 +10760,7 @@ body.rd #master-section-bar [data-section="profile"] { display:none; }
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.181';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.182';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -15851,10 +15851,22 @@ function nav_restore(state) {
   try {
     var p = state.p;
     if (p) {
-      var visibleTabs = ['triage', 'scan', 'sop', 'fiber'];
-      var tnEl = (visibleTabs.indexOf(p) !== -1 && typeof getTnItem === 'function')
-                   ? getTnItem(p) : null;
-      showPage(p, tnEl, state.o);
+      if (redesign_isOn() && p === 'ref' && typeof showRefTab === 'function') {
+        // Ship B4b (.182): rd-shaped Ref pill states ({p:'ref', g, t} — pushed only by
+        // showStab under rd) restore through showRefTab: showMode('ref') syncs the
+        // bottom nav / mode-ref / _rdMode, the grid drops, the right outer tab
+        // activates, and the g/t replay below lands the exact pill panel. Bare
+        // showPage('ref') would skip that chrome sync when popping from another mode.
+        // Legacy never pushes p:'ref' → rd-gated, ?legacy=1 restore byte-identical.
+        var refTab = { 'fiber-sub': 'rf-optics', 'cli-sub': 'rf-cli', 'pwr-sub': 'rf-hw' }[state.g];
+        if (refTab) { showRefTab(refTab); }
+        else if (typeof showMode === 'function') { showMode('ref'); }
+      } else {
+        var visibleTabs = ['triage', 'scan', 'sop', 'fiber'];
+        var tnEl = (visibleTabs.indexOf(p) !== -1 && typeof getTnItem === 'function')
+                     ? getTnItem(p) : null;
+        showPage(p, tnEl, state.o);
+      }
     }
     if (state.g && state.t) {
       var allStabs = document.querySelectorAll('.subtab-strip .stab');
@@ -35220,13 +35232,14 @@ function showStab(el, groupClass, targetId) {
   // Suppressed when called from popstate restore (via _navSuppressPush).
   var groupToPage = { 'fiber-sub': 'fiber', 'cli-sub': 'cli', 'pwr-sub': 'power' };
   var pageId = groupToPage[groupClass] || null;
-  // Ship B4 (.181): under redesign these strips live re-homed inside Ref; pushing their
-  // legacy p: violated the no-legacy-p hard rule (every Back then leaned on the showPage
-  // guard). Sub-pill flips are lateral — the Ref grid-back is the in-page back — so the
-  // push is suppressed under rd. Stale legacy g/t states still restore correctly: the
-  // showPage guard lands the right Ref tab, then nav_restore's g/t replay re-activates
-  // the exact panel. ?legacy=1 pushes exactly as before.
-  if (pageId && !redesign_isOn()) nav_push({ p: pageId, g: groupClass, t: targetId });
+  // Ship B4b (.182): under redesign these strips live re-homed inside Ref. B4 suppressed
+  // this push entirely (its legacy p: violated the no-legacy-p hard rule), which cost the
+  // back-swipe affordance after a pill flip; John's device call restored it with an
+  // rd-SHAPED state: p:'ref' + the same g/t. nav_restore routes p:'ref' through
+  // showRefTab (full chrome sync), then its g/t replay re-activates the exact pill
+  // panel — Back now steps pill→pill inside the rd frame (pre-B4 that pop painted the
+  // LEGACY page: the leak). ?legacy=1 pushes exactly as before.
+  if (pageId) nav_push(redesign_isOn() ? { p: 'ref', g: groupClass, t: targetId } : { p: pageId, g: groupClass, t: targetId });
 }
 
 // ━━━ CARDS — tap to open, tap again to close, one open at a time per section ━━━
