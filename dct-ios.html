@@ -10760,7 +10760,7 @@ body.rd #master-section-bar [data-section="profile"] { display:none; }
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.182';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.183';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -16326,15 +16326,16 @@ document.addEventListener('DOMContentLoaded', redesign_homeHardware);
 // The re-homed pg-power function tabs (Power/LED/Rack Map/Blast/Thermal) stay BELOW as
 // the deep content — a framing layer, NO content rewrite (Design Law 3 / R4 rule).
 // FIVE cards per the logged decision (H100 · H200 · B200 · GB200 · GB300); the .173
-// "GB200 folded into GB-NVL" comment was a MIS-LOG and is reverted here. Cooling facts:
-// H100/H200/B200 HGX = AIR; GB200/GB300 NVL racks = DLC. Each platform tap
+// "GB200 folded into GB-NVL" comment was a MIS-LOG and is reverted here. Cooling facts
+// (owner ruling 2026-07-04): CoreWeave deploys B200 LIQUID-cooled — AIR = H100/H200;
+// DLC = B200 + GB200/GB300 NVL. Each platform tap
 // (rd_platformOpen) shows a filtered panel of the matching reference cards (title/badge
 // regex, CLONED — no source mutation, honest empty-state, BACK→landing); SHARED scrolls
 // the shared PDU & Power Math content (pw-power). Redesign-only → ?legacy=1 byte-identical.
 var RD_PLATFORMS = [
   { key:'h100',  name:'H100',   gen:'Hopper',          cool:'AIR', cc:'var(--cyan)', icon:'icons/phantom-plat-h100-256.webp' },
   { key:'h200',  name:'H200',   gen:'Hopper',          cool:'AIR', cc:'var(--cyan)', icon:'icons/phantom-plat-h200-256.webp' },
-  { key:'b200',  name:'B200',   gen:'Blackwell',       cool:'AIR', cc:'var(--cyan)', icon:'icons/phantom-plat-b200-256.webp' },
+  { key:'b200',  name:'B200',   gen:'Blackwell',       cool:'DLC', cc:'var(--vio)',  icon:'icons/phantom-plat-b200-256.webp' },
   { key:'gb200', name:'GB200',  gen:'Blackwell · NVL', cool:'DLC', cc:'var(--vio)',  icon:'icons/phantom-plat-gb200-256.webp' },
   { key:'gb300', name:'GB300',  gen:'Blackwell · NVL', cool:'DLC', cc:'var(--vio)',  icon:'icons/phantom-plat-gb300-256.webp' }
 ];
