@@ -10948,11 +10948,98 @@ body.rd .rm-rack-frame, body.rd .br-tile:not(.affected) {
 }
 /* ━━━ end GLASS SKIN v1 (G-1c) ━━━ */
 
+/* ━━━ v1.14.191 GLASS SKIN v1 — Ship G-1d-α: owner-ruled surfaces (rulings 2026-07-06) ━━━
+   1 Ask PHANTOM card: glass housing, violet accent → ring tint; prism plate + arrow untouched.
+   2 Command shift tiles (DEPLOY/SCANNED/HANDOFF = #pg-cmd .tile): housing converts, per-tile
+     --tc accent → ring tint; one-knob glow shadows kept VERBATIM + well inset appended;
+     dim empty-state text untouched (children).
+   3 LOAD MASTER banner (#pg-cmd .nba): plate → glass, magenta accent frame → ring tint;
+     existing glow kept verbatim.
+   4 Shared ops-tool shell (_deploy_toolsBackHdr renders into #wk-deploy for rackmap/portmap/
+     bom/manifest + burndown/audits/blast): BACK chip (.pt-btn-ghost) converts — scoped to
+     #wk-deploy so all shell tools convert together per ruling. NOTE: .pt-btn clip-path corners
+     clip the ring at the notches — eyeball on device.
+   5 SCAN OR TYPE RACK ID input (.rack-viewer-input): ring+well recipe. The mock's .mach class
+     is NOT in live (new-device-setup-v2.html never arrived) — values are the shipped GLASS
+     SKIN recipe verbatim, not an invention; focus state re-asserted cyan.
+   6 OPS SIGNAL empty plate: UNTOUCHED — awaiting the owner's explicit ruling on the dashed
+     ghost-blueprint empty-state language. */
+body.rd .ask {
+  border: 2px solid transparent;
+  background:
+    radial-gradient(140% 160% at 50% -40%, rgba(140,172,206,.10) 0%, transparent 46%) padding-box,
+    linear-gradient(180deg,#0b1019,#05080e 58%,#0a0f1a) padding-box,
+    linear-gradient(175deg, rgba(255,255,255,.22) 0%, rgba(200,220,240,.07) 16%,
+      rgba(28,38,52,.9) 45%, rgba(7,11,17,1) 76%,
+      color-mix(in srgb, var(--vio) 42%, transparent) 100%) border-box;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06),
+    inset 0 0 30px -6px color-mix(in srgb,var(--vio) var(--glow-inner),transparent),
+    0 0 var(--glow-outer) -2px color-mix(in srgb,var(--vio) var(--glow-a),transparent),
+    0 12px 26px -14px rgba(0,0,0,.9),
+    inset 0 2px 4px rgba(0,0,0,.6);
+}
+body.rd #pg-cmd .tile {
+  border: 2px solid transparent;
+  background:
+    radial-gradient(140% 160% at 50% -40%, rgba(140,172,206,.10) 0%, transparent 46%) padding-box,
+    linear-gradient(180deg,#0b1019,#05080e 58%,#0a0f1a) padding-box,
+    linear-gradient(175deg, rgba(255,255,255,.22) 0%, rgba(200,220,240,.07) 16%,
+      rgba(28,38,52,.9) 45%, rgba(7,11,17,1) 76%,
+      color-mix(in srgb, var(--tc) 45%, transparent) 100%) border-box;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06),
+    inset 0 0 30px -6px color-mix(in srgb,var(--tc) var(--glow-inner),transparent),
+    0 0 var(--glow-outer) -2px color-mix(in srgb,var(--tc) var(--glow-a),transparent),
+    0 12px 26px -14px rgba(0,0,0,.9),
+    inset 0 2px 4px rgba(0,0,0,.6);
+}
+body.rd #pg-cmd .nba {
+  border: 2px solid transparent;
+  background:
+    radial-gradient(140% 160% at 50% -40%, rgba(140,172,206,.10) 0%, transparent 46%) padding-box,
+    linear-gradient(180deg,#0b1019,#05080e 58%,#0a0f1a) padding-box,
+    linear-gradient(175deg, rgba(255,255,255,.22) 0%, rgba(200,220,240,.07) 16%,
+      rgba(28,38,52,.9) 45%, rgba(7,11,17,1) 76%,
+      color-mix(in srgb, #ff2bd6 45%, transparent) 100%) border-box;
+  box-shadow: 0 8px 20px -14px rgba(0,0,0,.85),
+    inset 0 0 26px -4px color-mix(in srgb,#ff2bd6 20%,transparent),
+    inset 0 2px 4px rgba(0,0,0,.6);
+}
+body.rd #wk-deploy .pt-btn-ghost {
+  border: 2px solid transparent;
+  background:
+    radial-gradient(140% 160% at 50% -40%, rgba(140,172,206,.10) 0%, transparent 46%) padding-box,
+    linear-gradient(180deg,#0b1019,#05080e 58%,#0a0f1a) padding-box,
+    linear-gradient(175deg, rgba(255,255,255,.22) 0%, rgba(200,220,240,.07) 16%,
+      rgba(28,38,52,.9) 45%, rgba(7,11,17,1) 76%, rgba(90,112,138,.28) 100%) border-box;
+  box-shadow:
+    inset 0 2px 4px rgba(0,0,0,.7),
+    inset 0 -1px 0 rgba(160,190,220,.07),
+    0 5px 12px rgba(0,0,0,.45);
+}
+body.rd .rack-viewer-input {
+  border: 2px solid transparent;
+  background:
+    radial-gradient(140% 160% at 50% -40%, rgba(140,172,206,.08) 0%, transparent 46%) padding-box,
+    linear-gradient(180deg,#0b1019,#05080e 58%,#0a0f1a) padding-box,
+    linear-gradient(175deg, rgba(255,255,255,.22) 0%, rgba(200,220,240,.07) 16%,
+      rgba(28,38,52,.9) 45%, rgba(7,11,17,1) 76%, rgba(90,112,138,.28) 100%) border-box;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,.7);
+}
+body.rd .rack-viewer-input:focus {
+  background:
+    radial-gradient(140% 160% at 50% -40%, rgba(92,242,255,.10) 0%, transparent 50%) padding-box,
+    linear-gradient(180deg,#0b1019,#05080e 58%,#0a0f1a) padding-box,
+    linear-gradient(175deg, rgba(255,255,255,.30) 0%, rgba(210,240,255,.10) 16%,
+      rgba(28,44,60,.95) 45%, rgba(8,12,18,1) 76%, rgba(92,242,255,.60) 100%) border-box;
+  box-shadow: 0 0 0 2px rgba(92,242,255,0.15), inset 0 2px 4px rgba(0,0,0,.6);
+}
+/* ━━━ end GLASS SKIN v1 (G-1d-α) ━━━ */
+
 </style>
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.190';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.191';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
