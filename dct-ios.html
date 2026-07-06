@@ -11035,11 +11035,36 @@ body.rd .rack-viewer-input:focus {
 }
 /* ━━━ end GLASS SKIN v1 (G-1d-α) ━━━ */
 
+/* ━━━ v1.14.192 GLASS SKIN v1 — Ship G-1c2: JS-inline plate utility (.gsk) ━━━
+   Inline styles beat any class rule, so JS-rendered plates carry a utility class whose
+   ring+well is !important — the ONLY sanctioned !important in the glass system (scoped
+   body.rd; radius stays the plate's own inline value — geometry frozen). Templates keep
+   their inline styles untouched (minimal diff, trivial rollback); .gsk is class-inert
+   under ?legacy=1 (no rule outside body.rd matches it).
+   Converted this ship (pattern-verified, fn-mapped): deploy_renderFloorMap ·
+   deploy_showRackDetail ×2 · renderOpticScanResult · handoff listSection ·
+   deploy_showAuditLog · bomRenderResults ×4. deploy_showTombstone site deliberately
+   SKIPPED (modal = bucket D). Remaining inline C-sites (issues/today/profile/bom-ingest/
+   phase-matrix[dynamic bg]/ledger[violet accent ruling]/etc.) = G-1c3 queue. */
+body.rd .gsk {
+  border: 2px solid transparent !important;
+  background:
+    radial-gradient(140% 160% at 50% -40%, rgba(140,172,206,.10) 0%, transparent 46%) padding-box,
+    linear-gradient(180deg,#0b1019,#05080e 58%,#0a0f1a) padding-box,
+    linear-gradient(175deg, rgba(255,255,255,.22) 0%, rgba(200,220,240,.07) 16%,
+      rgba(28,38,52,.9) 45%, rgba(7,11,17,1) 76%, rgba(90,112,138,.28) 100%) border-box !important;
+  box-shadow:
+    inset 0 2px 4px rgba(0,0,0,.7),
+    inset 0 -1px 0 rgba(160,190,220,.07),
+    0 5px 12px rgba(0,0,0,.45) !important;
+}
+/* ━━━ end GLASS SKIN v1 (G-1c2) ━━━ */
+
 </style>
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.191';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.192';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -27892,7 +27917,7 @@ function deploy_renderFloorMap(deployId) {
   html += '</div>';
 
   // Legend
-  html += '<div style="background:var(--surf-1);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:10px 12px">';
+  html += '<div class="gsk" style="background:var(--surf-1);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:10px 12px">';
   html += '<div style="font-family:var(--mono);font-size:var(--fs-micro);letter-spacing:1.5px;color:var(--slate);margin-bottom:6px">STATUS</div>';
   html += '<div style="display:flex;flex-wrap:wrap;gap:10px;font-family:var(--mono);font-size:10px">';
   var legend = [
@@ -28819,7 +28844,7 @@ function deploy_showRackDetail(deployId, rackId) {
       ].filter(function(c) { return c.count > 0; });
       if (compCats.length > 0) {
         var compTotal = compCats.reduce(function(a,c){ return a + c.count; }, 0);
-        html += '<div style="background:var(--surf-1);border:1px solid rgba(255,255,255,0.06);border-radius:var(--hud-r12);padding:12px 14px;margin-bottom:14px">';
+        html += '<div class="gsk" style="background:var(--surf-1);border:1px solid rgba(255,255,255,0.06);border-radius:var(--hud-r12);padding:12px 14px;margin-bottom:14px">';
         html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">';
         html += '<span style="font-family:var(--mono);font-size:var(--fs-micro);letter-spacing:1.5px;color:var(--slate)">COMPONENTS</span>';
         html += '<span style="font-family:var(--orb);font-size:13px;color:var(--white)">' + compTotal + ' <span style="font-size:10px;color:var(--slate)">DEVICES</span></span>';
@@ -28974,7 +28999,7 @@ function deploy_showRackDetail(deployId, rackId) {
     html += '<details style="margin-top:12px"><summary style="font-family:var(--orb);font-size: var(--fs-micro);letter-spacing:3px;color:var(--slate);cursor:pointer;padding:8px 0;text-transform:uppercase">DEVICES (' + rack.slots.length + ')</summary>';
     html += '<div style="margin-top:6px">';
     rack.slots.forEach(function(slot) {
-      html += '<div style="background:rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.06);border-radius:6px;padding:6px 10px;margin:3px 0;font-family:var(--mono);font-size: var(--fs-caption);color:var(--slate)">';
+      html += '<div class="gsk" style="background:rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.06);border-radius:6px;padding:6px 10px;margin:3px 0;font-family:var(--mono);font-size: var(--fs-caption);color:var(--slate)">';
       html += '<strong style="color:var(--white)">' + escHtml(slot.name || 'Unknown') + '</strong>';
       if (slot.model) html += ' · ' + escHtml(slot.model);
       if (slot.uStart != null) html += ' · U' + slot.uStart + (slot.uEnd && slot.uEnd !== slot.uStart ? '-' + slot.uEnd : '');
@@ -29141,7 +29166,7 @@ function handoff_showGenerator(deploymentId) {
 
   // Completed / Open / Watch lists
   var listSection = function(label, color, items, emptyMsg) {
-    var out = '<div style="background:var(--surf-1);border:1px solid var(--cyan-border-lo);border-radius:var(--hud-r12);padding:12px 16px;margin-bottom:8px;position:relative;overflow:hidden">';
+    var out = '<div class="gsk" style="background:var(--surf-1);border:1px solid var(--cyan-border-lo);border-radius:var(--hud-r12);padding:12px 16px;margin-bottom:8px;position:relative;overflow:hidden">';
     out += '<div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:' + color + '"></div>';
     out += '<div style="font-family:var(--mono);font-size: var(--fs-micro);letter-spacing:1.5px;color:' + color + ';margin-bottom:8px">' + label + '</div>';
     if (items.length) {
@@ -29434,7 +29459,7 @@ function deploy_showAuditLog(deploymentId) {
       var label   = actionLabels[e.action]  || e.action;
       var timeStr = new Date(e.ts).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
 
-      html += '<div style="background:var(--surf-1);border:1px solid var(--cyan-border-lo);border-radius:8px;padding:10px 12px;margin-bottom:6px;position:relative;overflow:hidden">';
+      html += '<div class="gsk" style="background:var(--surf-1);border:1px solid var(--cyan-border-lo);border-radius:8px;padding:10px 12px;margin-bottom:6px;position:relative;overflow:hidden">';
       html += '<div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:' + color + '"></div>';
       html += '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">';
 
@@ -35242,7 +35267,7 @@ function bomRenderResults(r, el) {
   if ((r.racks || []).length) {
     sections.push('<div style="margin-top:12px"><div class="parse-hdr"><span>RACK ELEVATIONS</span><span class="badge b-cyan">' + r.racks.length + '</span></div>');
     r.racks.forEach(function(rack) {
-      sections.push('<div style="background:rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.06);border-radius:6px;padding:8px 10px;margin:4px 0;font-family:var(--mono);font-size: var(--fs-caption);color:var(--slate)">' +
+      sections.push('<div class="gsk" style="background:rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.06);border-radius:6px;padding:8px 10px;margin:4px 0;font-family:var(--mono);font-size: var(--fs-caption);color:var(--slate)">' +
         '<strong style="color:var(--white)">' + escHtml(rack.name) + '</strong>' + (rack.room ? ' · ' + escHtml(rack.room) : '') +
         ' — ' + (rack.slots || []).length + ' devices, ' + (rack.totalU || 42) + 'U</div>');
     });
@@ -35252,7 +35277,7 @@ function bomRenderResults(r, el) {
   if ((r.optics || []).length) {
     sections.push('<div style="margin-top:12px"><div class="parse-hdr"><span>OPTIC REQUIREMENTS</span><span class="badge b-violet">' + r.optics.length + '</span></div>');
     r.optics.forEach(function(op) {
-      sections.push('<div style="background:rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.06);border-radius:6px;padding:8px 10px;margin:4px 0;font-family:var(--mono);font-size: var(--fs-caption);color:var(--slate)">' +
+      sections.push('<div class="gsk" style="background:rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.06);border-radius:6px;padding:8px 10px;margin:4px 0;font-family:var(--mono);font-size: var(--fs-caption);color:var(--slate)">' +
         '<strong style="color:var(--white)">' + escHtml(op.type) + '</strong> × ' + (op.quantity || '?') +
         (op.platform ? ' → ' + escHtml(op.platform) : '') +
         (op.notes ? ' · ' + escHtml(op.notes) : '') + '</div>');
@@ -35264,7 +35289,7 @@ function bomRenderResults(r, el) {
     sections.push('<div style="margin-top:12px"><div class="parse-hdr"><span>BURNDOWN JOBS</span><span class="badge b-gold">' + r.burndownJobs.length + '</span></div>');
     r.burndownJobs.forEach(function(job) {
       var portCount = (job.ports || []).length;
-      sections.push('<div style="background:rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.06);border-radius:6px;padding:8px 10px;margin:4px 0;font-family:var(--mono);font-size: var(--fs-caption);color:var(--slate)">' +
+      sections.push('<div class="gsk" style="background:rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.06);border-radius:6px;padding:8px 10px;margin:4px 0;font-family:var(--mono);font-size: var(--fs-caption);color:var(--slate)">' +
         '<strong style="color:var(--white)">' + escHtml(job.name) + '</strong> · ' + escHtml(job.priority || 'P3') +
         ' · ' + portCount + ' ports</div>');
     });
@@ -35274,7 +35299,7 @@ function bomRenderResults(r, el) {
   if ((r.sops || []).length) {
     sections.push('<div style="margin-top:12px"><div class="parse-hdr"><span>PROCEDURES</span><span class="badge b-cyan">' + r.sops.length + '</span></div>');
     r.sops.forEach(function(sop) {
-      sections.push('<div style="background:rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.06);border-radius:6px;padding:8px 10px;margin:4px 0;font-family:var(--mono);font-size: var(--fs-caption);color:var(--slate)">' +
+      sections.push('<div class="gsk" style="background:rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.06);border-radius:6px;padding:8px 10px;margin:4px 0;font-family:var(--mono);font-size: var(--fs-caption);color:var(--slate)">' +
         '<strong style="color:var(--white)">' + escHtml(sop.title) + '</strong> · ' + escHtml(sop.category || 'other') +
         ' · ' + (sop.steps || []).length + ' steps</div>');
     });
@@ -38764,7 +38789,7 @@ function renderOpticScanResult(entry, matches) {
   if (matches.length > 1) {
     html += '<div style="margin-top:12px;font-family:var(--mono);font-size: var(--fs-micro);letter-spacing:1.5px;color:var(--slate);margin-bottom:6px">OTHER POSSIBLE MATCHES</div>';
     matches.slice(1, 4).forEach(alt => {
-      html += `<div style="background:var(--surf-1);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:8px 12px;margin-bottom:4px;cursor:pointer" onclick="this.querySelector('.alt-detail').style.display=this.querySelector('.alt-detail').style.display==='none'?'block':'none'">
+      html += `<div class="gsk" style="background:var(--surf-1);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:8px 12px;margin-bottom:4px;cursor:pointer" onclick="this.querySelector('.alt-detail').style.display=this.querySelector('.alt-detail').style.display==='none'?'block':'none'">
         <div style="display:flex;justify-content:space-between;align-items:center">
           <span style="font-family:var(--raj);font-size: var(--fs-body);color:var(--white)">${escHtml(alt.optic)}</span>
           <span style="font-family:var(--mono);font-size: var(--fs-caption);color:var(--slate)">${alt.score}%</span>
