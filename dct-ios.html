@@ -10902,11 +10902,57 @@ body.rd .msc-cab.sel {
 }
 /* ━━━ end GLASS SKIN v1 (G-1b) ━━━ */
 
+/* ━━━ v1.14.190 GLASS SKIN v1 — Ship G-1c: Work tools + rail-safe treatment ━━━
+   Signed manifest: Downloads/G1A-SURFACE-CENSUS.md. Two treatments this ship:
+   RING = full machined ring + well (clean plates only). RAIL-SAFE = background swap ONLY —
+   native borders, pseudo rails, and shadows kept, because border-left/pseudo rails are
+   semantic identity (the G-1b lesson: a transparent-border ring erases them).
+   Includes the three G-1b deferrals (.step/.s-hit/.master-result-row) as rail-safe.
+   EXCLUDED THIS SHIP: .mf-pill (data-state semantic status family → P-3 badge track,
+   corrects the manifest's C) · .rm-slot (device-type fill IS the data) · .scan-gun-row
+   (dashed add-affordance border) · all JS-INLINE plates (deploy detail/issues/handoff/
+   ledger/bom-ingest/TODAY/burndown/profile — inline styles beat class CSS; needs a
+   template-edit pass = G-1c2, separate ship). Semantic variants that tint background are
+   :not()-exempted; variants that only recolor borders/opacity ride on top unchanged. */
+body.rd .bp-header, body.rd .bp-card, body.rd .bp-item, body.rd .bp-empty, body.rd .bp-empty-list,
+body.rd .mf-detail-panel, body.rd .mf-btn,
+body.rd .pmv-clean-map, body.rd .pmv-stat,
+body.rd .bd-new-form, body.rd .bd-pmv-inject, body.rd .bd-pri-btn,
+body.rd .rm-add-btn, body.rd .scrubbar, body.rd .rack-canvas,
+body.rd .rl-overview, body.rd .rl-empty, body.rd .rl-search-clear, body.rd .rl-search-scan,
+body.rd .scan-context-strip, body.rd .scan-hero, body.rd .scan-coll-row,
+body.rd .scan-verify-hint, body.rd .scan-export-btn, body.rd .scan-clear-btn,
+body.rd .br-tile-net-badge, body.rd .br-empty, body.rd .audit-entry {
+  border: 2px solid transparent;
+  background:
+    radial-gradient(140% 160% at 50% -40%, rgba(140,172,206,.10) 0%, transparent 46%) padding-box,
+    linear-gradient(180deg,#0b1019,#05080e 58%,#0a0f1a) padding-box,
+    linear-gradient(175deg, rgba(255,255,255,.22) 0%, rgba(200,220,240,.07) 16%,
+      rgba(28,38,52,.9) 45%, rgba(7,11,17,1) 76%, rgba(90,112,138,.28) 100%) border-box;
+  box-shadow:
+    inset 0 2px 4px rgba(0,0,0,.7),
+    inset 0 -1px 0 rgba(160,190,220,.07),
+    0 5px 12px rgba(0,0,0,.45);
+}
+/* rail-safe: recessed-well surface only — rails, borders, and existing shadows untouched */
+body.rd .step, body.rd .s-hit, body.rd .master-result-row,
+body.rd .rl-row, body.rd .pmv-map-row:not(.has-error):not(.has-warn),
+body.rd .mf-tile, body.rd .mf-meta,
+body.rd .bd-job-card, body.rd .bd-detail-header, body.rd .bd-port-row,
+body.rd .audit-card, body.rd .rapid-log-entry, body.rd .disc-card,
+body.rd .rm-active-pill, body.rd .rm-last-viewed, body.rd .rm-rack-header,
+body.rd .rm-rack-frame, body.rd .br-tile:not(.affected) {
+  background:
+    radial-gradient(140% 160% at 50% -40%, rgba(140,172,206,.08) 0%, transparent 46%),
+    linear-gradient(180deg,#0b1019,#05080e 58%,#0a0f1a);
+}
+/* ━━━ end GLASS SKIN v1 (G-1c) ━━━ */
+
 </style>
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.189';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.190';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
