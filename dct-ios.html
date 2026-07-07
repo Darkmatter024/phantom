@@ -11395,11 +11395,33 @@ body.rd .fr-go:active { transform:translateY(1px); }
 @media (prefers-reduced-motion:reduce) { body.rd .fr-go::before, body.rd .fr-go::after { animation:none; } }
 /* ━━━ end P-2 NEW DEVICE v2 ━━━ */
 
+/* ━━━ v1.14.201 STAT FACES — reference-card headline rows (D-1a pilot, owner-approved Variant B) ━━━
+   Handoff anchor drift: spec said after end-PILL-SKIN-v2; appended at the current end of the
+   glass system instead (reported). LEGACY GUARD: the face divs live in shared static markup,
+   so a body:not(.rd) hide keeps ?legacy=1 pixel-identical (the divs don't exist there today;
+   net legacy render unchanged). .card-scent built per spec, applied NOWHERE (owner may flip). */
+body:not(.rd) .card-stat, body:not(.rd) .card-tags, body:not(.rd) .card-scent { display:none; }
+body.rd .card-stat{display:flex;flex-wrap:wrap;align-items:baseline;column-gap:14px;row-gap:2px;
+  margin-top:9px;font-family:'JetBrains Mono',monospace;font-weight:500;font-size:13px;
+  letter-spacing:.02em;color:hsl(186 100% 69%)}
+body.rd .card-stat b{font-weight:700;font-size:15.5px;color:#dff5ff;
+  text-shadow:0 0 10px hsl(186 100% 69% / .35)}
+body.rd .card-stat i{font-style:normal;color:#41546a;font-size:10.5px}
+body.rd .card-tags{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
+body.rd .ctag{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.06em;
+  color:#c8d6e4;border-radius:7px;padding:4px 9px;border:1px solid #22304a;
+  background:linear-gradient(180deg,#0c1220,#070c15)}
+body.rd .ctag b{color:#ffcb45;font-weight:700}
+/* held in reserve — build, apply nowhere until owner flips it on */
+body.rd .card-scent{font-family:'Chakra Petch',sans-serif;font-size:10.5px;letter-spacing:.1em;
+  color:#5f7186;margin-top:9px}
+/* ━━━ end STAT FACES ━━━ */
+
 </style>
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.200';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.201';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -13578,7 +13600,7 @@ if (typeof window !== 'undefined') {
           </div>
         </div>
         <div class="card" onclick="toggleCard(this)">
-          <div class="card-hdr"><div class="card-title">GB300 NVL72 — 120kW DLC</div><div class="card-right"><div class="badge b-red">120kW</div><div class="chev">▶</div></div></div>
+          <div class="card-hdr"><div class="card-title">GB300 NVL72 — 120kW DLC</div><div class="card-right"><div class="badge b-red">120kW</div><div class="chev">▶</div></div><div class="card-stat"><span><b>120 kW</b> <i>PEAK RACK POWER</i></span><span><b>~45°C facility water</b> <i>CDU INLET MAX</i></span><span><b>15–30 LPM</b> <i>PER RACK FLOW</i></span></div></div>
           <div class="card-body">
             <table class="dt"><tr><th>Parameter</th><th>Spec</th></tr>
             <tr><td>Peak rack power</td><td>120 kW</td></tr>
@@ -13614,7 +13636,7 @@ if (typeof window !== 'undefined') {
         <div class="sh">GPU Platform Power &amp; PDU Reference</div>
 
         <div class="card" onclick="toggleCard(this)">
-          <div class="card-hdr"><div class="card-title">H100 SXM5 / H200 SXM5 — Power</div><div class="card-right"><div class="badge b-gold">H100/H200</div><div class="chev">▶</div></div></div>
+          <div class="card-hdr"><div class="card-title">H100 SXM5 / H200 SXM5 — Power</div><div class="card-right"><div class="badge b-gold">H100/H200</div><div class="chev">▶</div></div><div class="card-stat"><span><b>700W</b> <i>GPU TDP EACH</i></span><span><b>5,600W</b> <i>GPU SUBTOTAL</i></span><span><b>8</b> <i>GPUS PER NODE</i></span></div></div>
           <div class="card-body">
             <table class="dt">
               <tr><th>Parameter</th><th>H100 SXM5</th><th>H200 SXM5</th></tr>
@@ -13646,7 +13668,7 @@ if (typeof window !== 'undefined') {
         </div>
 
         <div class="card" onclick="toggleCard(this)">
-          <div class="card-hdr"><div class="card-title">GB200 NVL36 — Power</div><div class="card-right"><div class="badge b-red">GB200</div><div class="chev">▶</div></div></div>
+          <div class="card-hdr"><div class="card-title">GB200 NVL36 — Power</div><div class="card-right"><div class="badge b-red">GB200</div><div class="chev">▶</div></div><div class="card-stat"><span><b>1,000W</b> <i>GPU TDP EACH</i></span><span><b>65,000–70,000W</b> <i>FULL RACK TYPICAL</i></span><span><b>36</b> <i>GPUS PER RACK</i></span></div></div>
           <div class="card-body">
             <table class="dt">
               <tr><th>Parameter</th><th>Spec</th></tr>
@@ -13669,7 +13691,7 @@ if (typeof window !== 'undefined') {
         </div>
 
         <div class="card" onclick="toggleCard(this)">
-          <div class="card-hdr"><div class="card-title">GB300 NVL72 — Power</div><div class="card-right"><div class="badge b-red">120kW</div><div class="chev">▶</div></div></div>
+          <div class="card-hdr"><div class="card-title">GB300 NVL72 — Power</div><div class="card-right"><div class="badge b-red">120kW</div><div class="chev">▶</div></div><div class="card-stat"><span><b>120,000W</b> <i>FULL RACK PEAK</i></span><span><b>Up to 1,200W</b> <i>GPU TDP EACH</i></span><span><b>72</b> <i>GPUS PER RACK</i></span></div></div>
           <div class="card-body">
             <table class="dt">
               <tr><th>Parameter</th><th>Spec</th></tr>
@@ -13724,7 +13746,7 @@ if (typeof window !== 'undefined') {
 
         <!-- H100 SXM5 -->
         <div class="card" onclick="toggleCard(this)">
-          <div class="card-hdr"><div class="card-title">H100 SXM5 — PDU Load Balance</div><div class="card-right"><div class="badge b-cyan">H100</div><div class="chev">▶</div></div></div>
+          <div class="card-hdr"><div class="card-title">H100 SXM5 — PDU Load Balance</div><div class="card-right"><div class="badge b-cyan">H100</div><div class="chev">▶</div></div><div class="card-stat"><span><b>8x</b> <i>PSU COUNT</i></span><span><b>208V</b> <i>VOLTAGE</i></span><span><b>~6.4kW</b> <i>PER PSU FULL LOAD</i></span></div></div>
           <div class="card-body">
             <div style="font-family:var(--mono);font-size: var(--fs-caption);color:var(--slate);margin-bottom:12px;letter-spacing:1px">
               8x PSU · 208V · ~6.4kW per PSU at full load · Dual feed A+B · 3-phase balanced
@@ -13736,7 +13758,7 @@ if (typeof window !== 'undefined') {
 
         <!-- H200 SXM5 -->
         <div class="card" onclick="toggleCard(this)">
-          <div class="card-hdr"><div class="card-title">H200 SXM5 — PDU Load Balance</div><div class="card-right"><div class="badge b-cyan">H200</div><div class="chev">▶</div></div></div>
+          <div class="card-hdr"><div class="card-title">H200 SXM5 — PDU Load Balance</div><div class="card-right"><div class="badge b-cyan">H200</div><div class="chev">▶</div></div><div class="card-stat"><span><b>8x</b> <i>PSU COUNT</i></span><span><b>208V</b> <i>VOLTAGE</i></span><span><b>~7.2kW</b> <i>PER PSU FULL LOAD</i></span></div></div>
           <div class="card-body">
             <div style="font-family:var(--mono);font-size: var(--fs-caption);color:var(--slate);margin-bottom:12px;letter-spacing:1px">
               8x PSU · 208V · ~7.2kW per PSU at full load · Dual feed A+B · 3-phase balanced
@@ -13748,7 +13770,7 @@ if (typeof window !== 'undefined') {
 
         <!-- GB300 NVL72 -->
         <div class="card" onclick="toggleCard(this)">
-          <div class="card-hdr"><div class="card-title">GB300 NVL72 — PDU Load Balance</div><div class="card-right"><div class="badge b-red">GB300</div><div class="chev">▶</div></div></div>
+          <div class="card-hdr"><div class="card-title">GB300 NVL72 — PDU Load Balance</div><div class="card-right"><div class="badge b-red">GB300</div><div class="chev">▶</div></div><div class="card-stat"><span><b>12x</b> <i>PSU COUNT</i></span><span><b>~10kW</b> <i>PER PSU</i></span><span><b>120kW</b> <i>TOTAL RACK</i></span></div></div>
           <div class="card-body">
             <div style="font-family:var(--mono);font-size: var(--fs-caption);color:var(--slate);margin-bottom:12px;letter-spacing:1px">
               12x PSU · 208V · ~10kW per PSU · Dual feed A+B · 3-phase · DLC required · 120kW total rack
@@ -13763,7 +13785,7 @@ if (typeof window !== 'undefined') {
       <div class="pwr-sub" id="pw-hw" style="display:none">
         <div class="sh">GPU Server Faults</div>
         <div class="card" onclick="toggleCard(this)">
-          <div class="card-hdr"><div class="card-title">H100 SXM5 — Common Faults</div><div class="card-right"><div class="badge b-gold">H100</div><div class="chev">▶</div></div></div>
+          <div class="card-hdr"><div class="card-title">H100 SXM5 — Common Faults</div><div class="card-right"><div class="badge b-gold">H100</div><div class="chev">▶</div></div><div class="card-tags"><span class="ctag"><b>XID 79</b> Reset</span><span class="ctag"><b>XID 94</b> driver</span><span class="ctag">ECC uncorrectable rising</span><span class="ctag">NVLink errors</span></div></div>
           <div class="card-body">
             <table class="dt"><tr><th>Symptom</th><th>Cause</th><th>Action</th></tr>
             <tr><td>GPU not in nvidia-smi</td><td>PCIe, driver, power</td><td>Check slot power, reseat, BMC logs</td></tr>
@@ -14138,7 +14160,7 @@ if (typeof window !== 'undefined') {
         <div class="card" onclick="toggleCard(this)">
           <div class="card-hdr">
             <div class="card-title">ASHRAE Class A1 / A2 — Data Center Standard</div>
-            <div class="card-right"><div class="badge b-cyan">ASHRAE TC 9.9</div><div class="chev">▶</div></div>
+            <div class="card-right"><div class="badge b-cyan">ASHRAE TC 9.9</div><div class="chev">▶</div></div><div class="card-stat"><span><b>15–32°C</b> <i>A1 INLET (59–89.6°F)</i></span><span><b>10–35°C</b> <i>A2 INLET (50–95°F)</i></span><span><b>80% RH</b> <i>MAX, NON-CONDENSING</i></span></div>
           </div>
           <div class="card-body">
             <p>ASHRAE TC 9.9 defines thermal envelope classes for IT equipment. Most modern data center hardware is rated Class A2 or higher. Inlet temperature is measured at the front face of the equipment, not ambient room temperature.</p>
@@ -14179,7 +14201,7 @@ if (typeof window !== 'undefined') {
         <div class="card" onclick="toggleCard(this)">
           <div class="card-hdr">
             <div class="card-title">Thermal Alert — Action Thresholds</div>
-            <div class="card-right"><div class="badge b-gold">FIELD GUIDE</div><div class="chev">▶</div></div>
+            <div class="card-right"><div class="badge b-gold">FIELD GUIDE</div><div class="chev">▶</div></div><div class="card-stat"><span><b>≥35°C</b> <i>INLET CRITICAL</i></span><span><b>≥83°C</b> <i>JUNCTION THROTTLE RISK</i></span><span><b>31–34°C</b> <i>INLET WARNING</i></span></div>
           </div>
           <div class="card-body">
             <div class="sh">Inlet Temperature Actions</div>
@@ -14204,7 +14226,7 @@ if (typeof window !== 'undefined') {
         <div class="card" onclick="toggleCard(this)">
           <div class="card-hdr">
             <div class="card-title">DLC / CDU Thermal Field Reference</div>
-            <div class="card-right"><div class="badge b-cyan">GB200 · GB300</div><div class="chev">▶</div></div>
+            <div class="card-right"><div class="badge b-cyan">GB200 · GB300</div><div class="chev">▶</div></div><div class="card-stat"><span><b>18–25°C</b> <i>COOLANT SUPPLY</i></span><span><b>Supply + 5–12°C</b> <i>COOLANT RETURN</i></span></div>
           </div>
           <div class="card-body">
             <p>Direct Liquid Cooling (DLC) systems use a Coolant Distribution Unit (CDU) to supply chilled water or coolant to server cold plates. For GB200 and GB300 NVL systems this is not optional — it is required for operation.</p>

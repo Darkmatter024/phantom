@@ -64,4 +64,11 @@ any HIGH-risk ship). Every ship keeps its own rollback line. Claude Code appends
 - [ ] ?legacy=1 fresh device: the OLD gate, verbatim
 - [ ] Rack-ID input + ticket fallback textarea: deeper well + brighter cyan focus (true-up) — still reads right
 
+## v1.14.201 — D-1a stat faces pilot · rollback: revert commit
+- [ ] Platforms drill-ins / POWER + COOLING cards: 11 faces render (values collapsed-visible, mono, cyan); 12 procedural cards deliberately faceless
+- [ ] ⭐ DENSITY CALL at arm length (gates D-1b): too busy? want the scent line? faces on the right cards?
+- [ ] H100 Common Faults card: XID tags w/ gold numbers
+- [ ] Spot-audit any face value against the card body it fronts (they must match verbatim)
+- [ ] ?legacy=1: cards show NO faces (guard) — pixel-identical to before
+
 <!-- append new ships above this line; checkpoint when 6 deep or before HIGH-risk -->
