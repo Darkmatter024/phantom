@@ -1,7 +1,7 @@
 # BATCH-VERIFY — consolidated device checklist (CALL 0, DIRECTIVE 2026-07-06)
 **Protocol:** ships stack; owner runs THIS list once per batch (cap: every 6 stacked ships or before
 any HIGH-risk ship). Every ship keeps its own rollback line. Claude Code appends; owner checks off.
-**Batch v1.14.192-.197: RELEASED by owner 2026-07-07 ('keep going'). Current batch: v1.14.198 → (open)** · Clear SW cache before the pass.
+**Batches .192-.197 and .198-.201: RELEASED by owner. Current batch: v1.14.202 → (open)** · Clear SW cache before the pass.
 
 ---
 
@@ -70,5 +70,10 @@ any HIGH-risk ship). Every ship keeps its own rollback line. Claude Code appends
 - [ ] H100 Common Faults card: XID tags w/ gold numbers
 - [ ] Spot-audit any face value against the card body it fronts (they must match verbatim)
 - [ ] ?legacy=1: cards show NO faces (guard) — pixel-identical to before
+
+## v1.14.202 — P-3 law + G-1 residue · rollback: revert commit
+- [ ] TODAY dashboard: cyan panels + chart card machined w/ cyan ring; violet KPI tile rings violet; RED blocker cards unchanged
+- [ ] Profile editor: cyan card machined; ORANGE info card unchanged
+- [ ] Platforms drill-in DLC chip still violet (law codified, no visual change intended anywhere else)
 
 <!-- append new ships above this line; checkpoint when 6 deep or before HIGH-risk -->
