@@ -11213,22 +11213,27 @@ body.rd #vaTicketFallback { padding:0 16px; }
    that file has still never arrived; these are the shipped ring+well values John
    device-verified on the .191 rack input. When the mock lands, a value true-up is
    one edit HERE and nowhere else. */
+/* v1.14.200 TRUE-UP (CALL 3 closure): values aligned to the arrived New Device v2 mock —
+   pill-well geometry (130% 220% at -70%, 55% stop), mock ring stops (.2/.26), mock focus
+   treatment (bright cyan ring + well glow insets; the 2px outer focus ring dropped).
+   Single-element adaptation of the mock's wrapper recipe (inputs can't host the brush
+   pseudo); P-2's own fields use the full wrapper (.fr-mach/.fr-well) with brush. */
 body.rd .mach, body.rd .rack-viewer-input, body.rd .va-ticket-ta {
-  border: 2px solid transparent;
+  border: 2.5px solid transparent;
   background:
-    radial-gradient(140% 160% at 50% -40%, rgba(140,172,206,.08) 0%, transparent 46%) padding-box,
-    linear-gradient(180deg,#0b1019,#05080e 58%,#0a0f1a) padding-box,
-    linear-gradient(175deg, rgba(255,255,255,.22) 0%, rgba(200,220,240,.07) 16%,
-      rgba(28,38,52,.9) 45%, rgba(7,11,17,1) 76%, rgba(90,112,138,.28) 100%) border-box;
-  box-shadow: inset 0 2px 4px rgba(0,0,0,.7);
+    radial-gradient(130% 220% at 50% -70%, rgba(140,172,206,.11) 0%, transparent 44%) padding-box,
+    linear-gradient(180deg,#0b1019,#05080e 55%,#0a0f1a) padding-box,
+    linear-gradient(175deg, rgba(255,255,255,.2) 0%, rgba(200,220,240,.07) 16%,
+      rgba(28,38,52,.9) 45%, rgba(7,11,17,1) 76%, rgba(90,112,138,.26) 100%) border-box;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,.85), inset 0 -1px 0 rgba(160,190,220,.08);
 }
 body.rd .mach:focus, body.rd .rack-viewer-input:focus, body.rd .va-ticket-ta:focus {
   background:
-    radial-gradient(140% 160% at 50% -40%, rgba(92,242,255,.10) 0%, transparent 50%) padding-box,
-    linear-gradient(180deg,#0b1019,#05080e 58%,#0a0f1a) padding-box,
-    linear-gradient(175deg, rgba(255,255,255,.30) 0%, rgba(210,240,255,.10) 16%,
-      rgba(28,44,60,.95) 45%, rgba(8,12,18,1) 76%, rgba(92,242,255,.60) 100%) border-box;
-  box-shadow: 0 0 0 2px rgba(92,242,255,0.15), inset 0 2px 4px rgba(0,0,0,.6);
+    radial-gradient(130% 220% at 50% -70%, rgba(140,172,206,.11) 0%, transparent 44%) padding-box,
+    linear-gradient(180deg,#0b1019,#05080e 55%,#0a0f1a) padding-box,
+    linear-gradient(175deg, rgba(120,230,255,.35) 0%, rgba(200,235,255,.1) 16%,
+      rgba(28,44,60,.95) 45%, rgba(7,11,17,1) 76%, rgba(60,180,220,.4) 100%) border-box;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,.75), inset 0 -2px 8px rgba(40,224,255,.2), inset 0 0 16px rgba(40,224,255,.08);
 }
 body.rd .mach::placeholder, body.rd .rack-viewer-input::placeholder, body.rd .va-ticket-ta::placeholder {
   color: rgba(142,161,179,.55); letter-spacing: 1px;
@@ -11340,11 +11345,61 @@ body.rd .pt-btn-primary:active:not(:disabled) {
 }
 /* ━━━ end GLASS SKIN v1 (G-1d) ━━━ */
 
+/* ━━━ v1.14.200 P-2 NEW DEVICE v2 — first-run gate reskin (approved mock, files48) ━━━
+   Renders only via the redesign_isOn() branch of firstRun_show(); legacy gate untouched.
+   Fonts/tokens consumed from the app (mock's Google-Fonts link + duplicate tokens stripped).
+   CONFIRM & ENTER = rotating dual-comet ring (@property --angle, iOS 16.4+; below that the
+   inline --angle:0deg fallback renders a STATIC comet — approved degrade, boot-button
+   precedent) + touch-following spotlight; prefers-reduced-motion kills the rotation. */
+@property --angle { syntax: "<angle>"; initial-value: 0deg; inherits: false; }
+body.rd .fr-crumb { font-family:'Chakra Petch',sans-serif; font-size:11px; letter-spacing:.24em; color:var(--vio); margin:0 0 10px; }
+body.rd .fr-crumb b { color:var(--cyan); }
+body.rd .fr-h1 { font-family:var(--orb); font-weight:800; font-size:26px; letter-spacing:.06em; margin:0 0 6px;
+  background:linear-gradient(180deg,#fff,#9fb4c8 75%); -webkit-background-clip:text; background-clip:text; color:transparent; }
+body.rd .fr-lede { font-family:var(--raj); font-size:15px; color:#a9bccb; margin:0 0 8px; }
+body.rd .fr-sec { font-family:'Chakra Petch',sans-serif; font-weight:600; font-size:10.5px; letter-spacing:.26em;
+  color:var(--cyan); margin:24px 2px 10px; text-shadow:0 0 10px rgba(40,224,255,.35); }
+body.rd .fr-sec-opt { color:#5fd8c4; }
+body.rd .fr-sec span { color:#8095a8; font-weight:400; letter-spacing:.12em; text-transform:none; }
+body.rd .fr-mach { position:relative; border-radius:13px; padding:2.5px; margin:0 0 12px;
+  background:linear-gradient(175deg,rgba(255,255,255,.2) 0%,rgba(200,220,240,.07) 16%,rgba(28,38,52,.9) 45%,rgba(7,11,17,1) 76%,rgba(90,112,138,.26) 100%),linear-gradient(#141b27,#0a0f18); }
+body.rd .fr-mach::before { content:''; position:absolute; inset:0; border-radius:13px; pointer-events:none; mix-blend-mode:overlay;
+  background:repeating-linear-gradient(115deg,rgba(255,255,255,.04) 0 1px,transparent 1px 3px); }
+body.rd .fr-well { position:relative; border-radius:10.5px; overflow:hidden;
+  background:radial-gradient(130% 220% at 50% -70%,rgba(140,172,206,.11) 0%,transparent 44%),linear-gradient(180deg,#0b1019,#05080e 55%,#0a0f1a);
+  box-shadow:inset 0 2px 4px rgba(0,0,0,.85),inset 0 -1px 0 rgba(160,190,220,.08); }
+body.rd .fr-in { all:unset; display:block; width:100%; box-sizing:border-box; padding:15px 16px;
+  font-family:'Chakra Petch',sans-serif; font-size:15px; color:#dff0fb; letter-spacing:.02em; }
+body.rd .fr-in::placeholder { color:#54687c; }
+body.rd .fr-mach:focus-within { background:linear-gradient(175deg,rgba(120,230,255,.35) 0%,rgba(200,235,255,.1) 16%,rgba(28,44,60,.95) 45%,rgba(7,11,17,1) 76%,rgba(60,180,220,.4) 100%),linear-gradient(#141b27,#0a0f18); }
+body.rd .fr-mach:focus-within .fr-well { box-shadow:inset 0 2px 4px rgba(0,0,0,.75),inset 0 -2px 8px rgba(40,224,255,.2),inset 0 0 16px rgba(40,224,255,.08); }
+body.rd .fr-hint { font-family:'Chakra Petch',sans-serif; font-size:11px; color:#6b8093; letter-spacing:.04em; line-height:1.6; margin:-4px 2px 14px; }
+body.rd .fr-go { all:unset; position:relative; display:block; width:100%; margin-top:34px; border-radius:100px; cursor:pointer; isolation:isolate;
+  text-align:center; padding:19px 0; font-family:var(--orb); font-weight:700; font-size:15px; letter-spacing:.3em; text-indent:.3em;
+  color:#eef9ff; text-shadow:0 0 16px rgba(120,220,255,.7); -webkit-tap-highlight-color:transparent; box-sizing:border-box; }
+body.rd .fr-go::before, body.rd .fr-go::after { content:''; position:absolute; inset:-3px; border-radius:inherit; z-index:-2;
+  background:conic-gradient(from var(--angle),
+    transparent 0%, var(--cyan) 8%, transparent 22%,
+    transparent 48%, var(--vio) 58%, transparent 74%);
+  animation:frRot 4.2s linear infinite; }
+body.rd .fr-go::after { filter:blur(15px); opacity:.9; }
+@keyframes frRot { to { --angle:360deg; } }
+body.rd .fr-go-plate { position:absolute; inset:0; border-radius:inherit; z-index:-1;
+  background:linear-gradient(180deg,#081018,#03060c 60%,#070d16);
+  box-shadow:inset 0 1px 0 rgba(200,230,255,.14),inset 0 -10px 20px rgba(0,0,0,.6); }
+body.rd .fr-go-spot { position:absolute; inset:0; border-radius:inherit; z-index:0; opacity:0; transition:opacity .25s; pointer-events:none;
+  background:radial-gradient(120px circle at var(--mx,50%) var(--my,50%),rgba(90,220,255,.26),transparent 55%); }
+body.rd .fr-go.touching .fr-go-spot { opacity:1; }
+body.rd .fr-go b { position:relative; z-index:1; }
+body.rd .fr-go:active { transform:translateY(1px); }
+@media (prefers-reduced-motion:reduce) { body.rd .fr-go::before, body.rd .fr-go::after { animation:none; } }
+/* ━━━ end P-2 NEW DEVICE v2 ━━━ */
+
 </style>
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.199';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.200';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -20582,6 +20637,44 @@ function firstRun_show() {
   var ov    = document.getElementById('fr-overlay');
   if (!inner || !ov) return;
   var p = siteProfile_load();
+
+  // P-2 (v1.14.200): New Device v2 — approved mock new-device-setup-v2.html (files48).
+  // Runtime-gated: legacy keeps the original gate below verbatim. Same field IDs, same
+  // firstRun_confirm() storage path (merge-not-overwrite, confirmedAt, error handling).
+  if (redesign_isOn()) {
+    var frMach = function(id, ph, attrs, val) {
+      return '<div class="fr-mach"><div class="fr-well"><input id="' + id + '" type="text" class="fr-in" placeholder="' + ph + '" ' + attrs + ' value="' + escHtml(val || '') + '"></div></div>';
+    };
+    inner.innerHTML =
+      '<div style="padding:26px 0 4px">'
+      +   '<p class="fr-crumb"><b>PHANTOM</b> // SET UP THIS DEVICE</p>'
+      +   '<h1 class="fr-h1">' + (p.facilityId ? escHtml(p.facilityId) : 'New device') + '</h1>'
+      +   '<p class="fr-lede">' + escHtml(p.facilityName || 'Tell PHANTOM where this device is working.') + '</p>'
+      + '</div>'
+      + '<div class="fr-sec">YOUR NAME</div>'
+      + frMach('fr-operator', 'e.g. J. Hamilton', 'autocapitalize="words" autocomplete="name" spellcheck="false"', p.operator)
+      + '<p class="fr-hint">Used on your sign-offs and handoffs.</p>'
+      + '<div class="fr-sec">SITE</div>'
+      + frMach('fr-facilityId', 'Site code (e.g. DFW-07)', 'autocapitalize="characters" spellcheck="false"', p.facilityId)
+      + frMach('fr-facilityName', 'Facility name (e.g. CoreWeave Dallas)', 'autocapitalize="words" spellcheck="false"', p.facilityName)
+      + '<p class="fr-hint">Hardware — switches, GPUs, optics — fills in from the Master you load. PHANTOM doesn\'t assume your gear.</p>'
+      + '<div class="fr-sec fr-sec-opt">FLOOR DETAILS <span>— optional, fill when you are on the floor</span></div>'
+      + frMach('fr-rackNaming', 'Rack naming convention', 'autocapitalize="characters" spellcheck="false"', p.rackNamingConvention)
+      + frMach('fr-pdu', 'PDU type', 'autocapitalize="characters" spellcheck="false"', p.pduType)
+      + '<div id="fr-error" role="alert" style="display:none;margin-top:18px;padding:12px 14px;border-radius:10px;border:1px solid rgba(255,69,58,0.5);background:rgba(255,69,58,0.10);color:#ffb3ad;font-family:var(--mono);font-size:12px;line-height:1.5"></div>'
+      + '<button id="fr-confirm" class="fr-go" style="--angle:0deg" onclick="firstRun_confirm()"><span class="fr-go-plate"></span><span class="fr-go-spot"></span><b>CONFIRM &amp; ENTER</b></button>';
+    // touch-following spotlight (mock verbatim; passive — never blocks scroll)
+    try {
+      var g = document.getElementById('fr-confirm');
+      var mv = function(x, y) { var r = g.getBoundingClientRect(); g.style.setProperty('--mx', (x - r.left) + 'px'); g.style.setProperty('--my', (y - r.top) + 'px'); };
+      g.addEventListener('touchstart', function(e) { g.classList.add('touching'); mv(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
+      g.addEventListener('touchmove', function(e) { mv(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
+      g.addEventListener('touchend', function() { g.classList.remove('touching'); });
+    } catch(e) {}
+    ov.classList.add('show');
+    setTimeout(function() { var f = document.getElementById('fr-operator'); if (f) f.focus(); }, 60);
+    return;
+  }
 
   var fieldCss = 'width:100%;box-sizing:border-box;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.18);'
     + 'border-radius:10px;padding:14px;color:var(--white);font-family:var(--raj);font-size:17px;-webkit-appearance:none;outline:none';

@@ -57,4 +57,11 @@ any HIGH-risk ship). Every ship keeps its own rollback line. Claude Code appends
 - [ ] Any AI feature (Ask PHANTOM) round-trips normally against the grace-mode Worker
 - [ ] (After Worker paste) Cloudflare log shows x-phantom-key arriving; unkeyed count trends to 0
 
+## v1.14.200 — P-2 New Device v2 + .mach true-up · rollback: revert commit
+- [ ] Fresh device (cleared localStorage): v2 screen — machined fields w/ brush, comet ring rotating, spotlight follows touch
+- [ ] Save minimal (name+site) -> enters app -> SYS > SITE PROFILE shows saved values; floor fields editable later
+- [ ] EXISTING-profile device NEVER sees the screen (backfill contract)
+- [ ] ?legacy=1 fresh device: the OLD gate, verbatim
+- [ ] Rack-ID input + ticket fallback textarea: deeper well + brighter cyan focus (true-up) — still reads right
+
 <!-- append new ships above this line; checkpoint when 6 deep or before HIGH-risk -->
