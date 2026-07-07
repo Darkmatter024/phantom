@@ -1,7 +1,7 @@
 # BATCH-VERIFY — consolidated device checklist (CALL 0, DIRECTIVE 2026-07-06)
 **Protocol:** ships stack; owner runs THIS list once per batch (cap: every 6 stacked ships or before
 any HIGH-risk ship). Every ship keeps its own rollback line. Claude Code appends; owner checks off.
-**Current batch: v1.14.192 → (open)** · Clear SW cache before the pass.
+**Current batch: v1.14.192 → v1.14.197 — CAP REACHED (6), RUN THIS PASS** · Clear SW cache before the pass.
 
 ---
 
@@ -37,5 +37,13 @@ any HIGH-risk ship). Every ship keeps its own rollback line. Claude Code appends
 - [ ] Rack Map SCAN-OR-TYPE input: unchanged look (same recipe, now from the .mach block) + cyan focus
 - [ ] A-1 clipboard-deny fallback textarea: unchanged look + placeholder legible
 - [ ] Any regression on Rack Map search flow (submit still works)
+
+## v1.14.197 — G-1c3 CALL-1 + inline plates (`pending`) · rollback: revert commit
+- [ ] Deploy command center: phase-matrix rows machined; a COMPLETE row rings green, PAUSED gold, BLOCKED red, normal slate; phase cells (per-phase colors/glows) unchanged
+- [ ] ?legacy=1 deploy list: phase matrix rows show the OLD flat tints (runtime-gated)
+- [ ] Optic ledger summary card + Masterfile reconcile card: machined CYAN ring (violet gone — CALL 1)
+- [ ] Issue detail cards, handoff record cards, BOM-ingest step cards, EDP parse status, preflight card, nvidia-smi telemetry card: machined
+- [ ] BOM-ingest SUCCESS (green) cards + TODAY red blocker rows: UNCHANGED (semantic, deliberately skipped)
+- [ ] .195 ask card + .196 inputs items above
 
 <!-- append new ships above this line; checkpoint when 6 deep or before HIGH-risk -->

@@ -11245,11 +11245,30 @@ body.rd .mach::placeholder, body.rd .rack-viewer-input::placeholder, body.rd .va
 }
 /* ━━━ end M-1 .mach ━━━ */
 
+/* ━━━ v1.14.197 GLASS SKIN v1 — Ship G-1c3: CALL-1 rulings + remaining inline plates ━━━
+   .gsk-row = machined row plate whose STATUS hue rides the --pg channel (rl-chip pattern,
+   CALL 1): phase-matrix rows. Neutral rows get the slate default; complete/paused/blocked
+   rows carry their semantic channel inline. Phase CELL colors untouched — no phase becomes
+   cyan or violet. Ledger/reconcile surfaces converted CYAN-NEUTRAL per CALL 1 (violet is
+   review-pending only). Tinted-accent inline plates (TODAY KPIs, profile editor,
+   action-stripe chips, issue list rows) documented to the G-1 residue slot (queue item 9). */
+body.rd .gsk-row {
+  --pg: 210 15% 45%;
+  border: 1.5px solid transparent;
+  background:
+    radial-gradient(140% 160% at 50% -40%, rgba(140,172,206,.07) 0%, transparent 46%) padding-box,
+    linear-gradient(180deg,#0b1019,#05080e 58%,#0a0f1a) padding-box,
+    linear-gradient(175deg, rgba(255,255,255,.18) 0%, rgba(200,220,240,.06) 16%,
+      rgba(28,38,52,.9) 45%, rgba(7,11,17,1) 76%, hsl(var(--pg) / .30) 100%) border-box;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,.6), 0 3px 8px rgba(0,0,0,.35);
+}
+/* ━━━ end GLASS SKIN v1 (G-1c3) ━━━ */
+
 </style>
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.196';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.197';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -18604,7 +18623,7 @@ function issue_renderDetail() {
   html += '</div>';
 
   // Context block
-  html += '<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.10);border-radius:10px;padding:12px 14px;margin-bottom:10px">';
+  html += '<div class="gsk" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.10);border-radius:10px;padding:12px 14px;margin-bottom:10px">';
   html += '<div style="font-family:var(--mono);font-size:10px;letter-spacing:1.5px;color:var(--slate,#8a99ad);margin-bottom:6px">CONTEXT</div>';
   var ctxRows = [];
   if (depName) ctxRows.push('Deployment · ' + escHtml(depName));
@@ -18621,7 +18640,7 @@ function issue_renderDetail() {
 
   // Description
   if (iss.description) {
-    html += '<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.10);border-radius:10px;padding:12px 14px;margin-bottom:10px">';
+    html += '<div class="gsk" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.10);border-radius:10px;padding:12px 14px;margin-bottom:10px">';
     html += '<div style="font-family:var(--mono);font-size:10px;letter-spacing:1.5px;color:var(--slate,#8a99ad);margin-bottom:6px">DESCRIPTION</div>';
     html += '<div style="font-family:var(--raj);font-size:13px;color:#fff;line-height:1.5;white-space:pre-wrap">' + escHtml(iss.description) + '</div>';
     html += '</div>';
@@ -18639,7 +18658,7 @@ function issue_renderDetail() {
   // Event timeline
   var events = (iss.events || []).slice().reverse();
   if (events.length) {
-    html += '<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.10);border-radius:10px;padding:12px 14px;margin-bottom:10px">';
+    html += '<div class="gsk" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.10);border-radius:10px;padding:12px 14px;margin-bottom:10px">';
     html += '<div style="font-family:var(--mono);font-size:10px;letter-spacing:1.5px;color:var(--slate,#8a99ad);margin-bottom:8px">TIMELINE</div>';
     events.forEach(function(ev) {
       var label = ev.type.replace(/_/g, ' ').toUpperCase();
@@ -23738,8 +23757,18 @@ function deploy_renderPhaseMatrix(deploys) {
       : dep.status === 'paused'   ? 'rgba(255,214,10,0.15)'
       : blockers > 0              ? 'rgba(255,45,85,0.20)'
       : 'rgba(255,255,255,0.06)';
-
-    html += '<div style="display:grid;grid-template-columns:1fr 32px 32px 32px 32px 32px 36px;gap:3px;align-items:center;background:' + rowBg + ';border:1px solid ' + rowBorder + ';border-radius:8px;padding:8px 10px;margin-bottom:4px;cursor:pointer" onclick="deploy_showDetail(\'' + dep.id + '\')" ontouchstart="this.style.opacity=\'0.75\'" ontouchend="this.style.opacity=\'1\'">';
+    // G-1c3 (v1.14.197, CALL 1): under rd the row is a machined plate and the STATUS hue rides
+    // the --pg channel (the rl-chip pattern) — green/gold/red keep their meaning in the ring.
+    // Legacy branch keeps the inline tint verbatim (this renderer also paints under ?legacy=1).
+    var rowChan = dep.status === 'complete' ? '131 66% 52%'
+      : dep.status === 'paused'   ? '48 100% 58%'
+      : blockers > 0              ? '348 100% 63%'
+      : '';
+    var rowGrid = 'display:grid;grid-template-columns:1fr 32px 32px 32px 32px 32px 36px;gap:3px;align-items:center;border-radius:8px;padding:8px 10px;margin-bottom:4px;cursor:pointer';
+    var rowOpen = redesign_isOn()
+      ? '<div class="gsk-row" style="' + (rowChan ? '--pg:' + rowChan + ';' : '') + rowGrid + '"'
+      : '<div style="background:' + rowBg + ';border:1px solid ' + rowBorder + ';' + rowGrid + '"';
+    html += rowOpen + ' onclick="deploy_showDetail(\'' + dep.id + '\')" ontouchstart="this.style.opacity=\'0.75\'" ontouchend="this.style.opacity=\'1\'">';
 
     // Name + status indicator
     var nameShort = dep.name.length > 18 ? dep.name.substring(0,17) + '…' : dep.name;
@@ -29448,7 +29477,7 @@ function handoff_showLog(deploymentId) {
 
   handoffs.forEach(function(h) {
     var timeStr = new Date(h.generatedAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-    html += '<div style="background:var(--surf-1);border:1px solid rgba(255,214,10,0.2);border-radius:var(--hud-r12);padding:14px 16px;margin-bottom:8px;position:relative;overflow:hidden">';
+    html += '<div class="gsk" style="background:var(--surf-1);border:1px solid rgba(255,214,10,0.2);border-radius:var(--hud-r12);padding:14px 16px;margin-bottom:8px;position:relative;overflow:hidden">';
     html += '<div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--gold)"></div>';
 
     html += '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px">';
@@ -29463,7 +29492,7 @@ function handoff_showLog(deploymentId) {
     html += '<div style="font-family:var(--raj);font-size:12px;color:var(--slate-readable);margin-bottom:8px">' + escHtml(h.autoSummary) + '</div>';
 
     if (h.notes) {
-      html += '<div style="background:rgba(0,0,0,0.25);border-radius:6px;padding:8px 10px;font-family:var(--raj);font-size:12px;color:var(--slate-readable);margin-bottom:8px">' + escHtml(h.notes) + '</div>';
+      html += '<div class="gsk" style="background:rgba(0,0,0,0.25);border-radius:6px;padding:8px 10px;font-family:var(--raj);font-size:12px;color:var(--slate-readable);margin-bottom:8px">' + escHtml(h.notes) + '</div>';
     }
 
     html += '<div style="display:flex;gap: 8px;font-family:var(--mono);font-size: var(--fs-caption);color:var(--slate)">';
@@ -29701,7 +29730,7 @@ function deploy_showOpticLedger(deploymentId) {
   var summaryBarColor = summaryPct === 100 ? 'var(--green)' : (summaryPct > 0 ? 'var(--cyan)' : 'var(--slate)');
   var summaryValColor = summaryPct === 100 ? 'var(--green)' : (summaryPct > 0 ? 'var(--cyan)' : 'var(--white)');
 
-  html += '<div style="background:var(--surf-1);border:1px solid var(--violet-border);border-radius:var(--hud-r12);padding:14px 16px;margin-bottom:10px">';
+  html += '<div class="gsk" style="background:var(--surf-1);border:1px solid var(--violet-border);border-radius:var(--hud-r12);padding:14px 16px;margin-bottom:10px">';
   html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';
   html += '<span style="font-family:var(--mono);font-size: var(--fs-micro);letter-spacing:1.5px;color:var(--violet)">ALL TYPES — INSTALLED</span>';
   html += '<span style="font-family:var(--orb);font-size:18px;color:' + summaryValColor + '">' + totalInstalled + '&nbsp;<span style="font-size:11px;color:var(--slate)">/ ' + totalRequired + '</span></span>';
@@ -33013,7 +33042,7 @@ function _bomIngest_renderStepIndicator(currentStep) {
 function _bomIngest_renderStepSource() {
   var s = _bomIngestState;
   var html = '';
-  html += '<div style="background:rgba(0,0,0,0.25);border:1px solid rgba(92,242,255,0.15);border-radius:var(--hud-r12);padding:12px 14px;margin-bottom:12px">';
+  html += '<div class="gsk" style="background:rgba(0,0,0,0.25);border:1px solid rgba(92,242,255,0.15);border-radius:var(--hud-r12);padding:12px 14px;margin-bottom:12px">';
   html += '<div style="font-family:var(--orb);font-size:var(--fs-micro);letter-spacing:2px;color:var(--cyan);margin-bottom:8px">STEP 1 · SOURCE</div>';
   html += '<p style="font-family:var(--mono);font-size:11px;color:var(--slate-readable);line-height:1.5;margin-bottom:10px">Drop in an .xlsx (multi-sheet supported) or paste CSV content. Header signature is auto-detected from the first 30 rows of each sheet.</p>';
 
@@ -33046,12 +33075,12 @@ function _bomIngest_renderStepPreview() {
   var warnings = p.warnings || [];
   var html = '';
 
-  html += '<div style="background:rgba(0,0,0,0.25);border:1px solid rgba(92,242,255,0.15);border-radius:var(--hud-r12);padding:12px 14px;margin-bottom:12px">';
+  html += '<div class="gsk" style="background:rgba(0,0,0,0.25);border:1px solid rgba(92,242,255,0.15);border-radius:var(--hud-r12);padding:12px 14px;margin-bottom:12px">';
   html += '<div style="font-family:var(--orb);font-size:var(--fs-micro);letter-spacing:2px;color:var(--cyan);margin-bottom:10px">STEP 2 · PREVIEW</div>';
 
   // Stat grid
   var statCell = function(label, value, color) {
-    return '<div style="background:rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.04);border-radius:8px;padding:8px 10px">' +
+    return '<div class="gsk" style="background:rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.04);border-radius:8px;padding:8px 10px">' +
       '<div style="color:var(--slate);font-size:var(--fs-micro);letter-spacing:1.5px">' + label + '</div>' +
       '<div style="color:' + (color || 'var(--white)') + ';font-family:var(--orb);font-size:14px;margin-top:3px">' + _bomIngest_esc(value) + '</div>' +
       '</div>';
@@ -33091,7 +33120,7 @@ function _bomIngest_renderStepPreview() {
     html += '<div style="color:var(--slate);font-size:var(--fs-micro);letter-spacing:1.5px;margin-bottom:6px;font-family:var(--mono)">SAMPLE (FIRST ' + sampleCount + ' OF ' + items.length + ')</div>';
     for (var i = 0; i < sampleCount; i++) {
       var it = items[i];
-      html += '<div style="background:rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.04);border-radius:8px;padding:8px 10px;margin-bottom:6px;font-family:var(--mono);font-size:10px;line-height:1.5">';
+      html += '<div class="gsk" style="background:rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.04);border-radius:8px;padding:8px 10px;margin-bottom:6px;font-family:var(--mono);font-size:10px;line-height:1.5">';
       html += '<div style="color:var(--cyan);font-weight:500">' + _bomIngest_esc(it.cw_sku || it.part_no || '—') + '</div>';
       var desc = (it.description || '').slice(0, 80);
       if (desc) html += '<div style="color:var(--slate-readable);margin-top:2px">' + _bomIngest_esc(desc) + '</div>';
@@ -33122,7 +33151,7 @@ function _bomIngest_renderStepMetadata() {
   var m = s.metadata;
   var html = '';
 
-  html += '<div style="background:rgba(0,0,0,0.25);border:1px solid rgba(92,242,255,0.15);border-radius:var(--hud-r12);padding:12px 14px;margin-bottom:12px">';
+  html += '<div class="gsk" style="background:rgba(0,0,0,0.25);border:1px solid rgba(92,242,255,0.15);border-radius:var(--hud-r12);padding:12px 14px;margin-bottom:12px">';
   html += '<div style="font-family:var(--orb);font-size:var(--fs-micro);letter-spacing:2px;color:var(--cyan);margin-bottom:10px">STEP 3 · METADATA</div>';
   html += '<p style="font-family:var(--mono);font-size:11px;color:var(--slate-readable);line-height:1.5;margin-bottom:14px">Confirm or fill in deployment-level fields. Auto-detected values are pre-populated where possible.</p>';
 
@@ -33241,7 +33270,7 @@ function _bomIngest_renderStepMetadata() {
 function _bomIngest_renderStepCommit() {
   var s = _bomIngestState;
   var html = '';
-  html += '<div style="background:rgba(0,0,0,0.25);border:1px solid rgba(92,242,255,0.15);border-radius:var(--hud-r12);padding:24px 14px;margin-bottom:12px;text-align:center">';
+  html += '<div class="gsk" style="background:rgba(0,0,0,0.25);border:1px solid rgba(92,242,255,0.15);border-radius:var(--hud-r12);padding:24px 14px;margin-bottom:12px;text-align:center">';
   html += '<div style="font-family:var(--orb);font-size:var(--fs-micro);letter-spacing:2px;color:var(--cyan);margin-bottom:12px">COMMITTING…</div>';
 
   // Stage 2 — xlsx batch shows per-sheet progress as each completes
@@ -33323,7 +33352,7 @@ function _bomIngest_renderStepSuccess() {
   html += '.';
   html += '</div>';
 
-  html += '<div style="background:rgba(0,0,0,0.35);border:1px solid rgba(255,255,255,0.04);border-radius:6px;padding:8px 12px;font-family:var(--mono);font-size:10px;color:var(--slate-readable);word-break:break-all;line-height:1.6">';
+  html += '<div class="gsk" style="background:rgba(0,0,0,0.35);border:1px solid rgba(255,255,255,0.04);border-radius:6px;padding:8px 12px;font-family:var(--mono);font-size:10px;color:var(--slate-readable);word-break:break-all;line-height:1.6">';
   if (r.bom_deployment_id) html += 'BOM_DEPLOYMENT: <span style="color:var(--cyan)">' + _bomIngest_esc(r.bom_deployment_id) + '</span><br>';
   if (r.bom_scope_id)      html += 'BOM_SCOPE: <span style="color:var(--cyan)">' + _bomIngest_esc(r.bom_scope_id) + '</span>';
   html += '</div>';
@@ -33932,7 +33961,7 @@ function _bomIngest_renderStepXlsxSheets() {
   var includedCount = _bomIngest_xlsxIncludedCount();
 
   var html = '';
-  html += '<div style="background:rgba(0,0,0,0.25);border:1px solid rgba(92,242,255,0.15);border-radius:var(--hud-r12);padding:12px 14px;margin-bottom:12px">';
+  html += '<div class="gsk" style="background:rgba(0,0,0,0.25);border:1px solid rgba(92,242,255,0.15);border-radius:var(--hud-r12);padding:12px 14px;margin-bottom:12px">';
   html += '<div style="font-family:var(--orb);font-size:var(--fs-micro);letter-spacing:2px;color:var(--cyan);margin-bottom:8px">STEP 2 · SELECT SHEETS</div>';
   html += '<p style="font-family:var(--mono);font-size:11px;color:var(--slate-readable);line-height:1.5;margin-bottom:10px">';
   html += _bomIngest_esc(_bomIngestState.filename || 'xlsx workbook');
@@ -35153,7 +35182,7 @@ function edp_renderStatus(targetEl, statuses) {
            '</div>';
   }).join('');
   targetEl.innerHTML =
-    '<div style="background:rgba(0,0,0,0.25);border:1px solid rgba(92,242,255,0.15);border-radius:8px;padding:10px;margin-bottom:12px">' +
+    '<div class="gsk" style="background:rgba(0,0,0,0.25);border:1px solid rgba(92,242,255,0.15);border-radius:8px;padding:10px;margin-bottom:12px">' +
       '<div style="font-family:var(--mono);font-size: var(--fs-micro);letter-spacing:1.5px;color:var(--cyan);margin-bottom:6px">PARSING EDP · SECTIONED</div>' +
       rows +
     '</div>';
@@ -40570,7 +40599,7 @@ function reconcile_render(mount){
     body += '<div style="font-family:var(--mono);font-size:var(--fs-caption);color:var(--slate);margin-top:6px">' + (res.hostCount||0) + ' Master hosts · count-reconcile by model / optic type (not per-serial)</div>';
   }
   body += '</div>';
-  mount.innerHTML = '<div style="background:var(--surf-1);border:1px solid rgba(155,89,255,0.2);border-radius:12px;padding:14px 16px;margin-bottom:14px">' + head + body + '</div>';
+  mount.innerHTML = '<div class="gsk" style="background:var(--surf-1);border:1px solid rgba(155,89,255,0.2);border-radius:12px;padding:14px 16px;margin-bottom:14px">' + head + body + '</div>';
 }
 
 // ── Ship 2 Part B: Vendor-EDP attach (Auditor role) ───────────────────────
@@ -40833,7 +40862,7 @@ function preflight_render(mount){
     body += '<div style="font-family:var(--mono);font-size:var(--fs-caption);color:var(--slate);margin-top:6px">' + (res.cableCount || 0) + ' cables · ' + (res.rackCount || 0) + ' EDP racks · geometry + port-map (pre-pull)</div>';
   }
   body += '</div>';
-  mount.innerHTML = '<div style="background:var(--surf-1);border:1px solid rgba(92,242,255,0.22);border-radius:12px;padding:14px 16px;margin-bottom:14px">' + head + body + '</div>';
+  mount.innerHTML = '<div class="gsk" style="background:var(--surf-1);border:1px solid rgba(92,242,255,0.22);border-radius:12px;padding:14px 16px;margin-bottom:14px">' + head + body + '</div>';
 }
 
 // NOW-tab cross-tab severity dot (v1.6.87). Crit when the active deployment has
@@ -41773,7 +41802,7 @@ function renderNvidiaSmi(text, el) {
     if (throttled)       findings.push({lvl:'warn', t:`GPU ${g.idx}: Throttled (${g.perf})`,                d:'Not at P0 performance state. Thermal, power, or clock constraint active.'});
     if (pPct >= 95)      findings.push({lvl:'warn', t:`GPU ${g.idx}: Power near cap (${g.pwrUsed}W / ${g.pwrCap}W)`, d:'Running at power limit — may throttle under sustained load.'});
 
-    html += `<div style="background:var(--surf-1);border:1px solid rgba(255,255,255,0.07);border-radius:var(--hud-r12);padding:12px 14px;margin-bottom:8px;">
+    html += `<div class="gsk" style="background:var(--surf-1);border:1px solid rgba(255,255,255,0.07);border-radius:var(--hud-r12);padding:12px 14px;margin-bottom:8px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
         <div>
           <div style="font-family:var(--orb);font-size: var(--fs-micro);letter-spacing:2px;color:var(--slate);margin-bottom:3px;">GPU ${g.idx}</div>
