@@ -76,4 +76,11 @@ any HIGH-risk ship). Every ship keeps its own rollback line. Claude Code appends
 - [ ] Profile editor: cyan card machined; ORANGE info card unchanged
 - [ ] Platforms drill-in DLC chip still violet (law codified, no visual change intended anywhere else)
 
+## v1.14.203 — D-1b fleet stat faces · rollback: revert commit
+- [ ] Fiber cards (OM3/OM4/OM5/OS2): reach faces collapsed-visible and correct vs their tables
+- [ ] LC/SC/DAC/AOC/QSFP/SFP/IB/OLTS/baud cards: faces match their bodies verbatim (spot-audit any)
+- [ ] CLI / OOB / console / triage checklist cards: deliberately faceless (28 of 42 — procedure-heavy by design)
+- [ ] ?legacy=1: no faces anywhere
+- [ ] QUEUE IS DRAINED — this pass closes batches .198-.203
+
 <!-- append new ships above this line; checkpoint when 6 deep or before HIGH-risk -->
