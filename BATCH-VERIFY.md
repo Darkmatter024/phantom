@@ -1,7 +1,7 @@
 # BATCH-VERIFY — consolidated device checklist (CALL 0, DIRECTIVE 2026-07-06)
 **Protocol:** ships stack; owner runs THIS list once per batch (cap: every 6 stacked ships or before
 any HIGH-risk ship). Every ship keeps its own rollback line. Claude Code appends; owner checks off.
-**Current batch: v1.14.192 → v1.14.197 — CAP REACHED (6), RUN THIS PASS** · Clear SW cache before the pass.
+**Batch v1.14.192-.197: RELEASED by owner 2026-07-07 ('keep going'). Current batch: v1.14.198 → (open)** · Clear SW cache before the pass.
 
 ---
 
@@ -45,5 +45,12 @@ any HIGH-risk ship). Every ship keeps its own rollback line. Claude Code appends
 - [ ] Issue detail cards, handoff record cards, BOM-ingest step cards, EDP parse status, preflight card, nvidia-smi telemetry card: machined
 - [ ] BOM-ingest SUCCESS (green) cards + TODAY red blocker rows: UNCHANGED (semantic, deliberately skipped)
 - [ ] .195 ask card + .196 inputs items above
+
+## v1.14.198 — G-1d Command + pt-btn · rollback: revert commit (primary = one rule)
+- [ ] Command: OPS SIGNAL rows, KPI tiles, header back chip machined; hero lens + stat trio glass w/ cyan glow intact
+- [ ] Command QA tile grid: machined housings, per-tile glow/text hues still locate groups at arm length (border tints gone — JUDGE THIS)
+- [ ] ⭐ PRIMARY BUTTONS fleet-wide (LOAD MASTER, parse, exports…): now dark cask w/ cyan text + ring (was solid cyan/black text) — JUDGE THE AFFORDANCE; veto = one-rule revert
+- [ ] Ghost/secondary buttons machined incl. clip-notch corners; warning/destructive buttons UNCHANGED (semantic)
+- [ ] Header ghost button machined; its amber alert state unchanged; shift pill (green) unchanged
 
 <!-- append new ships above this line; checkpoint when 6 deep or before HIGH-risk -->
