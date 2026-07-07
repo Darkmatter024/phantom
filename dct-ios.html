@@ -11344,7 +11344,7 @@ body.rd .pt-btn-primary:active:not(:disabled) {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.198';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.199';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -15696,6 +15696,7 @@ function phantomViewCrashLog() {
 // Security: Worker enforces Origin allowlist (rejects non-GitHub-Pages requests).
 // No token is sent from the client — protection is origin-based + server-enforced spend cap.
 const PHANTOM_PROXY_URL = 'https://phantom-api.wfj6t2fk7w.workers.dev/v1/messages';
+const PHANTOM_PROXY_KEY = '30f3479c8cffdebe9525794cc0fbda997499062217fa9e97'; // S-1 shared secret  must match Worker PHANTOM_KEY. Not secrecy (public source); raises drive-by abuse cost alongside origin check + rate limit + spend cap.
 
 const PHANTOM_API_MAX_BODY = 300000; // 300KB max request body — bumped for real EDP files
 function phantomAPI(body, _retryCtx) {
@@ -15716,7 +15717,8 @@ function phantomAPI(body, _retryCtx) {
   return fetch(PHANTOM_PROXY_URL, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'x-phantom-key': PHANTOM_PROXY_KEY
     },
     body: payload,
     signal: controller.signal

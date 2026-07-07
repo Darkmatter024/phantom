@@ -53,4 +53,8 @@ any HIGH-risk ship). Every ship keeps its own rollback line. Claude Code appends
 - [ ] Ghost/secondary buttons machined incl. clip-notch corners; warning/destructive buttons UNCHANGED (semantic)
 - [ ] Header ghost button machined; its amber alert state unchanged; shift pill (green) unchanged
 
+## v1.14.199 — S-1 client proxy key · rollback: revert commit (Worker unaffected)
+- [ ] Any AI feature (Ask PHANTOM) round-trips normally against the grace-mode Worker
+- [ ] (After Worker paste) Cloudflare log shows x-phantom-key arriving; unkeyed count trends to 0
+
 <!-- append new ships above this line; checkpoint when 6 deep or before HIGH-risk -->
