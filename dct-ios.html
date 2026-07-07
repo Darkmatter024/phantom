@@ -10965,6 +10965,10 @@ body.rd .rm-rack-frame, body.rd .br-tile:not(.affected) {
    6 OPS SIGNAL empty plate: UNTOUCHED — awaiting the owner's explicit ruling on the dashed
      ghost-blueprint empty-state language. */
 body.rd .ask {
+  /* v1.14.195 T3 (queue-1, CALL 0 batch): saturation tune-down — owner flagged the hot
+     saturate(1.40) twice; .155 precedent (John-approved) killed it on photoreal-art cards
+     because it crushes the art. The ask card is now photoreal-on-glass — same class. */
+  filter: none;
   border: 2px solid transparent;
   background:
     radial-gradient(140% 160% at 50% -40%, rgba(140,172,206,.10) 0%, transparent 46%) padding-box,
@@ -11243,7 +11247,7 @@ body.rd #vaTicketFallback { padding:0 16px; }
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.194';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.195';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
