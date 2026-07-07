@@ -11020,23 +11020,7 @@ body.rd #wk-deploy .pt-btn-ghost {
     inset 0 -1px 0 rgba(160,190,220,.07),
     0 5px 12px rgba(0,0,0,.45);
 }
-body.rd .rack-viewer-input {
-  border: 2px solid transparent;
-  background:
-    radial-gradient(140% 160% at 50% -40%, rgba(140,172,206,.08) 0%, transparent 46%) padding-box,
-    linear-gradient(180deg,#0b1019,#05080e 58%,#0a0f1a) padding-box,
-    linear-gradient(175deg, rgba(255,255,255,.22) 0%, rgba(200,220,240,.07) 16%,
-      rgba(28,38,52,.9) 45%, rgba(7,11,17,1) 76%, rgba(90,112,138,.28) 100%) border-box;
-  box-shadow: inset 0 2px 4px rgba(0,0,0,.7);
-}
-body.rd .rack-viewer-input:focus {
-  background:
-    radial-gradient(140% 160% at 50% -40%, rgba(92,242,255,.10) 0%, transparent 50%) padding-box,
-    linear-gradient(180deg,#0b1019,#05080e 58%,#0a0f1a) padding-box,
-    linear-gradient(175deg, rgba(255,255,255,.30) 0%, rgba(210,240,255,.10) 16%,
-      rgba(28,44,60,.95) 45%, rgba(8,12,18,1) 76%, rgba(92,242,255,.60) 100%) border-box;
-  box-shadow: 0 0 0 2px rgba(92,242,255,0.15), inset 0 2px 4px rgba(0,0,0,.6);
-}
+/* v1.14.196: .rack-viewer-input rules moved into the M-1 .mach recipe block (CALL 3). */
 /* ━━━ end GLASS SKIN v1 (G-1d-α) ━━━ */
 
 /* ━━━ v1.14.192 GLASS SKIN v1 — Ship G-1c2: JS-inline plate utility (.gsk) ━━━
@@ -11099,26 +11083,13 @@ body.rd .va-intake-chip.va-ticket-on {
     0 0 calc(.45em * var(--pill-tube)) hsl(var(--pill-cy) / calc(.95 * var(--pill-tube))),
     0 0 calc(1.3em * var(--pill-tube)) hsl(var(--pill-cy) / calc(.5 * var(--pill-tube)));
 }
+/* v1.14.196: .va-ticket-ta base surface moved into the M-1 .mach recipe block (CALL 3);
+   only its element-specific layout stays here. */
 body.rd .va-ticket-ta {
   width: 100%; box-sizing: border-box; min-height: 96px; resize: vertical; outline: none;
   padding: 12px 14px; color: #fff; font-family: var(--mono); font-size: 13px; line-height: 1.5;
-  border-radius: var(--hud-r12, 12px); border: 2px solid transparent;
-  background:
-    radial-gradient(140% 160% at 50% -40%, rgba(140,172,206,.08) 0%, transparent 46%) padding-box,
-    linear-gradient(180deg,#0b1019,#05080e 58%,#0a0f1a) padding-box,
-    linear-gradient(175deg, rgba(255,255,255,.22) 0%, rgba(200,220,240,.07) 16%,
-      rgba(28,38,52,.9) 45%, rgba(7,11,17,1) 76%, rgba(90,112,138,.28) 100%) border-box;
-  box-shadow: inset 0 2px 4px rgba(0,0,0,.7);
+  border-radius: var(--hud-r12, 12px);
 }
-body.rd .va-ticket-ta:focus {
-  background:
-    radial-gradient(140% 160% at 50% -40%, rgba(92,242,255,.10) 0%, transparent 50%) padding-box,
-    linear-gradient(180deg,#0b1019,#05080e 58%,#0a0f1a) padding-box,
-    linear-gradient(175deg, rgba(255,255,255,.30) 0%, rgba(210,240,255,.10) 16%,
-      rgba(28,44,60,.95) 45%, rgba(8,12,18,1) 76%, rgba(92,242,255,.60) 100%) border-box;
-  box-shadow: 0 0 0 2px rgba(92,242,255,0.15), inset 0 2px 4px rgba(0,0,0,.6);
-}
-body.rd .va-ticket-ta::placeholder { color: rgba(142,161,179,.55); letter-spacing: 1px; }
 /* ━━━ end A-1 TICKET INTAKE ━━━ */
 
 /* ━━━ v1.14.194 A-2 ASSISTANT INTENT FLOW — premium sheet, mic stays cold ━━━
@@ -11243,11 +11214,42 @@ body.rd #vaBody > .va-tchip:first-child { margin-top:16px; }
 body.rd #vaTicketFallback { padding:0 16px; }
 /* ━━━ end A-2 INTENT FLOW ━━━ */
 
+/* ━━━ v1.14.196 M-1 — THE `.mach` MACHINED INPUT RECIPE (CALL 3 consolidation) ━━━
+   ONE source of truth for ring+well data-entry fields. Consumers: any element carrying
+   class="mach" + the two named stand-ins re-dressed per CALL 3 (.rack-viewer-input,
+   .va-ticket-ta). The A-2 composer consumes it via its machined .va-comp wrapper.
+   P-2's New Device fields adopt class="mach" at build time.
+   VALUE NOTE (reported): CALL 3 cites the New Device v2 mock as the recipe source —
+   that file has still never arrived; these are the shipped ring+well values John
+   device-verified on the .191 rack input. When the mock lands, a value true-up is
+   one edit HERE and nowhere else. */
+body.rd .mach, body.rd .rack-viewer-input, body.rd .va-ticket-ta {
+  border: 2px solid transparent;
+  background:
+    radial-gradient(140% 160% at 50% -40%, rgba(140,172,206,.08) 0%, transparent 46%) padding-box,
+    linear-gradient(180deg,#0b1019,#05080e 58%,#0a0f1a) padding-box,
+    linear-gradient(175deg, rgba(255,255,255,.22) 0%, rgba(200,220,240,.07) 16%,
+      rgba(28,38,52,.9) 45%, rgba(7,11,17,1) 76%, rgba(90,112,138,.28) 100%) border-box;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,.7);
+}
+body.rd .mach:focus, body.rd .rack-viewer-input:focus, body.rd .va-ticket-ta:focus {
+  background:
+    radial-gradient(140% 160% at 50% -40%, rgba(92,242,255,.10) 0%, transparent 50%) padding-box,
+    linear-gradient(180deg,#0b1019,#05080e 58%,#0a0f1a) padding-box,
+    linear-gradient(175deg, rgba(255,255,255,.30) 0%, rgba(210,240,255,.10) 16%,
+      rgba(28,44,60,.95) 45%, rgba(8,12,18,1) 76%, rgba(92,242,255,.60) 100%) border-box;
+  box-shadow: 0 0 0 2px rgba(92,242,255,0.15), inset 0 2px 4px rgba(0,0,0,.6);
+}
+body.rd .mach::placeholder, body.rd .rack-viewer-input::placeholder, body.rd .va-ticket-ta::placeholder {
+  color: rgba(142,161,179,.55); letter-spacing: 1px;
+}
+/* ━━━ end M-1 .mach ━━━ */
+
 </style>
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.195';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.196';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had

@@ -33,4 +33,9 @@ any HIGH-risk ship). Every ship keeps its own rollback line. Claude Code appends
 - [ ] Ask card on Command: prism art reads clean (was hot/oversaturated) — `.155` precedent value
 - [ ] Card still glass (ring/well/violet tint) — only saturation changed
 
+## v1.14.196 — M-1 .mach recipe (CALL 3) · rollback: revert commit
+- [ ] Rack Map SCAN-OR-TYPE input: unchanged look (same recipe, now from the .mach block) + cyan focus
+- [ ] A-1 clipboard-deny fallback textarea: unchanged look + placeholder legible
+- [ ] Any regression on Rack Map search flow (submit still works)
+
 <!-- append new ships above this line; checkpoint when 6 deep or before HIGH-risk -->
