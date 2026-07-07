@@ -11117,11 +11117,133 @@ body.rd .va-ticket-ta:focus {
 body.rd .va-ticket-ta::placeholder { color: rgba(142,161,179,.55); letter-spacing: 1px; }
 /* ━━━ end A-1 TICKET INTAKE ━━━ */
 
+/* ━━━ v1.14.194 A-2 ASSISTANT INTENT FLOW — premium sheet, mic stays cold ━━━
+   Per approved mock assistant-intent-sheet-mock.html (files47). All body.rd-scoped;
+   the legacy va sheet paints byte-identical (intent/composer states are rd-only,
+   listening additions are rd-ternary inside the shared template).
+   Glow discipline: per-intent accents are icon-stroke tube glows only — no halos. */
+body.rd .va-sheet-inner {
+  border: 2.5px solid transparent; border-top: 2.5px solid transparent;
+  border-radius: 26px 26px 0 0;
+  background:
+    radial-gradient(130% 160% at 50% -40%, rgba(140,172,206,.12) 0%, transparent 46%) padding-box,
+    linear-gradient(180deg,#0b1220,#060a12 50%,#080e18) padding-box,
+    linear-gradient(175deg, rgba(255,255,255,.22) 0%, rgba(200,220,240,.08) 14%,
+      rgba(28,38,52,.92) 42%, rgba(7,11,17,1) 78%, rgba(90,112,138,.28) 100%) border-box;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,.8), inset 0 -1px 0 rgba(160,190,220,.08), 0 -8px 30px rgba(0,0,0,.6);
+  position: relative;
+}
+body.rd .va-sheet-inner::before {
+  content:''; position:absolute; inset:0; border-radius:24px 24px 0 0; pointer-events:none;
+  mix-blend-mode:overlay; opacity:.26;
+  background:repeating-linear-gradient(115deg, rgba(255,255,255,.045) 0 1px, transparent 1px 3px);
+}
+body.rd .va-handle {
+  width: 52px; background: linear-gradient(90deg,#26344a,#3b4c66,#26344a);
+  border-radius: 99px; box-shadow: inset 0 1px 1px rgba(255,255,255,.12);
+}
+body.rd .va-sheet-title { text-shadow: 0 0 12px hsl(var(--pill-cy) / .45); letter-spacing: .3em; }
+body.rd .va-iask {
+  font-family:'Chakra Petch',sans-serif; font-size:10px; letter-spacing:.26em;
+  color:#61748a; text-align:center; margin:16px 0 14px;
+}
+body.rd .va-igrid { display:flex; flex-direction:column; gap:12px; padding:0 16px 20px; }
+body.rd .va-icard {
+  position:relative; border-radius:17px; border:2.5px solid transparent; padding:0;
+  cursor:pointer; text-align:left; width:100%;
+  background:
+    linear-gradient(#141b27,#0a0f18) padding-box,
+    linear-gradient(175deg, rgba(255,255,255,.22) 0%, rgba(200,220,240,.07) 16%,
+      rgba(28,38,52,.9) 45%, rgba(7,11,17,1) 76%, rgba(90,112,138,.28) 100%) border-box;
+  filter:drop-shadow(0 5px 12px rgba(0,0,0,.55));
+  -webkit-tap-highlight-color:transparent;
+}
+body.rd .va-icard:active { transform:translateY(1px); }
+body.rd .va-iwell {
+  display:flex; align-items:center; gap:14px; border-radius:14.5px; overflow:hidden; padding:15px 16px;
+  background:radial-gradient(130% 220% at 50% -70%, rgba(140,172,206,.11) 0%, transparent 44%),
+    linear-gradient(180deg,#0b1019,#05080e 55%,#0a0f1a);
+  box-shadow:inset 0 2px 4px rgba(0,0,0,.85), inset 0 -1px 0 rgba(160,190,220,.08);
+}
+body.rd .va-iico {
+  width:44px; height:44px; flex:0 0 auto; border-radius:12px; display:grid; place-items:center;
+  background:linear-gradient(180deg,#0e1626,#080d16);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.07), inset 0 -4px 8px rgba(0,0,0,.5);
+}
+body.rd .va-iico svg { width:22px; height:22px; }
+body.rd .va-it { flex:1; min-width:0; }
+body.rd .va-it b { display:block; font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:13px; letter-spacing:.22em; color:#e8f2f8; }
+body.rd .va-it span { display:block; font-family:var(--raj); font-size:12.5px; color:#6d8096; margin-top:2px; letter-spacing:.03em; }
+body.rd .va-iarw { font-size:15px; color:#3d5169; }
+body.rd .va-i-speak .va-iico svg { stroke:hsl(var(--pill-cy)); filter:drop-shadow(0 0 5px hsl(var(--pill-cy)/.55)); }
+body.rd .va-i-speak .va-iwell { box-shadow:inset 0 2px 4px rgba(0,0,0,.85), inset 0 -3px 8px hsl(var(--pill-cy)/.10); }
+body.rd .va-i-paste .va-iico svg { stroke:hsl(var(--pill-vi)); filter:drop-shadow(0 0 5px hsl(var(--pill-vi)/.6)); }
+body.rd .va-i-paste .va-iwell { box-shadow:inset 0 2px 4px rgba(0,0,0,.85), inset 0 -3px 8px hsl(var(--pill-vi)/.10); }
+body.rd .va-i-type .va-iico svg { stroke:var(--gold,#ffcb45); filter:drop-shadow(0 0 5px rgba(255,203,69,.5)); }
+body.rd .va-i-type .va-iwell { box-shadow:inset 0 2px 4px rgba(0,0,0,.85), inset 0 -3px 8px rgba(255,203,69,.08); }
+body.rd .va-i-imp .va-iico svg { stroke:#7fe8d2; filter:drop-shadow(0 0 5px rgba(31,255,208,.5)); }
+body.rd .va-i-imp .va-iwell { box-shadow:inset 0 2px 4px rgba(0,0,0,.85), inset 0 -3px 8px rgba(31,255,208,.08); }
+body.rd .va-comp {
+  position:relative; border-radius:15px; border:2.5px solid transparent; margin:14px 16px 0;
+  background:
+    radial-gradient(130% 220% at 50% -70%, rgba(140,172,206,.1) 0%, transparent 44%) padding-box,
+    linear-gradient(180deg,#0b1019,#05080e 55%,#0a0f1a) padding-box,
+    linear-gradient(175deg, rgba(255,255,255,.22) 0%, rgba(200,220,240,.07) 16%,
+      rgba(28,38,52,.9) 45%, rgba(7,11,17,1) 76%, rgba(90,112,138,.28) 100%) border-box;
+  box-shadow:inset 0 2px 4px rgba(0,0,0,.85), inset 0 -1px 0 rgba(160,190,220,.08);
+}
+body.rd .va-comp-ta {
+  display:block; width:100%; min-height:150px; padding:14px 15px; border:0; outline:none; resize:vertical;
+  background:transparent; box-sizing:border-box;
+  font-family:var(--mono); font-size:12.5px; line-height:1.6; color:#dff0fb; white-space:pre-wrap;
+}
+body.rd .va-comp-ta::placeholder { color:#4a5d72; }
+body.rd .va-crow { display:flex; gap:10px; margin:14px 16px 20px; }
+body.rd .va-cask, body.rd .va-ldone {
+  flex:1; border-radius:999px; border:2.5px solid transparent; padding:14px 0; cursor:pointer; text-align:center;
+  font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:12px; letter-spacing:.26em; color:hsl(var(--pill-cy));
+  background:linear-gradient(180deg,#0b1019,#05080e) padding-box,
+    linear-gradient(175deg, rgba(255,255,255,.3), rgba(28,44,60,.95) 45%, hsl(var(--pill-cy)/.35)) border-box;
+  box-shadow:inset 0 2px 4px rgba(0,0,0,.7), inset 0 -3px 6px hsl(var(--pill-cy)/.12);
+  text-shadow:0 0 .5em hsl(var(--pill-cy)/.5);
+  -webkit-tap-highlight-color:transparent;
+}
+body.rd .va-ldone { display:block; flex:none; margin:0 auto; padding:13px 34px; }
+body.rd .va-cback {
+  border-radius:999px; border:2px solid transparent; padding:14px 20px; cursor:pointer;
+  font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:10.5px; letter-spacing:.2em; color:#8ea2b8;
+  background:linear-gradient(180deg,#0b1019,#05080e) padding-box,
+    linear-gradient(175deg, rgba(255,255,255,.2), rgba(28,38,52,.9) 45%, rgba(7,11,17,1)) border-box;
+  box-shadow:inset 0 2px 3px rgba(0,0,0,.7);
+  -webkit-tap-highlight-color:transparent;
+}
+body.rd .va-lcancel {
+  display:block; margin:12px auto 4px; background:none; border:0; cursor:pointer;
+  font-family:'Chakra Petch',sans-serif; font-size:10px; letter-spacing:.24em; color:#5a6c80;
+  min-height:30px;
+}
+body.rd .va-tchip {
+  display:flex; align-items:center; gap:10px; border-radius:12px; border:2px solid transparent;
+  padding:11px 13px; margin:14px 16px 4px;
+  background:linear-gradient(180deg,#0b1019,#05080e) padding-box,
+    linear-gradient(175deg, rgba(255,255,255,.2), rgba(36,28,52,.9) 45%, hsl(var(--pill-vi)/.4)) border-box;
+  box-shadow:inset 0 2px 4px rgba(0,0,0,.75), inset 0 -3px 8px hsl(var(--pill-vi)/.1);
+}
+body.rd .va-tn {
+  flex:1; font-family:var(--mono); font-size:11.5px; letter-spacing:.05em; color:var(--pill-vi-core,#f2d9ff);
+  text-shadow:0 0 8px hsl(var(--pill-vi)/.4); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+body.rd .va-tk { font-family:var(--mono); font-size:10px; color:#5f7186; }
+body.rd .va-tx { color:#8ea2b8; font-size:14px; padding:2px 6px; cursor:pointer; background:none; border:0; min-height:30px; }
+body.rd #vaBody > .va-tchip:first-child { margin-top:16px; }
+body.rd #vaTicketFallback { padding:0 16px; }
+/* ━━━ end A-2 INTENT FLOW ━━━ */
+
 </style>
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.193';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.194';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -11686,7 +11808,7 @@ if (typeof window !== 'undefined') {
         <p id="cc-nbap">&mdash;</p>
         <span class="route" id="cc-nbar" role="button" tabindex="0"></span>
       </div>
-      <button class="ask" onclick="openVaSheet('listening');vaStart()" aria-label="Ask PHANTOM for assistance">
+      <button class="ask" onclick="openVaSheet('intent')" aria-label="Ask PHANTOM for assistance">
         <span class="prism"><img class="ico-photoreal icon-glow" src="icons/phantom-ui-assistant-256.webp" alt="PHANTOM" width="62"></span>
         <div>
           <div class="ey">Ask PHANTOM</div>
@@ -35633,7 +35755,7 @@ function toggleChk(item) {
 const INTENT_MAP = [
   { keywords: ['optic','qsfp','sfp','transceiver','osfp','dac','aoc','sr4','lr4','mpo','mmf','smf','fiber type','reach'], action: () => goOptic() },
   { keywords: ['port map','port validator','cabling','cable map','cable plan','validate port','ne sign'], action: () => goOpsTab('portmap') },
-  { keywords: ['voice','ask','assistant','speak','question','help me'], action: () => { if (redesign_isOn()) { openVaSheet('listening'); if (typeof vaStart === 'function') vaStart(); return; } showPage('triage', getTnItem('triage')); setTimeout(() => openVaSheet('listening'), 100); } },
+  { keywords: ['voice','ask','assistant','speak','question','help me'], action: () => { if (redesign_isOn()) { openVaSheet('intent'); return; } showPage('triage', getTnItem('triage')); setTimeout(() => openVaSheet('listening'), 100); } },
   { keywords: ['parser','analyze','paste','cli output','dom','fcs','crc','ibperf','perfquery','port-channel'], action: () => goCliParser() },
   { keywords: ['sop','procedure','runbook','handover','shift'], action: () => goOpsTab('sops') },
   { keywords: ['rack map','elevation','rack','u-slot','rack layout'], action: () => { if (redesign_isOn()) { if (typeof showWorkTab === 'function') showWorkTab('deploy'); return; } showPage('sop', getTnItem('sop'), 'rackmap'); } },
@@ -37851,9 +37973,16 @@ function setVaBody(state) {
         <div class="va-status listening" id="vaStatus">LISTENING — SPEAK NOW</div>
         <div style="text-align:center;padding:10px 20px 20px">
           <div class="va-dots"><span></span><span></span><span></span></div>
-          <div style="margin-top:12px;font-family:var(--raj);font-size:12px;color:var(--slate)">Release button when done</div>
+          ${redesign_isOn() ? '' : '<div style="margin-top:12px;font-family:var(--raj);font-size:12px;color:var(--slate)">Release button when done</div>'}
         </div>
-        <div id="vaIntakeRow">${redesign_isOn() ? va_intakeRowHtml() : ''}</div>`;
+        ${redesign_isOn() ? va_listenControlsHtml() : ''}`;
+    } else if (state === 'intent') {
+      // A-2 (v1.14.194) — redesign-only entry state. Mic hardware is NOT touched here;
+      // vaStart() fires only from the SPEAK card tap (the legitimate iOS gesture).
+      body.innerHTML = va_intentHtml();
+    } else if (state === 'composer') {
+      body.innerHTML = va_composerHtml();
+      try { var _ta = document.getElementById('vaComposerTa'); if (_ta) _ta.focus(); } catch(e) {}
     } else if (state === 'thinking') {
       body.innerHTML = `
         <div class="va-question"><div class="va-q-label">YOU ASKED</div>${escHtml(VA.transcript || '...')}</div>
@@ -37868,34 +37997,70 @@ function setVaBody(state) {
 // ── A-1 TICKET INTAKE (v1.14.193) — paste/import a ticket as attached evidence ──
 // Redesign-only row (setVaBody gates on redesign_isOn(); legacy va sheet unchanged).
 // Stateless by design: VA.ticket lives for the open sheet only, never localStorage.
-function va_intakeRowHtml() {
-  if (VA.ticket) {
-    var kb = (VA.ticket.text.length / 1024).toFixed(1);
-    return '<div class="va-intake-row">' +
-      '<button class="va-intake-chip va-ticket-on" onclick="va_clearTicket()">TICKET ATTACHED · ' +
-      escHtml(VA.ticket.name) + ' · ' + kb + ' KB · ✕</button></div>';
-  }
-  return '<div class="va-intake-row">' +
-    '<button class="va-intake-chip" onclick="va_pasteTicket()">PASTE TICKET</button>' +
-    '<button class="va-intake-chip" onclick="document.getElementById(\'vaTicketFile\').click()">IMPORT</button>' +
-    '<input type="file" id="vaTicketFile" accept=".txt,.log,.json,.eml,.csv,.md" style="display:none" onchange="va_importTicket(this)">' +
+// A-2 (v1.14.194): the intake row grew into the intent menu — four machined doors, mic cold.
+function va_intentHtml() {
+  var t = VA.ticket;
+  var chip = t ? ('<div class="va-tchip"><span class="va-tn">TICKET ATTACHED · ' + escHtml(t.name) + '</span>' +
+    '<span class="va-tk">' + (t.text.length / 1024).toFixed(1) + ' KB</span>' +
+    '<button class="va-tx" onclick="va_clearTicket()" aria-label="Clear attached ticket">✕</button></div>') : '';
+  var speakSub = t ? 'Ask about the attached ticket' : 'Ask by voice — mic starts when you tap';
+  return chip +
+    '<p class="va-iask">' + (t ? 'NOW — HOW DO YOU WANT TO ASK?' : 'HOW DO YOU WANT TO ASK?') + '</p>' +
+    '<div class="va-igrid">' +
+    '<button class="va-icard va-i-speak" onclick="vaStart()" aria-label="Ask by voice"><span class="va-iwell">' +
+    '<span class="va-iico"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></span>' +
+    '<span class="va-it"><b>SPEAK</b><span>' + speakSub + '</span></span><span class="va-iarw">›</span></span></button>' +
+    '<button class="va-icard va-i-paste" onclick="va_pasteTicket()" aria-label="Paste ticket from clipboard"><span class="va-iwell">' +
+    '<span class="va-iico"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round"><rect x="6" y="5" width="12" height="15" rx="2"/><path d="M9 5V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v1M9.5 11h5M9.5 14.5h5"/></svg></span>' +
+    '<span class="va-it"><b>PASTE TICKET</b><span>Attach the ticket from your clipboard</span></span><span class="va-iarw">›</span></span></button>' +
+    '<button class="va-icard va-i-type" onclick="setVaBody(\'composer\')" aria-label="Type or paste your question"><span class="va-iwell">' +
+    '<span class="va-iico"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10h.01M11 10h.01M15 10h.01M7 14h10"/></svg></span>' +
+    '<span class="va-it"><b>TYPE OR PASTE</b><span>Write it — or paste ticket text straight in</span></span><span class="va-iarw">›</span></span></button>' +
+    '<button class="va-icard va-i-imp" onclick="document.getElementById(\'vaTicketFile\').click()" aria-label="Import ticket file"><span class="va-iwell">' +
+    '<span class="va-iico"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round"><path d="M12 3v11m0 0 4-4m-4 4-4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg></span>' +
+    '<span class="va-it"><b>IMPORT FILE</b><span>.txt · .log · .json · .eml · .csv</span></span><span class="va-iarw">›</span></span></button>' +
     '</div>' +
-    '<div id="vaTicketFallback" style="display:none;padding:0 20px 14px">' +
+    '<input type="file" id="vaTicketFile" accept=".txt,.log,.json,.eml,.csv,.md" style="display:none" onchange="va_importTicket(this)">' +
+    '<div id="vaTicketFallback" style="display:none;margin-top:12px">' +
     '<textarea class="va-ticket-ta" id="vaTicketTa" rows="4" placeholder="PASTE TICKET TEXT HERE"></textarea>' +
     '<button class="va-intake-chip" style="margin-top:8px" onclick="va_attachFallback()">ATTACH</button>' +
     '</div>';
 }
-function va_refreshIntakeRow() {
-  var row = document.getElementById('vaIntakeRow');
-  if (row) row.innerHTML = va_intakeRowHtml();
+// Composer — the text IS the question; same ask path as a voice transcript (incl. attached ticket).
+// Native textarea paste needs no clipboard.readText — zero permission dependence.
+function va_composerHtml() {
+  return '<div class="va-comp"><textarea class="va-comp-ta" id="vaComposerTa" placeholder="TYPE YOUR QUESTION — OR PASTE TICKET TEXT DIRECTLY HERE"></textarea></div>' +
+    '<div class="va-crow">' +
+    '<button class="va-cask" onclick="va_composerAsk()">ASK PHANTOM</button>' +
+    '<button class="va-cback" onclick="setVaBody(\'intent\')">‹ MENU</button></div>';
+}
+function va_composerAsk() {
+  var ta = document.getElementById('vaComposerTa');
+  var q = ta && ta.value ? ta.value.trim() : '';
+  if (!q) { if (typeof phantomToast === 'function') phantomToast('Type or paste a question first', 'warn'); return; }
+  VA.transcript = q;
+  vaAsk(q);
+}
+function va_listenControlsHtml() {
+  return '<button class="va-ldone" onclick="va_listenDone()">DONE — ASK PHANTOM</button>' +
+    '<button class="va-lcancel" onclick="va_listenCancel()">CANCEL · BACK TO MENU</button>';
+}
+function va_listenDone() {
+  // stop() finalizes recognition → the existing onend path fires vaAsk(transcript)
+  try { if (VA.recognition) VA.recognition.stop(); } catch(e) {}
+}
+function va_listenCancel() {
+  VA.listening = false;
+  try { if (VA.recognition) VA.recognition.abort(); } catch(e) {}
+  setVaBody('intent');
 }
 function va_attachTicket(name, text) {
   VA.ticket = { name: name, text: text };
-  va_refreshIntakeRow();
+  setVaBody('intent');   // A-2: evidence on board — back to the menu with the chip mounted
 }
 function va_clearTicket() {
   VA.ticket = null;
-  va_refreshIntakeRow();
+  setVaBody('intent');
 }
 // Paste path — readText MUST run directly in the tap handler (iOS gesture requirement).
 // Denied/empty/unsupported → machined textarea fallback; a permission prompt on first
