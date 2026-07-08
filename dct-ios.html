@@ -4624,6 +4624,7 @@ select {
 #omni-bar input:disabled { cursor: not-allowed; }
 /* Hide during boot splash — #boot covers viewport with higher z-index, but hide cleanly */
 body.phantom-booting #omni-bar { display: none; }
+body.rd #omni-bar { background: linear-gradient(180deg, rgba(4,7,11,0.93), rgba(8,14,22,0.99)); } /* v1.14.204: opaque plate — card text was ghosting through the nav band */
 
 /* ━━━ POINT-AND-SHOOT · RACK-LOOKUP SCAN BUTTON ━━━ */
 /* Full-screen scan HUD is handled by #qr-overlay (PhantomScanner). */
@@ -8841,8 +8842,8 @@ body.rd #rd-profile-sheet.open { display: flex; }
    neutral .gx border / cyan glow), prism contained in a 56px violet-tinted box with a
    36px mark (was a 64px uncontained 62px image), and typography scaled to the surface
    (title 18px not 23px, 11px mono label, 13px desc). body.rd-only; legacy untouched. */
-body.rd .ask{--ax:var(--vio);display:flex;align-items:center;gap:14px;padding:18px;margin:0 16px 14px;width:auto;text-align:left;filter:saturate(1.40);border:1px solid color-mix(in srgb,var(--vio) var(--glow-border),transparent);border-radius:16px;background:linear-gradient(160deg,#0a0d13 0%,#070809 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.06),inset 0 0 30px -6px color-mix(in srgb,var(--vio) var(--glow-inner),transparent),0 0 var(--glow-outer) -2px color-mix(in srgb,var(--vio) var(--glow-a),transparent),0 12px 26px -14px rgba(0,0,0,.9)}   /* Rule F (v1.14.128): match the Command-surface card recipe (.nba/.lens) — radius 16, saturate, violet accent glow — not the .gx grid recipe (radius 14, cyan glow). .gx dropped from markup. v1.14.159 T2: luminance lift — border #a66bff 58%, inset 26% + outer bloom; prism bg 22%/border #a66bff 45%/inner glow — into OLED-visible range. */
-body.rd .ask .prism{flex:0 0 auto;width:56px;height:56px;display:grid;place-items:center;background:color-mix(in srgb,var(--vio) 22%,transparent);border:1px solid color-mix(in srgb,#a66bff 45%,transparent);border-radius:8px;box-shadow:inset 0 0 12px color-mix(in srgb,var(--vio) 25%,transparent)}
+body.rd .ask{--ax:var(--vio);display:flex;align-items:center;gap:14px;padding:18px;margin:0 16px 14px;width:auto;text-align:left;border-radius:16px}   /* Rule F (v1.14.128). v1.14.204 STRUCTURAL: LAYOUT-ONLY now. Material (border/background/box-shadow/filter) was silently LOSING the cascade to the later G-1 rule — every material edit here was a no-op. All material consolidated into the G-1 rule. Do NOT re-add material props here. */
+body.rd .ask .prism{flex:0 0 auto;width:56px;height:56px;display:grid;place-items:center;background:color-mix(in srgb,var(--vio) 12%,transparent);border:1px solid color-mix(in srgb,#a66bff 45%,transparent);border-radius:8px;box-shadow:inset 0 0 12px color-mix(in srgb,var(--vio) 25%,transparent)}
 body.rd .ask .prism img{width:36px;height:auto;animation:askBreathe 4.6s ease-in-out infinite}
 body.rd .ask .ey{color:var(--vio);font-family:var(--mono);font-size:11px;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:4px}
 body.rd .ask h3{font-weight:700;font-size:18px;margin:0;color:#fff;line-height:1.1}
@@ -10967,19 +10968,24 @@ body.rd .rm-rack-frame, body.rd .br-tile:not(.affected) {
 body.rd .ask {
   /* v1.14.195 T3 (queue-1, CALL 0 batch): saturation tune-down — owner flagged the hot
      saturate(1.40) twice; .155 precedent (John-approved) killed it on photoreal-art cards
-     because it crushes the art. The ask card is now photoreal-on-glass — same class. */
+     because it crushes the art. The ask card is now photoreal-on-glass — same class.
+     v1.14.204: -webkit-appearance reset added — .ask is a raw <button>; without the reset
+     iOS WebKit refuses the border-box gradient ring and the whole G-1 material never paints.
+     This rule is the CASCADE WINNER over the layout-only rule (~L8844) — material lives HERE only. */
+  /* v1.14.204 BULLETPROOF MATERIAL: the border-box gradient ring trick (2px transparent
+     border + border-box background layer) does not paint on this raw <button> even with the
+     appearance reset — owner confirmed on device twice. Replaced with the pre-G-1 primitive
+     set (plain ring + padding-box glass + inset glow) which paints on every element type.
+     Consumes the --glow-border knob per the one-knob law. Do NOT reintroduce border-box layers here. */
+  -webkit-appearance: none;
+  appearance: none;
   filter: none;
-  border: 2px solid transparent;
+  border: 1px solid color-mix(in srgb, var(--vio) var(--glow-border), transparent);
   background:
-    radial-gradient(140% 160% at 50% -40%, rgba(140,172,206,.10) 0%, transparent 46%) padding-box,
-    linear-gradient(180deg,#0b1019,#05080e 58%,#0a0f1a) padding-box,
-    linear-gradient(175deg, rgba(255,255,255,.22) 0%, rgba(200,220,240,.07) 16%,
-      rgba(28,38,52,.9) 45%, rgba(7,11,17,1) 76%,
-      color-mix(in srgb, var(--vio) 42%, transparent) 100%) border-box;
+    radial-gradient(140% 160% at 50% -40%, rgba(140,172,206,.10) 0%, transparent 46%),
+    linear-gradient(180deg,#0b1019,#05080e 58%,#0a0f1a);
   box-shadow: inset 0 1px 0 rgba(255,255,255,.06),
-    inset 0 0 30px -6px color-mix(in srgb,var(--vio) var(--glow-inner),transparent),
-    0 0 var(--glow-outer) -2px color-mix(in srgb,var(--vio) var(--glow-a),transparent),
-    0 12px 26px -14px rgba(0,0,0,.9),
+    inset 0 0 30px -6px color-mix(in srgb,var(--vio) 12%,transparent),
     inset 0 2px 4px rgba(0,0,0,.6);
 }
 body.rd #pg-cmd .tile {
@@ -11314,10 +11320,9 @@ body.rd #pg-cmd .spill {
       color-mix(in srgb, var(--cyan) 35%, transparent) 100%) border-box;
   box-shadow:
     inset 0 1px 0 rgba(255,255,255,.06),
-    inset 0 0 30px -6px color-mix(in srgb,var(--cyan) var(--glow-inner),transparent),
-    0 0 var(--glow-outer) -2px color-mix(in srgb,var(--cyan) var(--glow-a),transparent),
-    0 12px 26px -14px rgba(0,0,0,.9),
+    inset 0 0 30px -6px color-mix(in srgb,var(--cyan) 12%,transparent),
     inset 0 2px 4px rgba(0,0,0,.55);
+  /* v1.14.204 T3: outer bloom + bottom drop shadow deleted (asymmetric bloom read as row tilt), inner glow fixed 12%. */
 }
 /* pt-btn system — ghost/secondary machined; primary = the A-2 cask language */
 body.rd .pt-btn-ghost, body.rd .pt-btn-secondary {
@@ -11401,13 +11406,15 @@ body.rd .fr-go:active { transform:translateY(1px); }
    so a body:not(.rd) hide keeps ?legacy=1 pixel-identical (the divs don't exist there today;
    net legacy render unchanged). .card-scent built per spec, applied NOWHERE (owner may flip). */
 body:not(.rd) .card-stat, body:not(.rd) .card-tags, body:not(.rd) .card-scent { display:none; }
-body.rd .card-stat{display:flex;flex-wrap:wrap;align-items:baseline;column-gap:14px;row-gap:2px;
+body.rd .card-hdr{flex-wrap:wrap} /* v1.14.204 D-1 ROOT FIX: without wrap on the container, the full-basis stat row below can never drop to its own line — it competes in the row and crushes .card-title to a one-word-per-line sliver with the badge over it. */
+body.rd .card-hdr .ico-tile, body.rd .card-hdr .card-right{flex-shrink:0}
+body.rd .card-stat{display:flex;flex-basis:100%;flex-wrap:wrap;align-items:baseline;column-gap:14px;row-gap:2px; /* v1.14.204 D-1 fix: full-basis row — wraps below the title row (requires card-hdr flex-wrap above) */
   margin-top:9px;font-family:'JetBrains Mono',monospace;font-weight:500;font-size:13px;
   letter-spacing:.02em;color:hsl(186 100% 69%)}
 body.rd .card-stat b{font-weight:700;font-size:15.5px;color:#dff5ff;
   text-shadow:0 0 10px hsl(186 100% 69% / .35)}
 body.rd .card-stat i{font-style:normal;color:#41546a;font-size:10.5px}
-body.rd .card-tags{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
+body.rd .card-tags{display:flex;flex-basis:100%;flex-wrap:wrap;gap:7px;margin-top:9px} /* v1.14.204: same full-basis fix as .card-stat */
 body.rd .ctag{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.06em;
   color:#c8d6e4;border-radius:7px;padding:4px 9px;border:1px solid #22304a;
   background:linear-gradient(180deg,#0c1220,#070c15)}
@@ -11455,7 +11462,7 @@ body.rd .gsk-vio {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.203';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.204';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had

@@ -83,4 +83,11 @@ any HIGH-risk ship). Every ship keeps its own rollback line. Claude Code appends
 - [ ] ?legacy=1: no faces anywhere
 - [ ] QUEUE IS DRAINED — this pass closes batches .198-.203
 
+## v1.14.204 — web-Claude fix pass (SUPERSEDES the .195/.198/.201/.203 render items above) · rollback: git revert
+- [ ] Command: Ask PHANTOM card now ACTUALLY shows the glass (was invisible border-box on device); prism + arrow intact
+- [ ] #omni-bar (active-deployment capture band): opaque, no card text ghosting through it
+- [ ] Primary buttons: even glow, no bottom-heavy tilt (T3 tune)
+- [ ] Reference cards WITH stat faces: card TITLE reads full-width, stat row wraps to its OWN line below (not crushed into the title) — this is the D-1 layout fix; re-judge density now that layout is correct
+- [ ] ⚠ Watch pt-btn-primary specifically: if it looks flat/materialless like the old ask card did, flag it (same raw-<button> border-box risk, left in scope for a follow-up)
+
 <!-- append new ships above this line; checkpoint when 6 deep or before HIGH-risk -->
