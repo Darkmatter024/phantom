@@ -128,6 +128,15 @@ any HIGH-risk ship). Every ship keeps its own rollback line. Claude Code appends
 - [ ] `?legacy=1`: LOG NOTE prompt has NO chip row, behaves exactly as before
 - [ ] ⚠ 8th ship in this batch (2 past the 6-cap) — owner continued the stack 2026-07-08
 
+## v1.14.210 — LOGO-HOME (single-tap wordmark → Command) · rollback: git revert
+- [ ] Single-tap the PHANTOM wordmark from a rack detail → lands on Command Center
+- [ ] 5 rapid taps still triggers BOOT REPLAY (toast + reload) — dev hatch intact
+- [ ] Focus a checklist note field, type text, single-tap logo → confirm() prompt; cancel keeps you on the rack
+- [ ] No double navigation from a 5-tap burst (home timer cleared in the ≥5 branch)
+- [ ] Already on Command → single tap does nothing (no flicker/re-render)
+- [ ] `?legacy=1`: single tap does NOT jump home (unchanged), but 5-tap replay still works
+- [ ] 9th ship in this batch — owner continued the stack 2026-07-08
+
 <!-- AUTO-VERIFY 2026-07-08 (Claude Code, desktop Chrome automation + Node logic tests): .208 + .209
      FUNCTIONAL items ALL PASS — checklist toggle-without-collapse holds; note persists; site-scope
      works; .209 long-press logs EXACTLY ONCE (RACK_NOTE before 0 / after 1); both ?legacy=1 = no

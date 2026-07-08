@@ -11522,7 +11522,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.209';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.210';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -16576,14 +16576,43 @@ function phantomDeferredInit() {
   function bind() {
     var logo = document.getElementById('appLogoTap');
     if (!logo) { setTimeout(bind, 500); return; }
+    // v1.14.210 LOGO-HOME: a11y + affordance, redesign only (shared-header markup stays
+    // byte-identical for legacy — set at runtime, not in the served HTML).
+    if (typeof redesign_isOn !== 'function' || redesign_isOn()) {
+      try { logo.setAttribute('aria-label', 'Go to Command Center'); logo.style.cursor = 'pointer'; } catch (e) {}
+    }
     var taps = 0;
     var resetTimer = null;
+    var homeTimer = null;
+    // v1.14.210: settled single tap → Command Center. Redesign only; 5-tap boot
+    // replay is preserved in both houses. Home must never be trappable behind a
+    // broken guard, so the whole thing is wrapped and falls through to navigate.
+    function logo_goHome() {
+      try {
+        if (typeof redesign_isOn === 'function' && !redesign_isOn()) return;   // legacy: logo behavior unchanged
+        var cmd = document.getElementById('pg-cmd');
+        if (cmd && cmd.offsetParent !== null) { if (typeof haptic === 'function') haptic(6); return; }  // already on Command → no re-render
+        var ae = document.activeElement;
+        if (ae && ae.classList && ae.classList.contains('pcl-note') && ae.value && ae.value.trim().length) {
+          if (!confirm('Leave this rack? Unsaved note may be lost.')) return;
+        }
+        if (typeof haptic === 'function') haptic(8);
+        showPage('triage', (typeof getTnItem === 'function') ? getTnItem('triage') : null);
+      } catch (e) {
+        try { showPage('triage', (typeof getTnItem === 'function') ? getTnItem('triage') : null); } catch (_) {}
+      }
+    }
     logo.addEventListener('click', function(e) {
       taps++;
       clearTimeout(resetTimer);
       resetTimer = setTimeout(function() { taps = 0; }, 2000);
+      // Single-tap-home resolver: a 5-tap burst lands taps 2..5 inside 260ms and keeps
+      // clearing this timer, so it only fires for a genuinely settled single tap.
+      clearTimeout(homeTimer);
+      homeTimer = setTimeout(function() { if (taps === 1) { taps = 0; logo_goHome(); } }, 260);
       if (taps >= 5) {
         taps = 0;
+        clearTimeout(homeTimer);   // v1.14.210: no home-jump after a boot-replay burst
         if (typeof haptic === 'function') haptic(20);
         try { localStorage.removeItem('phantom_seen_boot'); } catch (e) {}
         // Tiny toast so the tech sees it worked
