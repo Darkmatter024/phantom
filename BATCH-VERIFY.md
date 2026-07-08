@@ -116,4 +116,16 @@ any HIGH-risk ship). Every ship keeps its own rollback line. Claude Code appends
 - [ ] `?legacy=1`: rack detail has NO checklist strip, COMPLETE shows no checklist confirm (byte-identical)
 - [ ] ⚠ 7th ship in this batch (one past the 6-cap) — owner stacked by decision 2026-07-08
 
+## v1.14.209 — LOG NOTE QUICK CHIPS (tap/long-press, site-editable) · rollback: git revert
+- [ ] Work › Deploy › rack › action stripe LOG NOTE: prompt shows a chip wrap row above the input
+- [ ] TAP a chip → label fills the box, cursor at end, keyboard focus; tap a 2nd → appends with '; '
+- [ ] LONG-PRESS ~0.5s → logs instantly (haptic + "Note logged to <rack>" toast), sheet closes, no typing
+- [ ] ⚠ Audit trail shows exactly ONE RACK_NOTE per long-press (no double-log)
+- [ ] Start a long-press then scroll/drag off the chip → nothing logs (no misfire)
+- [ ] `+` → prompt adds a chip that appears here AND next open (site-scoped)
+- [ ] EDIT → red ✕ removes (default hidden / user deleted), tap label renames; DONE exits
+- [ ] Typed-note flow still works (type → OK → logs) — chips are additive
+- [ ] `?legacy=1`: LOG NOTE prompt has NO chip row, behaves exactly as before
+- [ ] ⚠ 8th ship in this batch (2 past the 6-cap) — owner continued the stack 2026-07-08
+
 <!-- append new ships above this line; checkpoint when 6 deep or before HIGH-risk -->

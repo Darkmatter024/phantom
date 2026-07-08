@@ -11503,11 +11503,26 @@ body.rd .pcl-edit{font-family:var(--mono);font-size:var(--fs-micro);letter-spaci
 body.rd .pcl-edit-on{color:var(--gold)}
 /* ━━━ end PHASE CHECKLIST ━━━ */
 
+/* ━━━ v1.14.209 LOG NOTE QUICK CHIPS — .pql-* (body.rd only; legacy prompt shows no chips) ━━━ */
+body.rd .pql-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:2px 0 12px}
+body.rd .pql-chip{display:inline-flex;align-items:center;gap:5px;padding:6px 11px;border-radius:14px;
+  background:linear-gradient(180deg,#0e1524,#080d16);border:1px solid rgba(92,242,255,.22);color:#bfe9f5;
+  font-family:var(--mono);font-size:var(--fs-micro);letter-spacing:.6px;cursor:pointer;
+  -webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 1px 3px rgba(0,0,0,.4)}
+body.rd .pql-chip:active{border-color:var(--cyan);background:linear-gradient(180deg,#12203a,#0a1220)}
+body.rd .pql-chip-edit{border-color:rgba(255,203,69,.35);color:#e7d9b5}
+body.rd .pql-x{color:var(--red);font-size:11px;line-height:1}
+body.rd .pql-ctl{padding:6px 9px;font-family:var(--mono);font-size:var(--fs-micro);letter-spacing:1px;
+  color:var(--slate);cursor:pointer;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
+body.rd .pql-ctl-on{color:var(--gold)}
+/* ━━━ end LOG NOTE QUICK CHIPS ━━━ */
+
 </style>
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.208';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.209';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -15667,6 +15682,12 @@ function phantomPromptAsk(opts) {
   var placeholder = opts.placeholder || '';
   var allowEmpty = opts.allowEmpty === true;
   var maxLength = opts.maxLength || 200;
+  // Quick Chips (v1.14.209) — opts-gated; only the Log Note caller passes these.
+  // Every other prompt caller leaves them undefined → original behavior verbatim.
+  var chips = Array.isArray(opts.chips) ? opts.chips : null;
+  var chipStore = opts.chipStore || null;                                  // { effective, add, remove, rename }
+  var onChipTap = (typeof opts.onChipTap === 'function') ? opts.onChipTap : null;
+  var onChipHold = (typeof opts.onChipHold === 'function') ? opts.onChipHold : null;
   return new Promise(function(resolve) {
     var overlay = document.createElement('div');
     overlay.className = 'ppt-overlay';
@@ -15680,6 +15701,7 @@ function phantomPromptAsk(opts) {
       '<div class="ppt-card">' +
         '<div class="ppt-title">' + safeTitle + '</div>' +
         (safeSub ? '<div class="ppt-sub">' + safeSub + '</div>' : '<div class="ppt-sub"></div>') +
+        (chips ? '<div class="pql-row"></div>' : '') +
         '<input type="text" class="ppt-input" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" maxlength="' + maxLength + '" placeholder="' + safePh + '" aria-label="' + safeTitle + '" />' +
         '<div class="ppt-actions">' +
           '<button type="button" class="ppt-btn ppt-btn-cancel" data-cancel="1">CANCEL</button>' +
@@ -15735,7 +15757,153 @@ function phantomPromptAsk(opts) {
       }
     }
     document.addEventListener('keydown', onKey);
+
+    // ── Quick Chips (v1.14.209) — opts-gated wrap row above the input ──
+    if (chips) {
+      var editMode = false;
+      var doTap = function(label) {
+        if (onChipTap) { onChipTap(label, input); return; }
+        var cur = input.value;
+        if (cur && cur.trim().length) input.value = cur.replace(/\s*$/, '') + '; ' + label;
+        else input.value = label;
+        try { input.focus(); var L = input.value.length; input.setSelectionRange(L, L); } catch (e) {}
+        syncOk();
+      };
+      var fireHold = function(label) {
+        try { if (onChipHold) onChipHold(label); } catch (e) { if (typeof console !== 'undefined') console.warn('[pql] hold cb failed', e); }
+        cleanup(null);   // resolve null so the awaiting caller does NOT re-log the typed path
+      };
+      var bindPress = function(el, label) {
+        var timer = null, held = false;
+        var start = function() { held = false; if (timer) clearTimeout(timer); timer = setTimeout(function() { held = true; timer = null; fireHold(label); }, 500); };
+        var cancel = function() { if (timer) { clearTimeout(timer); timer = null; } };
+        var end = function(e) { if (timer) { clearTimeout(timer); timer = null; if (!held) { if (e && e.preventDefault) e.preventDefault(); doTap(label); } } };
+        el.addEventListener('pointerdown', start);
+        el.addEventListener('pointerup', end);
+        el.addEventListener('pointercancel', cancel);
+        el.addEventListener('pointerleave', cancel);
+      };
+      var renderChips = function() {
+        var row = overlay.querySelector('.pql-row');
+        if (!row) return;
+        row.innerHTML = '';
+        var list = chipStore ? chipStore.effective() : (chips || []);
+        list.forEach(function(c) {
+          var chip = document.createElement('span');
+          chip.className = 'pql-chip' + (editMode ? ' pql-chip-edit' : '');
+          if (editMode) {
+            var x = document.createElement('span');
+            x.className = 'pql-x'; x.textContent = '✕';
+            x.addEventListener('click', function(ev) { ev.stopPropagation(); if (chipStore) chipStore.remove(c.id, !!c._user); renderChips(); });
+            chip.appendChild(x);
+            var lbl = document.createElement('span'); lbl.textContent = c.label;
+            chip.appendChild(lbl);
+            chip.addEventListener('click', function() { if (chipStore) chipStore.rename(c.id); renderChips(); });
+          } else {
+            chip.textContent = c.label;
+            bindPress(chip, c.label);
+          }
+          row.appendChild(chip);
+        });
+        if (chipStore) {
+          var add = document.createElement('span');
+          add.className = 'pql-ctl'; add.textContent = editMode ? '+ ADD' : '+';
+          add.addEventListener('click', function() { chipStore.add(); renderChips(); });
+          row.appendChild(add);
+          var ed = document.createElement('span');
+          ed.className = 'pql-ctl' + (editMode ? ' pql-ctl-on' : ''); ed.textContent = editMode ? 'DONE' : 'EDIT';
+          ed.addEventListener('click', function() { editMode = !editMode; renderChips(); });
+          row.appendChild(ed);
+        }
+      };
+      renderChips();
+    }
   });
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// LOG NOTE QUICK CHIPS (v1.14.209) — site-editable chips for the rack Log
+// Note prompt. Same site-override pattern as the phase checklist. Storage:
+// phantom_lognote_chips_v1 = { added:[{id,label}], removed:[id], renamed:{id:label} }.
+// ─────────────────────────────────────────────────────────────────────
+const LOGNOTE_CHIP_DEFAULTS = [
+  { id:'ip',    label:'IN PROGRESS' },
+  { id:'vend',  label:'WAITING ON VENDOR' },
+  { id:'parts', label:'WAITING ON PARTS' },
+  { id:'block', label:'BLOCKED — see ticket' },
+  { id:'2tech', label:'NEEDS SECOND TECH' },
+  { id:'done',  label:'PHASE COMPLETE — signed off' },
+  { id:'reseat',label:'RE-SEATED / RE-TERMINATED, retest pass' },
+  { id:'optic', label:'OPTIC SWAPPED' },
+  { id:'rma',   label:'NODE PULLED FOR RMA' },
+  { id:'pdown', label:'POWERED DOWN — do not energize' },
+  { id:'ho',    label:'HANDED OFF TO NEXT SHIFT' },
+  { id:'vwin',  label:'AWAITING VALIDATION WINDOW' }
+];
+const LOGNOTE_CHIPS_KEY = 'phantom_lognote_chips_v1';
+function lognoteChips_load() {
+  var s = safeParse(localStorage.getItem(LOGNOTE_CHIPS_KEY) || 'null', null);
+  if (!s || typeof s !== 'object') s = {};
+  if (!Array.isArray(s.added)) s.added = [];
+  if (!Array.isArray(s.removed)) s.removed = [];
+  if (!s.renamed || typeof s.renamed !== 'object') s.renamed = {};
+  return s;
+}
+function lognoteChips_save(s) {
+  try { return safeStore(LOGNOTE_CHIPS_KEY, JSON.stringify(s)); }
+  catch (e) { if (typeof console !== 'undefined') console.warn('[lognote-chips] save failed', e); return false; }
+}
+function lognoteChips_effective() {
+  var site = lognoteChips_load();
+  var out = [];
+  LOGNOTE_CHIP_DEFAULTS.forEach(function(c) {
+    if (site.removed.indexOf(c.id) !== -1) return;
+    out.push({ id: c.id, label: site.renamed[c.id] || c.label });
+  });
+  site.added.forEach(function(a) {
+    if (!a || site.removed.indexOf(a.id) !== -1) return;
+    out.push({ id: a.id, label: site.renamed[a.id] || a.label, _user: true });
+  });
+  return out;
+}
+function lognoteChips_labelOf(id) {
+  var site = lognoteChips_load();
+  if (site.renamed[id]) return site.renamed[id];
+  for (var i = 0; i < LOGNOTE_CHIP_DEFAULTS.length; i++) if (LOGNOTE_CHIP_DEFAULTS[i].id === id) return LOGNOTE_CHIP_DEFAULTS[i].label;
+  for (var j = 0; j < site.added.length; j++) if (site.added[j] && site.added[j].id === id) return site.added[j].label;
+  return '';
+}
+function lognoteChips_add() {
+  var label = null;
+  try { label = prompt('New log-note chip:'); } catch (e) {}
+  if (label == null) return;
+  label = String(label).trim();
+  if (!label) return;
+  if (label.length > 60) label = label.slice(0, 60);
+  var s = lognoteChips_load();
+  s.added.push({ id: 'usr-' + Date.now().toString(36), label: label });
+  lognoteChips_save(s);
+}
+function lognoteChips_remove(id, isUser) {
+  var s = lognoteChips_load();
+  if (isUser) {
+    s.added = s.added.filter(function(a){ return !a || a.id !== id; });
+    if (s.renamed[id]) delete s.renamed[id];
+  } else if (s.removed.indexOf(id) === -1) {
+    s.removed.push(id);
+  }
+  lognoteChips_save(s);
+}
+function lognoteChips_rename(id) {
+  var nv = null;
+  try { nv = prompt('Rename chip:', lognoteChips_labelOf(id)); } catch (e) {}
+  if (nv == null) return;
+  nv = String(nv).trim();
+  if (!nv) return;
+  if (nv.length > 60) nv = nv.slice(0, 60);
+  var s = lognoteChips_load();
+  s.renamed[id] = nv;
+  lognoteChips_save(s);
 }
 
 // ━━━ EARLY STUBS ━━━
@@ -43605,13 +43773,26 @@ async function stripeRack_logNote(deployId, rackId) {
     var rack = racks.find(function(r) { return r.id === rackId; });
     if (rack) rackLabel = rack.rackId || rack.name || rackId;
   } catch (e) { /* fall through with raw id */ }
-  var note = await phantomPromptAsk({
+  var _promptOpts = {
     title: 'Log Note to ' + rackLabel,
     subtitle: 'Lands in the audit trail · max 500 chars',
     defaultValue: '',
     placeholder: 'What happened on this rack?',
     maxLength: 500
-  });
+  };
+  // Quick Chips (v1.14.209) — redesign only; legacy prompt path byte-identical (no chips passed).
+  if (typeof redesign_isOn === 'function' && redesign_isOn()) {
+    _promptOpts.chips = lognoteChips_effective();
+    _promptOpts.chipStore = { effective: lognoteChips_effective, add: lognoteChips_add, remove: lognoteChips_remove, rename: lognoteChips_rename };
+    _promptOpts.onChipHold = function(label) {
+      try {
+        deploy_logAudit(deployId, 'RACK_NOTE', 'rack', rackId, String(label).slice(0, 500));
+        if (typeof haptic === 'function') haptic([8, 30, 8]);
+        phantomToast('Note logged to ' + rackLabel, 'ok');
+      } catch (e) { phantomToast('Failed to log note', 'error'); }
+    };
+  }
+  var note = await phantomPromptAsk(_promptOpts);
   if (note === null) return;
   note = note.trim();
   if (!note) return;
