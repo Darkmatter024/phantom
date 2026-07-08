@@ -8783,8 +8783,11 @@ body.rd #ref-grid .rf-card:active .rf-i-img, body.rd #work-grid .rf-card:active 
 @keyframes rfCardSweep { 0%,68%{ transform:translateX(-120%); } 100%{ transform:translateX(120%); } }
 @media (prefers-reduced-motion:reduce) { body.rd #ref-grid .rf-card::before, body.rd #work-grid .rf-card::before, body.rd .deploy-tools-grid .rf-card::before { animation:none; opacity:.10; transform:translateX(-30%); } }
 #ref-back { align-items:center; gap:12px; margin:4px 0 12px; }
-.rf-back-btn { width:56px; height:56px; border-radius:14px; border:1px solid rgba(120,150,200,.18); background:rgba(16,22,34,.55); display:grid; place-items:center; cursor:pointer; flex:0 0 auto; color:var(--white); -webkit-tap-highlight-color:transparent; }   /* Rule A (v1.14.124): >=56px tap target (gloved hands) */
-.rf-back-btn svg { width:24px; height:24px; }
+.rf-back-btn { position:relative; width:56px; height:56px; border:0; background:none; display:grid; place-items:center; cursor:pointer; flex:0 0 auto; color:var(--slate-readable,#8ea3c4); -webkit-tap-highlight-color:transparent; }   /* Rule A (v1.14.124): 56px hit target kept for gloves. v1.14.212 (adopt web-Claude .204 opt-4 small-soft-square, fleet-wide): visible chrome shrunk to a 34px chip via ::before so BACK stops out-weighing header actions; icon slate, lights cyan on press. */
+.rf-back-btn::before { content:""; position:absolute; width:34px; height:34px; border-radius:10px; border:1px solid rgba(120,150,200,.18); background:rgba(16,22,34,.55); transition:border-color .12s ease; }
+.rf-back-btn svg { position:relative; z-index:1; width:19px; height:19px; }
+.rf-back-btn:active { color:var(--cyan); }
+.rf-back-btn:active::before { border-color:rgba(40,224,255,.5); }
 #ref-back .rf-back-title { font-family:var(--orb); font-weight:700; letter-spacing:.14em; font-size:18px; color:var(--white); }
 body.rd #pg-ref:not(.rf-grid) .ref-sub.stab-active { animation:rf-fade .22s ease both; }
 @keyframes rf-fade { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
@@ -10710,9 +10713,15 @@ body.rd #master-section-bar [data-section="profile"] { display:none; }
      is no escape: #wk-deploy carries an identity transform from its rf-fade animation, which
      makes fixed resolve to the scroll content, not the viewport.) Fix: while the scope picker
      is shown, shrink #pg-work's bottom padding to just the nav height so the sticky bar pins
-     ABOVE the nav instead of over the list. Legacy (no body.rd) keeps the sticky rule, byte-identical. */
-  body.rd #pg-work:has(.msc-actions) { padding-bottom: calc(71px + var(--safe-bottom)) !important; }
-  body.rd .msc-foot-pad { height:88px; }
+     ABOVE the nav instead of over the list. Legacy (no body.rd) keeps the sticky rule, byte-identical.
+     v1.14.212 ROOT FIX (adopt web-Claude .204 B1): null the lingering rf-fade transform on the
+     scope-picker host so #wk-deploy stops being a containing block — sticky/fixed resolve to the
+     viewport again. This supersedes the padding-shrink hack, so the padding is now a comfortable
+     reserve, which ALSO fixes the last cab row (dh6:050) clipping flush against the nav on short
+     viewports. Scoped to when the scope picker is present so normal work-sub fade-in is untouched. */
+  body.rd #pg-work:not(.wk-grid) #wk-deploy:has(.msc-actions) { transform: none !important; }
+  body.rd #pg-work:has(.msc-actions) { padding-bottom: calc(var(--tabnav-h) + 96px) !important; } /* v1.14.212 (web-Claude .204): was 71px+safe — last row clipped; reserve full tabnav height + gap, sticky bar still pins above nav. */
+  body.rd .msc-foot-pad { height:112px; } /* v1.14.212 (web-Claude .204): matched to the larger bottom reserve */
 
 /* ══ PHANTOM entry screen (v1.14.49) — globe hero + CoreWeave mesh + Spectral Iris + calibration.
    Replaces the v1.14.48 baked landing. ALL selectors scoped under #boot; classes/ids/keyframes pe-* namespaced
@@ -11530,7 +11539,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.211';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.212';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
