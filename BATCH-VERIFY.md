@@ -128,4 +128,11 @@ any HIGH-risk ship). Every ship keeps its own rollback line. Claude Code appends
 - [ ] `?legacy=1`: LOG NOTE prompt has NO chip row, behaves exactly as before
 - [ ] ⚠ 8th ship in this batch (2 past the 6-cap) — owner continued the stack 2026-07-08
 
+<!-- AUTO-VERIFY 2026-07-08 (Claude Code, desktop Chrome automation + Node logic tests): .208 + .209
+     FUNCTIONAL items ALL PASS — checklist toggle-without-collapse holds; note persists; site-scope
+     works; .209 long-press logs EXACTLY ONCE (RACK_NOTE before 0 / after 1); both ?legacy=1 = no
+     .pcl/.pql markup; no console errors; 24/24 resolver logic assertions pass. CAVEAT: user's Chrome
+     had no deployment data → ran against SYNTHETIC data via overridden read-loaders (feature code NOT
+     patched); organic master-seeded path not exercised in-browser. .202-.207 = visual/CSS, device-only.
+     STILL OWED BY OWNER: on-device pass for haptics, iOS visual/aesthetic, PWA — none automatable. -->
 <!-- append new ships above this line; checkpoint when 6 deep or before HIGH-risk -->
