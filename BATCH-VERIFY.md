@@ -166,4 +166,12 @@ any HIGH-risk ship). Every ship keeps its own rollback line. Claude Code appends
 - [ ] `?legacy=1`: no functional regressions
 - [ ] ⚠ 11th ship in this batch — owner-directed reconcile, stack continued 2026-07-08
 
+## v1.14.213 — BOOT PLATE SWAP (portrait hero 1024→2048 + SW bump) · rollback: git revert
+- [ ] Hard-refresh / remove+re-add the PWA (URL cache-bust does NOT bypass a registered SW — let the new SW activate)
+- [ ] App version reads `v1.14.213` after the SW updates
+- [ ] Boot hero is visibly CRISPER on iPhone (portrait)
+- [ ] If it looks unchanged → the SW cache-key bump didn't take (check this first)
+- [ ] Landscape/iPad boot still fine (plate-wide.webp untouched)
+- [ ] First ship of a new batch (prior .202-.212 released 2026-07-08)
+
 <!-- append new ships above this line; checkpoint when 6 deep or before HIGH-risk -->
