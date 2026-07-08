@@ -90,4 +90,8 @@ any HIGH-risk ship). Every ship keeps its own rollback line. Claude Code appends
 - [ ] Reference cards WITH stat faces: card TITLE reads full-width, stat row wraps to its OWN line below (not crushed into the title) — this is the D-1 layout fix; re-judge density now that layout is correct
 - [ ] ⚠ Watch pt-btn-primary specifically: if it looks flat/materialless like the old ask card did, flag it (same raw-<button> border-box risk, left in scope for a follow-up)
 
+## v1.14.205 — pt-btn-primary padding-box fix · rollback: revert the rule to .204
+- [ ] Primary buttons (LOAD MASTER, EXPORT, parse CTAs, CONFIRM actions): now show the dark cask w/ cyan ring + glow + cyan text (was possibly flat/invisible border-box) — this REPLACES the .198 primary flag
+- [ ] Ghost/secondary + qa-btn: unchanged from .198 (still border-box; flag if any reads flat vs primary now)
+
 <!-- append new ships above this line; checkpoint when 6 deep or before HIGH-risk -->

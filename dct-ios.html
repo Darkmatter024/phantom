@@ -11337,16 +11337,25 @@ body.rd .pt-btn-ghost, body.rd .pt-btn-secondary {
 body.rd .pt-btn-primary,
 body.rd .pt-btn-primary:hover:not(:disabled),
 body.rd .pt-btn-primary:active:not(:disabled) {
+  /* v1.14.205: the border-box gradient ring does not reliably paint on a raw <button> on iOS
+     (the same class of bug web-Claude fixed on .ask in .204; owner-requested here for the primary
+     cask). Converted to the padding-box primitive — a real cyan ring (no transparent border-box
+     layer) + padding-box glass + inset glow; consumes --glow-border per the one-knob law.
+     appearance reset is redundant with the .pt-btn base but kept explicit and self-contained.
+     Do NOT reintroduce a border-box layer here. Ghost/secondary stay border-box: device-verified
+     rendering in .190/.191 (BACK chips) — left untouched to avoid churn on a confirmed-good surface. */
+  -webkit-appearance: none; appearance: none;
   color: hsl(var(--pill-cy));
   text-shadow: 0 0 .5em hsl(var(--pill-cy) / .5);
-  border: 2.5px solid transparent;
+  border: 1.5px solid color-mix(in srgb, var(--cyan) var(--glow-border), transparent);
   background:
-    linear-gradient(180deg,#0b1019,#05080e) padding-box,
-    linear-gradient(175deg, rgba(255,255,255,.3), rgba(28,44,60,.95) 45%, hsl(var(--pill-cy)/.35)) border-box;
+    radial-gradient(140% 160% at 50% -40%, rgba(140,172,206,.08) 0%, transparent 46%),
+    linear-gradient(180deg,#0b1019,#05080e 60%,#070d16);
   box-shadow:
+    inset 0 1px 0 rgba(200,230,255,.14),
     inset 0 2px 4px rgba(0,0,0,.7),
     inset 0 -3px 6px hsl(var(--pill-cy) / .12),
-    0 0 20px rgba(92,242,255,0.28);
+    0 0 20px rgba(92,242,255,0.22);
 }
 /* ━━━ end GLASS SKIN v1 (G-1d) ━━━ */
 
@@ -11462,7 +11471,7 @@ body.rd .gsk-vio {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.204';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.205';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
