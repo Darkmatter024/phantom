@@ -144,4 +144,16 @@ any HIGH-risk ship). Every ship keeps its own rollback line. Claude Code appends
      had no deployment data → ran against SYNTHETIC data via overridden read-loaders (feature code NOT
      patched); organic master-seeded path not exercised in-browser. .202-.207 = visual/CSS, device-only.
      STILL OWED BY OWNER: on-device pass for haptics, iOS visual/aesthetic, PWA — none automatable. -->
+## v1.14.211 — FLOOR MAP ACTIVE STRIP (auto-derived mid-flight row) · rollback: git revert
+- [ ] Open a Deploy with ≥1 in-progress or blocked rack → ACTIVE strip appears ABOVE the grid, correct count
+- [ ] Header reads `ACTIVE · N RACK(S)` cyan; `· M BLOCKED` appended in red when any blocked
+- [ ] Strip order = BLOCKED first, then active
+- [ ] A mid-flight rack shows in BOTH the strip AND its grid row (not deduped) — intended
+- [ ] Tap a strip tile → opens that rack's detail
+- [ ] Strip tiles look pixel-identical to grid tiles (shared `deploy_floorTileHtml`)
+- [ ] Deploy with only complete/pending racks → NO strip (grid only)
+- [ ] 8+ mid-flight → strip scrolls horizontally, scrollbar hidden, right-edge mask-fade
+- [ ] `?legacy=1`: floor map shows NO strip; grid identical to before
+- [ ] ⚠ 10th ship in this batch — well past the 6-cap; owner continued the stack 2026-07-08
+
 <!-- append new ships above this line; checkpoint when 6 deep or before HIGH-risk -->
