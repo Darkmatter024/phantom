@@ -104,4 +104,16 @@ any HIGH-risk ship). Every ship keeps its own rollback line. Claude Code appends
 - [ ] LAPTOP/desktop Chrome: Command page — the DEPLOY/SCANNED/HANDOFF tiles are compact (~96px, not giant); Deploy tile is on-screen and clicking it opens the deploy flow
 - [ ] PHONE: same tiles now their designed compact height (slightly shorter than before) — deploy tile still taps through
 
+## v1.14.208 — PHASE CHECKLIST (per-phase item lists) · rollback: git revert
+- [ ] Work › Deploy › open a rack: each phase card shows a CHECKLIST strip; in_progress phase auto-expanded, others collapsed
+- [ ] Tap items → green ring-check; count meter + bar update live WITHOUT collapsing the accordion
+- [ ] wantNote rows (torque/serial/XID/leak) show note field open; type a value, leave + reopen rack → persists
+- [ ] `+ note` on a plain row reveals an input · `+ ADD ITEM` → new row on THIS rack AND every other rack (site-scoped)
+- [ ] EDIT → per-row red ✕ (default→removed, user item→deleted) + tap label to rename; DONE exits
+- [ ] DLC rack (GB200/GB300/NVL72) shows the 2 extra mechanical DLC rows; H100/H200 does NOT; unknown-GPU rack shows them (fail-open)
+- [ ] in_progress phase, unchecked items, tap COMPLETE → "N items unchecked — complete anyway?" soft confirm (last check does NOT auto-complete)
+- [ ] Complete the deployment → checklist read-only, notes shown, no add/edit
+- [ ] `?legacy=1`: rack detail has NO checklist strip, COMPLETE shows no checklist confirm (byte-identical)
+- [ ] ⚠ 7th ship in this batch (one past the 6-cap) — owner stacked by decision 2026-07-08
+
 <!-- append new ships above this line; checkpoint when 6 deep or before HIGH-risk -->

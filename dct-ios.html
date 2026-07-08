@@ -11469,11 +11469,45 @@ body.rd .gsk-vio {
 }
 /* ━━━ end G-1 residue ━━━ */
 
+/* ━━━ v1.14.208 PHASE CHECKLIST — .pcl-* (body.rd only; legacy never renders these) ━━━ */
+body.rd .pcl-row{padding:1px 0}
+body.rd .pcl-line{display:flex;align-items:center;gap:10px;min-height:44px}
+body.rd .pcl-chk{flex:0 0 auto;width:20px;height:20px;border-radius:50%;
+  border:1.5px solid rgba(120,140,160,.55);cursor:pointer;-webkit-tap-highlight-color:transparent;
+  position:relative;transition:border-color .15s,background .15s}
+body.rd .pcl-chk-on{border-color:var(--green);background:var(--green)}
+body.rd .pcl-chk-on::after{content:'';position:absolute;left:6px;top:2.5px;width:5px;height:10px;
+  border:solid #04060a;border-width:0 2px 2px 0;transform:rotate(45deg)}
+body.rd .pcl-label{flex:1;font-family:var(--mono);font-size:var(--fs-caption);color:#c8d6e4;
+  line-height:1.35;cursor:pointer;letter-spacing:.3px;word-break:break-word}
+body.rd .pcl-x{flex:0 0 auto;width:20px;height:20px;display:flex;align-items:center;justify-content:center;
+  color:var(--red);font-family:var(--mono);font-size:14px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+body.rd .pcl-note{-webkit-appearance:none;appearance:none;display:block;width:100%;
+  margin:2px 0 6px 30px;box-sizing:border-box;max-width:calc(100% - 30px);
+  background:linear-gradient(180deg,#080d15,#05080e);border:1px solid rgba(92,242,255,.18);
+  border-radius:6px;padding:7px 10px;color:#dbe7f2;font-family:var(--mono);font-size:var(--fs-caption);
+  letter-spacing:.3px;box-shadow:inset 0 2px 4px rgba(0,0,0,.55)}
+body.rd .pcl-note:focus{outline:none;border-color:var(--cyan);
+  box-shadow:inset 0 2px 4px rgba(0,0,0,.55),0 0 0 2px rgba(40,224,255,.15)}
+body.rd .pcl-note::placeholder{color:#5f7186}
+body.rd .pcl-note-ro{margin:2px 0 6px 30px;font-family:var(--mono);font-size:var(--fs-caption);
+  color:#8ea2b4;padding:4px 0;letter-spacing:.3px;word-break:break-word}
+body.rd .pcl-addnote{display:inline-block;margin:0 0 4px 30px;font-family:var(--mono);
+  font-size:var(--fs-micro);letter-spacing:1px;color:#5f7186;cursor:pointer;-webkit-tap-highlight-color:transparent}
+body.rd .pcl-ctrl{display:flex;align-items:center;justify-content:space-between;margin-top:10px;
+  padding-top:8px;border-top:1px solid rgba(255,255,255,.05)}
+body.rd .pcl-add{font-family:var(--mono);font-size:var(--fs-micro);letter-spacing:1.5px;
+  color:var(--cyan);cursor:pointer;-webkit-tap-highlight-color:transparent}
+body.rd .pcl-edit{font-family:var(--mono);font-size:var(--fs-micro);letter-spacing:1.5px;
+  color:var(--slate);cursor:pointer;-webkit-tap-highlight-color:transparent}
+body.rd .pcl-edit-on{color:var(--gold)}
+/* ━━━ end PHASE CHECKLIST ━━━ */
+
 </style>
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.207';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.208';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -22542,6 +22576,282 @@ function deploy_loadPhases(deployId) {
 }
 function deploy_savePhases(arr) { var ok = safeStore(DEPLOY_PHASES_KEY, JSON.stringify(arr)); if (ok) _deployRollupGen++; return ok; }
 
+// ─────────────────────────────────────────────────────────────────────
+// PHASE CHECKLIST (v1.14.208) — expandable per-phase item lists inside
+// deploy_showRackDetail. Site-level add/edit/remove (first brick of the
+// AUS-01 site profile). Per-rack check + note state RIDES existing phase
+// objects (ph.checks / ph.notes) — no new per-rack key, no migration.
+// Item % renders inside the phase card ONLY; rack % (phasesDone/5) untouched.
+// Redesign-only surface — legacy render stays byte-identical.
+// ─────────────────────────────────────────────────────────────────────
+const PHASE_CHECKLIST_DEFAULTS = {
+  mechanical: [
+    { id:'mech-rails',  label:'Rail kits installed — all RU' },
+    { id:'mech-set',    label:'Rack set & anchored (floor/seismic)' },
+    { id:'mech-level',  label:'Leveled / plumb' },
+    { id:'mech-torque', label:'Anchor/busbar torque to spec', wantNote:true },
+    { id:'mech-panels', label:'Side panels + front/rear doors on' },
+    { id:'mech-blank',  label:'Blanking panels filled' },
+    { id:'mech-tray',   label:'Cable tray / ladder landed' },
+    { id:'mech-gnd',    label:'Grounding strap bonded to busbar' },
+    { id:'mech-qd',     label:'DLC manifold + quick-disconnects seated', cooling:'dlc' },
+    { id:'mech-leak',   label:'DLC leak check passed (photo ref)', cooling:'dlc', wantNote:true }
+  ],
+  power: [
+    { id:'pwr-pdu',    label:'PDUs mounted (L + R)' },
+    { id:'pwr-whip',   label:'Whips landed & torqued', wantNote:true },
+    { id:'pwr-brkr',   label:'Breaker positions verified vs Master' },
+    { id:'pwr-lock',   label:'Locking C13/C19 cords fully seated' },
+    { id:'pwr-ab',     label:'A/B redundant feeds on separate phases' },
+    { id:'pwr-led',    label:'All PSU LEDs green' }
+  ],
+  network: [
+    { id:'net-run',    label:'IB/NVLink cables run & labeled both ends' },
+    { id:'net-optic',  label:'Optics seated · DOM verified' },
+    { id:'net-serial', label:'Optic serials captured (racks/ports)', wantNote:true },
+    { id:'net-oob',    label:'Mgmt / OOB cabled' },
+    { id:'net-map',    label:'Port map matches Master' },
+    { id:'net-link',   label:'Link LEDs up' }
+  ],
+  compute: [
+    { id:'cmp-stop',   label:'Nodes racked to positive mechanical stop' },
+    { id:'cmp-serial', label:'Node serial / asset capture', wantNote:true },
+    { id:'cmp-bmc',    label:'BMC / IPMI reachable' },
+    { id:'cmp-fw',     label:'Firmware baseline verified' },
+    { id:'cmp-xid',    label:'XID / error-code baseline clean', wantNote:true },
+    { id:'cmp-pxe',    label:'PXE boot verified' }
+  ],
+  validation: [
+    { id:'val-burn',  label:'Burn-in started' },
+    { id:'val-ib',    label:'NCCL / IB bandwidth pass', wantNote:true },
+    { id:'val-xid',   label:'Post-burn XID sweep clean', wantNote:true },
+    { id:'val-echo',  label:'Ghost Echo capture logged' },
+    { id:'val-note',  label:'Handoff notes written' }
+  ]
+};
+const CHECKLIST_SITE_KEY = 'phantom_checklist_site_v1';
+
+// Transient (in-memory, lost on reload) UI state — satisfies "not persisted"
+// while surviving the in-flow re-renders that add/edit/remove trigger.
+var _checklist_open = {};   // phaseId -> bool (accordion expand)
+var _checklist_edit = {};   // phaseId -> bool (edit mode)
+var _checklist_noteTimers = {};
+
+// Site overrides — { added:[{id,phase,label,wantNote?}], removed:[id], renamed:{id:label} }
+function checklist_loadSite() {
+  var s = safeParse(localStorage.getItem(CHECKLIST_SITE_KEY) || 'null', null);
+  if (!s || typeof s !== 'object') s = {};
+  if (!Array.isArray(s.added)) s.added = [];
+  if (!Array.isArray(s.removed)) s.removed = [];
+  if (!s.renamed || typeof s.renamed !== 'object') s.renamed = {};
+  return s;
+}
+function checklist_saveSite(s) {
+  try { return safeStore(CHECKLIST_SITE_KEY, JSON.stringify(s)); }
+  catch (e) { if (typeof console !== 'undefined') console.warn('[checklist] site save failed', e); return false; }
+}
+
+// DLC detection — cooling:'dlc' rows show only on liquid-cooled platforms
+// (GB200/GB300/NVL72). Fail-open: absent/generic hardwareType ⇒ show.
+function checklist_isDlc(hardwareType) {
+  if (!hardwareType || hardwareType === 'generic') return true;
+  return /GB200|GB300|NVL/i.test(String(hardwareType));
+}
+
+// Resolver — defaults filtered by cooling → minus removed → renamed labels
+// → plus site-added. Pure; used by BOTH render and % math.
+function checklist_effectiveItems(phaseType, hardwareType) {
+  var base = PHASE_CHECKLIST_DEFAULTS[phaseType] || [];
+  var site = checklist_loadSite();
+  var dlc = checklist_isDlc(hardwareType);
+  var out = [];
+  base.forEach(function(it) {
+    if (it.cooling === 'dlc' && !dlc) return;
+    if (site.removed.indexOf(it.id) !== -1) return;
+    out.push({ id: it.id, label: site.renamed[it.id] || it.label, wantNote: !!it.wantNote });
+  });
+  site.added.forEach(function(a) {
+    if (!a || a.phase !== phaseType) return;
+    if (site.removed.indexOf(a.id) !== -1) return;
+    out.push({ id: a.id, label: site.renamed[a.id] || a.label, wantNote: !!a.wantNote, _user: true });
+  });
+  return out;
+}
+// Current label of a single item id (for the rename prompt default).
+function checklist_labelOf(phaseType, itemId) {
+  var site = checklist_loadSite();
+  if (site.renamed[itemId]) return site.renamed[itemId];
+  var base = PHASE_CHECKLIST_DEFAULTS[phaseType] || [];
+  for (var i = 0; i < base.length; i++) if (base[i].id === itemId) return base[i].label;
+  for (var j = 0; j < site.added.length; j++) if (site.added[j] && site.added[j].id === itemId) return site.added[j].label;
+  return '';
+}
+function _checklist_hwForPhase(deployId, ph) {
+  try {
+    var racks = deploy_loadRacks(deployId);
+    var rack = racks.find(function(r){ return r.id === ph.rackId; });
+    return rack ? ge_deriveHardwareType(rack) : null;
+  } catch (e) { return null; }
+}
+
+// Per-rack check state — rides ph.checks on the phase object.
+function checklist_toggle(deployId, phaseId, itemId) {
+  var all = deploy_loadPhases();
+  var ph = all.find(function(p){ return p.id === phaseId; });
+  if (!ph) { if (typeof console !== 'undefined') console.warn('[checklist] phase not found', phaseId); phantomToast('Phase not found', 'error'); return; }
+  if (!ph.checks || typeof ph.checks !== 'object') ph.checks = {};
+  var nowChecked = !ph.checks[itemId];
+  if (nowChecked) ph.checks[itemId] = true; else delete ph.checks[itemId];
+  deploy_savePhases(all);
+  // In-place paint — no full re-render, so the accordion stays put.
+  var chk = document.getElementById('pcl-chk-' + phaseId + '-' + itemId);
+  if (chk) chk.className = 'pcl-chk' + (nowChecked ? ' pcl-chk-on' : '');
+  var row = document.getElementById('pcl-row-' + phaseId + '-' + itemId);
+  if (row) row.setAttribute('aria-checked', nowChecked ? 'true' : 'false');
+  checklist_paintMeter(deployId, ph);
+}
+function checklist_paintMeter(deployId, ph) {
+  var items = checklist_effectiveItems(ph.type, _checklist_hwForPhase(deployId, ph));
+  var total = items.length, done = 0;
+  items.forEach(function(it){ if (ph.checks && ph.checks[it.id]) done++; });
+  var pct = total ? Math.round(done / total * 100) : 0;
+  var cEl = document.getElementById('pcl-count-' + ph.id);
+  if (cEl) cEl.textContent = done + '/' + total + ' · ' + pct + '%';
+  var bEl = document.getElementById('pcl-bar-' + ph.id);
+  if (bEl) bEl.style.width = pct + '%';
+}
+// Per-rack note — rides ph.notes; debounced ~400ms.
+function checklist_setNote(deployId, phaseId, itemId, str) {
+  var key = phaseId + '|' + itemId;
+  if (_checklist_noteTimers[key]) clearTimeout(_checklist_noteTimers[key]);
+  _checklist_noteTimers[key] = setTimeout(function() {
+    _checklist_noteTimers[key] = null;
+    var all = deploy_loadPhases();
+    var ph = all.find(function(p){ return p.id === phaseId; });
+    if (!ph) { if (typeof console !== 'undefined') console.warn('[checklist] phase not found for note', phaseId); return; }
+    if (!ph.notes || typeof ph.notes !== 'object') ph.notes = {};
+    var v = (str == null ? '' : String(str));
+    if (v) ph.notes[itemId] = v; else delete ph.notes[itemId];
+    deploy_savePhases(all);
+  }, 400);
+}
+function checklist_revealNote(deployId, phaseId, itemId, el) {
+  if (!el || !el.parentNode) return;
+  var inp = document.createElement('input');
+  inp.type = 'text'; inp.className = 'pcl-note'; inp.placeholder = 'note / value';
+  inp.addEventListener('input', function(){ checklist_setNote(deployId, phaseId, itemId, inp.value); });
+  el.parentNode.replaceChild(inp, el);
+  try { inp.focus(); } catch (e) {}
+}
+function checklist_toggleAccordion(phaseId) {
+  var body = document.getElementById('pcl-body-' + phaseId);
+  var chev = document.getElementById('pcl-chev-' + phaseId);
+  if (!body) return;
+  var next = body.style.display === 'none';
+  body.style.display = next ? 'block' : 'none';
+  if (chev) chev.textContent = next ? '▴' : '▾';
+  _checklist_open[phaseId] = next;
+}
+// Site override mutators — deliberate actions, so a full in-flow re-render is fine.
+function checklist_addItem(deployId, rackId, phaseType) {
+  var label = null;
+  try { label = prompt('New ' + (DEPLOY_PHASE_LABELS_FULL[phaseType] || phaseType) + ' checklist item:'); } catch (e) {}
+  if (label == null) return;
+  label = String(label).trim();
+  if (!label) return;
+  if (label.length > 120) label = label.slice(0, 120);
+  var site = checklist_loadSite();
+  var id = 'usr-' + Date.now().toString(36);
+  site.added.push({ id: id, phase: phaseType, label: label });
+  checklist_saveSite(site);
+  var ph = deploy_loadPhases().find(function(p){ return p.rackId === rackId && p.type === phaseType; });
+  if (ph) _checklist_open[ph.id] = true;
+  deploy_showRackDetail(deployId, rackId);
+}
+function checklist_removeItem(deployId, rackId, phaseType, itemId, isUser) {
+  var site = checklist_loadSite();
+  if (isUser) {
+    site.added = site.added.filter(function(a){ return !a || a.id !== itemId; });
+    if (site.renamed[itemId]) delete site.renamed[itemId];
+  } else if (site.removed.indexOf(itemId) === -1) {
+    site.removed.push(itemId);
+  }
+  checklist_saveSite(site);
+  deploy_showRackDetail(deployId, rackId);
+}
+function checklist_renameItem(deployId, rackId, phaseType, itemId) {
+  var nv = null;
+  try { nv = prompt('Rename item:', checklist_labelOf(phaseType, itemId)); } catch (e) {}
+  if (nv == null) return;
+  nv = String(nv).trim();
+  if (!nv) return;
+  if (nv.length > 120) nv = nv.slice(0, 120);
+  var site = checklist_loadSite();
+  site.renamed[itemId] = nv;
+  checklist_saveSite(site);
+  deploy_showRackDetail(deployId, rackId);
+}
+function checklist_toggleEdit(deployId, rackId, phaseId) {
+  _checklist_edit[phaseId] = !_checklist_edit[phaseId];
+  _checklist_open[phaseId] = true;
+  deploy_showRackDetail(deployId, rackId);
+}
+// Renders the whole checklist strip for one phase card. Returns '' when the
+// effective list is empty. Redesign-only caller.
+function checklist_renderPhase(deployId, rackId, ph, hardwareType, depLocked) {
+  var items = checklist_effectiveItems(ph.type, hardwareType);
+  if (!items.length && depLocked) return '';
+  var editMode = !depLocked && !!_checklist_edit[ph.id];
+  var total = items.length, done = 0;
+  items.forEach(function(it){ if (ph.checks && ph.checks[it.id]) done++; });
+  var pct = total ? Math.round(done / total * 100) : 0;
+  var col = DEPLOY_PHASE_COLORS[ph.type] || 'var(--white)';
+  var expanded = (ph.id in _checklist_open) ? _checklist_open[ph.id] : (ph.status === 'in_progress');
+
+  var h = '<div class="pcl-strip" style="margin-top:10px;border-top:1px solid rgba(255,255,255,0.06);padding-top:10px">';
+  h += '<div class="pcl-head" onclick="checklist_toggleAccordion(\'' + ph.id + '\')" style="display:flex;align-items:center;gap:8px;cursor:pointer;-webkit-tap-highlight-color:transparent">';
+  h += '<span style="flex:1;font-family:var(--mono);font-size:var(--fs-micro);letter-spacing:1.5px;color:var(--slate)">CHECKLIST</span>';
+  if (total) h += '<span id="pcl-count-' + ph.id + '" style="font-family:var(--mono);font-size:var(--fs-micro);letter-spacing:1px;color:' + col + '">' + done + '/' + total + ' · ' + pct + '%</span>';
+  h += '<span id="pcl-chev-' + ph.id + '" style="font-family:var(--mono);font-size:var(--fs-caption);color:var(--slate)">' + (expanded ? '▴' : '▾') + '</span>';
+  h += '</div>';
+  h += '<div style="height:3px;border-radius:2px;background:rgba(255,255,255,0.06);margin-top:8px;overflow:hidden"><div id="pcl-bar-' + ph.id + '" style="height:100%;width:' + pct + '%;background:' + col + ';border-radius:2px;transition:width .3s ease"></div></div>';
+  h += '<div id="pcl-body-' + ph.id + '" style="display:' + (expanded ? 'block' : 'none') + ';margin-top:8px">';
+  items.forEach(function(it) {
+    var checked = !!(ph.checks && ph.checks[it.id]);
+    var noteVal = (ph.notes && ph.notes[it.id]) ? String(ph.notes[it.id]) : '';
+    var showNote = it.wantNote || !!noteVal;
+    h += '<div id="pcl-row-' + ph.id + '-' + it.id + '" class="pcl-row" role="checkbox" aria-checked="' + (checked ? 'true' : 'false') + '">';
+    h += '<div class="pcl-line">';
+    if (editMode) {
+      h += '<span class="pcl-x" onclick="checklist_removeItem(\'' + deployId + '\',\'' + rackId + '\',\'' + ph.type + '\',\'' + it.id + '\',' + (it._user ? 'true' : 'false') + ')">✕</span>';
+      h += '<span class="pcl-label" onclick="checklist_renameItem(\'' + deployId + '\',\'' + rackId + '\',\'' + ph.type + '\',\'' + it.id + '\')">' + escHtml(it.label) + '</span>';
+    } else {
+      var tap = depLocked ? '' : ' onclick="checklist_toggle(\'' + deployId + '\',\'' + ph.id + '\',\'' + it.id + '\')"';
+      h += '<span class="pcl-chk' + (checked ? ' pcl-chk-on' : '') + '" id="pcl-chk-' + ph.id + '-' + it.id + '"' + tap + '></span>';
+      h += '<span class="pcl-label"' + tap + '>' + escHtml(it.label) + '</span>';
+    }
+    h += '</div>';
+    if (depLocked) {
+      if (noteVal) h += '<div class="pcl-note-ro">' + escHtml(noteVal) + '</div>';
+    } else if (!editMode) {
+      if (showNote) {
+        h += '<input class="pcl-note" type="text" placeholder="note / value" value="' + escHtml(noteVal) + '" oninput="checklist_setNote(\'' + deployId + '\',\'' + ph.id + '\',\'' + it.id + '\',this.value)">';
+      } else {
+        h += '<span class="pcl-addnote" onclick="checklist_revealNote(\'' + deployId + '\',\'' + ph.id + '\',\'' + it.id + '\',this)">+ note</span>';
+      }
+    }
+    h += '</div>';
+  });
+  if (!depLocked) {
+    h += '<div class="pcl-ctrl">';
+    h += '<span class="pcl-add" onclick="checklist_addItem(\'' + deployId + '\',\'' + rackId + '\',\'' + ph.type + '\')">+ ADD ITEM</span>';
+    h += '<span class="pcl-edit' + (editMode ? ' pcl-edit-on' : '') + '" onclick="checklist_toggleEdit(\'' + deployId + '\',\'' + rackId + '\',\'' + ph.id + '\')">' + (editMode ? 'DONE' : 'EDIT') + '</span>';
+    h += '</div>';
+  }
+  h += '</div></div>';
+  return h;
+}
+
 // ── Stage 5: Optic Ledger Storage ──
 function deploy_loadOptics(deployId) {
   var all = safeParse(localStorage.getItem(DEPLOY_OPTICS_KEY) || '[]', []);
@@ -23414,6 +23724,23 @@ function ge_captureSave() {
 // Entry point wired into the COMPLETE button in the rack detail view.
 // Looks up the rack, derives hardwareType, opens the capture modal.
 function ge_onCompleteTap(phaseId, deployId, rackId, phaseType) {
+  // Phase-checklist soft guard (v1.14.208) — redesign only; legacy path byte-identical.
+  // Not a hard gate: last item checked does NOT auto-complete, and unchecked items
+  // only prompt a soft confirm.
+  if (typeof redesign_isOn === 'function' && redesign_isOn()) {
+    try {
+      var _all = deploy_loadPhases();
+      var _ph = _all.find(function(p){ return p.id === phaseId; });
+      if (_ph) {
+        var _racks0 = deploy_loadRacks(deployId);
+        var _rk0 = _racks0.find(function(r){ return r.id === rackId; });
+        var _items0 = checklist_effectiveItems(phaseType, _rk0 ? ge_deriveHardwareType(_rk0) : null);
+        var _un = 0;
+        _items0.forEach(function(it){ if (!(_ph.checks && _ph.checks[it.id])) _un++; });
+        if (_un > 0 && !confirm(_un + ' checklist item' + (_un > 1 ? 's' : '') + ' unchecked — complete anyway?')) return;
+      }
+    } catch (e) { if (typeof console !== 'undefined') console.warn('[checklist] complete guard skipped', e); }
+  }
   var racks = deploy_loadRacks(deployId);
   var rack = racks.find(function(r) { return r.id === rackId; });
   if (!rack) {
@@ -29462,6 +29789,12 @@ function deploy_showRackDetail(deployId, rackId) {
 
     // Stale Phase Surfacer — badge if audit events exist after signoff
     html += deploy_renderPhaseStaleBadge(ph, rackAudit, deployId, rackId);
+
+    // Phase checklist (v1.14.208) — redesign-only; legacy render byte-identical.
+    if (typeof redesign_isOn === 'function' && redesign_isOn()) {
+      try { html += checklist_renderPhase(deployId, rackId, ph, ge_deriveHardwareType(rack), _depLocked); }
+      catch (clErr) { if (typeof console !== 'undefined') console.warn('[checklist] render skipped', clErr); }
+    }
 
     html += '</div>';
   });
