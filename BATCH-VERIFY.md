@@ -94,4 +94,10 @@ any HIGH-risk ship). Every ship keeps its own rollback line. Claude Code appends
 - [ ] Primary buttons (LOAD MASTER, EXPORT, parse CTAs, CONFIRM actions): now show the dark cask w/ cyan ring + glow + cyan text (was possibly flat/invisible border-box) — this REPLACES the .198 primary flag
 - [ ] Ghost/secondary + qa-btn: unchanged from .198 (still border-box; flag if any reads flat vs primary now)
 
+## v1.14.206 — A-2 assistant-sheet buttons padding-box fix · rollback: revert commit
+- [ ] Tap Ask PHANTOM: the 4 intent cards (SPEAK/PASTE/TYPE/IMPORT) now show their machined ring + accent (were likely flat/edgeless border-box on device)
+- [ ] Composer: ASK PHANTOM + MENU buttons show ring; Listening: DONE + CANCEL show ring
+- [ ] Clipboard-deny fallback: ATTACH chip renders; ticket-attached chip lit cyan
+- [ ] These were last device-touched in .194 before the border-box bug was known — this is the corrective
+
 <!-- append new ships above this line; checkpoint when 6 deep or before HIGH-risk -->

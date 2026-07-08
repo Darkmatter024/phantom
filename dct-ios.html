@@ -11051,25 +11051,24 @@ body.rd .gsk {
    so body.rd scoping here is belt-and-braces; legacy va sheet is untouched. */
 body.rd .va-intake-row { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; padding:0 20px 16px; }
 body.rd .va-intake-chip {
+  /* v1.14.206: raw <button> border-box fix (.204/.205 class) — real slate ring + padding-box glass;
+     the fallback ATTACH chip (clipboard-deny path) was on the same non-painting border-box. */
+  -webkit-appearance: none; appearance: none;
   min-height: 40px; padding: 9px 16px; cursor: pointer; -webkit-tap-highlight-color: transparent;
   font-family: var(--mono); font-size: 10.5px; font-weight: 700; letter-spacing: 1.6px;
   text-transform: uppercase; color: var(--slate-readable, #8ea1b3);
-  border-radius: 999px; border: 2.5px solid transparent;
+  border-radius: 999px; border: 1.5px solid rgba(90,112,138,.42);
   background:
-    radial-gradient(130% 220% at 50% -70%, rgba(140,172,206,.11) 0%, transparent 44%) padding-box,
-    linear-gradient(180deg,#0b1019,#05080e 55%,#0a0f1a) padding-box,
-    linear-gradient(175deg, rgba(255,255,255,.24) 0%, rgba(200,220,240,.08) 16%,
-      rgba(28,38,52,.9) 45%, rgba(7,11,17,1) 76%, rgba(90,112,138,.30) 100%) border-box;
+    radial-gradient(130% 220% at 50% -70%, rgba(140,172,206,.11) 0%, transparent 44%),
+    linear-gradient(180deg,#0b1019,#05080e 55%,#0a0f1a);
   box-shadow: inset 0 2px 4px rgba(0,0,0,.85), inset 0 -1px 0 rgba(160,190,220,.08), 0 5px 10px rgba(0,0,0,.5);
 }
 body.rd .va-intake-chip.va-ticket-on {
   color: hsl(var(--pill-cy));
+  border-color: color-mix(in srgb, var(--cyan) 55%, transparent);
   background:
-    radial-gradient(130% 220% at 50% -70%, rgba(140,172,206,.11) 0%, transparent 44%) padding-box,
-    linear-gradient(180deg,#0b1019,#05080e 55%,#0a0f1a) padding-box,
-    linear-gradient(175deg, rgba(255,255,255,.34) 0%, rgba(210,240,255,.12) 16%,
-      rgba(28,44,60,.95) 45%, rgba(8,12,18,1) 74%,
-      hsl(var(--pill-cy) / calc(.55 * var(--pill-spill))) 100%) border-box;
+    radial-gradient(130% 220% at 50% -70%, rgba(140,172,206,.11) 0%, transparent 44%),
+    linear-gradient(180deg,#0b1019,#05080e 55%,#0a0f1a);
   box-shadow:
     inset 0 2px 4px rgba(0,0,0,.7),
     inset 0 -3px calc(10px * var(--pill-spill)) hsl(var(--pill-cy) / calc(.30 * var(--pill-spill))),
@@ -11120,12 +11119,13 @@ body.rd .va-iask {
 }
 body.rd .va-igrid { display:flex; flex-direction:column; gap:12px; padding:0 16px 20px; }
 body.rd .va-icard {
-  position:relative; border-radius:17px; border:2.5px solid transparent; padding:0;
+  /* v1.14.206: raw <button> — border-box ring does not paint on iOS (the .ask/.pt-btn-primary
+     class of bug, .204/.205). Real slate ring + padding-box fill; the .va-iwell child carries
+     the machined well. appearance reset required (no base rule provides it). */
+  -webkit-appearance:none; appearance:none;
+  position:relative; border-radius:17px; border:1.5px solid rgba(90,112,138,.42); padding:0;
   cursor:pointer; text-align:left; width:100%;
-  background:
-    linear-gradient(#141b27,#0a0f18) padding-box,
-    linear-gradient(175deg, rgba(255,255,255,.22) 0%, rgba(200,220,240,.07) 16%,
-      rgba(28,38,52,.9) 45%, rgba(7,11,17,1) 76%, rgba(90,112,138,.28) 100%) border-box;
+  background:linear-gradient(#141b27,#0a0f18);
   filter:drop-shadow(0 5px 12px rgba(0,0,0,.55));
   -webkit-tap-highlight-color:transparent;
 }
@@ -11171,20 +11171,22 @@ body.rd .va-comp-ta {
 body.rd .va-comp-ta::placeholder { color:#4a5d72; }
 body.rd .va-crow { display:flex; gap:10px; margin:14px 16px 20px; }
 body.rd .va-cask, body.rd .va-ldone {
-  flex:1; border-radius:999px; border:2.5px solid transparent; padding:14px 0; cursor:pointer; text-align:center;
+  /* v1.14.206: raw <button> border-box fix (.204/.205 class) — real cyan ring + padding-box glass. */
+  -webkit-appearance:none; appearance:none;
+  flex:1; border-radius:999px; border:1.5px solid color-mix(in srgb, var(--cyan) var(--glow-border), transparent); padding:14px 0; cursor:pointer; text-align:center;
   font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:12px; letter-spacing:.26em; color:hsl(var(--pill-cy));
-  background:linear-gradient(180deg,#0b1019,#05080e) padding-box,
-    linear-gradient(175deg, rgba(255,255,255,.3), rgba(28,44,60,.95) 45%, hsl(var(--pill-cy)/.35)) border-box;
-  box-shadow:inset 0 2px 4px rgba(0,0,0,.7), inset 0 -3px 6px hsl(var(--pill-cy)/.12);
+  background:linear-gradient(180deg,#0b1019,#05080e);
+  box-shadow:inset 0 1px 0 rgba(200,230,255,.14), inset 0 2px 4px rgba(0,0,0,.7), inset 0 -3px 6px hsl(var(--pill-cy)/.12);
   text-shadow:0 0 .5em hsl(var(--pill-cy)/.5);
   -webkit-tap-highlight-color:transparent;
 }
 body.rd .va-ldone { display:block; flex:none; margin:0 auto; padding:13px 34px; }
 body.rd .va-cback {
-  border-radius:999px; border:2px solid transparent; padding:14px 20px; cursor:pointer;
+  /* v1.14.206: raw <button> border-box fix (.204/.205 class) — real slate ring + padding-box glass. */
+  -webkit-appearance:none; appearance:none;
+  border-radius:999px; border:1.5px solid rgba(90,112,138,.34); padding:14px 20px; cursor:pointer;
   font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:10.5px; letter-spacing:.2em; color:#8ea2b8;
-  background:linear-gradient(180deg,#0b1019,#05080e) padding-box,
-    linear-gradient(175deg, rgba(255,255,255,.2), rgba(28,38,52,.9) 45%, rgba(7,11,17,1)) border-box;
+  background:linear-gradient(180deg,#0b1019,#05080e);
   box-shadow:inset 0 2px 3px rgba(0,0,0,.7);
   -webkit-tap-highlight-color:transparent;
 }
@@ -11471,7 +11473,7 @@ body.rd .gsk-vio {
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.205';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.206';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
