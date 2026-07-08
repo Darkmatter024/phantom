@@ -156,4 +156,14 @@ any HIGH-risk ship). Every ship keeps its own rollback line. Claude Code appends
 - [ ] `?legacy=1`: floor map shows NO strip; grid identical to before
 - [ ] ⚠ 10th ship in this batch — well past the 6-cap; owner continued the stack 2026-07-08
 
+## v1.14.212 — RECONCILE web-Claude .204 superset (B1 root fix + last-row clip + back-btn chip) · rollback: git revert
+- [ ] Work › Deploy › STAGE SCOPE: tap cab rows → selection count increments (bar no longer eats taps); STAGE SCOPE SNAPSHOT enables
+- [ ] Scroll to last cab row (e.g. dh6:050) → fully visible above the nav, not clipped (short viewport)
+- [ ] Sticky action bar still pins directly above the bottom nav
+- [ ] Every BACK button (Work tool, Crash Cart drill-in, Platforms drill-in) → smaller 34px rounded chip, slate chevron
+- [ ] Press-and-hold a BACK button → chevron + chip border light cyan
+- [ ] BACK still navigates correctly; 56px tap area still catches gloved taps
+- [ ] `?legacy=1`: no functional regressions
+- [ ] ⚠ 11th ship in this batch — owner-directed reconcile, stack continued 2026-07-08
+
 <!-- append new ships above this line; checkpoint when 6 deep or before HIGH-risk -->
