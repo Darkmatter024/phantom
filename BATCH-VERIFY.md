@@ -100,4 +100,8 @@ any HIGH-risk ship). Every ship keeps its own rollback line. Claude Code appends
 - [ ] Clipboard-deny fallback: ATTACH chip renders; ticket-attached chip lit cyan
 - [ ] These were last device-touched in .194 before the border-box bug was known — this is the corrective
 
+## v1.14.207 — FIX Command deploy tile clickable (laptop) · rollback: remove aspect-ratio:auto
+- [ ] LAPTOP/desktop Chrome: Command page — the DEPLOY/SCANNED/HANDOFF tiles are compact (~96px, not giant); Deploy tile is on-screen and clicking it opens the deploy flow
+- [ ] PHONE: same tiles now their designed compact height (slightly shorter than before) — deploy tile still taps through
+
 <!-- append new ships above this line; checkpoint when 6 deep or before HIGH-risk -->
