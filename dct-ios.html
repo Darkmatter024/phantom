@@ -8447,6 +8447,14 @@ textarea.hud-input {
 .tile.is-done { box-shadow:0 0 0 1px rgba(48,209,88,0.22), 0 0 14px rgba(48,209,88,0.14); }
 .tile.is-active { box-shadow:0 0 0 1px rgba(92,242,255,0.22), 0 0 14px rgba(92,242,255,0.14); }
 .tile.is-blocked { border-color:var(--red); box-shadow:0 0 0 1px rgba(255,45,85,0.3), 0 0 14px rgba(255,45,85,0.14); }
+/* ACTIVE strip (v1.14.211, handoff-active-strip-v1) — horizontal mid-flight rack
+   scan above the floor grid. Reuses .tile verbatim; markup is emitted only under
+   redesign_isOn(), so the new classes are body.rd-scoped (legacy byte-identical). */
+body.rd .tile-active-hdr { font-family:var(--mono); font-size:var(--fs-micro); letter-spacing:1.5px; color:var(--cyan); margin:0 0 6px; }
+body.rd .tile-active-hdr .blk { color:var(--red); }
+body.rd .tile-active-strip { display:flex; gap:8px; overflow-x:auto; margin-bottom:12px; padding-bottom:4px; scrollbar-width:none; -webkit-overflow-scrolling:touch; touch-action:pan-x; overscroll-behavior-x:contain; -webkit-mask-image:linear-gradient(to right,black 85%,transparent 100%); }
+body.rd .tile-active-strip::-webkit-scrollbar { display:none; }
+body.rd .tile-active-strip .tile { flex:0 0 104px; }
 @media (prefers-reduced-motion: reduce) {
   .trace-node.is-active { animation:none; box-shadow:0 0 10px var(--cyan); }
 }
@@ -11522,7 +11530,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.210';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.211';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -28855,6 +28863,62 @@ function _floorMap_extractNum(rackId) {
   return m ? parseInt(m[1], 10) : 999999;
 }
 
+// ONE floor-tile renderer (v1.14.211) — the ACTIVE strip and the grid both call
+// this so their tile markup can never drift (the bug class that bit .ask). Pure:
+// builds the rack <button> from an already-computed rollup (ru) + fill (f).
+function deploy_floorTileHtml(deployId, rack, ru, f) {
+  var html = '';
+  html += '<button class="tile is-' + f.state + '" onclick="deploy_showRackDetail(\'' + deployId + '\',\'' + rack.id + '\')" aria-label="' + escHtml(rack.rackId || rack.id || 'rack') + ' ' + f.fill + '% (' + f.state + ')" ontouchstart="this.style.opacity=\'0.7\'" ontouchend="this.style.opacity=\'1\'">';
+  if (f.state === 'blocked') html += '<span class="tile-flag"></span>';
+  html += '<div class="tile-hdr">' + escHtml(rack.rackId || rack.id || '?') + '</div>';
+  html += '<div class="tile-body"><div class="rk">';
+  if (f.state === 'pending') {
+    html += '<div class="rk-u rk-ghost"></div><div class="rk-u rk-ghost"></div><div class="rk-u rk-ghost"></div><div class="rk-u rk-ghost"></div>';
+  } else {
+    html += '<div class="rk-u rk-pdu"></div><div class="rk-u rk-sw"><i class="rk-led"></i></div><div class="rk-u rk-gpu"><i class="rk-led"></i></div><div class="rk-u rk-gpu"><i class="rk-led"></i></div><div class="rk-u rk-gpu"><i class="rk-led"></i></div><div class="rk-u rk-blank"></div>';
+  }
+  html += '</div></div>';
+  html += '<div class="tile-pips">';
+  (ru.phases || []).forEach(function(p) {
+    html += '<span class="tile-pip ' + hud_phaseClass(p.status) + '"></span>';
+  });
+  html += '</div>';
+  html += '<div class="tile-underline"></div>';
+  html += '</button>';
+  return html;
+}
+
+// Pure helper (v1.14.211) — id list of mid-flight (blocked||active) racks for a
+// deployment, in row/number sort. Standalone (re-derives its own rollups) so the
+// future Shift Handoff bundle can reuse "what I worked this shift" without the
+// floor-map render context. NOT called by deploy_renderFloorMap (that would be a
+// second data pass); the render derives its strip from its own single rollup loop.
+function deploy_activeRacks(deployId) {
+  var out = [];
+  try {
+    var racks = deploy_loadRacks(deployId);
+    if (!racks || !racks.length) return out;
+    var phases = deploy_loadPhases(deployId);
+    var byRow = {};
+    racks.forEach(function(rack) {
+      var rowKey = String(rack.rackId || rack.id || '').split(':')[0] || '—';
+      if (!byRow[rowKey]) byRow[rowKey] = [];
+      byRow[rowKey].push(rack);
+    });
+    var rowKeys = Object.keys(byRow).sort();
+    rowKeys.forEach(function(rk) {
+      byRow[rk].sort(function(a, b) { return _floorMap_extractNum(a.rackId) - _floorMap_extractNum(b.rackId); });
+    });
+    rowKeys.forEach(function(rk) {
+      byRow[rk].forEach(function(rack) {
+        var st = hud_rackFill(deploy_computeRackRollup(rack.id, phases)).state;
+        if (st === 'blocked' || st === 'active') out.push(rack.id);
+      });
+    });
+  } catch (e) {}
+  return out;
+}
+
 function deploy_renderFloorMap(deployId) {
   var mapEl = document.getElementById('deploy-floor-map');
   if (!mapEl) return;
@@ -28878,36 +28942,52 @@ function deploy_renderFloorMap(deployId) {
     byRow[rk].sort(function(a, b) { return _floorMap_extractNum(a.rackId) - _floorMap_extractNum(b.rackId); });
   });
 
+  // Single rollup pass (v1.14.211) — shared by the ACTIVE strip and the grid so
+  // neither recomputes and the two can't drift. blockedRacks/activeRacks are
+  // collected in row/number order here; the strip renders blocked-first.
+  var rollById = {};
+  var blockedRacks = [], activeRacks = [];
+  rowKeys.forEach(function(rk) {
+    byRow[rk].forEach(function(rack) {
+      var ru = deploy_computeRackRollup(rack.id, allPhases);
+      var f = hud_rackFill(ru);
+      rollById[rack.id] = { ru: ru, f: f };
+      if (f.state === 'blocked') blockedRacks.push(rack);
+      else if (f.state === 'active') activeRacks.push(rack);
+    });
+  });
+
   var html = '';
   // Header: rack + row count (no auto-layout disclosure — the fixed-tile grid IS the layout).
   html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">';
   html += '<div style="font-family:var(--mono);font-size:var(--fs-micro);letter-spacing:1.5px;color:var(--slate)">' + racks.length + ' RACK' + (racks.length === 1 ? '' : 'S') + ' · ' + rowKeys.length + ' ROW' + (rowKeys.length === 1 ? '' : 'S') + '</div>';
   html += '</div>';
 
+  // ACTIVE strip (v1.14.211) — mid-flight racks only (blocked||active), blocked
+  // first, in a horizontal thumb-scan above the grid. Same tiles as the grid via
+  // deploy_floorTileHtml (no divergent markup); reads the rollById already computed
+  // above (no second data pass). Redesign-only so ?legacy=1 stays byte-identical.
+  // Each rack ALSO still renders in its grid row below — intentional, not deduped.
+  if (redesign_isOn() && (blockedRacks.length + activeRacks.length) > 0) {
+    var nAct = blockedRacks.length + activeRacks.length;
+    html += '<div class="tile-active-hdr">ACTIVE · ' + nAct + ' RACK' + (nAct === 1 ? '' : 'S');
+    if (blockedRacks.length) html += ' · <span class="blk">' + blockedRacks.length + ' BLOCKED</span>';
+    html += '</div>';
+    html += '<div class="tile-active-strip">';
+    blockedRacks.concat(activeRacks).forEach(function(rack) {
+      var e = rollById[rack.id];
+      html += deploy_floorTileHtml(deployId, rack, e.ru, e.f);
+    });
+    html += '</div>';
+  }
+
   // The grid — fixed-width tiles wrap; row headers span the full grid width.
   html += '<div class="tile-grid">';
   rowKeys.forEach(function(rk) {
     html += '<div class="tile-rowhdr">ROW ' + escHtml(rk.toUpperCase()) + '</div>';
     byRow[rk].forEach(function(rack) {
-      var ru = deploy_computeRackRollup(rack.id, allPhases);
-      var f = hud_rackFill(ru);
-      html += '<button class="tile is-' + f.state + '" onclick="deploy_showRackDetail(\'' + deployId + '\',\'' + rack.id + '\')" aria-label="' + escHtml(rack.rackId || rack.id || 'rack') + ' ' + f.fill + '% (' + f.state + ')" ontouchstart="this.style.opacity=\'0.7\'" ontouchend="this.style.opacity=\'1\'">';
-      if (f.state === 'blocked') html += '<span class="tile-flag"></span>';
-      html += '<div class="tile-hdr">' + escHtml(rack.rackId || rack.id || '?') + '</div>';
-      html += '<div class="tile-body"><div class="rk">';
-      if (f.state === 'pending') {
-        html += '<div class="rk-u rk-ghost"></div><div class="rk-u rk-ghost"></div><div class="rk-u rk-ghost"></div><div class="rk-u rk-ghost"></div>';
-      } else {
-        html += '<div class="rk-u rk-pdu"></div><div class="rk-u rk-sw"><i class="rk-led"></i></div><div class="rk-u rk-gpu"><i class="rk-led"></i></div><div class="rk-u rk-gpu"><i class="rk-led"></i></div><div class="rk-u rk-gpu"><i class="rk-led"></i></div><div class="rk-u rk-blank"></div>';
-      }
-      html += '</div></div>';
-      html += '<div class="tile-pips">';
-      (ru.phases || []).forEach(function(p) {
-        html += '<span class="tile-pip ' + hud_phaseClass(p.status) + '"></span>';
-      });
-      html += '</div>';
-      html += '<div class="tile-underline"></div>';
-      html += '</button>';
+      var e = rollById[rack.id];
+      html += deploy_floorTileHtml(deployId, rack, e.ru, e.f);
     });
   });
   html += '</div>';
