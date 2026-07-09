@@ -11567,7 +11567,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.218';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.219';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -29762,10 +29762,14 @@ function rackElevation_render3D(rack, mountEl) {
   var slots  = (rack && Array.isArray(rack.slots)) ? rack.slots : [];
   var totalU = (rack && rack.totalU) ? rack.totalU : 48;
 
+  // ── locked settings (HANDOFF-3d-rack-render-fix.md, John-approved) ──
+  var RW = 6.0, RD = 2.7, uH = 0.34, RH = totalU * uH, yBase = -RH / 2;
+  var FOV = 32;
+  var fitDist = (RH * 0.60) / Math.tan((FOV * Math.PI / 180) / 2);   // frames the FULL rack height → no taper/balloon
+
   var scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(0x06090f, 0.03);
-  var camera = new THREE.PerspectiveCamera(42, w / h, 0.1, 200);
-  camera.position.set(0, 4.5, 15);
+  scene.fog = new THREE.FogExp2(0x06090f, 0.018);
+  var camera = new THREE.PerspectiveCamera(FOV, w / h, 0.5, 400);
   var renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   renderer.setSize(w, h);
@@ -29774,28 +29778,32 @@ function rackElevation_render3D(rack, mountEl) {
   canvas.style.touchAction = 'none';
   mountEl.appendChild(canvas);
 
-  scene.add(new THREE.AmbientLight(0x24303c, 1.1));
-  var keyL = new THREE.DirectionalLight(0xbfe9ff, 0.9); keyL.position.set(8, 14, 10);   scene.add(keyL);
-  var rimL = new THREE.DirectionalLight(0x9b59ff, 0.5); rimL.position.set(-10, 6, -8);   scene.add(rimL);
+  scene.add(new THREE.AmbientLight(0x243040, 1.05));
+  var keyL = new THREE.DirectionalLight(0xbfe9ff, 0.9);  keyL.position.set(8, 14, 10);           scene.add(keyL);
+  var rimL = new THREE.DirectionalLight(0x9b59ff, 0.55); rimL.position.set(-10, 6, -8);           scene.add(rimL);
+  var ptL  = new THREE.PointLight(0x5cf2ff, 0.5, 0);     ptL.position.set(0, 1.5, fitDist * 0.7);  scene.add(ptL);
 
-  var uH = 0.32, RW = 3.4, RD = 2.2, RH = totalU * uH, yBase = -RH / 2;
   var rackGrp = new THREE.Group();
-
   var postMat = new THREE.MeshStandardMaterial({ color: 0x0c1219, metalness: 0.7, roughness: 0.5, emissive: 0x0a141c, emissiveIntensity: 0.4 });
-  function post(x, z) { var m = new THREE.Mesh(new THREE.BoxGeometry(0.14, RH, 0.14), postMat); m.position.set(x, 0, z); rackGrp.add(m); }
+  function post(x, z) { var m = new THREE.Mesh(new THREE.BoxGeometry(0.16, RH, 0.16), postMat); m.position.set(x, 0, z); rackGrp.add(m); }
   post(-RW / 2, -RD / 2); post(RW / 2, -RD / 2); post(-RW / 2, RD / 2); post(RW / 2, RD / 2);
-  [RH / 2, -RH / 2].forEach(function (y) { var m = new THREE.Mesh(new THREE.BoxGeometry(RW + 0.14, 0.14, RD + 0.14), postMat); m.position.set(0, y, 0); rackGrp.add(m); });
+  [RH / 2, -RH / 2].forEach(function (y) { var m = new THREE.Mesh(new THREE.BoxGeometry(RW + 0.16, 0.16, RD + 0.16), postMat); m.position.set(0, y, 0); rackGrp.add(m); });
 
-  // color by device type — reuse the FLAT legend map so 2D/3D never drift.
-  function trayColor(dev) {
-    var tc = (typeof TYPE_COLORS !== 'undefined') ? (TYPE_COLORS[dev.type] || TYPE_COLORS.other) : null;
-    return new THREE.Color((tc && tc.bar) ? tc.bar : '#486070');
+  // 3D tray palette — matches MOCKUP-rack-threejs.html (John-approved LOCKED SETTINGS).
+  // DELIBERATE view-specific palette (compute cyan / switch violet / power gold / cdu teal),
+  // distinct from the 2D FLAT TYPE_COLORS legend where gpu=violet — see version.json note.
+  function trayHex(dev) {
+    var t = (dev.type || '').toLowerCase();
+    if (t === 'sw' || t === 'switch') return 0xb478ff;                     // NVLink / leaf switch → violet
+    if (t === 'pwr' || t === 'pdu' || t === 'ups') return 0xffd60a;        // power → gold
+    if (t === 'cdu' || t === 'stor' || t === 'storage') return 0x3fd0c8;   // cdu / storage → teal
+    if (t === 'patch' || t === 'fw' || t === 'kvm') return 0x5c7686;       // aux → dim slate
+    return 0x5cf2ff;                                                        // compute (gpu/cpu/server) + default → cyan
   }
-  // status hook: Part A overlay not shipped → every present device is SOLID.
-  // When it lands, branch here on dev.status (racked/ghost+amber-edges/fault).
+  // status hook: Part A overlay not shipped → present device = SOLID racked (opaque, no smear).
   function trayMaterial(dev /*, status */) {
-    var base = trayColor(dev);
-    return new THREE.MeshStandardMaterial({ color: base, emissive: base, emissiveIntensity: 0.32, metalness: 0.3, roughness: 0.5 });
+    var col = trayHex(dev);
+    return new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: 0.32, metalness: 0.35, roughness: 0.42 });
   }
 
   var trayMeshes = [];
@@ -29804,9 +29812,9 @@ function rackElevation_render3D(rack, mountEl) {
     var uS = dev.uStart, uE = dev.uEnd;
     if (uE < uS) { var t = uS; uS = uE; uE = t; }
     if (uE > totalU) uE = totalU;
-    var hT = (uE - uS + 1) * uH - 0.05; if (hT <= 0) hT = uH * 0.6;
+    var hT = (uE - uS + 1) * uH - 0.06; if (hT <= 0) hT = uH * 0.55;   // 0.06 gap → faces never coplanar (kills z-fighting)
     var yc = yBase + ((uS + uE) / 2 - 0.5) * uH;
-    var g = new THREE.BoxGeometry(RW - 0.5, hT, RD - 0.5);   // geometry BEFORE material (edge-outline hook)
+    var g = new THREE.BoxGeometry(RW - 0.5, hT, RD - 0.5);
     var m = new THREE.Mesh(g, trayMaterial(dev, null));
     m.position.set(0, yc, 0);
     m.userData.dev = dev;
@@ -29814,12 +29822,19 @@ function rackElevation_render3D(rack, mountEl) {
     rackGrp.add(m);
   });
 
-  var disc = new THREE.Mesh(new THREE.CircleGeometry(RW * 1.9, 48), new THREE.MeshBasicMaterial({ color: 0x0a1119, transparent: true, opacity: 0.55 }));
-  disc.rotation.x = -Math.PI / 2; disc.position.y = yBase - 0.1; scene.add(disc);
+  var disc = new THREE.Mesh(new THREE.CircleGeometry(RW * 1.4, 48), new THREE.MeshBasicMaterial({ color: 0x0a1119, transparent: true, opacity: 0.55 }));
+  disc.rotation.x = -Math.PI / 2; disc.position.y = yBase - 0.15; scene.add(disc);
+
+  // MINI scrubber → translucent cyan highlight band at a U (rack group is stationary; camera orbits)
+  var hlBand = new THREE.Mesh(
+    new THREE.BoxGeometry(RW + 0.25, uH, RD + 0.25),
+    new THREE.MeshBasicMaterial({ color: 0x5cf2ff, transparent: true, opacity: 0.16, depthWrite: false })
+  );
+  hlBand.visible = false; rackGrp.add(hlBand);
   scene.add(rackGrp);
 
-  // ── interaction: manual orbit (rotate the rack group), pinch/wheel zoom, tap raycast ──
-  var rot = { x: 0.15, y: -0.5 }, target = { x: 0.15, y: -0.5 }, dist = 15;
+  // ── camera spherical orbit around rack CENTER — always lookAt(0,0,0) so it never skews/balloons ──
+  var theta = 0.5, elev = 0.18, zoom = 1, tTheta = 0.5, tElev = 0.18;
   var dragging = false, px = 0, py = 0, downX = 0, downY = 0, moved = false, idle = 0, stopped = false, pinch0 = 0;
   var reduce = false; try { reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
   var raycaster = new THREE.Raycaster(), ndc = new THREE.Vector2();
@@ -29828,8 +29843,8 @@ function rackElevation_render3D(rack, mountEl) {
   function onMove(x, y) {
     if (Math.abs(x - downX) > 11 || Math.abs(y - downY) > 11) moved = true;   // ~11px: gloved tap vs orbit
     if (!dragging) return;
-    target.y += (x - px) * 0.008; target.x += (y - py) * 0.006;
-    target.x = Math.max(-0.6, Math.min(0.9, target.x));
+    tTheta -= (x - px) * 0.006;
+    tElev = Math.max(-0.15, Math.min(0.5, tElev + (y - py) * 0.004));          // clamped tilt — can't tip into a bad angle
     px = x; py = y; idle = 0;
   }
   function onUp(x, y) { dragging = false; if (!moved) raycast(x, y); }
@@ -29843,7 +29858,7 @@ function rackElevation_render3D(rack, mountEl) {
     if (hits.length) {
       var dev = hits[0].object.userData.dev;
       if (dev && typeof openRmDevice === 'function') {
-        try { window._rmConnHit = { id: rack.rackId || rack.id }; } catch (e) {}   // human cab designation (rackId), not the internal seed slug (id)
+        try { window._rmConnHit = { id: rack.rackId || rack.id }; } catch (e) {}   // human cab designation, not the internal seed slug
         if (typeof haptic === 'function') haptic([6]);
         openRmDevice(dev);
       }
@@ -29862,11 +29877,11 @@ function rackElevation_render3D(rack, mountEl) {
     if (e.touches.length === 1) { onMove(e.touches[0].clientX, e.touches[0].clientY); }
     else if (e.touches.length === 2 && pinch0) {
       var d = tDist(e.touches);
-      if (d > 0) { dist = Math.max(8, Math.min(30, dist * (pinch0 / d))); pinch0 = d; }
+      if (d > 0) { zoom = Math.max(0.55, Math.min(1.7, zoom * (pinch0 / d))); pinch0 = d; }
     }
   }
   function tend(e) { var t = (e.changedTouches && e.changedTouches[0]) || null; if (t && e.touches.length === 0) onUp(t.clientX, t.clientY); else dragging = false; }
-  function wheel(e) { dist = Math.max(8, Math.min(30, dist + e.deltaY * 0.01)); e.preventDefault(); }
+  function wheel(e) { zoom = Math.max(0.55, Math.min(1.7, zoom + e.deltaY * 0.0012)); e.preventDefault(); }
 
   canvas.addEventListener('mousedown', mdown);
   window.addEventListener('mousemove', mmove);
@@ -29876,6 +29891,34 @@ function rackElevation_render3D(rack, mountEl) {
   canvas.addEventListener('touchend', tend);
   canvas.addEventListener('wheel', wheel, { passive: false });
 
+  // ── MINI scrubber wiring (3D mode): drag the minimap → move the cyan highlight band to that U ──
+  var scrubBar = document.getElementById('scrubbar');
+  var scrubTrack = document.getElementById('scrubbarTrack');
+  var scrubHandle = document.getElementById('scrubbarHandle');
+  function scrubUFromY(clientY) {
+    var box = (scrubTrack || scrubBar).getBoundingClientRect();
+    var f = Math.max(0, Math.min(1, (clientY - box.top) / Math.max(1, box.height)));
+    return Math.round(totalU * (1 - f));                                  // exact inverse of the ruler tick layout (top=high U, bottom=U1)
+  }
+  function scrubSetU(u) {
+    u = Math.max(1, Math.min(totalU, u));
+    hlBand.position.y = yBase + (u - 0.5) * uH; hlBand.visible = true;
+    if (scrubHandle) scrubHandle.style.top = (((totalU - u) / totalU) * 100).toFixed(2) + '%';
+  }
+  var scrubDragging = false;
+  function scrubDown(e) { scrubDragging = true; var tt = (e.touches && e.touches[0]) || e; scrubSetU(scrubUFromY(tt.clientY)); if (e.cancelable) e.preventDefault(); }
+  function scrubMove(e) { if (!scrubDragging) return; var tt = (e.touches && e.touches[0]) || e; scrubSetU(scrubUFromY(tt.clientY)); if (e.cancelable) e.preventDefault(); }
+  function scrubEnd() { scrubDragging = false; }
+  if (scrubBar) {
+    if (scrubHandle) { scrubHandle.style.display = 'block'; scrubHandle.style.transition = 'none'; }   // reveal + kill the .18s spring so it tracks the finger, not lags it
+    scrubBar.addEventListener('mousedown', scrubDown);
+    window.addEventListener('mousemove', scrubMove);
+    window.addEventListener('mouseup', scrubEnd);
+    scrubBar.addEventListener('touchstart', scrubDown, { passive: false });
+    scrubBar.addEventListener('touchmove', scrubMove, { passive: false });
+    scrubBar.addEventListener('touchend', scrubEnd);
+  }
+
   var ro = null;
   function doResize() { var nw = mountEl.clientWidth, nh = mountEl.clientHeight; if (!nw || !nh) return; renderer.setSize(nw, nh); camera.aspect = nw / nh; camera.updateProjectionMatrix(); }
   try { ro = new ResizeObserver(doResize); ro.observe(mountEl); } catch (e) {}
@@ -29883,13 +29926,14 @@ function rackElevation_render3D(rack, mountEl) {
   var rafId = null;
   function loop() {
     if (stopped) return;
-    if (!canvas.isConnected) { teardown(); return; }   // panel removed from DOM (nav away / re-render) → self-dispose the GL context
+    if (!canvas.isConnected) { teardown(); return; }   // panel removed from DOM (nav away / re-render) → self-dispose
     rafId = requestAnimationFrame(loop);
     idle++;
-    if (!dragging && !reduce && idle > 90) target.y += 0.0018;   // slow idle auto-spin
-    rot.x += (target.x - rot.x) * 0.08; rot.y += (target.y - rot.y) * 0.08;
-    rackGrp.rotation.x = rot.x; rackGrp.rotation.y = rot.y;
-    camera.position.set(0, 4.5, dist); camera.lookAt(0, 0, 0);
+    if (!dragging && !reduce && idle > 90) tTheta += 0.0016;   // slow idle auto-spin
+    theta += (tTheta - theta) * 0.10; elev += (tElev - elev) * 0.10;
+    var D = fitDist * zoom;
+    camera.position.set(Math.sin(theta) * D, elev * D, Math.cos(theta) * D);
+    camera.lookAt(0, 0, 0);
     renderer.render(scene, camera);
   }
   loop();
@@ -29908,6 +29952,15 @@ function rackElevation_render3D(rack, mountEl) {
     canvas.removeEventListener('touchmove', tmove);
     canvas.removeEventListener('touchend', tend);
     canvas.removeEventListener('wheel', wheel);
+    if (scrubBar) {
+      scrubBar.removeEventListener('mousedown', scrubDown);
+      window.removeEventListener('mousemove', scrubMove);
+      window.removeEventListener('mouseup', scrubEnd);
+      scrubBar.removeEventListener('touchstart', scrubDown);
+      scrubBar.removeEventListener('touchmove', scrubMove);
+      scrubBar.removeEventListener('touchend', scrubEnd);
+    }
+    if (scrubHandle) { scrubHandle.style.display = ''; scrubHandle.style.transition = ''; }   // restore minimap CSS (handle hidden + spring in FLAT)
     if (ro) { try { ro.disconnect(); } catch (e) {} ro = null; }
     try { scene.traverse(function (o) {
       if (o.geometry) o.geometry.dispose();
