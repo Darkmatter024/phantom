@@ -174,4 +174,13 @@ any HIGH-risk ship). Every ship keeps its own rollback line. Claude Code appends
 - [ ] Landscape/iPad boot still fine (plate-wide.webp untouched)
 - [ ] First ship of a new batch (prior .202-.212 released 2026-07-08)
 
+## v1.14.214 — FIX deploy scope-picker cab taps eaten (STAGE never enables) · rollback: git revert
+- [ ] WORK › Deploy › NEW / SCOPE A JOB (Master loaded) → tap cab rows → selection counter climbs
+- [ ] STAGE SCOPE SNAPSHOT button ENABLES once ≥1 cab selected
+- [ ] Action bar sits just ABOVE the bottom nav — NOT floating over the cab list
+- [ ] Scroll the cab list → last cab clears the bar (not clipped)
+- [ ] Works on PHONE and LAPTOP (the reported-broken surface)
+- [ ] `?legacy=1`: scope picker unaffected
+- [ ] Root cause: .212 padding bump floated the sticky bar over the list; reverted. transform:none (irrelevant to sticky) deleted.
+
 <!-- append new ships above this line; checkpoint when 6 deep or before HIGH-risk -->
