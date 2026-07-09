@@ -183,4 +183,13 @@ any HIGH-risk ship). Every ship keeps its own rollback line. Claude Code appends
 - [ ] `?legacy=1`: scope picker unaffected
 - [ ] Root cause: .212 padding bump floated the sticky bar over the list; reverted. transform:none (irrelevant to sticky) deleted.
 
+## v1.14.215 — CRASH-LOG HARDENING (copy-out + version stamp + real auto-clear) · rollback: git revert
+- [ ] Force a `window.onerror` on device → orange crash banner appears
+- [ ] Tap banner → toast/haptic fires; alert header shows `v1.14.215`; each entry line shows ` · v1.14.215`
+- [ ] Paste clipboard into Notes/Messages → FULL log landed (not just the 1400-char preview), with header + stamps
+- [ ] Stale-clear: `.215` entries survive a reboot (same version kept); (opt) hand-edit an entry `.v` to a fake older version → dropped on reload, `.215` stays
+- [ ] iOS clipboard-deny path: if no "Copied" toast, alert still shows the trace to screenshot (no dead-end)
+- [ ] If banner/version reads unchanged → SW cache-key bump didn't take (check first)
+- [ ] First ship of a new batch (prior .213-.214 released 2026-07-09)
+
 <!-- append new ships above this line; checkpoint when 6 deep or before HIGH-risk -->
