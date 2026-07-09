@@ -9778,6 +9778,18 @@ body.rd #rd-botnav{display:flex}
   display: none;
 }
 
+/* v1.14.218 — 3D rack view: FLAT|3D toggle + lazy three.js mount (redesign-only,
+   body.rd-scoped so ?legacy=1 is byte-identical). .reh-flat-wrap is display:contents
+   so the FLAT elevation renders exactly as before; .is-3d on the host swaps to 3D. */
+body.rd .reh-3d-toggle { display: flex; gap: 4px; padding: 4px 0 8px; }
+body.rd .reh-3d-seg { font-family: var(--mono); font-size: var(--fs-caption, 10px); letter-spacing: 1px; padding: 4px 12px; border: 1px solid rgba(92,242,255,0.25); border-radius: 6px; background: rgba(8,12,18,0.6); color: var(--slate); cursor: pointer; }
+body.rd .reh-3d-seg.is-on { color: var(--cyan); border-color: var(--cyan); background: rgba(40,224,255,0.10); }
+body.rd .reh-flat-wrap { display: contents; }
+body.rd .reh-3d-mount { display: none; position: relative; height: 60vh; max-height: 60vh; border: 1px solid rgba(92,242,255,0.10); border-radius: 8px; overflow: hidden; background: #06090f; }
+body.rd .rack-hybrid-canvas.is-3d .reh-flat-wrap { display: none; }
+body.rd .rack-hybrid-canvas.is-3d .reh-3d-mount { display: block; }
+body.rd .reh-3d-loading { padding: 24px 12px; font-family: var(--mono); font-size: var(--fs-caption, 10px); letter-spacing: 1px; color: var(--slate); text-align: center; }
+
 /* ─── Crash-Cart Mode ─── */
 /* 4-foot UI: massive monospace text for hands-full racking work.
    Hides all chrome. Single non-trappable exit bar. Reads from active context. */
@@ -11555,7 +11567,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.217';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.218';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -29635,6 +29647,283 @@ function rackHybrid_initSync(rack) {
   setTimeout(updateViewport, 0);
 }
 
+// ══════════════════════════════════════════════════════════════════════════
+// v1.14.218 — 3D RACK VIEW (three.js r128, lazy-loaded, offline-safe, opt-in).
+// Scoped to the rack-detail RACK ELEVATION panel only. FLAT stays the instant
+// default; 3D lazy-loads vendor/three.min.js (SW-precached) and mounts a bounded
+// WebGL scene. Redesign-house only (redesign_isOn) → ?legacy=1 byte-identical.
+// Trays render SOLID now; burn-down materials (racked/ghost/fault) layer in once
+// the Part A status overlay ships (see trayMaterial hook). One live GL context at
+// a time — disposed on toggle-to-FLAT or when a new context opens (iOS ceiling).
+// ══════════════════════════════════════════════════════════════════════════
+var REH3D_PREF_KEY = 'phantom_rackview_3d';   // per-session opt-in (default FLAT)
+var _reh3dActive = null;                       // { mount, dispose } — bounds live GL contexts to 1
+
+function reh3d_prefOn()  { try { return sessionStorage.getItem(REH3D_PREF_KEY) === '1'; } catch (e) { return false; } }
+function reh3d_prefSet(on) { try { sessionStorage.setItem(REH3D_PREF_KEY, on ? '1' : '0'); } catch (e) {} }
+
+function reh3d_webglOK() {
+  try {
+    var c = document.createElement('canvas');
+    return !!(window.WebGLRenderingContext && (c.getContext('webgl') || c.getContext('experimental-webgl')));
+  } catch (e) { return false; }
+}
+
+// Restore the session's FLAT|3D choice after the panel paints (rack in scope).
+function reh3d_restore(rack) {
+  window._reh3dRack = rack;
+  if (reh3d_prefOn()) reh3d_setMode('3d');
+}
+
+// FLAT|3D segmented-toggle handler (bound via onclick in the panel header).
+function reh3d_setMode(mode) {
+  var rack = window._reh3dRack;
+  var host = document.getElementById('reh3dCanvasHost');
+  if (!host) return;
+  var flatBtn = document.getElementById('reh3dBtnFlat');
+  var d3Btn   = document.getElementById('reh3dBtn3d');
+  if (mode === '3d') {
+    if (!reh3d_webglOK()) {
+      console.warn('[PHANTOM] 3D rack view: WebGL unavailable — staying on FLAT');
+      if (typeof phantomToast === 'function') phantomToast('3D unavailable on this device — showing flat view', 'warn');
+      return;
+    }
+    host.classList.add('is-3d');
+    if (flatBtn) flatBtn.classList.remove('is-on');
+    if (d3Btn)   d3Btn.classList.add('is-on');
+    reh3d_prefSet(true);
+    if (typeof haptic === 'function') haptic(15);
+    rackElevation_ensure3D(rack, document.getElementById('reh3dMount'));
+  } else {
+    host.classList.remove('is-3d');
+    if (d3Btn)   d3Btn.classList.remove('is-on');
+    if (flatBtn) flatBtn.classList.add('is-on');
+    reh3d_prefSet(false);
+    if (typeof haptic === 'function') haptic(15);
+    var m = document.getElementById('reh3dMount');
+    if (m && m._rm3dDispose) { try { m._rm3dDispose(); } catch (e) {} }
+  }
+}
+
+// Lazy-load three.js (SW-precached, same-origin) then render. Never blank: on any
+// failure fall back to FLAT + toast (no silent failure).
+function rackElevation_ensure3D(rack, mountEl) {
+  if (!mountEl) return;
+  if (window.THREE) { rackElevation_render3D(rack, mountEl); return; }
+  mountEl.innerHTML = '<div class="reh-3d-loading">Loading 3D…</div>';
+  if (typeof loadScript !== 'function') { reh3d_fail(mountEl); return; }
+  loadScript('./vendor/three.min.js').then(function () {
+    // If the user toggled back to FLAT or navigated away during the async load,
+    // don't mount a scene into a hidden/detached panel (would spin a dead loop).
+    var host = document.getElementById('reh3dCanvasHost');
+    if (!host || !host.classList.contains('is-3d') || !document.body.contains(mountEl)) return;
+    if (window.THREE) rackElevation_render3D(rack, mountEl);
+    else reh3d_fail(mountEl);
+  }).catch(function () { reh3d_fail(mountEl); });
+}
+
+function reh3d_fail(mountEl) {
+  var host = document.getElementById('reh3dCanvasHost');
+  if (host) host.classList.remove('is-3d');
+  var d3Btn = document.getElementById('reh3dBtn3d'), flatBtn = document.getElementById('reh3dBtnFlat');
+  if (d3Btn)   d3Btn.classList.remove('is-on');
+  if (flatBtn) flatBtn.classList.add('is-on');
+  reh3d_prefSet(false);
+  if (mountEl) mountEl.innerHTML = '';
+  console.warn('[PHANTOM] 3D rack view: three.js unavailable — fell back to FLAT');
+  if (typeof phantomToast === 'function') phantomToast('3D unavailable — showing flat view', 'warn');
+}
+
+// The scene. Mirrors MOCKUP-rack-threejs.html but bounded to mountEl and driven by
+// real rack.slots (uStart/uEnd/type). Colors from TYPE_COLORS (same map as FLAT).
+function rackElevation_render3D(rack, mountEl) {
+  var THREE = window.THREE;
+  if (!mountEl || !THREE) return;
+  // one live context: dispose any prior (this mount OR a stale one from a past open)
+  if (mountEl._rm3dDispose) { try { mountEl._rm3dDispose(); } catch (e) {} }
+  if (_reh3dActive && _reh3dActive.dispose && _reh3dActive.mount !== mountEl) {
+    try { _reh3dActive.dispose(); } catch (e) {}
+  }
+  mountEl.innerHTML = '';
+  var w = mountEl.clientWidth, h = mountEl.clientHeight;
+  if (!w || !h) {
+    // Panel not laid out yet — retry ONLY while it's still the visible 3D mount.
+    // If it's hidden (toggled to FLAT) or detached (navigated away), abort loudly —
+    // never re-arm an uncancellable per-frame spin on a dead mount.
+    var host0 = document.getElementById('reh3dCanvasHost');
+    if (host0 && host0.classList.contains('is-3d') && mountEl.offsetParent !== null && document.body.contains(mountEl)) {
+      requestAnimationFrame(function () { rackElevation_render3D(rack, mountEl); });
+    } else {
+      console.warn('[PHANTOM] 3D rack view: mount hidden/detached before layout — aborting render');
+    }
+    return;
+  }
+
+  var slots  = (rack && Array.isArray(rack.slots)) ? rack.slots : [];
+  var totalU = (rack && rack.totalU) ? rack.totalU : 48;
+
+  var scene = new THREE.Scene();
+  scene.fog = new THREE.FogExp2(0x06090f, 0.03);
+  var camera = new THREE.PerspectiveCamera(42, w / h, 0.1, 200);
+  camera.position.set(0, 4.5, 15);
+  var renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.setSize(w, h);
+  var canvas = renderer.domElement;
+  canvas.style.display = 'block'; canvas.style.width = '100%'; canvas.style.height = '100%';
+  canvas.style.touchAction = 'none';
+  mountEl.appendChild(canvas);
+
+  scene.add(new THREE.AmbientLight(0x24303c, 1.1));
+  var keyL = new THREE.DirectionalLight(0xbfe9ff, 0.9); keyL.position.set(8, 14, 10);   scene.add(keyL);
+  var rimL = new THREE.DirectionalLight(0x9b59ff, 0.5); rimL.position.set(-10, 6, -8);   scene.add(rimL);
+
+  var uH = 0.32, RW = 3.4, RD = 2.2, RH = totalU * uH, yBase = -RH / 2;
+  var rackGrp = new THREE.Group();
+
+  var postMat = new THREE.MeshStandardMaterial({ color: 0x0c1219, metalness: 0.7, roughness: 0.5, emissive: 0x0a141c, emissiveIntensity: 0.4 });
+  function post(x, z) { var m = new THREE.Mesh(new THREE.BoxGeometry(0.14, RH, 0.14), postMat); m.position.set(x, 0, z); rackGrp.add(m); }
+  post(-RW / 2, -RD / 2); post(RW / 2, -RD / 2); post(-RW / 2, RD / 2); post(RW / 2, RD / 2);
+  [RH / 2, -RH / 2].forEach(function (y) { var m = new THREE.Mesh(new THREE.BoxGeometry(RW + 0.14, 0.14, RD + 0.14), postMat); m.position.set(0, y, 0); rackGrp.add(m); });
+
+  // color by device type — reuse the FLAT legend map so 2D/3D never drift.
+  function trayColor(dev) {
+    var tc = (typeof TYPE_COLORS !== 'undefined') ? (TYPE_COLORS[dev.type] || TYPE_COLORS.other) : null;
+    return new THREE.Color((tc && tc.bar) ? tc.bar : '#486070');
+  }
+  // status hook: Part A overlay not shipped → every present device is SOLID.
+  // When it lands, branch here on dev.status (racked/ghost+amber-edges/fault).
+  function trayMaterial(dev /*, status */) {
+    var base = trayColor(dev);
+    return new THREE.MeshStandardMaterial({ color: base, emissive: base, emissiveIntensity: 0.32, metalness: 0.3, roughness: 0.5 });
+  }
+
+  var trayMeshes = [];
+  slots.forEach(function (dev) {
+    if (dev == null || dev.uStart == null || dev.uEnd == null) return;
+    var uS = dev.uStart, uE = dev.uEnd;
+    if (uE < uS) { var t = uS; uS = uE; uE = t; }
+    if (uE > totalU) uE = totalU;
+    var hT = (uE - uS + 1) * uH - 0.05; if (hT <= 0) hT = uH * 0.6;
+    var yc = yBase + ((uS + uE) / 2 - 0.5) * uH;
+    var g = new THREE.BoxGeometry(RW - 0.5, hT, RD - 0.5);   // geometry BEFORE material (edge-outline hook)
+    var m = new THREE.Mesh(g, trayMaterial(dev, null));
+    m.position.set(0, yc, 0);
+    m.userData.dev = dev;
+    trayMeshes.push(m);
+    rackGrp.add(m);
+  });
+
+  var disc = new THREE.Mesh(new THREE.CircleGeometry(RW * 1.9, 48), new THREE.MeshBasicMaterial({ color: 0x0a1119, transparent: true, opacity: 0.55 }));
+  disc.rotation.x = -Math.PI / 2; disc.position.y = yBase - 0.1; scene.add(disc);
+  scene.add(rackGrp);
+
+  // ── interaction: manual orbit (rotate the rack group), pinch/wheel zoom, tap raycast ──
+  var rot = { x: 0.15, y: -0.5 }, target = { x: 0.15, y: -0.5 }, dist = 15;
+  var dragging = false, px = 0, py = 0, downX = 0, downY = 0, moved = false, idle = 0, stopped = false, pinch0 = 0;
+  var reduce = false; try { reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+  var raycaster = new THREE.Raycaster(), ndc = new THREE.Vector2();
+
+  function onDown(x, y) { dragging = true; px = x; py = y; downX = x; downY = y; moved = false; idle = 0; }
+  function onMove(x, y) {
+    if (Math.abs(x - downX) > 11 || Math.abs(y - downY) > 11) moved = true;   // ~11px: gloved tap vs orbit
+    if (!dragging) return;
+    target.y += (x - px) * 0.008; target.x += (y - py) * 0.006;
+    target.x = Math.max(-0.6, Math.min(0.9, target.x));
+    px = x; py = y; idle = 0;
+  }
+  function onUp(x, y) { dragging = false; if (!moved) raycast(x, y); }
+  function raycast(clientX, clientY) {
+    var rect = canvas.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+    ndc.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+    ndc.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+    raycaster.setFromCamera(ndc, camera);
+    var hits = raycaster.intersectObjects(trayMeshes, false);
+    if (hits.length) {
+      var dev = hits[0].object.userData.dev;
+      if (dev && typeof openRmDevice === 'function') {
+        try { window._rmConnHit = { id: rack.rackId || rack.id }; } catch (e) {}   // human cab designation (rackId), not the internal seed slug (id)
+        if (typeof haptic === 'function') haptic([6]);
+        openRmDevice(dev);
+      }
+    }
+  }
+  function tDist(ts) { var dx = ts[0].clientX - ts[1].clientX, dy = ts[0].clientY - ts[1].clientY; return Math.sqrt(dx * dx + dy * dy); }
+
+  function mdown(e) { onDown(e.clientX, e.clientY); }
+  function mmove(e) { onMove(e.clientX, e.clientY); }
+  function mup(e)   { onUp(e.clientX, e.clientY); }
+  function tstart(e) {
+    if (e.touches.length === 1) { onDown(e.touches[0].clientX, e.touches[0].clientY); }
+    else if (e.touches.length === 2) { dragging = false; moved = true; pinch0 = tDist(e.touches); }
+  }
+  function tmove(e) {
+    if (e.touches.length === 1) { onMove(e.touches[0].clientX, e.touches[0].clientY); }
+    else if (e.touches.length === 2 && pinch0) {
+      var d = tDist(e.touches);
+      if (d > 0) { dist = Math.max(8, Math.min(30, dist * (pinch0 / d))); pinch0 = d; }
+    }
+  }
+  function tend(e) { var t = (e.changedTouches && e.changedTouches[0]) || null; if (t && e.touches.length === 0) onUp(t.clientX, t.clientY); else dragging = false; }
+  function wheel(e) { dist = Math.max(8, Math.min(30, dist + e.deltaY * 0.01)); e.preventDefault(); }
+
+  canvas.addEventListener('mousedown', mdown);
+  window.addEventListener('mousemove', mmove);
+  window.addEventListener('mouseup', mup);
+  canvas.addEventListener('touchstart', tstart, { passive: true });
+  canvas.addEventListener('touchmove', tmove, { passive: true });
+  canvas.addEventListener('touchend', tend);
+  canvas.addEventListener('wheel', wheel, { passive: false });
+
+  var ro = null;
+  function doResize() { var nw = mountEl.clientWidth, nh = mountEl.clientHeight; if (!nw || !nh) return; renderer.setSize(nw, nh); camera.aspect = nw / nh; camera.updateProjectionMatrix(); }
+  try { ro = new ResizeObserver(doResize); ro.observe(mountEl); } catch (e) {}
+
+  var rafId = null;
+  function loop() {
+    if (stopped) return;
+    if (!canvas.isConnected) { teardown(); return; }   // panel removed from DOM (nav away / re-render) → self-dispose the GL context
+    rafId = requestAnimationFrame(loop);
+    idle++;
+    if (!dragging && !reduce && idle > 90) target.y += 0.0018;   // slow idle auto-spin
+    rot.x += (target.x - rot.x) * 0.08; rot.y += (target.y - rot.y) * 0.08;
+    rackGrp.rotation.x = rot.x; rackGrp.rotation.y = rot.y;
+    camera.position.set(0, 4.5, dist); camera.lookAt(0, 0, 0);
+    renderer.render(scene, camera);
+  }
+  loop();
+
+  function onVis() { if (document.hidden) { if (rafId) { cancelAnimationFrame(rafId); rafId = null; } } else if (!stopped && rafId == null) { loop(); } }
+  document.addEventListener('visibilitychange', onVis);
+
+  function teardown() {
+    stopped = true;
+    if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+    document.removeEventListener('visibilitychange', onVis);
+    canvas.removeEventListener('mousedown', mdown);
+    window.removeEventListener('mousemove', mmove);
+    window.removeEventListener('mouseup', mup);
+    canvas.removeEventListener('touchstart', tstart);
+    canvas.removeEventListener('touchmove', tmove);
+    canvas.removeEventListener('touchend', tend);
+    canvas.removeEventListener('wheel', wheel);
+    if (ro) { try { ro.disconnect(); } catch (e) {} ro = null; }
+    try { scene.traverse(function (o) {
+      if (o.geometry) o.geometry.dispose();
+      if (o.material) { (Array.isArray(o.material) ? o.material : [o.material]).forEach(function (mm) { if (mm && mm.dispose) mm.dispose(); }); }
+    }); } catch (e) {}
+    try { renderer.dispose(); } catch (e) {}
+    try { renderer.forceContextLoss(); } catch (e) {}   // frees the GL context on iOS
+    if (canvas.parentNode) canvas.parentNode.removeChild(canvas);
+    trayMeshes = [];
+    mountEl._rm3dDispose = null;
+    if (_reh3dActive && _reh3dActive.mount === mountEl) _reh3dActive = null;
+  }
+  mountEl._rm3dDispose = teardown;
+  _reh3dActive = { mount: mountEl, dispose: teardown };
+}
+
 function rackElevation_buildHtml(rack) {
   var totalU = rack.totalU || 42;
   var U_HEIGHT = 44; // 44pt base — Cold Aisle tap target floor
@@ -29994,11 +30283,26 @@ function deploy_showRackDetail(deployId, rackId) {
   try {
     if (rack.slots && rack.slots.length > 0) {
       html += '<div class="rack-hybrid">';
-      html += '<div class="rack-hybrid-canvas">' + rackElevation_buildHtml(rack) + '</div>';
+      if (typeof redesign_isOn === 'function' && redesign_isOn()) {
+        // v1.14.218: opt-in three.js 3D view. FLAT is the instant default; the flat
+        // body is wrapped display:contents so it renders byte-identically, with a
+        // lazy 3D mount as a sibling. Legacy (else) emits the original line verbatim.
+        html += '<div class="rack-hybrid-canvas" id="reh3dCanvasHost">' +
+                  '<div class="reh-3d-toggle" role="group" aria-label="Elevation view mode">' +
+                    '<button type="button" id="reh3dBtnFlat" class="reh-3d-seg is-on" onclick="reh3d_setMode(\'flat\')">FLAT</button>' +
+                    '<button type="button" id="reh3dBtn3d" class="reh-3d-seg" onclick="reh3d_setMode(\'3d\')">3D</button>' +
+                  '</div>' +
+                  '<div id="rehFlatWrap" class="reh-flat-wrap">' + rackElevation_buildHtml(rack) + '</div>' +
+                  '<div id="reh3dMount" class="reh-3d-mount"></div>' +
+                '</div>';
+      } else {
+        html += '<div class="rack-hybrid-canvas">' + rackElevation_buildHtml(rack) + '</div>';
+      }
       html += '<div class="rack-hybrid-minimap">' + scrubbar_buildHtml(rack) + '</div>';
       html += '</div>';
       setTimeout(function() {
         rackHybrid_initSync(rack);
+        if (typeof reh3d_restore === 'function' && typeof redesign_isOn === 'function' && redesign_isOn()) reh3d_restore(rack);
       }, 0);
     }
   } catch (rhErr) {
