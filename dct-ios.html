@@ -8824,6 +8824,11 @@ body.rd #rf-hw.plat-detail-open > :not(#rf-plat-detail) { display:none !importan
 body.rd #hdr-agg-profile-row { display: flex; }
 #rd-profile-sheet { position: fixed; top: 0; left: 0; right: 0; bottom: calc(72px + var(--safe-bottom, 0px)); z-index: 60; display: none; flex-direction: column; background: linear-gradient(180deg, #06090f, #0a0e16); }
 body.rd #rd-profile-sheet.open { display: flex; }
+/* v1.14.221 — SYS -> ERRORS diagnostics row + sheet (redesign-only; mirrors the profile gating above) */
+#hdr-agg-errors-row { display: none; }
+body.rd #hdr-agg-errors-row { display: flex; }
+#rd-errors-sheet { position: fixed; top: 0; left: 0; right: 0; bottom: calc(72px + var(--safe-bottom, 0px)); z-index: 60; display: none; flex-direction: column; background: linear-gradient(180deg, #06090f, #0a0e16); }
+body.rd #rd-errors-sheet.open { display: flex; }
 .rd-sheet-hdr { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: calc(12px + var(--safe-top, 0px)) 18px 12px; border-bottom: 1px solid rgba(120,150,200,0.14); }
 .rd-sheet-titles { min-width: 0; }
 .rd-sheet-titles .t { font-family: var(--orb); font-weight: 700; letter-spacing: .14em; font-size: 18px; color: var(--white); }
@@ -11567,7 +11572,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.220';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.221';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -12037,6 +12042,12 @@ if (typeof window !== 'undefined') {
               <span class="hdr-agg-row-name">STORAGE</span>
               <span class="hdr-agg-row-val" id="hs-store-val">—</span>
             </div>
+            <!-- v1.14.221 DIAGNOSTICS: crash-log entry count; tap opens the ERRORS sheet (redesign-only, gated in CSS). -->
+            <div class="hdr-agg-row" id="hdr-agg-errors-row" onclick="event.stopPropagation();var _p=document.getElementById('hdr-agg-panel');if(_p)_p.style.display='none';rd_openErrors()" style="cursor:pointer">
+              <span class="hdr-agg-row-dot" id="hdr-agg-errors-dot" style="background:#666"></span>
+              <span class="hdr-agg-row-name">ERRORS</span>
+              <span class="hdr-agg-row-val" id="hdr-agg-errors-val" style="color:var(--slate)">&mdash;</span>
+            </div>
             <!-- v1.14.156: overflow ACTIONS relocated into SYS panel (redesign only; legacy still uses the medallion menu). -->
             <div class="hdr-agg-act" aria-hidden="true" style="height:1px;background:rgba(255,255,255,0.08);margin:5px 0"></div>
             <button onclick="exportAllData();var _p=document.getElementById('hdr-agg-panel');if(_p)_p.style.display='none'" class="hdr-menu-item hdr-agg-act" style="color:var(--violet)" aria-label="Export all data"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9b59ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> &nbsp;BACKUP</button>
@@ -12068,6 +12079,16 @@ if (typeof window !== 'undefined') {
       <button class="rd-sheet-close" onclick="rd_closeProfile()" aria-label="Close site profile">&#10005;</button>
     </div>
     <div class="rd-sheet-body" id="rd-profile-body"></div>
+  </div>
+
+  <!-- v1.14.221 — ERRORS diagnostics sheet (SYS -> ERRORS). Reuses the .rd-sheet primitive;
+       lists the phantom_crash_log ring newest-first with COPY ALL + CLEAR. Redesign-only. -->
+  <div id="rd-errors-sheet" role="dialog" aria-modal="true" aria-label="Error log">
+    <div class="rd-sheet-hdr">
+      <div class="rd-sheet-titles"><div class="t">ERRORS</div><div class="s">CRASH LOG &middot; DIAGNOSTICS</div></div>
+      <button class="rd-sheet-close" onclick="rd_closeErrors()" aria-label="Close error log">&#10005;</button>
+    </div>
+    <div class="rd-sheet-body" id="rd-errors-body"></div>
   </div>
 
   <!-- DCT-02: Storage warning banner -->
@@ -16064,6 +16085,40 @@ function phantomViewCrashLog() {
   var confirmed = confirm(msg + '\n\nClear log?');
   if (confirmed) { localStorage.removeItem('phantom_crash_log'); var b = document.getElementById('crash-banner'); if (b) b.style.display = 'none'; }
 }
+// v1.14.221 — hand-callable CAUGHT-error sink. The DCT-04 IIFE above only sees UNCAUGHT
+// errors (window.onerror / unhandledrejection); a swallowed catch on a critical path (e.g.
+// the deploy chokepoint) never reaches it. phantom_logErr writes a caught error into the
+// SAME phantom_crash_log ring (adds ctx + stack) so SYS -> ERRORS surfaces it. Fully self-
+// contained + try-wrapped: the logger can never crash its caller. Skips the IGNORE_PATTERNS
+// filter on purpose — every hand-instrumented catch is a deliberate, wanted record.
+function phantom_logErr(ctx, err) {
+  try {
+    var CRASH_KEY = 'phantom_crash_log';
+    var msg = (err && err.message) ? err.message : String(err);
+    var entries = safeParse(localStorage.getItem(CRASH_KEY), []);
+    if (!Array.isArray(entries)) entries = [];
+    entries.unshift({
+      ts: new Date().toISOString(),
+      v: (typeof PHANTOM_APP_VERSION === 'string' ? PHANTOM_APP_VERSION : ''),
+      type: 'caught',
+      ctx: String(ctx || ''),
+      msg: String(msg).slice(0, 300),
+      src: '', line: '', col: '',
+      stack: (err && err.stack) ? String(err.stack).slice(0, 500) : ''
+    });
+    entries = entries.slice(0, 30);
+    localStorage.setItem(CRASH_KEY, JSON.stringify(entries));
+    // The ring write above runs in BOTH houses (capture is house-agnostic). The VISIBLE shared
+    // #crash-banner mutation is redesign-gated so ?legacy=1 stays STRICTLY byte-identical on
+    // caught-error paths — the existing logCrash still drives the banner for UNCAUGHT errors in
+    // both houses, unchanged; SYS -> ERRORS surfaces caught entries in redesign.
+    if (typeof redesign_isOn === 'function' && redesign_isOn()) {
+      var banner = document.getElementById('crash-banner');
+      if (banner) { banner.style.display = 'block'; banner.innerHTML = '<span class="ico ico-md ico-warning"></span> JS ERROR — tap to view crash log (' + entries.length + ' entries)'; }
+    }
+    try { if (typeof console !== 'undefined' && console.warn) console.warn('[phantom_logErr] ' + String(ctx) + ':', err); } catch (_) {}
+  } catch (_) {}
+}
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // ENGINE LAYER — Logic, rendering, event handling
@@ -17164,6 +17219,78 @@ function rd_closeProfile() {
   var sheet = document.getElementById('rd-profile-sheet');
   if (sheet) sheet.classList.remove('open');
 }
+// v1.14.221 — ERRORS diagnostics sheet (SYS -> ERRORS). Renders the phantom_crash_log ring
+// newest-first with COPY ALL + CLEAR, reusing the .rd-sheet primitive + phantomViewCrashLog's
+// clipboard builder. Read-only diagnostics: never mutates app/deploy data.
+function errors_refreshCount() {
+  try {
+    var entries = safeParse(localStorage.getItem('phantom_crash_log') || '[]', []);
+    var n = Array.isArray(entries) ? entries.length : 0;
+    var val = document.getElementById('hdr-agg-errors-val');
+    var dot = document.getElementById('hdr-agg-errors-dot');
+    if (val) { val.textContent = n > 0 ? String(n) : 'NONE'; val.style.color = n > 0 ? '#ff3b3b' : 'var(--slate)'; }
+    if (dot) { dot.style.background = n > 0 ? '#ff3b3b' : '#666'; }
+  } catch (_) {}
+}
+function rd_renderErrors() {
+  var body = document.getElementById('rd-errors-body');
+  if (!body) return;
+  var entries = safeParse(localStorage.getItem('phantom_crash_log') || '[]', []);
+  if (!Array.isArray(entries)) entries = [];
+  var actions = '<div style="display:flex;gap:8px;margin-bottom:14px">'
+    + '<button class="hdr-menu-item" onclick="errors_copyAll()" style="flex:1;color:var(--cyan);justify-content:center">COPY ALL</button>'
+    + '<button class="hdr-menu-item" onclick="errors_clear()" style="flex:1;color:#ff3b3b;justify-content:center">CLEAR</button>'
+    + '</div>';
+  if (!entries.length) {
+    body.innerHTML = actions + '<div style="text-align:center;color:var(--slate);font-family:var(--mono);font-size:13px;padding:26px 0">No errors recorded.</div>';
+    return;
+  }
+  var rows = entries.map(function(e) {
+    var when = String(e.ts || '').replace('T', ' ').replace(/\.\d+Z$/, 'Z');
+    var head = String(e.type || 'error').toUpperCase() + (e.ctx ? ' &middot; ' + escHtml(e.ctx) : '');
+    var meta = (e.src ? escHtml(String(e.src)) + ':' + escHtml(String(e.line)) : '') + (e.v ? (e.src ? ' &middot; ' : '') + escHtml(String(e.v)) : '');
+    return '<div style="border:1px solid rgba(120,150,200,0.14);border-radius:9px;padding:10px 12px;margin-bottom:8px;font-family:var(--mono)">'
+      + '<div style="font-size:11px;letter-spacing:.08em;color:#ff6b6b">' + head + '</div>'
+      + '<div style="font-size:12px;color:var(--white);margin:4px 0;word-break:break-word">' + escHtml(String(e.msg || '')) + '</div>'
+      + '<div style="font-size:10px;color:var(--slate)">' + escHtml(when) + (meta ? ' &middot; ' + meta : '') + '</div>'
+      + '</div>';
+  }).join('');
+  body.innerHTML = actions + rows;
+}
+function rd_openErrors() {
+  var sheet = document.getElementById('rd-errors-sheet');
+  if (!sheet) return;
+  rd_renderErrors();
+  sheet.classList.add('open');
+}
+function rd_closeErrors() {
+  var sheet = document.getElementById('rd-errors-sheet');
+  if (sheet) sheet.classList.remove('open');
+}
+function errors_copyAll() {
+  var entries = safeParse(localStorage.getItem('phantom_crash_log') || '[]', []);
+  if (!Array.isArray(entries) || !entries.length) { phantomToast('No errors to copy', 'warn'); return; }
+  var header = 'PHANTOM ERROR LOG · ' + (typeof PHANTOM_APP_VERSION === 'string' ? PHANTOM_APP_VERSION : '?') + ' · ' + entries.length + ' entries';
+  var text = header + '\n\n' + entries.map(function(e, i) {
+    return '[' + (i+1) + '] ' + e.ts + (e.v ? ' · ' + e.v : '') + '\n'
+      + String(e.type).toUpperCase() + (e.ctx ? ' (' + e.ctx + ')' : '') + ': ' + e.msg
+      + (e.src ? '\n@ ' + e.src + ':' + e.line : '')
+      + (e.stack ? '\n' + e.stack : '');
+  }).join('\n\n');
+  // Must run inside this tap gesture — iOS rejects clipboard writes outside a direct user gesture.
+  var didCopy = false;
+  try { if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(text); didCopy = true; } } catch (_) { didCopy = false; }
+  if (!didCopy) { try { window.prompt('Copy the error log below:', text); didCopy = true; } catch (_) {} }
+  if (typeof haptic === 'function') { try { haptic([8]); } catch (_) {} }
+  phantomToast(didCopy ? 'Copied ' + entries.length + ' entries' : 'Copy failed', didCopy ? 'success' : 'error');
+}
+function errors_clear() {
+  if (!confirm('Clear the error log?')) return;
+  try { localStorage.removeItem('phantom_crash_log'); } catch (_) {}
+  var b = document.getElementById('crash-banner'); if (b) b.style.display = 'none';
+  rd_renderErrors();
+  errors_refreshCount();
+}
 // v1.14.167 — New-UI Master FILE entry (Phase 0.5 un-strand). Gives the cabinet-search /
 // host-map / elevation BROWSE a redesign door (additive; mirrors rd_openPower driving an
 // existing surface — no new sheet, no CSS). showPage('master') activates pg-master in the
@@ -17209,7 +17336,7 @@ function showWorkTab(target) {
   // Command-page launcher (cmd_route), Stage-2 graceful-degrades, nav drill — skips the stub.
   // deploy_showCommandCenter renders into deploy_opsHost() and does not call showWorkTab (no
   // recursion). Callers wanting a specific deploy/rack detail render it AFTER this (detail wins).
-  if (target === 'deploy' && typeof deploy_showCommandCenter === 'function') { try { deploy_showCommandCenter(deploy_opsHost()); } catch (_) {} }
+  if (target === 'deploy' && typeof deploy_showCommandCenter === 'function') { try { deploy_showCommandCenter(deploy_opsHost()); } catch (e) { phantom_logErr('showWorkTab:deploy', e); try { if (typeof redesign_isOn === 'function' && redesign_isOn()) { var _dh = deploy_opsHost(); if (_dh) _dh.innerHTML = '<div style="padding:24px 18px;text-align:center;font-family:var(--mono)"><div style="color:#ff3b3b;font-size:13px;letter-spacing:.08em;margin-bottom:6px">DEPLOY FAILED TO RENDER</div><div style="color:var(--slate);font-size:12px;line-height:1.6;margin-bottom:16px">Error logged &mdash; see SYS &rarr; ERRORS.</div><button class="hdr-menu-item" style="justify-content:center;color:var(--cyan);margin:0 auto" onclick="try{deploy_showCommandCenter(deploy_opsHost())}catch(err){phantom_logErr(\'retry:deploy\',err)}">RETRY</button></div>'; } } catch (_) {} } }
   wk_setBackTitle(WK_CAT_NAMES[target] || 'Workspace');
 }
 // v1.14.105 — Work card-grid helpers (mirror the Ref grid). wk_showGrid() returns to the landing.
@@ -17549,15 +17676,15 @@ function cmd_render() {
   var confirmed = (typeof siteProfile_isConfirmed === 'function') && siteProfile_isConfirmed();
   var site = (typeof phantom_siteLabel === 'function') ? phantom_siteLabel('SITE') : 'SITE';
   var deploys = [];
-  try { if (typeof deploy_loadAll === 'function') deploys = deploy_loadAll() || []; } catch (_) {}
+  try { if (typeof deploy_loadAll === 'function') deploys = deploy_loadAll() || []; } catch (e) { phantom_logErr('cmd_render:loadAll', e); }
   var deployCount = deploys.length, rackCount = 0, blockerCount = 0;
   deploys.forEach(function(d) {
-    try { if (typeof deploy_loadRacks === 'function') rackCount += (deploy_loadRacks(d.id) || []).length; } catch (_) {}
-    try { if (typeof deploy_countBlockers === 'function') blockerCount += deploy_countBlockers(d.id) || 0; } catch (_) {}
+    try { if (typeof deploy_loadRacks === 'function') rackCount += (deploy_loadRacks(d.id) || []).length; } catch (e) { phantom_logErr('cmd_render:loadRacks', e); }
+    try { if (typeof deploy_countBlockers === 'function') blockerCount += deploy_countBlockers(d.id) || 0; } catch (e) { phantom_logErr('cmd_render:countBlockers', e); }
   });
   var activeDep = null, activePct = 0;
   try { if (typeof nowtab_resolveDep === 'function') activeDep = nowtab_resolveDep(); } catch (_) {}
-  if (activeDep) { try { var ru = deploy_computeDeployRollup(activeDep.id); if (ru) activePct = ru.pctOverall || 0; } catch (_) {} }
+  if (activeDep) { try { var ru = deploy_computeDeployRollup(activeDep.id); if (ru) activePct = ru.pctOverall || 0; } catch (e) { phantom_logErr('cmd_render:activeRollup', e); } }
   var handoffDraft = false;
   try { var hraw = localStorage.getItem('phantom_handoff_v1'); handoffDraft = !!(hraw && JSON.parse(hraw)); } catch (_) {}
   var rung = !confirmed ? 'A' : ((deployCount === 0 && rackCount === 0) ? 'B' : 'C');
@@ -18367,7 +18494,7 @@ function _blocker_renderDeployPicker() {
   var html = '<div style="font-family:var(--mono);font-size:11px;letter-spacing:1.5px;color:var(--slate,#8a99ad);margin-bottom:8px">TAP TO SELECT</div>';
   deps.forEach(function(d) {
     var pct = 0;
-    try { var roll = deploy_computeDeployRollup(d.id); pct = (roll && roll.phasePct) || 0; } catch (e) {}
+    try { var roll = deploy_computeDeployRollup(d.id); pct = (roll && roll.phasePct) || 0; } catch (e) { phantom_logErr('blocker_deployPicker:rollup', e); }
     var name = escHtml(d.name || 'Unnamed');
     var site = escHtml(d.site || '');
     html += '<button onclick="blocker_pickDeployment(\'' + d.id + '\')" style="display:block;width:100%;text-align:left;background:rgba(92,242,255,0.04);border:1px solid rgba(92,242,255,0.18);border-radius:10px;padding:14px 16px;margin-bottom:8px;min-height:64px;cursor:pointer;color:var(--white)">' +
@@ -18381,10 +18508,10 @@ function _blocker_renderDeployPicker() {
 function _blocker_renderRackPicker() {
   var deployId = _blockerModal.deployId;
   var dep = null;
-  try { dep = (typeof deploy_getById === 'function') ? deploy_getById(deployId) : null; } catch (e) {}
+  try { dep = (typeof deploy_getById === 'function') ? deploy_getById(deployId) : null; } catch (e) { phantom_logErr('blocker_rackPicker:getById', e); }
   var depName = (dep && dep.name) ? dep.name : 'Deployment';
   var racks = [];
-  try { racks = deploy_loadRacks(deployId) || []; } catch (e) {}
+  try { racks = deploy_loadRacks(deployId) || []; } catch (e) { phantom_logErr('blocker_rackPicker:loadRacks', e); }
 
   var html = '<div style="font-family:var(--mono);font-size:11px;letter-spacing:1.5px;color:var(--cyan,#5cf2ff);margin-bottom:4px">' + escHtml(depName) + '</div>';
   html += '<div style="font-family:var(--mono);font-size:11px;letter-spacing:1.5px;color:var(--slate,#8a99ad);margin-bottom:10px">' + racks.length + ' racks · tap to log blocker</div>';
@@ -24659,7 +24786,7 @@ function deploy_opsHost() {
       var h = document.getElementById('wk-deploy');
       if (h) return h;
     }
-  } catch (_) {}
+  } catch (e) { phantom_logErr('deploy_opsHost:hostResolve', e); }
   return document.getElementById('ops-content');
 }
 function deploy_showCommandCenter(container) {
@@ -24847,7 +24974,7 @@ function deploy_detailTool(id, tab) {
   host.innerHTML = _deploy_toolsBackHdr((meta ? meta.name : 'TOOL'),
     "deploy_showDetail('" + id + "')") + '<div id="ops-tool-host"></div>';
   var sub = document.getElementById('ops-tool-host');
-  try { OPS_TABS[tab](sub); } catch (e) { try { console.warn('deploy_detailTool render failed', tab, e); } catch (_) {} }
+  try { OPS_TABS[tab](sub); } catch (e) { phantom_logErr('deploy_detailTool:render', e); try { console.warn('deploy_detailTool render failed', tab, e); } catch (_) {} }
 }
 
 function deploy_showList(container) {
@@ -26894,7 +27021,7 @@ function mscope_open() {
   var omniBar = document.getElementById('omni-bar');
   if (omniBar) omniBar.classList.add('omni-inactive');
   // Ship 2: surface that a pending staged scope will be replaced on next confirm.
-  try { if (localStorage.getItem(PHANTOM_JOBSNAP_STORE.KEY)) phantomToast('A staged scope exists — re-staging replaces it', 'warn'); } catch (e) {}
+  try { if (localStorage.getItem(PHANTOM_JOBSNAP_STORE.KEY)) phantomToast('A staged scope exists — re-staging replaces it', 'warn'); } catch (e) { phantom_logErr('mscope_open:jobsnapProbe', e); }
   _mscopeState.selected = {};
   var m = mscope_master();
   if (!m) { mscope_renderLoadPrompt(c); return; }
@@ -26910,7 +27037,7 @@ function mscope_loadMaster() {
     _mscopeState.selected = {};
     mscope_render(c, site);
   }).catch(function(err) {
-    try { console.error('mscope_loadMaster:', err); } catch (_) {}
+    try { console.error('mscope_loadMaster:', err); phantom_logErr('mscope_loadMaster:reject', err); } catch (_) {}
     phantomToast('Master load failed — check the file', 'error');
   });
 }
@@ -43718,7 +43845,7 @@ function hdr_aggToggle(e) {
   var isOpen = panel.style.display === 'block';
   panel.style.display = isOpen ? 'none' : 'block';
   pill.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
-  if (!isOpen) { try { haptic([6]); } catch(_) {} }
+  if (!isOpen) { try { haptic([6]); } catch(_) {} try { if (typeof redesign_isOn === 'function' && redesign_isOn() && typeof errors_refreshCount === 'function') errors_refreshCount(); } catch(_) {} }
 }
 
 // Close detail panel on any outside tap
