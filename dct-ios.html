@@ -11538,7 +11538,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.214';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.215';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -15986,7 +15986,7 @@ function row(key, val) {
     if (shouldIgnore(String(msg))) return;
     try {
       var entries = safeParse(localStorage.getItem(CRASH_KEY), []);
-      entries.unshift({ ts: new Date().toISOString(), type: type, msg: String(msg).slice(0, 300), src: src, line: line, col: col });
+      entries.unshift({ ts: new Date().toISOString(), v: (typeof PHANTOM_APP_VERSION === 'string' ? PHANTOM_APP_VERSION : ''), type: type, msg: String(msg).slice(0, 300), src: src, line: line, col: col });
       localStorage.setItem(CRASH_KEY, JSON.stringify(entries.slice(0, MAX_ENTRIES)));
       var banner = document.getElementById('crash-banner');
       if (banner) { banner.style.display = 'block'; banner.innerHTML = '<span class="ico ico-md ico-warning"></span> JS ERROR — tap to view crash log (' + entries.length + ' entries)'; }
@@ -16002,16 +16002,12 @@ function row(key, val) {
   try {
     var entries = safeParse(localStorage.getItem(CRASH_KEY), []);
     if (entries.length > 0) {
-      var currentFile = (function(h) {
-        try { return (h.split('?')[0].split('#')[0].split('/').pop() || ''); }
-        catch(e) { return ''; }
-      })(window.location.href);
-      function sameVersion(src) {
-        if (!src) return true;  // keep entries with no src (e.g. promise rejections)
-        try { return (src.split('?')[0].split('#')[0].split('/').pop() || '') === currentFile; }
-        catch(e) { return false; }
+      var currentVer = (typeof PHANTOM_APP_VERSION === 'string' ? PHANTOM_APP_VERSION : '');
+      function sameVersion(entry) {
+        if (!entry || !entry.v) return true;  // keep un-stamped legacy entries (pre-.215) this once; they age out of the ring
+        return entry.v === currentVer;
       }
-      var realErrors = entries.filter(function(e) { return !shouldIgnore(e.msg) && sameVersion(e.src); });
+      var realErrors = entries.filter(function(e) { return !shouldIgnore(e.msg) && sameVersion(e); });
       if (realErrors.length === 0) {
         localStorage.removeItem(CRASH_KEY);
       } else if (realErrors.length < entries.length) {
@@ -16023,11 +16019,21 @@ function row(key, val) {
 function phantomViewCrashLog() {
   var entries = safeParse(localStorage.getItem('phantom_crash_log') || '[]', []);
   if (!entries.length) { alert('No crash entries recorded.'); return; }
-  var text = entries.map(function(e, i) {
-    return '[' + (i+1) + '] ' + e.ts + '\n' + e.type.toUpperCase() + ': ' + e.msg + (e.src ? '\n@ ' + e.src + ':' + e.line : '');
+  var header = 'PHANTOM CRASH LOG · ' + (typeof PHANTOM_APP_VERSION === 'string' ? PHANTOM_APP_VERSION : '?') + ' · ' + entries.length + ' entries';
+  var text = header + '\n\n' + entries.map(function(e, i) {
+    return '[' + (i+1) + '] ' + e.ts + (e.v ? ' · ' + e.v : '') + '\n' + String(e.type).toUpperCase() + ': ' + e.msg + (e.src ? '\n@ ' + e.src + ':' + e.line : '');
   }).join('\n\n');
-  var confirmed = confirm('CRASH LOG (' + entries.length + ' entries):\n\n' + text.slice(0, 1500) + '\n\nClear log?');
-  if (confirmed) { localStorage.removeItem('phantom_crash_log'); document.getElementById('crash-banner').style.display = 'none'; }
+  // Copy first (must run inside this tap gesture — iOS rejects clipboard writes outside a direct user gesture)
+  var didCopy = false;
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(text); didCopy = true; }
+  } catch (_) { didCopy = false; }
+  if (typeof haptic === 'function') { try { haptic([8]); } catch(_) {} }
+  var msg = (didCopy ? 'Copied ' + entries.length + ' entries to clipboard.\n\n' : 'Copy failed (read below / screenshot).\n\n')
+          + text.slice(0, 1400)
+          + (text.length > 1400 ? '\n\n…(' + (text.length - 1400) + ' more chars copied to clipboard)' : '');
+  var confirmed = confirm(msg + '\n\nClear log?');
+  if (confirmed) { localStorage.removeItem('phantom_crash_log'); var b = document.getElementById('crash-banner'); if (b) b.style.display = 'none'; }
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -36178,6 +36184,7 @@ async function _edp_runChunkedInternal(raw, docHint, onProgress) {
       failures.forEach(function(f) {
         entries.unshift({
           ts: new Date().toISOString(),
+          v: (typeof PHANTOM_APP_VERSION === 'string' ? PHANTOM_APP_VERSION : ''),
           type: 'edp_section_fail',
           msg: '[EDP-DIAG] section="' + f.id + '" err=' + String(f.err || 'unknown').slice(0, 260),
           src: '_edp_runChunkedInternal',
@@ -36187,6 +36194,7 @@ async function _edp_runChunkedInternal(raw, docHint, onProgress) {
       });
       entries.unshift({
         ts: new Date().toISOString(),
+        v: (typeof PHANTOM_APP_VERSION === 'string' ? PHANTOM_APP_VERSION : ''),
         type: 'edp_run_summary',
         msg: '[EDP-DIAG] run: ' + successes + ' ok, ' + failures.length + ' fail · inputChars=' + (raw || '').length + ' · model=' + PHANTOM_MODEL,
         src: '_edp_runChunkedInternal',
