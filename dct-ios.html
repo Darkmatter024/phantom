@@ -6598,6 +6598,19 @@ textarea.hud-input {
 .rv-floor-head { font-family: var(--mono); font-size: var(--fs-caption, 10px); letter-spacing: 1.5px; text-transform: uppercase; color: var(--slate); padding: 12px 12px 2px; }
 .rv-floor-hint { font-family: var(--mono); font-size: var(--fs-micro, 9px); letter-spacing: 0.4px; color: rgba(72,96,112,0.7); padding: 0 12px 12px; }
 
+/* Stage 2 — templated floor: platform zone bands (skeleton) */
+.rv-tpl-frame { display: flex; flex-direction: column; gap: 2px; border: 1px solid rgba(72,96,112,0.4); border-radius: 8px; padding: 6px; margin: 2px 12px 0; min-height: 340px; background: rgba(4,6,10,0.4); }
+.rv-tpl-band { display: flex; align-items: center; justify-content: space-between; flex-basis: 0; min-height: 14px; padding: 2px 9px; border-left: 3px solid var(--slate); border-radius: 3px; background: rgba(72,96,112,0.10); font-family: var(--mono); overflow: hidden; }
+.rv-tpl-band-lbl { font-size: var(--fs-caption, 10px); letter-spacing: 0.6px; color: var(--white, #e8f0f5); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rv-tpl-band-u { font-size: var(--fs-micro, 9px); letter-spacing: 0.5px; color: var(--slate); margin-left: 8px; flex: none; }
+.rv-tpl-note { font-family: var(--mono); font-size: var(--fs-micro, 9px); letter-spacing: 0.3px; color: rgba(72,96,112,0.75); padding: 8px 12px 4px; line-height: 1.5; }
+/* kind band tints — additive, do NOT modify existing .cn-u-equipment / .cn-u-context */
+.rv-tpl-band.cn-u-switch { border-left-color: var(--vio); background: rgba(138,75,255,0.15); }
+.rv-tpl-band.cn-u-power, .rv-tpl-band.cn-u-cdu { border-left-color: var(--gold); background: rgba(255,203,69,0.13); }
+.rv-tpl-band.cn-u-compute { border-left-color: var(--cyan); background: rgba(40,224,255,0.10); }
+.rv-tpl-band.cn-u-net { border-left-color: var(--cyan); background: rgba(40,224,255,0.07); }
+.rv-tpl-band.cn-u-manifold, .rv-tpl-band.cn-u-blank { border-left-color: var(--slate); background: rgba(72,96,112,0.07); opacity: 0.65; }
+
 /* MASTER rack elevation - mirrored absolute layers over the .cn-* rail visual */
 .master-elev-rail { padding: 12px 10px 14px; overflow-x: hidden; touch-action: pan-y; }
 .master-elev-head {
@@ -11542,7 +11555,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.216';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.217';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -17946,7 +17959,7 @@ const OPS_TABS = {
       // FIRST, so the surface is never blank. A successful last-rack restore below
       // innerHTML-swaps over it; a silent miss (cold start OR gone rack) leaves the
       // floor in place — one change covers both void cases, no _rackResolve edit.
-      try { rackViewer_renderFloor(document.getElementById('rack-viewer-target')); } catch(_){}
+      try { rackViewer_renderFloor(document.getElementById('rack-viewer-target'), (typeof rackViewer_resolvePlatformKey === 'function' ? rackViewer_resolvePlatformKey() : null)); } catch(_){}
       try {
         var last = localStorage.getItem(RACK_VIEWER_LAST_KEY);
         if (last) rackViewer_request(last, true);
@@ -37235,11 +37248,152 @@ function _rackResolve(rawQuery, silent, opts) {
   }
 }
 
-// ── Rack Map floor: generic cage-nut / RU reference rail (cold-start / gone-rack).
-//    Reuses the cn-* twin-rail visual; NOT coupled to the compass page (#pg-compass).
-//    Overwritten in place the moment a real rack resolves. ──
-function rackViewer_renderFloor(target) {
+// ── Stage 2: RACK-TEMPLATE LIBRARY — platform id → rack geometry skeleton.
+//    frameU = total rack units; zones = ordered top→bottom bands { kind,label,u,count }
+//    where u = height PER unit, count = how many. kind drives the cn-u-* band tint.
+//    Store-less const library (NOT user data); live Master slot data overrides it. ──
+const RACK_TEMPLATES = {
+  'gb300-nvl72': {
+    label: 'GB300 NVL72', cooling: 'DLC', powerKW: 142, frameU: 48,
+    zones: [
+      { kind:'cdu',      label:'CDU',                u:2, count:1 },
+      { kind:'power',    label:'Power shelf',        u:1, count:3 },
+      { kind:'compute',  label:'Compute tray',       u:1, count:9 },
+      { kind:'switch',   label:'NVLink switch',      u:1, count:9 },
+      { kind:'compute',  label:'Compute tray',       u:1, count:9 },
+      { kind:'power',    label:'Power shelf',        u:1, count:3 },
+      { kind:'manifold', label:'Manifold / bus bar', u:1, count:12 }
+    ],
+    note: '18× compute + 9× NVSwitch · 6 power shelf (max 8) · DC bus bar + LC manifolds rear · ~142kW'
+  },
+  'gb200-nvl72': {
+    label: 'GB200 NVL72', cooling: 'DLC', powerKW: 132, frameU: 48,
+    zones: [
+      { kind:'cdu',      label:'CDU',                u:2, count:1 },
+      { kind:'power',    label:'Power shelf',        u:1, count:3 },
+      { kind:'compute',  label:'Compute tray',       u:1, count:9 },
+      { kind:'switch',   label:'NVLink switch',      u:1, count:9 },
+      { kind:'compute',  label:'Compute tray',       u:1, count:9 },
+      { kind:'power',    label:'Power shelf',        u:1, count:3 },
+      { kind:'manifold', label:'Manifold / bus bar', u:1, count:12 }
+    ],
+    note: '18× compute + 9× NVSwitch · 6 power shelf (max 8) · ~120–132kW nominal'
+  },
+  'hgx-b200-dlc': {
+    label: 'HGX B200 (DLC)', cooling: 'DLC', powerKW: 60, frameU: 48,
+    zones: [
+      { kind:'net',      label:'Leaf switch',        u:1, count:2 },
+      { kind:'compute',  label:'B200 node (8-GPU)',  u:8, count:4 },
+      { kind:'manifold', label:'CDU / manifold',     u:4, count:1 },
+      { kind:'power',    label:'PDU zone',           u:1, count:2 },
+      { kind:'blank',    label:'—',                  u:1, count:8 }
+    ],
+    note: 'Air/DLC hybrid · node height chassis-specific (verify vs Master) · ToR leaf pair'
+  },
+  'hgx-h200': {
+    label: 'HGX H200', cooling: 'AIR', powerKW: 40, frameU: 42,
+    zones: [
+      { kind:'net',      label:'Leaf switch',        u:1, count:2 },
+      { kind:'compute',  label:'H200 node (8-GPU)',  u:8, count:4 },
+      { kind:'blank',    label:'—',                  u:1, count:8 }
+    ],
+    note: '8-GPU HGX SXM · node 6U (Dell XE9680) to 8U (Supermicro) — confirm chassis'
+  },
+  'hgx-h100': {
+    label: 'HGX H100', cooling: 'AIR', powerKW: 40, frameU: 42,
+    zones: [
+      { kind:'net',      label:'Leaf switch',        u:1, count:2 },
+      { kind:'compute',  label:'H100 node (8-GPU)',  u:8, count:4 },
+      { kind:'blank',    label:'—',                  u:1, count:8 }
+    ],
+    note: '8-GPU HGX SXM · node height chassis-specific'
+  }
+};
+
+// Map an arbitrary platform / host-model string onto a RACK_TEMPLATES key.
+// Order matters: gb300/gb200 before b200 (else 'gb200' matches the 'b200' branch).
+function rackTemplate_keyFor(s) {
+  if (!s) return null;
+  var t = String(s).toLowerCase();
+  if (t.indexOf('gb300') >= 0) return 'gb300-nvl72';
+  if (t.indexOf('gb200') >= 0) return 'gb200-nvl72';
+  if (t.indexOf('b200')  >= 0) return 'hgx-b200-dlc';
+  if (t.indexOf('h200')  >= 0) return 'hgx-h200';
+  if (t.indexOf('h100')  >= 0) return 'hgx-h100';
+  return null;
+}
+
+// Resolve the floor's platform FROM DATA ONLY (never a hardcoded default):
+//   active deployment's rack platform → derived site-profile platforms → dominant
+//   platform in the loaded Master (rack.platform / host model) → null (generic rail).
+// Every hop is typeof-guarded — a missing accessor just falls through to generic.
+function rackViewer_resolvePlatformKey() {
+  try {
+    if (typeof deploy_getActive === 'function') {
+      var ad = deploy_getActive();
+      var rks = ad && Array.isArray(ad.racks) ? ad.racks : [];
+      for (var i = 0; i < rks.length; i++) {
+        var k = rackTemplate_keyFor(rks[i] && rks[i].platform);
+        if (k) return k;
+      }
+    }
+  } catch(_){}
+  try {
+    if (typeof siteProfile_load === 'function') {
+      var prof = siteProfile_load();
+      var pl = prof && Array.isArray(prof.platforms) ? prof.platforms : [];
+      for (var j = 0; j < pl.length; j++) {
+        var k2 = rackTemplate_keyFor(((pl[j] && pl[j].id) || '') + ' ' + ((pl[j] && pl[j].display) || ''));
+        if (k2) return k2;
+      }
+    }
+  } catch(_){}
+  try {
+    var m = window._lastPhantomMaster;
+    var racks = (m && m.racksByCab && typeof m.racksByCab === 'object') ? m.racksByCab : null;
+    if (racks) {
+      var tally = {};
+      Object.keys(racks).forEach(function(cab) {
+        var r = racks[cab] || {};
+        var hs = Array.isArray(r.hosts) ? r.hosts : [];
+        var cand = String(r.platform || '') + ' ' + (hs.length ? String((hs[0] && (hs[0].model || hs[0].platform)) || '') : '');
+        var key = rackTemplate_keyFor(cand);
+        if (key) tally[key] = (tally[key] || 0) + 1;
+      });
+      var best = null, bestN = 0;
+      Object.keys(tally).forEach(function(k) { if (tally[k] > bestN) { bestN = tally[k]; best = k; } });
+      if (best) return best;
+    }
+  } catch(_){}
+  return null;  // no Master / unmappable → generic cage-nut rail
+}
+
+// Templated floor: platform zone-band skeleton (labeled bands, kind-tinted, sized u×count).
+function _rackViewer_templateFloorHtml(tpl) {
+  var bands = tpl.zones.map(function(z) {
+    var span = z.u * z.count;
+    var count = z.count > 1 ? (' ×' + z.count) : '';
+    return '<div class="rv-tpl-band cn-u-' + z.kind + '" style="flex-grow:' + span + '" data-kind="' + z.kind + '">' +
+             '<span class="rv-tpl-band-lbl">' + escHtml(z.label) + count + '</span>' +
+             '<span class="rv-tpl-band-u">' + span + 'U</span>' +
+           '</div>';
+  }).join('');
+  return '<div class="rv-floor rv-floor-tpl">' +
+           '<div class="rv-floor-head">REFERENCE · ' + escHtml(tpl.label) + ' · ' + escHtml(tpl.cooling) + ' · ~' + tpl.powerKW + 'kW · ' + tpl.frameU + 'U</div>' +
+           '<div class="rv-floor-hint">Skeleton geometry — a loaded rack overrides this. Scan or type a rack ID for its live elevation.</div>' +
+           '<div class="rv-tpl-frame">' + bands + '</div>' +
+           (tpl.note ? '<div class="rv-tpl-note">' + escHtml(tpl.note) + '</div>' : '') +
+         '</div>';
+}
+
+// ── Rack Map floor: platform-aware skeleton (Stage 2) or generic cage-nut / RU rail.
+//    Reuses the cn-* visual; NOT coupled to the compass page (#pg-compass). When a
+//    platform resolves from the loaded Master, render its RACK_TEMPLATES geometry;
+//    otherwise the generic 24U reference rail. Overwritten the moment a rack resolves. ──
+function rackViewer_renderFloor(target, platformId) {
   if (!target) return;
+  var _tpl = (platformId && RACK_TEMPLATES[platformId]) ? RACK_TEMPLATES[platformId] : null;
+  if (_tpl) { target.innerHTML = _rackViewer_templateFloorHtml(_tpl); return; }
   var U = 24;  // reference height — generic rail, not a real rack
   function rail(side) {
     var rows = '';
