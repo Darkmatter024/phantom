@@ -1,7 +1,7 @@
 # BATCH-VERIFY — consolidated device checklist (CALL 0, DIRECTIVE 2026-07-06)
 **Protocol:** ships stack; owner runs THIS list once per batch (cap: every 6 stacked ships or before
 any HIGH-risk ship). Every ship keeps its own rollback line. Claude Code appends; owner checks off.
-**Batches .192-.197, .198-.201, and .202-.212: RELEASED by owner (.202-.212 device-verified "all good" 2026-07-08). Current batch: (open — next ship starts a new batch)** · Clear SW cache before the pass.
+**Batches .192-.197, .198-.201, .202-.212, and .213-.214: RELEASED by owner (.202-.212 verified 2026-07-08; .213 boot plate + .214 deploy-tap FIX verified "all good" 2026-07-09). Current batch: (open — next ship starts a new batch)** · Clear SW cache before the pass.
 
 ---
 
