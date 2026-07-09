@@ -6594,6 +6594,10 @@ textarea.hud-input {
 .cn-u.cn-u-context .cn-u-label { color: rgba(72,96,112,0.55); }
 .cn-u.cn-u-context .cn-hole { opacity: 0.45; }
 
+/* Rack Map floor (Stage-1 merge): cold-start / gone-rack reference rail head + hint */
+.rv-floor-head { font-family: var(--mono); font-size: var(--fs-caption, 10px); letter-spacing: 1.5px; text-transform: uppercase; color: var(--slate); padding: 12px 12px 2px; }
+.rv-floor-hint { font-family: var(--mono); font-size: var(--fs-micro, 9px); letter-spacing: 0.4px; color: rgba(72,96,112,0.7); padding: 0 12px 12px; }
+
 /* MASTER rack elevation - mirrored absolute layers over the .cn-* rail visual */
 .master-elev-rail { padding: 12px 10px 14px; overflow-x: hidden; touch-action: pan-y; }
 .master-elev-head {
@@ -11538,7 +11542,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.215';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.216';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -17938,6 +17942,11 @@ const OPS_TABS = {
       // Phase 2: auto-load last-viewed rack so user picks up where they left off.
       // Silent mode → if the rack is gone (deployment deleted, EDP changed),
       // we land on empty state, NOT a "NOT FOUND" flash. Graceful fallback.
+      // Merge (Stage 1): paint the Compass reference rail as the cold-start floor
+      // FIRST, so the surface is never blank. A successful last-rack restore below
+      // innerHTML-swaps over it; a silent miss (cold start OR gone rack) leaves the
+      // floor in place — one change covers both void cases, no _rackResolve edit.
+      try { rackViewer_renderFloor(document.getElementById('rack-viewer-target')); } catch(_){}
       try {
         var last = localStorage.getItem(RACK_VIEWER_LAST_KEY);
         if (last) rackViewer_request(last, true);
@@ -37224,6 +37233,39 @@ function _rackResolve(rawQuery, silent, opts) {
     if (typeof haptic === 'function') haptic([8]);
     if (typeof phantomToast === 'function') phantomToast('Loaded ' + opts.toastName(rack), 'ok');
   }
+}
+
+// ── Rack Map floor: generic cage-nut / RU reference rail (cold-start / gone-rack).
+//    Reuses the cn-* twin-rail visual; NOT coupled to the compass page (#pg-compass).
+//    Overwritten in place the moment a real rack resolves. ──
+function rackViewer_renderFloor(target) {
+  if (!target) return;
+  var U = 24;  // reference height — generic rail, not a real rack
+  function rail(side) {
+    var rows = '';
+    for (var u = U; u >= 1; u--) {
+      var holes = '';
+      ['top','mid','bot'].forEach(function(pos) {
+        holes += '<span class="cn-hole" data-pos="' + pos + '"></span>';  // unlit — reference only
+      });
+      rows += '<div class="cn-u cn-u-context">' +
+                '<div class="cn-u-label">U' + u + '</div>' +
+                '<div class="cn-holes">' + holes + '</div>' +
+              '</div>';
+    }
+    return '<div class="cn-rail cn-rail-' + side + '">' +
+             '<div class="cn-rail-label">' + (side === 'left' ? 'L · RAIL' : 'R · RAIL') + '</div>' +
+             rows +
+           '</div>';
+  }
+  target.innerHTML =
+    '<div class="rv-floor">' +
+      '<div class="rv-floor-head">REFERENCE · CAGE NUT &amp; RU MAP</div>' +
+      '<div class="rv-floor-hint">Scan or type a rack ID to load a live elevation.</div>' +
+      '<div class="cn-rail-viewport">' +
+        '<div class="cn-rail-wrap">' + rail('left') + rail('right') + '</div>' +
+      '</div>' +
+    '</div>';
 }
 
 // BUILD ops-tab Rack Map — scan-first viewer, no edit chrome (currentRackId NOT set).
