@@ -11582,7 +11582,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.226';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.227';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -17391,6 +17391,40 @@ function forge3d_fail(mount) {
   try { if (typeof phantomToast === 'function') phantomToast('3D unavailable', 'error'); } catch (_) {}
 }
 
+// v1.14.227 — Forge Stage 2: resolve the HERO rack for the F-04 slot with no explicit context
+// (SYS→FORGE 3D door). Reuses the app's canonical resolvers (One door per feature): active context
+// (rack → deployment) → current deployment (nowtab_resolveDep) → Master-first (mscope_master). Returns
+// { rack, deployment, source } or null; null → the generic Stage-1 hero (valid Zero-state, Design Law 2).
+function forge3d_resolveHeroRack() {
+  try {
+    var ctx = (typeof activeContext_get === 'function') ? activeContext_get() : null;
+    if (ctx && ctx.rack) return { rack: ctx.rack, deployment: ctx.deployment || null, source: 'active-rack' };
+    if (ctx && ctx.racks && ctx.racks.length) return { rack: ctx.racks[0], deployment: ctx.deployment || null, source: 'active-dep-first' };
+  } catch (e) {}
+  try {
+    var pick = (typeof nowtab_resolveDep === 'function') ? nowtab_resolveDep() : null;
+    if (pick && typeof deploy_loadRacks === 'function') {
+      var racks = deploy_loadRacks(pick.id) || [];
+      if (racks.length) return { rack: racks[0], deployment: pick, source: 'current-dep-first' };
+    }
+  } catch (e) {}
+  try {
+    var m = (typeof mscope_master === 'function') ? mscope_master() : null;
+    if (m && m.racksByCab && typeof master_rackToElevation === 'function') {
+      // Pick the first cab that actually has PLACED devices — racksByCab is cable-parsed-first, so
+      // Object.keys()[0] is usually a host-less cable-endpoint cab (empty slots) that would render a
+      // spotlit-but-empty hero (host-less-cab class). Scan for a populated cab; else fall to generic.
+      var cabKeys = Object.keys(m.racksByCab);
+      for (var k = 0; k < cabKeys.length; k++) {
+        var cabId = cabKeys[k];
+        var elev = master_rackToElevation(m.racksByCab[cabId], cabId);
+        if (elev && elev.slots && elev.slots.length) return { rack: { rackId: cabId, name: cabId, totalU: elev.totalU, slots: elev.slots }, deployment: null, source: 'master-cab' };
+      }
+    }
+  } catch (e) {}
+  return null;
+}
+
 function forge3d_render(mount) {
   var THREE = window.THREE;
   if (!THREE || !mount) { forge3d_fail(mount); return; }
@@ -17432,6 +17466,12 @@ function forge3d_render(mount) {
   };
   var rackObjects = [];
   var LED_STATES = {};
+  // v1.14.227 Stage 2 — the F-04 hero: resolved rack (or null → generic Stage-1 hero), its label, and
+  // the raycast target set (only hero device rows are tappable; non-hero racks stay non-interactive).
+  var heroMeshes = [];
+  var _heroInfo = (typeof forge3d_resolveHeroRack === 'function') ? forge3d_resolveHeroRack() : null;
+  var _heroRack = (_heroInfo && _heroInfo.rack) ? _heroInfo.rack : null;
+  var _heroLabel = _heroRack ? (_heroRack.rackId || _heroRack.name || _heroRack.id || 'F-04') : 'F-04';
 
   function _rr(ctx, x, y, w, h, r) {
     if (ctx.roundRect) { ctx.roundRect(x, y, w, h, r); } else { ctx.rect(x, y, w, h); }
@@ -17530,6 +17570,68 @@ function forge3d_render(mount) {
     group.userData.labelSprite = labelSprite;
   }
 
+  // ── buildHeroRack (Stage 2, §3): a Forge rack in the F-04 slot with a DATA-DRIVEN interior from the
+  // resolved Master rack + a brighter accent label + tappable device rows. Same chassis/face/bezel/
+  // LED-bar/glow/ports as its neighbors (it IS a Forge rack) — only the interior rows + label differ. ──
+  function buildHeroRack(rackId, x, z, heroRack) {
+    var group = new THREE.Group();
+    group.position.set(x, 0, z);
+    group.userData = { rackId: rackId, rowId: 'F', type: 'rack', hero: true };
+    var chassis = new THREE.Mesh(new THREE.BoxGeometry(1.8, 3.8, 1.0), MAT.rack);
+    chassis.position.y = 1.9; chassis.castShadow = true; chassis.receiveShadow = true; group.add(chassis);
+    var face = new THREE.Mesh(new THREE.BoxGeometry(1.74, 3.74, 0.06), MAT.rackFace);
+    face.position.set(0, 1.9, 0.535); group.add(face);
+    var bezel = new THREE.Mesh(new THREE.BoxGeometry(1.74, 0.04, 0.04), new THREE.MeshStandardMaterial({ color: 0x1a3040, roughness: 0.3, metalness: 0.9 }));
+    bezel.position.set(0, 3.77, 0.54); group.add(bezel);
+    var ledMat = new THREE.MeshStandardMaterial({ color: 0x00ccff, emissive: new THREE.Color(0x00aaee), emissiveIntensity: 4, roughness: 0.1 });
+    var led = new THREE.Mesh(new THREE.BoxGeometry(1.65, 0.05, 0.05), ledMat);
+    led.position.set(0, 3.84, 0.52); group.add(led); group.userData.ledMat = ledMat;
+    // DATA-DRIVEN interior: one visible row per Master device, top-anchored (§3.1 "keep it simple").
+    // Status defaults to racked/green — Part A (phantom_node_status_v1) per-node status isn't shipped;
+    // when it lands, drive the dot toward pending 0xf0a63c / fault 0xff5f67 here. Each row gets a
+    // full-width transparent hit-box (userData.dev) so the WHOLE row is tappable, gloved.
+    var slots = (heroRack && Array.isArray(heroRack.slots)) ? heroRack.slots.filter(function (d) { return d && d.uStart != null && d.uEnd != null; }) : [];
+    var visible = slots.slice(0, 10);
+    for (var i = 0; i < visible.length; i++) {
+      var dev = visible[i];
+      var slotY = 0.35 + (9 - i) * 0.36;   // top-anchored: first device at the top slot
+      var divider = new THREE.Mesh(new THREE.BoxGeometry(1.68, 0.008, 0.02), new THREE.MeshStandardMaterial({ color: 0x0d1a28, roughness: 0.8 }));
+      divider.position.set(0, slotY, 0.56); group.add(divider);
+      var dotMat = new THREE.MeshStandardMaterial({ color: 0x00ee55, emissive: new THREE.Color(0x00cc44), emissiveIntensity: 2.5 });
+      var dot = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, 0.02), dotMat);
+      dot.position.set(-0.78, slotY + 0.12, 0.565); group.add(dot);
+      var actMat = new THREE.MeshStandardMaterial({ color: 0x0044aa, emissive: new THREE.Color(0x003388), emissiveIntensity: Math.random() > 0.3 ? 1.5 : 0.1 });
+      var act = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.02), actMat);
+      act.position.set(-0.68, slotY + 0.12, 0.565); group.add(act);
+      var hit = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.3, 0.04), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }));
+      hit.position.set(0, slotY + 0.12, 0.57); hit.userData.dev = dev; group.add(hit); heroMeshes.push(hit);
+    }
+    for (var p = 0; p < 8; p++) {
+      var portMat = new THREE.MeshStandardMaterial({ color: 0x001122, roughness: 0.2, metalness: 0.8 });
+      var port = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.08, 0.03), portMat);
+      port.position.set(-0.7 + p * 0.2, 0.14, 0.565); group.add(port);
+    }
+    var rackLight = new THREE.PointLight(0x0077cc, 1.2, 4.5); rackLight.position.set(0, 3.5, 0.9); group.add(rackLight); group.userData.rackLight = rackLight;
+    var floorLight = new THREE.PointLight(0x002244, 0.4, 2); floorLight.position.set(0, 0.1, 0.5); group.add(floorLight);
+    scene.add(group); rackObjects.push(group); LED_STATES[rackId] = 'normal';
+    var labelSprite = makeRackLabel(rackId, '#5cf2ff');   // brighter accent = the active rack (§3)
+    labelSprite.position.set(0, 4.35, 0.5); labelSprite.scale.set(1.1, 0.38, 1); group.add(labelSprite);
+    group.userData.labelSprite = labelSprite;
+  }
+
+  // ── buildHeroSpotlight (Stage 2, §4): lights that reach ONLY the F-04 hero (x=1.25, z=0); the room
+  // stays at the dim §2.7 baseline. Short ranges so they die before F-03/F-05. ──
+  function buildHeroSpotlight() {
+    var hx = 1.25, hz = 0, hc = 1.9;
+    var spot = new THREE.SpotLight(0xeaf6ff, 3.4, 6, Math.PI / 5, 0.5, 1.5);
+    spot.position.set(hx, 5.4, hz + 2.4); spot.target.position.set(hx, hc, hz + 0.3);
+    scene.add(spot); scene.add(spot.target);
+    var pl = new THREE.PointLight(0x5cf2ff, 1.1, 2.6); pl.position.set(hx - 1.1, hc + 0.4, hz + 1.2); scene.add(pl);
+    var pv = new THREE.PointLight(0x8a4bff, 0.9, 2.6); pv.position.set(hx + 1.1, hc + 0.2, hz - 1.2); scene.add(pv);
+    var rim = new THREE.DirectionalLight(0xbfe9ff, 0.5); rim.position.set(hx, hc + 1.2, hz - 3); rim.target.position.set(hx, hc, hz); scene.add(rim); scene.add(rim.target);
+    var pool = new THREE.PointLight(0x5cf2ff, 0.8, 1.8); pool.position.set(hx, 0.25, hz + 0.5); scene.add(pool);
+  }
+
   // ── buildFloor (§2.6, verbatim) ──
   function buildFloor() {
     var mesh = new THREE.Mesh(new THREE.PlaneGeometry(60, 60), MAT.floor);
@@ -17564,12 +17666,16 @@ function forge3d_render(mount) {
 
   // ── buildRacks (spec §2.8 placement: front row z=0, receding z=-6/-12; F-01..F-18) ──
   function buildRacks() {
-    var cols = [-6.25, -3.75, -1.25, 1.25, 3.75, 6.25];   // F-04 = index 3 (x=1.25) = future hero slot
+    var cols = [-6.25, -3.75, -1.25, 1.25, 3.75, 6.25];   // F-04 = index 3 (x=1.25) = the hero slot
     var rowZ = [0, -6, -12];
     var n = 1;
     for (var r = 0; r < rowZ.length; r++) {
       for (var c = 0; c < cols.length; c++) {
-        buildSingleRack('F-' + String(n).padStart(2, '0'), cols[c], rowZ[r], 'F');
+        if (n === 4 && _heroRack) {
+          buildHeroRack(_heroLabel, cols[c], rowZ[r], _heroRack);   // Stage 2 data-driven hero (real rack ID)
+        } else {
+          buildSingleRack('F-' + String(n).padStart(2, '0'), cols[c], rowZ[r], 'F');
+        }
         n++;
       }
     }
@@ -17590,23 +17696,45 @@ function forge3d_render(mount) {
   }
   applyCam();
 
-  var dragging = false, lastX = 0, lastY = 0, pinchD = 0;
-  function onDown(x, y) { dragging = true; lastX = x; lastY = y; }
+  var dragging = false, lastX = 0, lastY = 0, pinchD = 0, downX = 0, downY = 0, moved = false;
+  var raycaster = new THREE.Raycaster(), ndc = new THREE.Vector2();
+  // v1.14.227 Stage 2 §3.2 — a TAP (not an orbit-drag) on a hero device row opens its device sheet.
+  // Only hero rows are in heroMeshes, so non-hero racks are inert. Mirrors the .218 render3D tap path.
+  function forge3d_raycastHero(cx, cy) {
+    if (!heroMeshes.length) return;
+    var rect = canvas.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+    ndc.x = ((cx - rect.left) / rect.width) * 2 - 1;
+    ndc.y = -((cy - rect.top) / rect.height) * 2 + 1;
+    raycaster.setFromCamera(ndc, camera);
+    var hits = raycaster.intersectObjects(heroMeshes, false);
+    if (hits.length) {
+      var dev = hits[0].object.userData.dev;
+      if (dev && typeof openRmDevice === 'function') {
+        try { window._rmConnHit = { id: (_heroRack && (_heroRack.rackId || _heroRack.id)) || _heroLabel }; } catch (e) {}
+        if (typeof haptic === 'function') { try { haptic([6]); } catch (e) {} }
+        try { openRmDevice(dev); } catch (e) { phantom_logErr('forge3d:openRmDevice', e); }
+      }
+    }
+  }
+  function onDown(x, y) { dragging = true; lastX = x; lastY = y; downX = x; downY = y; moved = false; }
   function onMove(x, y) {
     if (!dragging) return;
+    if (!moved && (Math.abs(x - downX) + Math.abs(y - downY)) > 6) moved = true;
     azimuth -= (x - lastX) * 0.006;
     polar = Math.max(POLAR_MIN, Math.min(POLAR_MAX, polar - (y - lastY) * 0.006));
     lastX = x; lastY = y;
     applyCam();
   }
-  function onUp() { dragging = false; }
+  function onUp(x, y) { dragging = false; if (!moved) forge3d_raycastHero(x, y); }
   function mdown(e) { onDown(e.clientX, e.clientY); }
   function mmove(e) { onMove(e.clientX, e.clientY); }
-  function mup() { onUp(); }
+  function mup(e) { onUp(e.clientX, e.clientY); }
   function wheel(e) { if (e.cancelable) e.preventDefault(); radius = Math.max(R_MIN, Math.min(R_MAX, radius + e.deltaY * 0.01)); applyCam(); }
   function tstart(e) {
     if (e.touches.length === 1) { onDown(e.touches[0].clientX, e.touches[0].clientY); }
-    else if (e.touches.length === 2) { dragging = false; pinchD = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY); }
+    else if (e.touches.length === 2) { dragging = false; moved = true; pinchD = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY); }   // moved=true so a pinch-release never fires the hero raycast
+    else { dragging = false; moved = true; }   // 3+ simultaneous touches = never a tap
   }
   function tmove(e) {
     if (e.touches.length === 1) { onMove(e.touches[0].clientX, e.touches[0].clientY); }
@@ -17617,7 +17745,7 @@ function forge3d_render(mount) {
     }
     if (e.cancelable) e.preventDefault();
   }
-  function tend(e) { if (!e.touches.length) { onUp(); pinchD = 0; } }
+  function tend(e) { if (!e.touches.length) { var _t = e.changedTouches && e.changedTouches[0]; onUp(_t ? _t.clientX : lastX, _t ? _t.clientY : lastY); pinchD = 0; } }
   canvas.addEventListener('mousedown', mdown);
   window.addEventListener('mousemove', mmove);
   window.addEventListener('mouseup', mup);
@@ -17677,6 +17805,7 @@ function forge3d_render(mount) {
     try { renderer.forceContextLoss(); } catch (e) {}
     if (canvas.parentNode) canvas.parentNode.removeChild(canvas);
     rackObjects = [];
+    heroMeshes = [];
     mount._forge3dDispose = null;
     if (_forge3dActive && _forge3dActive.mount === mount) _forge3dActive = null;
   }
@@ -17686,6 +17815,7 @@ function forge3d_render(mount) {
     buildFloor();
     buildLighting();
     buildRacks();
+    if (_heroRack) buildHeroSpotlight();   // Stage 2 §4 — hero-only rig on top of the dim baseline
   } catch (e) { phantom_logErr('forge3d_render:build', e); forge3d_fail(mount); return; }
 
   mount._forge3dDispose = teardown;
