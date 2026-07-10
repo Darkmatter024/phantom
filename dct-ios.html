@@ -11576,7 +11576,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.222';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.223';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -16950,6 +16950,17 @@ function nav_restore(state) {
     // is restored above, so the deploy_show* call lands in the right context.
     if (state.d) {
       var d = state.d;
+      // v1.14.223 — DEPLOY DEAD-RENDER FIX (nav_restore siblings of the card bug). The deploy-family
+      // detail branches below all render into deploy_opsHost() (= #wk-deploy under redesign). On a
+      // back/forward restore the WORK bottom-nav may have re-added .wk-grid WITHOUT a history push,
+      // so #pg-work still carries it and CSS (body.rd #pg-work.wk-grid .work-sub{display:none!important})
+      // force-hides #wk-deploy → the detail paints invisibly (nothing thrown, nothing logged — same
+      // class the card fix addresses). Drill out ONCE for every deploy-surface branch (idempotent;
+      // mscope/mscope-staged and tool: self-drill and are excluded; vendoredp: renders into the legacy
+      // #ops-content host — a separate fix; non-deploy sop:/job:/audit: excluded).
+      if (/^command$|^deploy:|^rack:|^tombstone:|^audit_log:|^optic_ledger:|^acceptance:|^handoff_gen:|^handoff_log:/.test(d)) {
+        deploy_ensureDeployPanelVisible();
+      }
       if (d === 'command' && typeof deploy_showCommandCenter === 'function') {
         deploy_showCommandCenter(deploy_opsHost());   // Ship B4 (.181): mode-correct host (rd: #wk-deploy; legacy: #ops-content — identical). Was hard-coded to the hidden legacy host under rd.
       } else if (d.indexOf('tool:') === 0 && typeof rd_openOpsTool === 'function') {   // Ship B2 (.179): 'tools' branch dropped (deploy_showTools deleted); 'tool:' repointed to the canonical p:'work' door — condition AND call
@@ -29037,7 +29048,24 @@ async function _deploy_create_postIntake(_results, name, lead, raw, precomputedH
 }
 
 // ── Screen 3: Deployment Dashboard (Stage 3) ──
+// v1.14.223 — DEPLOY DEAD-CARD FIX (root cause of "tap WORK->Deploy does nothing, nothing logged").
+// deploy_showDetail / deploy_showRackDetail render into deploy_opsHost() (= #wk-deploy under redesign).
+// When reached from the WORK card-grid landing (the Deploy card -> deploy_quick's context branch, or
+// nav_restore deploy:/rack:), #pg-work still carries .wk-grid, and CSS (body.rd #pg-work.wk-grid
+// .work-sub{display:none!important}) force-hides the panel while the grid shows — so the detail painted
+// into a display:none container: nothing visible, nothing thrown, nothing logged (the classic dead
+// Work-grid card, CLAUDE.md's #1 hard rule). This drills out of the grid + activates the wk-deploy stab
+// so the host is VISIBLE first. Idempotent (no-op if already drilled in); redesign-only (legacy renders
+// into #ops-content, which has no grid — byte-identical there).
+function deploy_ensureDeployPanelVisible() {
+  if (typeof redesign_isOn !== 'function' || !redesign_isOn()) return;
+  var pr = document.getElementById('pg-work');
+  if (pr) pr.classList.remove('wk-grid');
+  var btn = document.querySelector('#pg-work .subtab-strip .stab[data-wk="wk-deploy"]');
+  if (btn && typeof showStab === 'function') showStab(btn, 'work-sub', 'wk-deploy');
+}
 function deploy_showDetail(id) {
+  deploy_ensureDeployPanelVisible();
   wakeLock_release();
   var dep = deploy_getById(id);
   if (!dep) { phantomToast('Deployment not found', 'error'); deploy_showList(deploy_opsHost()); return; }
@@ -30714,6 +30742,7 @@ function scrubbar_openSnapped() {
 
 // ── Screen 4: Rack Detail ──
 function deploy_showRackDetail(deployId, rackId) {
+  deploy_ensureDeployPanelVisible();
   var dep = deploy_getById(deployId);
   if (!dep) { phantomToast('Deployment not found', 'error'); return; }
   document.body.classList.add('ops-detail');   // Rule A (v1.14.123): rack detail renders its own inline '‹ Back' step-back → suppress the redundant grid-back
