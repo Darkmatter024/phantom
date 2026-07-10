@@ -8868,6 +8868,9 @@ body.rd #forge3d-sheet.open { display: flex; }
 #pg-cmd .stat.block .n{color:var(--red)}
 #pg-cmd .stat.dep .n{color:var(--cyan)}
 #pg-cmd .stat.zero .n{color:var(--slate-dim)}
+/* v1.14.225 — Command Lens tap-through affordance (cards only get .cc-tap under redesign via cmd_render; legacy never renders them → byte-identical) */
+#pg-cmd .stat.cc-tap{cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .12s ease,filter .12s ease}
+#pg-cmd .stat.cc-tap:active{transform:scale(.97);filter:saturate(1.40) brightness(1.18)}
 #pg-cmd .nba{margin:0 16px 14px;filter:saturate(1.40);border:1px solid color-mix(in srgb,#ff2bd6 42%,transparent);border-radius:16px;background:linear-gradient(160deg,#0a0d13 0%,#070809 100%);box-shadow:0 8px 20px -14px rgba(0,0,0,.85),inset 0 0 26px -4px color-mix(in srgb,#ff2bd6 20%,transparent);padding:16px;position:relative}
 #pg-cmd .nba .nlabel{font-family:var(--mono);font-size:12px;letter-spacing:3px;color:#ff5fd6}
 #pg-cmd .nba h2{font-size:23px;font-weight:700;margin:8px 0 6px;line-height:1.1}
@@ -11576,7 +11579,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.224';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.225';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -18109,7 +18112,12 @@ function cmd_render() {
   var stats = (rung === 'A')
     ? [['—', 'RACKS', 'racks', 1], ['—', 'BLOCKERS', 'block', 1], ['—', 'DEPLOYS', 'dep', 1]]
     : [[_cc_pad(rackCount), 'RACKS', 'racks', rackCount === 0], [_cc_pad(blockerCount), 'BLOCKERS', 'block', blockerCount === 0], [_cc_pad(deployCount), 'DEPLOYS', 'dep', deployCount === 0]];
-  E('cc-stats').innerHTML = stats.map(function(s) { return '<div class="stat ' + s[2] + (s[3] ? ' zero' : '') + '"><div class="n">' + s[0] + '</div><div class="k">' + s[1] + '</div></div>'; }).join('');
+  // v1.14.225 — Command Lens stat cards → tap-through (re-home don't rebuild): RACKS → Rack Map floor
+  // (rd_openOpsTool('rackmap'), the canonical Work door), BLOCKERS → issues/blockers list (navigates +
+  // empty-states on 0, never a dead tap), DEPLOYS → Work→Deploy command center. Full-card hit area +
+  // press affordance (.cc-tap). Routes go through the .223/.224-fixed deploy/work paths + the .221 instrument.
+  var _cc_statRoute = { racks: "rd_openOpsTool('rackmap')", block: "cmd_route('work','issues')", dep: "cmd_route('work','deploy')" };
+  E('cc-stats').innerHTML = stats.map(function(s) { var _r = _cc_statRoute[s[2]]; return '<div class="stat ' + s[2] + (s[3] ? ' zero' : '') + (_r ? ' cc-tap' : '') + '"' + (_r ? ' role="button" tabindex="0" onclick="' + _r + '"' : '') + '><div class="n">' + s[0] + '</div><div class="k">' + s[1] + '</div></div>'; }).join('');
 
   // ── Next Best Action (§3.3 routing tree, honest state) ──
   var nba = cmd_nba(rung, { confirmed: confirmed, masterLoaded: masterLoaded, blockerCount: blockerCount, handoffDraft: handoffDraft, activeDep: activeDep, activePct: activePct, rackCount: rackCount });
