@@ -8833,6 +8833,9 @@ body.rd #rd-errors-sheet.open { display: flex; }
 #forge3d-sheet { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 60; display: none; flex-direction: column; background: #000508; }
 body.rd #forge3d-sheet.open { display: flex; }
 #forge3d-mount { position: relative; flex: 1; min-height: 0; overflow: hidden; background: #000508; }
+/* v1.14.226 — persistent build badge (§10): subtle top-right, redesign-only, taps pass through */
+#ver-stamp { display: none; }
+body.rd #ver-stamp { display: block; position: fixed; top: calc(var(--safe-top, 0px) + 3rem); right: 8px; z-index: 45; padding: 2px 8px; border-radius: 8px; font-family: var(--mono); font-size: 9px; font-weight: 600; letter-spacing: .08em; color: #43506a; background: rgba(6,9,15,0.7); border: 1px solid rgba(180,194,208,0.12); pointer-events: none; }
 .rd-sheet-hdr { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: calc(12px + var(--safe-top, 0px)) 18px 12px; border-bottom: 1px solid rgba(120,150,200,0.14); }
 .rd-sheet-titles { min-width: 0; }
 .rd-sheet-titles .t { font-family: var(--orb); font-weight: 700; letter-spacing: .14em; font-size: 18px; color: var(--white); }
@@ -11579,7 +11582,12 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.225';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.226';
+// v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
+// top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
+// Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
+// which is exactly the "am I on the latest?" signal — a fresh version.json behind stale HTML would lie.
+document.addEventListener('DOMContentLoaded', function(){ try { var vs = document.getElementById('ver-stamp'); if (vs) vs.textContent = 'v' + PHANTOM_APP_VERSION.replace('phantom-', ''); } catch(_){} });
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -12109,6 +12117,10 @@ if (typeof window !== 'undefined') {
     </div>
     <div id="forge3d-mount"></div>
   </div>
+
+  <!-- v1.14.226 — persistent build badge (§10). Redesign-only (CSS-gated), pointer-events:none so it
+       never blocks a tap. Text set from PHANTOM_APP_VERSION on DOMContentLoaded (the running build). -->
+  <div id="ver-stamp" aria-hidden="true">v&mdash;</div>
 
   <!-- DCT-02: Storage warning banner -->
   <div id="storage-warn" style="display:none;background:rgba(255,59,59,0.12);border-bottom:1px solid rgba(255,59,59,0.3);color:var(--alert,#ff3b3b);font-family:var(--mono);font-size: var(--fs-caption);letter-spacing:var(--hud-track-mid);text-align:center;padding:6px 16px;cursor:pointer" onclick="exportAllData()" aria-live="polite"></div>
