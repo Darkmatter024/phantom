@@ -11576,7 +11576,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.223';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.224';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -25789,7 +25789,9 @@ function manifest_renderForDeployment(c, dep, allActive) {
 
 function manifest_switchTo(deployId) {
   if (typeof deploy_setActive === 'function') deploy_setActive(deployId);
-  var c = document.getElementById('ops-content');
+  // v1.14.224 — DEAD-TAP FIX: was hard-coded to the hidden legacy #ops-content under rd. The manifest
+  // tool initially paints into #ops-tool-host (via rd_openOpsTool); re-render into that same host.
+  var c = redesign_isOn() ? document.getElementById('ops-tool-host') : document.getElementById('ops-content');
   if (c) manifest_render(c);
 }
 
@@ -31089,7 +31091,7 @@ function deploy_showRackDetail(deployId, rackId) {
       html += '<div style="margin-top:14px">';
       html += '<div style="font-family:var(--orb);font-size: var(--fs-micro);letter-spacing:3px;color:var(--cyan);margin-bottom:6px;text-transform:uppercase">Suggested SOPs</div>';
       suggestedSOPs.forEach(function(sop) {
-        html += '<div style="background:rgba(92,242,255,0.04);border:1px solid var(--cyan-border-lo);border-radius:8px;padding:9px 14px;margin-bottom:5px;cursor:pointer;display:flex;align-items:center;gap: 8px" onclick="goOpsTab(\'sops\');setTimeout(function(){openSopDetail(\'' + sop.id + '\')},150)" ontouchstart="this.style.opacity=\'0.7\'" ontouchend="this.style.opacity=\'1\'">';
+        html += '<div style="background:rgba(92,242,255,0.04);border:1px solid var(--cyan-border-lo);border-radius:8px;padding:9px 14px;margin-bottom:5px;cursor:pointer;display:flex;align-items:center;gap: 8px" onclick="goOpsTab(\'sops\');setTimeout(function(){if(!redesign_isOn())openSopDetail(\'' + sop.id + '\')},150)" ontouchstart="this.style.opacity=\'0.7\'" ontouchend="this.style.opacity=\'1\'">';
         html += '<div style="flex:1"><div style="font-family:var(--raj);font-size: var(--fs-body);font-weight:600;color:var(--white)">' + escHtml(sop.title) + '</div>';
         if (sop.category) html += '<div style="font-family:var(--mono);font-size: var(--fs-caption);color:var(--slate);margin-top:1px;letter-spacing:1px">' + escHtml(sop.category.toUpperCase()) + '</div>';
         html += '</div><span style="font-family:var(--mono);font-size: var(--fs-caption);color:var(--cyan)">→</span>';
@@ -35651,7 +35653,9 @@ function bomIngest_handleFile(input) {
 }
 
 function bomIngest_refresh() {
-  var c = document.getElementById('ops-content');
+  // v1.14.224 — DEAD-TAP FIX: BOM ingest nests in #bom-tab-pane (inside #wk-deploy) under rd; the
+  // hard-coded legacy #ops-content painted invisibly. Re-render into the pane to keep the INGEST strip.
+  var c = redesign_isOn() ? document.getElementById('bom-tab-pane') : document.getElementById('ops-content');
   if (c) bomIngest_render(c);
 }
 
@@ -35901,7 +35905,9 @@ function bomTab_setSubtab(name) {
   _BOM_TAB_STATE.activeSubtab = name;
   // Reset progress sub-view when leaving — fresh tally on re-entry.
   if (name === 'ingest') _BOM_TAB_STATE.progressView = 'tally';
-  var root = document.getElementById('ops-content');
+  // v1.14.224 — DEAD-TAP FIX: rebuilds the whole tab (strip + pane), so it must target the tool host
+  // #ops-tool-host under rd (not #bom-tab-pane); was hard-coded to the hidden legacy #ops-content.
+  var root = redesign_isOn() ? document.getElementById('ops-tool-host') : document.getElementById('ops-content');
   if (root) bomTab_render(root);
 }
 
@@ -41561,7 +41567,11 @@ const BD = (() => {
 
   function openJob(id) {
     const job = getJob(id); if (!job) return;
-    const c = document.getElementById('ops-content'); if (!c) return;
+    // v1.14.224 — DEAD-TAP FIX: was hard-coded to hidden legacy #ops-content under rd; #ops-tool-host
+    // is absent on the nav_restore job: / job-complete reach paths, so use deploy_opsHost() (#wk-deploy)
+    // + drill out of the wk-grid (this fn is reachable via the excluded nav_restore job: branch).
+    deploy_ensureDeployPanelVisible();
+    const c = (typeof deploy_opsHost === 'function') ? deploy_opsHost() : document.getElementById('ops-content'); if (!c) return;
 
     // Cut 14: push nav state for back navigation.
     nav_push({ p: (redesign_isOn() ? 'work' : 'sop'), o: 'burndown', d: 'job:' + id });
@@ -42603,7 +42613,14 @@ function reconcile_render(mount){
 // and NEVER creates a deployment. After attach, jump to the Reconcile panel
 // where the VENDOR≠MASTER cross-check renders.
 function vendorEdp_open(depId){
-  var c = document.getElementById('ops-content'); if (!c) return;
+  // v1.14.224 — DEAD-TAP FIX: was hard-coded to the legacy #ops-content, which is inside the
+  // hidden pg-sop page under redesign → the paste form rendered invisibly 100% of the time
+  // ("no silent host fallbacks" hard-rule violation). Repoint to the mode-correct deploy_opsHost()
+  // (rd: #wk-deploy; legacy: #ops-content), drill out of the wk-grid so the panel is visible, and
+  // fail LOUD on a missing host instead of a silent return.
+  deploy_ensureDeployPanelVisible();
+  var c = (typeof deploy_opsHost === 'function') ? deploy_opsHost() : document.getElementById('ops-content');
+  if (!c) { if (typeof phantomToast === 'function') phantomToast('Deploy surface unavailable', 'error'); return; }
   var dep = (typeof deploy_getById === 'function') ? deploy_getById(depId) : null;
   if (!dep) { phantomToast('Deployment not found', 'error'); return; }
   if (typeof nav_push === 'function') nav_push({ p:(redesign_isOn() ? 'work' : 'sop'), o:'deploy', d:'vendoredp:' + depId });
@@ -42959,7 +42976,10 @@ const AUDIT = (() => {
     currentAuditId = id;
     safeStore(ACTIVE_AUDIT_KEY, id);
 
-    const c = document.getElementById('ops-content');
+    // v1.14.224 — DEAD-TAP FIX: was hard-coded to hidden legacy #ops-content under rd; createNew /
+    // nav_restore audit: reach paths lack #ops-tool-host, so use deploy_opsHost() (#wk-deploy) + drill out.
+    deploy_ensureDeployPanelVisible();
+    const c = (typeof deploy_opsHost === 'function') ? deploy_opsHost() : document.getElementById('ops-content');
     if (!c) return;
 
     // Cut 14: push nav state for back navigation.
