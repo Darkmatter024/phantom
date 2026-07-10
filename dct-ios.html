@@ -8829,6 +8829,10 @@ body.rd #rd-profile-sheet.open { display: flex; }
 body.rd #hdr-agg-errors-row { display: flex; }
 #rd-errors-sheet { position: fixed; top: 0; left: 0; right: 0; bottom: calc(72px + var(--safe-bottom, 0px)); z-index: 60; display: none; flex-direction: column; background: linear-gradient(180deg, #06090f, #0a0e16); }
 body.rd #rd-errors-sheet.open { display: flex; }
+/* v1.14.222 — FORGE 3D scene sheet (Stage 1; redesign-only, full-screen, single persistent canvas) */
+#forge3d-sheet { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 60; display: none; flex-direction: column; background: #000508; }
+body.rd #forge3d-sheet.open { display: flex; }
+#forge3d-mount { position: relative; flex: 1; min-height: 0; overflow: hidden; background: #000508; }
 .rd-sheet-hdr { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: calc(12px + var(--safe-top, 0px)) 18px 12px; border-bottom: 1px solid rgba(120,150,200,0.14); }
 .rd-sheet-titles { min-width: 0; }
 .rd-sheet-titles .t { font-family: var(--orb); font-weight: 700; letter-spacing: .14em; font-size: 18px; color: var(--white); }
@@ -11572,7 +11576,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.221';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.222';
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -12054,6 +12058,8 @@ if (typeof window !== 'undefined') {
             <button onclick="phantomImport();var _p=document.getElementById('hdr-agg-panel');if(_p)_p.style.display='none'" class="hdr-menu-item hdr-agg-act" style="color:var(--slate-readable)" aria-label="Restore from backup"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8AAFBF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> &nbsp;RESTORE</button>
             <button onclick="identity_promptUser();var _p=document.getElementById('hdr-agg-panel');if(_p)_p.style.display='none'" class="hdr-menu-item hdr-agg-act" style="color:var(--cyan)" aria-label="Set identity"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5cf2ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> &nbsp;<span id="hdr-identity-label-rd">SET IDENTITY</span></button>
             <button onclick="hwMatrix_open();var _p=document.getElementById('hdr-agg-panel');if(_p)_p.style.display='none'" class="hdr-menu-item hdr-agg-act" style="color:var(--cyan)" aria-label="Open hardware reference"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5cf2ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5"/><line x1="12" y1="22" x2="12" y2="15.5"/><polyline points="22 8.5 12 15.5 2 8.5"/></svg> &nbsp;HW REF</button>
+            <!-- v1.14.222 PROVISIONAL door — Forge 3D scene (Stage 1). Relocate to the floor-map rack tap when the hero / rack-switch stages land. -->
+            <button onclick="forge3d_open();var _p=document.getElementById('hdr-agg-panel');if(_p)_p.style.display='none'" class="hdr-menu-item hdr-agg-act" style="color:var(--vio)" aria-label="Open Forge 3D scene"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8a4bff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg> &nbsp;FORGE 3D</button>
             <!-- v1.14.104: SYS → Site Profile (New-UI sheet). Redesign-only (gated in CSS); legacy panel unchanged. -->
             <div class="hdr-agg-row" id="hdr-agg-profile-row" onclick="event.stopPropagation();var _p=document.getElementById('hdr-agg-panel');if(_p)_p.style.display='none';rd_openProfile()" style="cursor:pointer;border-top:1px solid rgba(120,150,200,0.12)">
               <span class="hdr-agg-row-dot" style="background:var(--cyan)"></span>
@@ -12089,6 +12095,16 @@ if (typeof window !== 'undefined') {
       <button class="rd-sheet-close" onclick="rd_closeErrors()" aria-label="Close error log">&#10005;</button>
     </div>
     <div class="rd-sheet-body" id="rd-errors-body"></div>
+  </div>
+
+  <!-- v1.14.222 — FORGE 3D scene sheet (Stage 1, per HANDOFF-forge-hero-scene.md). Full-screen
+       .rd-sheet clone; a single persistent canvas mounts into #forge3d-mount. Redesign-only. -->
+  <div id="forge3d-sheet" role="dialog" aria-modal="true" aria-label="Forge 3D aisle">
+    <div class="rd-sheet-hdr">
+      <div class="rd-sheet-titles"><div class="t">FORGE &middot; 3D AISLE</div><div class="s">STAGE 1 &middot; SCENE PREVIEW</div></div>
+      <button class="rd-sheet-close" onclick="forge3d_close()" aria-label="Close Forge 3D">&#10005;</button>
+    </div>
+    <div id="forge3d-mount"></div>
   </div>
 
   <!-- DCT-02: Storage warning banner -->
@@ -17290,6 +17306,366 @@ function errors_clear() {
   var b = document.getElementById('crash-banner'); if (b) b.style.display = 'none';
   rd_renderErrors();
   errors_refreshCount();
+}
+// ═══════════════════════════════════════════════════════════════════════════
+// FORGE 3D — Stage 1 (per HANDOFF-forge-hero-scene.md). The Forge cold-aisle scene,
+// ported VERBATIM (materials / buildSingleRack / floor / lights / labels) from
+// forge-base (15).html — r128, offline via the app's vendored vendor/three.min.js.
+// Scene-construction subset ONLY: NO game layer (no FPS movement, incidents, SLA,
+// terminal, minimap, boot/HUD). FPS controls → a spherical ORBIT. §2.8 placement:
+// front row z=0 (F-01..F-06), receding rows z=-6/-12 (F-07..F-18); F-04 (x=1.25) is
+// the future hero slot (Stage 2). DEVIATIONS (reported): buildCeiling/buildWalls are
+// dropped — not in the spec §2 verbatim list, and an enclosing ceiling/wall fights an
+// orbit camera; the fog (0x000508) gives the enclosed feel without geometry.
+// Single persistent GL context; clones the .218 _reh3dActive teardown discipline
+// (RAF cancel · listener removal · scene.traverse dispose · renderer.dispose +
+// forceContextLoss · canvas.isConnected self-dispose). Provisional door: SYS → FORGE
+// 3D (relocate to the floor-map rack tap when the hero/rack-switch stages land).
+// ═══════════════════════════════════════════════════════════════════════════
+var _forge3dActive = null;  // { mount, dispose } — bounds live GL contexts to 1 (shares the iOS ceiling with _reh3dActive)
+
+function forge3d_open() {
+  var sheet = document.getElementById('forge3d-sheet');
+  if (!sheet) return;
+  sheet.classList.add('open');
+  // iOS one-GL-context ceiling: dispose the rack-detail 3D context if live before we build ours.
+  try {
+    if (typeof _reh3dActive !== 'undefined' && _reh3dActive && _reh3dActive.dispose &&
+        _reh3dActive.mount !== document.getElementById('forge3d-mount')) {
+      _reh3dActive.dispose();
+    }
+  } catch (e) { phantom_logErr('forge3d_open:reh3dDispose', e); }
+  var mount = document.getElementById('forge3d-mount');
+  if (!mount) return;
+  forge3d_ensure3D(mount);
+}
+
+function forge3d_close() {
+  var sheet = document.getElementById('forge3d-sheet');
+  if (sheet) sheet.classList.remove('open');
+  var mount = document.getElementById('forge3d-mount');
+  if (mount && mount._forge3dDispose) { try { mount._forge3dDispose(); } catch (e) { phantom_logErr('forge3d_close:dispose', e); } }
+}
+
+function forge3d_ensure3D(mount) {
+  if (!mount) return;
+  if (window.THREE) { forge3d_render(mount); return; }
+  mount.innerHTML = '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--slate);font-family:var(--mono);font-size:13px;letter-spacing:.12em">LOADING 3D…</div>';
+  if (typeof loadScript !== 'function') { forge3d_fail(mount); return; }
+  loadScript('./vendor/three.min.js').then(function () {
+    var sheet = document.getElementById('forge3d-sheet');
+    if (!sheet || !sheet.classList.contains('open') || !document.body.contains(mount)) return;  // toggled away mid-load
+    if (window.THREE) forge3d_render(mount);
+    else forge3d_fail(mount);
+  }).catch(function (e) { phantom_logErr('forge3d_ensure3D:loadScript', e); forge3d_fail(mount); });
+}
+
+function forge3d_fail(mount) {
+  if (mount) mount.innerHTML = '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#ff6b6b;font-family:var(--mono);font-size:13px;text-align:center;padding:24px;line-height:1.6">3D unavailable on this device.<br>WebGL may be disabled.</div>';
+  try { if (typeof phantomToast === 'function') phantomToast('3D unavailable', 'error'); } catch (_) {}
+}
+
+function forge3d_render(mount) {
+  var THREE = window.THREE;
+  if (!THREE || !mount) { forge3d_fail(mount); return; }
+  // single-context invariant: dispose any prior context on this mount / elsewhere
+  if (mount._forge3dDispose) { try { mount._forge3dDispose(); } catch (e) {} }
+  if (_forge3dActive && _forge3dActive.dispose && _forge3dActive.mount !== mount) { try { _forge3dActive.dispose(); } catch (e) {} }
+  // v1.14.222 — symmetric single-GL-context guard: dispose a live rack-detail 3D context too
+  // (covers the first-session async-load race where forge3d_open's _reh3dActive dispose was a no-op).
+  if (typeof _reh3dActive !== 'undefined' && _reh3dActive && _reh3dActive.dispose) { try { _reh3dActive.dispose(); } catch (e) {} }
+  mount.innerHTML = '';
+
+  var canvas = document.createElement('canvas');
+  canvas.style.cssText = 'display:block;width:100%;height:100%;touch-action:none';
+  mount.appendChild(canvas);
+
+  var W = mount.clientWidth || window.innerWidth;
+  var H = mount.clientHeight || window.innerHeight;
+
+  // ── renderer (verbatim forge-base (15).html §2.1) ──
+  var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+  renderer.setSize(W, H, false);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 0.6;   // Forge moody-dim value — do not retune
+
+  // ── scene / fog / camera (§2.2) ──
+  var scene = new THREE.Scene();
+  scene.fog = new THREE.FogExp2(0x000508, 0.04);
+  scene.background = new THREE.Color(0x000508);   // app shell has no black page bg; mock relied on CSS #000
+  var camera = new THREE.PerspectiveCamera(75, W / H, 0.1, 100);
+
+  // ── shared materials (§2.3, verbatim) ──
+  var MAT = {
+    floor: new THREE.MeshStandardMaterial({ color: 0x0a1520, roughness: 0.1, metalness: 0.8 }),
+    rack: new THREE.MeshStandardMaterial({ color: 0x0d1520, roughness: 0.3, metalness: 0.7 }),
+    rackFace: new THREE.MeshStandardMaterial({ color: 0x080e18, roughness: 0.2, metalness: 0.9 })
+  };
+  var rackObjects = [];
+  var LED_STATES = {};
+
+  function _rr(ctx, x, y, w, h, r) {
+    if (ctx.roundRect) { ctx.roundRect(x, y, w, h, r); } else { ctx.rect(x, y, w, h); }
+  }
+
+  // ── makeRackLabel (§2.5, verbatim; roundRect guarded for older Safari) ──
+  function makeRackLabel(rackId, color) {
+    var w = 256, h = 80;
+    var cv = document.createElement('canvas');
+    cv.width = w; cv.height = h;
+    var ctx = cv.getContext('2d');
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = 'rgba(0,4,10,0.88)';
+    ctx.beginPath(); _rr(ctx, 4, 4, w - 8, h - 8, 7); ctx.fill();
+    ctx.strokeStyle = color + '66'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); _rr(ctx, 4, 4, w - 8, h - 8, 7); ctx.stroke();
+    ctx.font = 'bold 32px "Courier New", monospace';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = color; ctx.shadowColor = color; ctx.shadowBlur = 18;
+    ctx.fillText(rackId, w / 2, h / 2 - 1);
+    ctx.shadowBlur = 5;
+    ctx.fillText(rackId, w / 2, h / 2 - 1);
+    var tex = new THREE.CanvasTexture(cv);
+    return new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false, sizeAttenuation: true }));
+  }
+
+  // ── buildSingleRack (§2.4, verbatim) ──
+  function buildSingleRack(rackId, x, z, rowId) {
+    var group = new THREE.Group();
+    group.position.set(x, 0, z);
+    group.userData = { rackId: rackId, rowId: rowId, type: 'rack' };
+
+    var chassis = new THREE.Mesh(new THREE.BoxGeometry(1.8, 3.8, 1.0), MAT.rack);
+    chassis.position.y = 1.9;
+    chassis.castShadow = true;
+    chassis.receiveShadow = true;
+    group.add(chassis);
+
+    var face = new THREE.Mesh(new THREE.BoxGeometry(1.74, 3.74, 0.06), MAT.rackFace);
+    face.position.set(0, 1.9, 0.535);
+    group.add(face);
+
+    var bezel = new THREE.Mesh(new THREE.BoxGeometry(1.74, 0.04, 0.04),
+      new THREE.MeshStandardMaterial({ color: 0x1a3040, roughness: 0.3, metalness: 0.9 }));
+    bezel.position.set(0, 3.77, 0.54);
+    group.add(bezel);
+
+    var ledMat = new THREE.MeshStandardMaterial({ color: 0x00ccff, emissive: new THREE.Color(0x00aaee), emissiveIntensity: 4, roughness: 0.1 });
+    var led = new THREE.Mesh(new THREE.BoxGeometry(1.65, 0.05, 0.05), ledMat);
+    led.position.set(0, 3.84, 0.52);
+    group.add(led);
+    group.userData.ledMat = ledMat;
+
+    for (var u = 0; u < 10; u++) {
+      var slotY = 0.35 + u * 0.36;
+      var divider = new THREE.Mesh(new THREE.BoxGeometry(1.68, 0.008, 0.02),
+        new THREE.MeshStandardMaterial({ color: 0x0d1a28, roughness: 0.8 }));
+      divider.position.set(0, slotY, 0.56);
+      group.add(divider);
+
+      var dotMat = new THREE.MeshStandardMaterial({ color: 0x00ee55, emissive: new THREE.Color(0x00cc44), emissiveIntensity: 2.5 });
+      var dot = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, 0.02), dotMat);
+      dot.position.set(-0.78, slotY + 0.12, 0.565);
+      group.add(dot);
+
+      var actMat = new THREE.MeshStandardMaterial({ color: 0x0044aa, emissive: new THREE.Color(0x003388), emissiveIntensity: Math.random() > 0.3 ? 1.5 : 0.1 });
+      var act = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.02), actMat);
+      act.position.set(-0.68, slotY + 0.12, 0.565);
+      group.add(act);
+    }
+
+    for (var p = 0; p < 8; p++) {
+      var portMat = new THREE.MeshStandardMaterial({ color: 0x001122, roughness: 0.2, metalness: 0.8 });
+      var port = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.08, 0.03), portMat);
+      port.position.set(-0.7 + p * 0.2, 0.14, 0.565);
+      group.add(port);
+    }
+
+    var rackLight = new THREE.PointLight(0x0077cc, 1.2, 4.5);
+    rackLight.position.set(0, 3.5, 0.9);
+    group.add(rackLight);
+    group.userData.rackLight = rackLight;
+
+    var floorLight = new THREE.PointLight(0x002244, 0.4, 2);
+    floorLight.position.set(0, 0.1, 0.5);
+    group.add(floorLight);
+
+    scene.add(group);
+    rackObjects.push(group);
+    LED_STATES[rackId] = 'normal';
+
+    var labelSprite = makeRackLabel(rackId, '#00c8e0');
+    labelSprite.position.set(0, 4.35, 0.5);
+    labelSprite.scale.set(1.1, 0.38, 1);
+    group.add(labelSprite);
+    group.userData.labelSprite = labelSprite;
+  }
+
+  // ── buildFloor (§2.6, verbatim) ──
+  function buildFloor() {
+    var mesh = new THREE.Mesh(new THREE.PlaneGeometry(60, 60), MAT.floor);
+    mesh.rotation.x = -Math.PI / 2;
+    mesh.receiveShadow = true;
+    scene.add(mesh);
+    var grid = new THREE.GridHelper(60, 60, 0x001a26, 0x001218);
+    grid.position.y = 0.001;
+    scene.add(grid);
+  }
+
+  // ── buildLighting (§2.7, verbatim values; rows front-weighted to {-6,-12,-18}) ──
+  function buildLighting() {
+    scene.add(new THREE.AmbientLight(0x020810, 1.0));
+    var rowZs = [-6, -12, -18];
+    rowZs.forEach(function (z) {
+      for (var x = -12; x <= 12; x += 6) {
+        var strip = new THREE.PointLight(0x1a4060, 0.8, 10);
+        strip.position.set(x, 3.8, z);
+        scene.add(strip);
+        var mesh = new THREE.Mesh(new THREE.BoxGeometry(4, 0.05, 0.1),
+          new THREE.MeshStandardMaterial({ color: 0x224455, emissive: 0x112233, emissiveIntensity: 0.5 }));
+        mesh.position.set(x, 3.95, z);
+        scene.add(mesh);
+      }
+    });
+    var dir = new THREE.DirectionalLight(0x102030, 0.5);
+    dir.position.set(0, 10, 5);
+    dir.castShadow = true;
+    scene.add(dir);
+  }
+
+  // ── buildRacks (spec §2.8 placement: front row z=0, receding z=-6/-12; F-01..F-18) ──
+  function buildRacks() {
+    var cols = [-6.25, -3.75, -1.25, 1.25, 3.75, 6.25];   // F-04 = index 3 (x=1.25) = future hero slot
+    var rowZ = [0, -6, -12];
+    var n = 1;
+    for (var r = 0; r < rowZ.length; r++) {
+      for (var c = 0; c < cols.length; c++) {
+        buildSingleRack('F-' + String(n).padStart(2, '0'), cols[c], rowZ[r], 'F');
+        n++;
+      }
+    }
+  }
+
+  // ── manual spherical orbit (no OrbitControls; mirrors the .218 primitive) ──
+  var target = new THREE.Vector3(0, 1.4, -6);   // pivot at the rack-field centre (z-midpoint of 0/-6/-12)
+  var azimuth = 0, polar = 1.549, radius = 14;  // home ≈ camera (0,1.7,8), the clean aisle shot
+  var POLAR_MIN = 0.35, POLAR_MAX = 1.55, R_MIN = 5, R_MAX = 22;
+  function applyCam() {
+    var sp = Math.sin(polar), cp = Math.cos(polar);
+    camera.position.set(
+      target.x + radius * sp * Math.sin(azimuth),
+      target.y + radius * cp,
+      target.z + radius * sp * Math.cos(azimuth)
+    );
+    camera.lookAt(target);
+  }
+  applyCam();
+
+  var dragging = false, lastX = 0, lastY = 0, pinchD = 0;
+  function onDown(x, y) { dragging = true; lastX = x; lastY = y; }
+  function onMove(x, y) {
+    if (!dragging) return;
+    azimuth -= (x - lastX) * 0.006;
+    polar = Math.max(POLAR_MIN, Math.min(POLAR_MAX, polar - (y - lastY) * 0.006));
+    lastX = x; lastY = y;
+    applyCam();
+  }
+  function onUp() { dragging = false; }
+  function mdown(e) { onDown(e.clientX, e.clientY); }
+  function mmove(e) { onMove(e.clientX, e.clientY); }
+  function mup() { onUp(); }
+  function wheel(e) { if (e.cancelable) e.preventDefault(); radius = Math.max(R_MIN, Math.min(R_MAX, radius + e.deltaY * 0.01)); applyCam(); }
+  function tstart(e) {
+    if (e.touches.length === 1) { onDown(e.touches[0].clientX, e.touches[0].clientY); }
+    else if (e.touches.length === 2) { dragging = false; pinchD = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY); }
+  }
+  function tmove(e) {
+    if (e.touches.length === 1) { onMove(e.touches[0].clientX, e.touches[0].clientY); }
+    else if (e.touches.length === 2) {
+      var d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+      if (pinchD) { radius = Math.max(R_MIN, Math.min(R_MAX, radius * (pinchD / d))); applyCam(); }
+      pinchD = d;
+    }
+    if (e.cancelable) e.preventDefault();
+  }
+  function tend(e) { if (!e.touches.length) { onUp(); pinchD = 0; } }
+  canvas.addEventListener('mousedown', mdown);
+  window.addEventListener('mousemove', mmove);
+  window.addEventListener('mouseup', mup);
+  canvas.addEventListener('wheel', wheel, { passive: false });
+  canvas.addEventListener('touchstart', tstart, { passive: true });
+  canvas.addEventListener('touchmove', tmove, { passive: false });
+  canvas.addEventListener('touchend', tend);
+
+  // ── resize ──
+  var ro = null;
+  function resize() {
+    var w = mount.clientWidth || window.innerWidth, h = mount.clientHeight || window.innerHeight;
+    if (!w || !h) return;
+    camera.aspect = w / h; camera.updateProjectionMatrix();
+    renderer.setSize(w, h, false);
+  }
+  try { ro = new ResizeObserver(resize); ro.observe(mount); } catch (e) { window.addEventListener('resize', resize); }
+
+  // ── render loop (self-disposes when the canvas leaves the DOM) ──
+  var rafId = null, stopped = false;
+  function loop() {
+    if (stopped) return;
+    if (!canvas.isConnected) { teardown(); return; }
+    rafId = requestAnimationFrame(loop);
+    renderer.render(scene, camera);
+  }
+  function onVis() {
+    if (document.hidden) { if (rafId) { cancelAnimationFrame(rafId); rafId = null; } }
+    else if (!stopped && rafId == null) { loop(); }
+  }
+  document.addEventListener('visibilitychange', onVis);
+
+  function teardown() {
+    stopped = true;
+    if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+    document.removeEventListener('visibilitychange', onVis);
+    canvas.removeEventListener('mousedown', mdown);
+    window.removeEventListener('mousemove', mmove);
+    window.removeEventListener('mouseup', mup);
+    canvas.removeEventListener('wheel', wheel);
+    canvas.removeEventListener('touchstart', tstart);
+    canvas.removeEventListener('touchmove', tmove);
+    canvas.removeEventListener('touchend', tend);
+    if (ro) { try { ro.disconnect(); } catch (e) {} ro = null; } else { window.removeEventListener('resize', resize); }
+    try {
+      scene.traverse(function (o) {
+        if (o.geometry) o.geometry.dispose();
+        if (o.material) {
+          (Array.isArray(o.material) ? o.material : [o.material]).forEach(function (mm) {
+            if (mm && mm.map && mm.map.dispose) mm.map.dispose();
+            if (mm && mm.dispose) mm.dispose();
+          });
+        }
+      });
+    } catch (e) {}
+    try { renderer.dispose(); } catch (e) {}
+    try { renderer.forceContextLoss(); } catch (e) {}
+    if (canvas.parentNode) canvas.parentNode.removeChild(canvas);
+    rackObjects = [];
+    mount._forge3dDispose = null;
+    if (_forge3dActive && _forge3dActive.mount === mount) _forge3dActive = null;
+  }
+
+  // ── build + go ──
+  try {
+    buildFloor();
+    buildLighting();
+    buildRacks();
+  } catch (e) { phantom_logErr('forge3d_render:build', e); forge3d_fail(mount); return; }
+
+  mount._forge3dDispose = teardown;
+  _forge3dActive = { mount: mount, dispose: teardown };
+  resize();
+  loop();
 }
 // v1.14.167 — New-UI Master FILE entry (Phase 0.5 un-strand). Gives the cabinet-search /
 // host-map / elevation BROWSE a redesign door (additive; mirrors rd_openPower driving an
@@ -29871,6 +30247,9 @@ function rackElevation_render3D(rack, mountEl) {
   if (_reh3dActive && _reh3dActive.dispose && _reh3dActive.mount !== mountEl) {
     try { _reh3dActive.dispose(); } catch (e) {}
   }
+  // v1.14.222 — symmetric single-GL-context guard: also dispose a live Forge 3D context (the
+  // sibling forge3d_* module) so a first-session async-load interleave can't leave BOTH live.
+  if (typeof _forge3dActive !== 'undefined' && _forge3dActive && _forge3dActive.dispose) { try { _forge3dActive.dispose(); } catch (e) {} }
   mountEl.innerHTML = '';
   var w = mountEl.clientWidth, h = mountEl.clientHeight;
   if (!w || !h) {
