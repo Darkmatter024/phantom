@@ -1,0 +1,1745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GB300 NVL72 • PHANTOM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', system-ui, sans-serif; background: #06090f; }
+        .font-display { font-family: 'Space Grotesk', 'Inter', sans-serif; font-weight: 600; }
+        #three-container { width: 100%; height: 100%; background: #06090f; touch-action: none; }
+        .three-canvas { display: block; width: 100% !important; height: 100% !important; touch-action: none; }
+        .glass {
+            background: rgba(6,9,15,0.92);
+            border: 1px solid rgba(180,194,208,0.18);
+            border-radius: 12px;
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 4px 16px rgba(0,0,0,0.4);
+        }
+        .glass-open {
+            border-color: rgba(92,242,255,0.28);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 0 0 1px rgba(92,242,255,0.10), 0 18px 40px rgba(0,0,0,0.32);
+        }
+        .chrome {
+            background: linear-gradient(180deg, rgba(255,255,255,0.07) 0%, rgba(5,12,20,0.97) 100%);
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.10), 0 1px 0 rgba(0,0,0,0.3);
+        }
+        .sheet {
+            background: rgba(5,7,11,0.92);
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            border-top: 1px solid rgba(92,242,255,0.20);
+        }
+        .component-pill { transition: transform .1s ease, background-color .1s ease; }
+        .component-pill:active { transform: scale(0.97); }
+        .hint { animation: hint-pulse 2s ease-in-out infinite; }
+        @keyframes hint-pulse { 0%,100%{opacity:.7} 50%{opacity:1} }
+        .band{position:relative;min-height:30px;border-radius:10px;overflow:hidden;
+          background:#0b1017;border:1.5px solid var(--zc,rgba(180,194,208,0.18));
+          display:flex;flex-direction:column;cursor:pointer;transition:flex-grow .3s ease;
+          box-shadow:inset 0 1px 0 rgba(255,255,255,0.05)}
+        .band.pendzone{border-style:dashed}
+        .band.open{box-shadow:inset 0 1px 0 rgba(255,255,255,0.06),0 0 0 1px var(--zc)}
+        .band .bar{flex:0 0 auto;display:flex;align-items:center;gap:8px;padding:5px 10px}
+        .band .dot{width:7px;height:7px;border-radius:50%;background:var(--zc);flex:0 0 auto;box-shadow:0 0 6px var(--zc)}
+        .band .nm{font:700 11px ui-monospace,monospace;letter-spacing:.12em;color:#e6edf7;text-transform:uppercase;white-space:nowrap}
+        .band .u{font:600 8.5px ui-monospace,monospace;color:#43506a;white-space:nowrap}
+        .band .cnt{margin-left:auto;font:700 11px ui-monospace,monospace}
+        .band .cnt.done{color:#36e2b2}.band .cnt.part{color:#f0a63c}.band .cnt.zero{color:#5a687f}
+        .segs{flex:0 0 auto;display:flex;gap:2px;padding:0 10px 6px}
+        .seg{flex:1;height:6px;border-radius:3px;background:#12181f;border:1px solid rgba(255,255,255,0.06)}
+        .seg.racked{background:var(--zc);border-color:transparent}
+        .seg.pending{background:transparent;border:1.5px dashed #f0a63c}
+        .seg.fault{background:#ff5f67;border-color:transparent;animation:hint-pulse 1.2s infinite}
+        .rows{flex:1 1 auto;overflow-y:auto;padding:2px 6px 6px;display:none;-webkit-overflow-scrolling:touch}
+        .band.open .rows{display:block}
+        .mrow{display:flex;align-items:center;gap:8px;min-height:40px;padding:0 9px;margin:3px 0;
+          border-radius:8px;background:#06090f;border:1px solid rgba(255,255,255,0.07);
+          font-family:ui-monospace,monospace}
+        .mrow .rnm{font:600 11px ui-monospace,monospace;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .mrow .ru{font-size:8.5px;color:#43506a}
+        .mrow .st{padding:3px 9px;border-radius:7px;font:700 9px ui-monospace,monospace;letter-spacing:.1em;border:1px solid}
+        .mrow .st.racked{color:#36e2b2;border-color:rgba(54,226,178,0.45);background:rgba(54,226,178,0.08)}
+        .mrow .st.pending{color:#f0a63c;border-color:rgba(240,166,60,0.5);background:rgba(240,166,60,0.07);border-style:dashed}
+        .mrow .st.fault{color:#ff5f67;border-color:rgba(255,95,103,0.55);background:rgba(255,95,103,0.09);animation:hint-pulse 1.2s infinite}
+        .mrow.infra{opacity:.55}
+    </style>
+</head>
+<body class="bg-[#06090f] text-white overflow-hidden">
+
+    <!-- ══ Top Bar ══ -->
+    <div class="chrome h-12 flex items-center justify-between px-4 border-b border-white/10 z-50 relative">
+        <div class="flex items-center gap-x-3">
+            <div class="flex items-center gap-x-2">
+                <div class="w-7 h-7 rounded-xl bg-gradient-to-br from-[#5cf2ff] to-[#b478ff] flex items-center justify-center">
+                    <i class="fa-solid fa-server text-[#06090f] text-sm"></i>
+                </div>
+                <div class="font-display text-xl tracking-tighter">PHANTOM</div>
+            </div>
+            <button id="hdr-rack" onclick="togglePicker()"
+                 class="px-2.5 py-0.5 text-[10px] font-mono bg-white/5 text-white/60 rounded border border-white/10">NVL72 ▾</button>
+        </div>
+        <div class="flex items-center gap-x-2">
+            <div class="px-2.5 py-1 text-[10px] bg-emerald-500/10 text-emerald-400 rounded-xl flex items-center gap-x-1.5">
+                <div class="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></div>
+                <span id="hdr-site" class="font-medium text-xs">AUS-01</span>
+            </div>
+            <div id="ver-stamp" style="position:absolute;top:52px;right:14px;z-index:60;
+                 font:600 9px ui-monospace,monospace;letter-spacing:.12em;color:#8ea3c4;
+                 background:rgba(6,9,15,0.85);border:1px solid rgba(180,194,208,0.16);
+                 border-radius:6px;padding:2px 7px">v1.14.219 · scene v13</div>
+            
+        </div>
+    </div>
+
+    <!-- rack picker strip -->
+    <div id="picker" class="hidden absolute left-3 z-[60] glass p-2 flex gap-x-2" style="top:3.2rem"></div>
+
+    <!-- ══ HYBRID: 3D viewport (top) + live zone map (bottom) ══ -->
+    <div class="relative" style="height: calc(52vh - 1.5rem);">
+        <div id="three-container" class="w-full h-full"></div>
+
+        <div id="drag-hint" class="absolute inset-0 flex items-center justify-center pointer-events-none z-40">
+            <div class="glass px-6 py-3 flex items-center gap-x-3 hint">
+                <i class="fa-solid fa-hand-paper text-[#5cf2ff] text-xl"></i>
+                <div>
+                    <div class="font-semibold text-sm">Drag to rotate • Pinch to zoom</div>
+                    <div class="text-[10px] text-white/50">Tap a tray to inspect • Explode to see internals</div>
+                </div>
+            </div>
+        </div>
+
+        
+
+        <div class="absolute bottom-3 left-3 glass px-2.5 py-1 text-[10px] font-mono text-white/45 z-40">
+            <span id="perf-chip">— fps</span>
+        </div>
+
+        <!-- backdrop dimmer -->
+        <div class="absolute top-3 left-3 z-40 glass px-3 py-2 flex items-center gap-x-2.5" style="width:190px">
+            <span style="font:600 9px ui-monospace,monospace;letter-spacing:.1em;color:#8ea3c4;white-space:nowrap">BG LIGHT</span>
+            <input id="bg-dim" type="range" min="0" max="150" value="100"
+                   oninput="onBgDim(this.value)"
+                   style="flex:1;accent-color:#5cf2ff;height:4px">
+            <span id="bg-dim-val" style="font:600 9px ui-monospace,monospace;color:#5cf2ff;width:30px;text-align:right">100</span>
+        </div>
+
+        <!-- hybrid: controls float over the 3D viewport -->
+        <div class="absolute bottom-3 right-3 z-40 flex gap-x-2">
+            <button onclick="toggleExplode()" title="Explode"
+                    class="glass w-10 h-10 flex items-center justify-center text-[#5cf2ff] text-base"
+                    style="background:rgba(92,242,255,0.08)">⇕</button>
+            <button id="tour-btn" onclick="toggleTour()" title="Tour"
+                    class="glass w-10 h-10 flex items-center justify-center text-[#b478ff] text-sm"
+                    style="background:rgba(180,120,255,0.08);border-color:rgba(180,120,255,0.30)"><span>▶</span></button>
+            <button onclick="openManifest()" title="Rack manifest"
+                    class="glass w-10 h-10 flex items-center justify-center text-[#36e2b2] text-base"
+                    style="background:rgba(54,226,178,0.08);border-color:rgba(54,226,178,0.30)">☰</button>
+        </div>
+
+        <!-- P6: tour caption — authored beat text, crossfades per keyframe -->
+        <div id="tour-cap" class="absolute left-1/2 bottom-6 -translate-x-1/2 z-40 glass px-5 py-2.5 pointer-events-none opacity-0 transition-opacity duration-300 text-center" style="min-width:230px">
+            <div id="tour-cap-title" class="font-display text-sm tracking-wide text-[#5cf2ff]"></div>
+            <div id="tour-cap-sub" class="font-mono text-[10px] text-white/55 mt-0.5"></div>
+        </div>
+
+        <!-- status chips — compact, corner-hugging, view stays clear -->
+        <div class="absolute top-1.5 right-1.5 flex flex-col items-end gap-y-1 z-40 pointer-events-none">
+            <div class="px-2 py-0.5 rounded-lg flex items-center gap-x-1.5"
+                 style="background:rgba(6,9,15,0.88);border:1px solid rgba(52,211,153,0.28);border-radius:9px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:inset 0 1px 0 rgba(255,255,255,0.05)">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block"></span>
+                <span id="rack-status" class="font-mono text-[10px] text-white/70 leading-tight"></span>
+            </div>
+            <div class="px-2 py-0.5 rounded-lg flex items-center gap-x-1.5"
+                 style="background:rgba(6,9,15,0.88);border:1px solid rgba(240,166,60,0.28);border-radius:9px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:inset 0 1px 0 rgba(255,255,255,0.05)">
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block"></span>
+                <span id="racked-status" class="font-mono text-[10px] text-amber-300/90 leading-tight"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ Zone map — the working surface, wired to the 3D above ══ -->
+    <div id="map" style="position:absolute;left:0;right:0;bottom:0;top:calc(52vh + 1.5rem);
+         padding:8px 10px 10px;display:flex;flex-direction:column;gap:4px;
+         background:rgba(5,7,11,0.92);border-top:1px solid rgba(92,242,255,0.20);
+         backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)"></div>
+
+    <!-- ══ Rack manifest / BOM-diff sheet ══ -->
+    <div id="manifest" class="hidden fixed inset-0 z-[110]" style="background:rgba(0,0,0,0.72)" onclick="closeManifest()">
+        <div onclick="event.stopPropagation()" class="absolute bottom-0 left-0 right-0 sheet rounded-t-3xl p-5 max-h-[82vh] overflow-auto">
+            <div class="flex justify-between items-start mb-1">
+                <div>
+                    <div id="mf-title" class="font-display text-2xl tracking-tighter text-white"></div>
+                    <div id="mf-sub" class="text-xs text-white/50 font-mono"></div>
+                </div>
+                <button onclick="closeManifest()" class="text-white/40 p-2 -mr-2 text-xl">✕</button>
+            </div>
+            <div id="mf-banner" class="my-3 rounded-2xl px-4 py-3 font-mono text-sm"></div>
+            <div id="mf-progress" class="mb-4"></div>
+            <div id="mf-missing"></div>
+            <div id="mf-installed" class="mt-4"></div>
+        </div>
+    </div>
+
+<script>
+'use strict';
+/* ═══ P8.1: ERROR TRAP — nothing dies silently, ever ═══ */
+function showFatal(src, e){
+    try {
+        let p = document.getElementById('err-panel');
+        if (!p){
+            p = document.createElement('div');
+            p.id = 'err-panel';
+            p.style.cssText = 'position:fixed;left:8px;right:8px;top:60px;z-index:9999;' +
+                'background:rgba(40,8,8,0.95);border:1px solid #ff3b30;border-radius:10px;' +
+                'padding:12px;font:11px ui-monospace,monospace;color:#ffb4ae;white-space:pre-wrap;max-height:45vh;overflow:auto';
+            document.body.appendChild(p);
+        }
+        p.textContent += '[' + src + '] ' + (e && e.message ? e.message : e) + '\n' +
+            (e && e.stack ? e.stack.split('\n').slice(0, 4).join('\n') : '') + '\n\n';
+    } catch(_){}
+}
+window.onerror = function(msg, url, line, col, err){ showFatal('window ' + line + ':' + col, err || msg); };
+window.addEventListener('unhandledrejection', ev => showFatal('promise', ev.reason));
+/* ═══════════════════════════════════════════════════════════════════════
+   PHANTOM · MOCKUP-FINAL — GB300 NVL72 3D rack, definitive build
+   Consolidates every device-verified decision from the full iteration line.
+
+   LOCKED SPEC (for the app port — three.js r128, no CDN):
+   · Scale        real meters: U=0.0445 · rack 0.60w × 1.07d × 2.136h · 48U
+   · Color mgmt   sRGBEncoding + NoToneMapping (neon unsquashed) — NEVER ACES
+   · GLOW         master emissive dial = 0.7 (approved "like this, dimmer")
+   · Palette      compute #5cf2ff · nvswitch #b478ff · power #ffd60a ·
+                  cdu #3fd0c8 · mgmt #8ea3c4 · fault #ff3b30 · ghost #f0a63c
+   · Cabinet      dark GLASS side/top panels (op 0.32) + neon cyan edge
+                  trace (op 0.45) + drilled EIA front rails + brushed plinth
+   · Trays        LIT recipe: diffuse hue×0.32 · emissive pure hue
+                  face 1.0×GLOW (fault 1.15×GLOW, pulsing) · soft body glow
+                  0.3×GLOW · hairline edge · additive glow quad · LED
+   · NVSwitch     3×8 QSFP port grid w/ depth, latch handle, violet frame
+   · Ghost        amber slot: fill 0.12 · lines 0.7
+   · Rear         copper spine + ribs · DC bus bar · blue/red manifolds ·
+                  blind-mate caps per tray (never hollow)
+   · Anatomy      CDU 3U top · POWER ×3 · COMPUTE A ×9 · NVLINK ×9 ·
+                  COMPUTE B ×9 (owner-verify vs floor)
+   · Camera       FOV 36 · orbit φ 0.6–1.55 · zoom r 1.0–7.0 ·
+                  idle front-biased sweep after 4s · all moves tweened
+   · Controls     pointer registry (1=orbit 2=pinch) · tap<8px<400ms ·
+                  auto-frame selection into upper half before sheet opens
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── constants ── */
+/* ★ SIZE DIALS — P14: label-first proportions (true scale: 0.60 / 0.0445) */
+const RACK_WIDTH = 0.92;                 /* width: label canvas real estate */
+const U_HEIGHT = 0.054;                  /* taller Us: label height */
+const TOTAL_U = 48;
+const RACK_DEPTH = 1.07;
+const RACK_HEIGHT = U_HEIGHT * TOTAL_U;  /* derived — 2.59 */
+const IW = RACK_WIDTH - 0.11;
+const GLOW = 1.0;                       /* ★ dial preserved; spec accent values are the baseline */
+const COLORS = {                         /* P9: gunmetal art direction (spec) */
+    background:0x02050a, frame:0x0b1118, rail:0x151e28, chassis:0x111923, panel:0x182431,
+    cyan:0x22ddff, violet:0x8b5cff, healthy:0x36e2b2, warning:0xffc83d, fault:0xff5f67 };
+const FAULT_HEX = COLORS.fault, GHOST_HEX = 0xf0a63c;
+
+/* ═══════════════════════════════════════════════════════════════════
+   P11: REAL DATA CONTRACT — this block IS the app wiring spec.
+   RACK_DATA.slots[] uses PHANTOM's exact Master parser shape:
+     { uStart, uEnd, type, name, model, notes }
+   type vocabulary = deploy_classifyDevice output:
+     gpu | switch | pdu | patch | server | storage | blank
+   status extension (per-node, app model): racked | pending | fault
+   TO FEED A REAL RACK: replace slots[] with a racksByCab[rackId].slots
+   export (+ per-node status from the deploy record). Nothing else changes.
+   ═══════════════════════════════════════════════════════════════════ */
+const RACK_DATA = {
+    rackId: 'L-14', siteCode: 'AUS-01', totalU: 48,
+    slots: [
+        { uStart:46, uEnd:48, type:'blank',   name:'CDU / COOLANT DIST',  model:'',            status:'racked'  },
+        { uStart:45, uEnd:45, type:'pdu',     name:'POWER SHELF A',       model:'33kW SHELF',  status:'racked'  },
+        { uStart:44, uEnd:44, type:'pdu',     name:'POWER SHELF B',       model:'33kW SHELF',  status:'racked'  },
+        { uStart:43, uEnd:43, type:'pdu',     name:'POWER SHELF C',       model:'33kW SHELF',  status:'racked'  },
+        { uStart:41, uEnd:41, type:'gpu',     name:'L14-GPU-01',          model:'GB300 TRAY',  status:'racked'  },
+        { uStart:40, uEnd:40, type:'gpu',     name:'L14-GPU-02',          model:'GB300 TRAY',  status:'racked'  },
+        { uStart:39, uEnd:39, type:'gpu',     name:'L14-GPU-03',          model:'GB300 TRAY',  status:'fault'   },
+        { uStart:38, uEnd:38, type:'gpu',     name:'L14-GPU-04',          model:'GB300 TRAY',  status:'racked'  },
+        { uStart:37, uEnd:37, type:'gpu',     name:'L14-GPU-05',          model:'GB300 TRAY',  status:'racked'  },
+        { uStart:36, uEnd:36, type:'gpu',     name:'L14-GPU-06',          model:'GB300 TRAY',  status:'racked'  },
+        { uStart:35, uEnd:35, type:'gpu',     name:'L14-GPU-07',          model:'GB300 TRAY',  status:'pending' },
+        { uStart:34, uEnd:34, type:'gpu',     name:'L14-GPU-08',          model:'GB300 TRAY',  status:'pending' },
+        { uStart:33, uEnd:33, type:'gpu',     name:'L14-GPU-09',          model:'GB300 TRAY',  status:'pending' },
+        { uStart:32, uEnd:32, type:'switch',  name:'L14-NVL-01',          model:'NVLINK5 SW',  status:'racked'  },
+        { uStart:31, uEnd:31, type:'switch',  name:'L14-NVL-02',          model:'NVLINK5 SW',  status:'racked'  },
+        { uStart:30, uEnd:30, type:'switch',  name:'L14-NVL-03',          model:'NVLINK5 SW',  status:'racked'  },
+        { uStart:29, uEnd:29, type:'switch',  name:'L14-NVL-04',          model:'NVLINK5 SW',  status:'pending' },
+        { uStart:28, uEnd:28, type:'switch',  name:'L14-NVL-05',          model:'NVLINK5 SW',  status:'pending' },
+        { uStart:27, uEnd:27, type:'switch',  name:'L14-NVL-06',          model:'NVLINK5 SW',  status:'pending' },
+        { uStart:26, uEnd:26, type:'switch',  name:'L14-NVL-07',          model:'NVLINK5 SW',  status:'pending' },
+        { uStart:25, uEnd:25, type:'switch',  name:'L14-NVL-08',          model:'NVLINK5 SW',  status:'pending' },
+        { uStart:24, uEnd:24, type:'switch',  name:'L14-NVL-09',          model:'NVLINK5 SW',  status:'pending' },
+        { uStart:23, uEnd:23, type:'gpu',     name:'L14-GPU-10',          model:'GB300 TRAY',  status:'racked'  },
+        { uStart:22, uEnd:22, type:'gpu',     name:'L14-GPU-11',          model:'GB300 TRAY',  status:'racked'  },
+        { uStart:21, uEnd:21, type:'gpu',     name:'L14-GPU-12',          model:'GB300 TRAY',  status:'racked'  },
+        { uStart:20, uEnd:20, type:'gpu',     name:'L14-GPU-13',          model:'GB300 TRAY',  status:'racked'  },
+        { uStart:19, uEnd:19, type:'gpu',     name:'L14-GPU-14',          model:'GB300 TRAY',  status:'racked'  },
+        { uStart:18, uEnd:18, type:'gpu',     name:'L14-GPU-15',          model:'GB300 TRAY',  status:'pending' },
+        { uStart:17, uEnd:17, type:'gpu',     name:'L14-GPU-16',          model:'GB300 TRAY',  status:'pending' },
+        { uStart:16, uEnd:16, type:'gpu',     name:'L14-GPU-17',          model:'GB300 TRAY',  status:'pending' },
+        { uStart:15, uEnd:15, type:'gpu',     name:'L14-GPU-18',          model:'GB300 TRAY',  status:'pending' },
+        { uStart:13, uEnd:14, type:'server',  name:'L14-MGMT-01',         model:'OOB MGMT',    status:'racked'  }
+    ]
+};
+/* ── RACK LIBRARY — in the app this is racksByCab; tap a rack, only it renders ── */
+function mkRack(id, faultAt, pendFrom){
+    const slots = [
+        { uStart:46, uEnd:48, type:'blank',  name:'CDU / COOLANT DIST', status:'racked' },
+        { uStart:45, uEnd:45, type:'pdu',    name:'POWER SHELF A',      status:'racked' },
+        { uStart:44, uEnd:44, type:'pdu',    name:'POWER SHELF B',      status:'racked' },
+        { uStart:43, uEnd:43, type:'pdu',    name:'POWER SHELF C',      status:'racked' }];
+    for (let n = 1; n <= 9; n++) slots.push({ uStart:42 - n, uEnd:42 - n, type:'gpu',
+        name:id.replace('-','') + '-GPU-' + String(n).padStart(2,'0'),
+        status:(42 - n) === faultAt ? 'fault' : (n >= pendFrom ? 'pending' : 'racked') });
+    for (let n = 1; n <= 9; n++) slots.push({ uStart:33 - n, uEnd:33 - n, type:'switch',
+        name:id.replace('-','') + '-NVL-' + String(n).padStart(2,'0'),
+        status:n >= Math.max(2, pendFrom - 3) ? 'pending' : 'racked' });
+    for (let n = 10; n <= 18; n++) slots.push({ uStart:33 - n, uEnd:33 - n, type:'gpu',
+        name:id.replace('-','') + '-GPU-' + n,
+        status:n - 9 >= pendFrom - 1 ? 'pending' : 'racked' });
+    slots.push({ uStart:13, uEnd:14, type:'server', name:id.replace('-','') + '-MGMT-01', status:'racked' });
+    return { rackId:id, siteCode:'AUS-01', totalU:48, slots:slots };
+}
+const RACKS = {
+    'L-14': RACK_DATA,                     /* mid-build · 1 fault */
+    'L-15': mkRack('L-15', -1, 9),         /* nearly complete */
+    'L-16': mkRack('L-16', -1, 2)          /* just started */
+};
+let CURRENT_RACK = 'L-14';
+
+/* classifier type → visual profile */
+const MASTER_TYPE_MAP = { gpu:'compute', switch:'nvswitch', pdu:'power',
+    storage:'cdu', server:'mgmt', patch:'mgmt', blank:'blank' };
+
+const CATALOG = {
+    compute:  { name:'Compute Tray',  model:'GB300 · 2× Grace + 4× Blackwell Ultra', u:1, kw:6.2, color:0x22ddff, css:'#22ddff', icon:'fa-microchip',
+                specs:{ 'GPUs':'4× Blackwell Ultra','CPUs':'2× Grace','Cooling':'DLC cold plate','NVLink':'Blind-mate cartridge (rear)' } },
+    nvswitch: { name:'NVLink Switch', model:'NVLink 5 switch tray', u:1, kw:0.9, color:0x8b5cff, css:'#8b5cff', icon:'fa-network-wired',
+                specs:{ 'Fabric':'NVLink 5','Role':'NVL72 spine crossbar','Cooling':'DLC cold plate','Position':'Center bank' } },
+    power:    { name:'Power Shelf',   model:'33 kW shelf · DC bus bar feed', u:1, kw:0, color:0xffc83d, css:'#ffc83d', icon:'fa-bolt-lightning',
+                specs:{ 'Output':'33 kW','Feed':'DC bus bar (rear)','Redundancy':'N+N capable','Input':'415 V 3-phase' } },
+    cdu:      { name:'CDU',           model:'In-rack coolant distribution unit', u:3, kw:0.4, color:0x36e2b2, css:'#36e2b2', icon:'fa-droplet',
+                specs:{ 'Role':'Liquid loop supply/return','Capacity':'Rack DLC loop','Position':'Top of rack','Monitoring':'Flow + ΔT' } },
+    mgmt:     { name:'Mgmt Switch',   model:'1G/10G OOB management', u:1, kw:0.3, color:0x8ea3c4, css:'#8ea3c4', icon:'fa-plug',
+                specs:{ 'Role':'BMC / OOB network','Uplink':'10G','Ports':'48× 1G','Position':'Top of rack' } },
+    blank:    { name:'Blank / Infra',  model:'Blanking / cooling',    u:1, kw:0,   color:0x36e2b2, css:'#36e2b2', icon:'fa-square',
+                specs:{ 'Role':'Cooling / blanking / infra' } }
+};
+
+/* ── state ── */
+let scene, camera, renderer, rackGroup;
+let components = [];
+let selectedComponent = null;
+let raycaster, mouse, clock;
+
+const pointers = new Map();
+let pinchD = 0, downX = 0, downY = 0, downAt = 0, moved = false;
+
+const spherical = { radius: 4.4, theta: 0.9, phi: 1.25 };
+const target = new THREE.Vector3(0, RACK_HEIGHT / 2, 0);
+const HOME = { radius: 4.4, theta: 0.9, phi: 1.25, ty: RACK_HEIGHT / 2 };
+
+let explodeAmount = 0, explodeTargetAmt = 0;
+let lastInteract = -1e9, sweepT = 0, hintGone = false, camTween = null;
+let axisLock = null;                                          /* P8.3: tour drag axis */
+
+let MAXANISO = 4;                                        /* P12: set from GPU caps in init */
+const slots = new Array(TOTAL_U + 1).fill(null);
+function uToY(u){ return (u - 0.5) * U_HEIGHT; }
+
+/* ── layers ── */
+const REG = { frame: [], rear: [] };
+/* ── shared geometry cache, keyed by U-height ── */
+const GEO_CACHE = {};
+function geoFor(hU){
+    if (GEO_CACHE[hU]) return GEO_CACHE[hU];
+    const h = hU * U_HEIGHT;
+    const G = {
+        body:  new THREE.BoxGeometry(IW, h * 0.94, RACK_DEPTH - 0.20),
+        rear:  new THREE.BoxGeometry(IW * 0.96, h * 0.80, 0.02),
+        bezel: new THREE.BoxGeometry(IW + 0.015, h * 0.98, 0.015),
+        face:  new THREE.BoxGeometry(IW * 0.94, h * 0.78, 0.007),
+        glow:  new THREE.PlaneGeometry(IW * 1.05, h * 1.08),
+        led:   new THREE.BoxGeometry(0.014, 0.008, 0.006),
+        slot:  new THREE.BoxGeometry(IW, h * 0.92, 0.012)
+    };
+    G.faceEdges = new THREE.EdgesGeometry(G.face);
+    G.slotEdges = new THREE.EdgesGeometry(G.slot);
+    GEO_CACHE[hU] = G;
+    return G;
+}
+
+/* ── shared materials ── */
+const bodyMat  = new THREE.MeshStandardMaterial({ color:COLORS.chassis, metalness:0.76, roughness:0.32, envMapIntensity:1.25 });
+const bezelMat = new THREE.MeshStandardMaterial({ color:COLORS.panel,   metalness:0.68, roughness:0.36, envMapIntensity:1.2 });
+const rearCapMat = new THREE.MeshStandardMaterial({ color:0x121a28, metalness:0.6, roughness:0.5,
+    emissive:0x2a1c08, emissiveIntensity:0.35 * GLOW });
+
+/* ══════════ init ══════════ */
+function init(){
+    const container = document.getElementById('three-container');
+    clock = new THREE.Clock();
+
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x000508);        /* Forge blue-black */
+    scene.fog = new THREE.FogExp2(0x000508, 0.052);      /* Forge: dense, room stays intimate */
+
+    camera = new THREE.PerspectiveCamera(36, container.clientWidth / container.clientHeight, 0.05, 100);
+
+    renderer = new THREE.WebGLRenderer({ antialias:true, powerPreference:'high-performance' });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2.25));   /* P12: sharp — was 1.75 */
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.outputEncoding = THREE.sRGBEncoding;        /* r134 equiv of outputColorSpace */
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 0.72;                 /* Forge-dim: moody enclosed hall */
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    MAXANISO = renderer.capabilities.getMaxAnisotropy();                    /* P12 */
+    renderer.domElement.classList.add('three-canvas');
+    container.appendChild(renderer.domElement);
+
+    raycaster = new THREE.Raycaster();
+    mouse = new THREE.Vector2();
+
+    /* ── P5: image-based environment — the PBR realism lever.
+       Procedural equirect "data hall": dark floor, cool ceiling light
+       strips, faint cyan/violet wall glow. PMREM'd → scene.environment,
+       so every metal surface picks up REAL reflections. ── */
+    (function buildEnvironment(){ try {
+        const cv = document.createElement('canvas');
+        cv.width = 512; cv.height = 256;
+        const g = cv.getContext('2d');
+        // hall gradient: near-black floor → deep blue upper walls
+        const grad = g.createLinearGradient(0, 256, 0, 0);
+        grad.addColorStop(0.0, '#020408');
+        grad.addColorStop(0.5, '#0a1220');
+        grad.addColorStop(1.0, '#141f33');
+        g.fillStyle = grad; g.fillRect(0, 0, 512, 256);
+        // ceiling light strips (the Marmoset-style studio highlights)
+        g.fillStyle = '#cfe6ff';
+        for (let x = 20; x < 512; x += 86) g.fillRect(x, 14, 46, 10);
+        g.fillStyle = 'rgba(207,230,255,0.35)';
+        for (let x = 20; x < 512; x += 86) g.fillRect(x - 6, 26, 58, 6);
+        // faint cyan + violet wall glows (aisle ambience)
+        const cy = g.createRadialGradient(120, 150, 0, 120, 150, 120);
+        cy.addColorStop(0, 'rgba(92,242,255,0.18)'); cy.addColorStop(1, 'transparent');
+        g.fillStyle = cy; g.fillRect(0, 60, 260, 196);
+        const vi = g.createRadialGradient(400, 140, 0, 400, 140, 120);
+        vi.addColorStop(0, 'rgba(155,89,255,0.14)'); vi.addColorStop(1, 'transparent');
+        g.fillStyle = vi; g.fillRect(260, 60, 252, 196);
+
+        const envTex = new THREE.CanvasTexture(cv);
+        envTex.mapping = THREE.EquirectangularReflectionMapping;
+        const pmrem = new THREE.PMREMGenerator(renderer);
+        scene.environment = pmrem.fromEquirectangular(envTex).texture;
+        envTex.dispose(); pmrem.dispose();
+    } catch(e){ showFatal('environment (skipped)', e); } })();
+
+    /* P9 lighting — spec rig (intensities mapped physical → r134 legacy) */
+    scene.add(new THREE.HemisphereLight(0x14202e, 0x01030a, 0.10));  /* whole room near-black */
+    const key = new THREE.DirectionalLight(0xbfe9ff, 0.30);          /* minimal global fill */
+    key.position.set(4, 7, 5);
+    key.castShadow = true;
+    key.shadow.mapSize.set(1024, 1024);
+    key.shadow.camera.near = 0.1;  key.shadow.camera.far = 30;
+    key.shadow.camera.left = -5;   key.shadow.camera.right = 5;
+    key.shadow.camera.top = 7;     key.shadow.camera.bottom = -3;
+    key.shadow.bias = -0.0003;
+    scene.add(key);
+    const cyanL = new THREE.PointLight(COLORS.cyan, 0.7, 8, 2);
+    cyanL.position.set(-3, 3.5, 4);  scene.add(cyanL);               /* cyan: front-left */
+    const violetL = new THREE.PointLight(COLORS.violet, 0.6, 8, 2);
+    violetL.position.set(3, 4, -2);  scene.add(violetL);             /* violet: rear-right */
+    const topL = new THREE.PointLight(0xffffff, 0.3, 6, 2);
+    topL.position.set(0, 7, 1);      scene.add(topL);
+
+    buildRack();
+    buildRear();
+    buildGround();
+    buildHall();                                        /* the aisle */
+
+    /* ── HERO SPOTLIGHT RIG — the star. Short-range lights centered on the
+       hero so the aisle stays dark but the working rack is fully lit. ── */
+    const heroKey = new THREE.SpotLight(0xeaf6ff, 3.4, 6, Math.PI/5, 0.5, 1.5);
+    heroKey.position.set(1.2, RACK_HEIGHT + 1.6, 2.2);
+    heroKey.target.position.set(0, RACK_HEIGHT/2, 0);
+    scene.add(heroKey); scene.add(heroKey.target);
+    const heroFillC = new THREE.PointLight(COLORS.cyan, 1.1, 2.6, 2);
+    heroFillC.position.set(-0.9, RACK_HEIGHT*0.6, 1.1); scene.add(heroFillC);
+    const heroFillV = new THREE.PointLight(COLORS.violet, 0.9, 2.6, 2);
+    heroFillV.position.set(0.9, RACK_HEIGHT*0.5, -0.9); scene.add(heroFillV);
+    const heroRim = new THREE.DirectionalLight(0xbfe9ff, 0.5);
+    heroRim.position.set(0, RACK_HEIGHT*0.7, -2); scene.add(heroRim);
+    const heroGlow = new THREE.PointLight(COLORS.cyan, 0.8, 1.8, 2);
+    heroGlow.position.set(0, 0.15, 0.8); scene.add(heroGlow);   /* floor pool */
+    populateDefault();
+    bindControls();
+    updateStatus();
+    animate();
+}
+
+/* ══════════ cabinet — neon glass shell + drilled rails ══════════ */
+function buildRack(){
+    rackGroup = new THREE.Group();
+    scene.add(rackGroup);
+    const t = 0.02;
+
+    /* P9: solid gunmetal frame — transparency only where real glass exists (none on NVL72 sides) */
+    const glassMat = new THREE.MeshStandardMaterial({
+        color:COLORS.frame, metalness:0.92, roughness:0.22, envMapIntensity:1.6 });
+
+    [-(RACK_WIDTH/2 + t/2), (RACK_WIDTH/2 + t/2)].forEach(x => {
+        const p = new THREE.Mesh(new THREE.BoxGeometry(t, RACK_HEIGHT + 0.06, RACK_DEPTH), glassMat);
+        p.position.set(x, RACK_HEIGHT/2, 0);
+        p.castShadow = true; p.receiveShadow = true;
+        rackGroup.add(p);
+    });
+    const cap = new THREE.Mesh(new THREE.BoxGeometry(RACK_WIDTH + t*2, 0.035, RACK_DEPTH + t*2), glassMat);
+    cap.position.set(0, RACK_HEIGHT + 0.05, 0); rackGroup.add(cap);
+
+    /* solid plinth — brushed, grounds the glass shell */
+    const plinthTex = (() => {
+        const cv = document.createElement('canvas'); cv.width = 512; cv.height = 128;   /* P12: 2× */
+        const g = cv.getContext('2d');
+        g.fillStyle = '#0c1119'; g.fillRect(0, 0, 512, 128);
+        for (let x = 0; x < 512; x += 2){
+            const v = 10 + Math.random() * 14;
+            g.fillStyle = 'rgb(' + v + ',' + (v + 5) + ',' + (v + 12) + ')';
+            g.fillRect(x, 0, 1, 128);
+        }
+        const tx = new THREE.CanvasTexture(cv);
+        tx.wrapS = tx.wrapT = THREE.RepeatWrapping;
+        tx.anisotropy = MAXANISO;
+        return tx;
+    })();
+    const plinth = new THREE.Mesh(
+        new THREE.BoxGeometry(RACK_WIDTH + 0.09, 0.085, RACK_DEPTH + 0.09),
+        new THREE.MeshStandardMaterial({ map:plinthTex, color:0xffffff, metalness:0.82, roughness:0.30, envMapIntensity:1.35 }));
+    plinth.position.set(0, -0.042, 0); rackGroup.add(plinth);
+
+    /* interior back wall */
+    const back = new THREE.Mesh(
+        new THREE.BoxGeometry(RACK_WIDTH - 0.03, RACK_HEIGHT, 0.014),
+        new THREE.MeshStandardMaterial({ color:0x070b12, metalness:0.25, roughness:0.9,
+            transparent:true, opacity:0.6, depthWrite:false }));
+    back.position.set(0, RACK_HEIGHT/2, -(RACK_DEPTH/2 - 0.11)); rackGroup.add(back);
+
+    /* drilled EIA mounting rails — the rack-read anchor, restored */
+    const railTex = (() => {
+        const cv = document.createElement('canvas'); cv.width = 64; cv.height = 1024;   /* P12: 2× */
+        const g = cv.getContext('2d');
+        g.fillStyle = '#16202f'; g.fillRect(0, 0, 64, 1024);
+        g.fillStyle = '#04060a';
+        for (let y = 12; y < 1024; y += 32) g.fillRect(22, y, 20, 16);
+        const tx = new THREE.CanvasTexture(cv);
+        tx.wrapS = tx.wrapT = THREE.RepeatWrapping; tx.repeat.set(1, 4);
+        tx.anisotropy = MAXANISO;
+        return tx;
+    })();
+    const railMat = new THREE.MeshStandardMaterial({ map:railTex, color:0xffffff, metalness:0.82, roughness:0.30, envMapIntensity:1.35 });
+    [-(RACK_WIDTH/2 - 0.035), (RACK_WIDTH/2 - 0.035)].forEach(x => {
+        const rail = new THREE.Mesh(new THREE.BoxGeometry(0.04, RACK_HEIGHT, 0.015), railMat);
+        rail.position.set(x, RACK_HEIGHT/2, RACK_DEPTH/2 - 0.01); rackGroup.add(rail);
+    });
+
+    /* neon cyan silhouette — the frame hero from the approved render */
+    const edges = new THREE.LineSegments(
+        new THREE.EdgesGeometry(new THREE.BoxGeometry(RACK_WIDTH + t*2, RACK_HEIGHT + 0.06, RACK_DEPTH + t*2)),
+        new THREE.LineBasicMaterial({ color:COLORS.cyan, transparent:true, opacity:0.20 }));   /* thin edge light, restrained */
+    edges.position.set(0, RACK_HEIGHT/2, 0);
+    rackGroup.add(edges);
+
+    REG.frame = rackGroup.children.slice();
+}
+
+/* ══════════ rear assembly — spine · bus bar · manifolds ══════════ */
+function buildRear(){
+    const g = new THREE.Group();
+    rackGroup.add(g);
+    REG.rear = [g];
+
+    const spanU = { lo: 15, hi: 41 };                    /* populated compute+switch span */
+    const spineH = (spanU.hi - spanU.lo + 1) * U_HEIGHT;
+    const spineY = (uToY(spanU.lo) + uToY(spanU.hi)) / 2;
+    const spineZ = -(RACK_DEPTH/2 - 0.055);
+    const spine = new THREE.Mesh(new THREE.BoxGeometry(0.12, spineH, 0.05),
+        new THREE.MeshStandardMaterial({ color:0xc47a3d, metalness:0.85, roughness:0.3,
+            emissive:0x552a08, emissiveIntensity:0.25 * GLOW, envMapIntensity:1.1 }));
+    spine.position.set(0, spineY, spineZ); g.add(spine);
+
+    const ribMat = new THREE.MeshStandardMaterial({ color:0x8a5326, metalness:0.9, roughness:0.35 });
+    for (let ru = spanU.lo; ru <= spanU.hi; ru += 2){
+        const rib = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.008, 0.056), ribMat);
+        rib.position.set(0, uToY(ru), spineZ); g.add(rib);
+    }
+
+    const bus = new THREE.Mesh(new THREE.BoxGeometry(0.05, RACK_HEIGHT - 0.2, 0.02),
+        new THREE.MeshStandardMaterial({ color:0x6e5a22, metalness:0.9, roughness:0.4 }));
+    bus.position.set(0.18, RACK_HEIGHT/2, -(RACK_DEPTH/2 - 0.035)); g.add(bus);
+
+    [[-0.24, 0x2e6bff], [-0.17, 0xd94f35]].forEach(([x, c]) => {
+        const m = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, RACK_HEIGHT - 0.1, 16),
+            new THREE.MeshStandardMaterial({ color:c, metalness:0.4, roughness:0.5,
+                emissive:c, emissiveIntensity:0.18 * GLOW }));
+        m.position.set(x, RACK_HEIGHT/2, -(RACK_DEPTH/2 - 0.035)); g.add(m);
+    });
+}
+
+/* ══════════ ground — radial falloff + foot ring ══════════ */
+function buildGround(){
+    const gtex = (() => {
+        const cv = document.createElement('canvas'); cv.width = cv.height = 512;
+        const g = cv.getContext('2d');
+        const rg = g.createRadialGradient(256, 256, 0, 256, 256, 256);
+        rg.addColorStop(0.0, '#0a121e');
+        rg.addColorStop(0.45, '#060b13');
+        rg.addColorStop(1.0, '#06090f');
+        g.fillStyle = rg; g.fillRect(0, 0, 512, 512);
+        return new THREE.CanvasTexture(cv);
+    })();
+    const ground = new THREE.Mesh(new THREE.CircleGeometry(2.4, 64),
+        new THREE.MeshStandardMaterial({ map:gtex, color:0x2a3444, metalness:0.28, roughness:0.52,
+            transparent:true, opacity:0.86, depthWrite:false }));   /* P9: dark platform, reflection ghosts through */
+    ground.rotation.x = -Math.PI/2; ground.position.y = -0.086;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    /* P8: soft contact shadow — grounds the cabinet */
+    const shTex = (() => {
+        const cv = document.createElement('canvas'); cv.width = cv.height = 256;
+        const g = cv.getContext('2d');
+        const rg = g.createRadialGradient(128, 128, 0, 128, 128, 128);
+        rg.addColorStop(0, 'rgba(0,0,0,0.85)');
+        rg.addColorStop(0.55, 'rgba(0,0,0,0.4)');
+        rg.addColorStop(1, 'rgba(0,0,0,0)');
+        g.fillStyle = rg; g.fillRect(0, 0, 256, 256);
+        return new THREE.CanvasTexture(cv);
+    })();
+    const contact = new THREE.Mesh(new THREE.PlaneGeometry(RACK_WIDTH * 3.1, 2.6),
+        new THREE.MeshBasicMaterial({ map:shTex, transparent:true, depthWrite:false }));
+    contact.rotation.x = -Math.PI/2; contact.position.y = -0.084; scene.add(contact);
+    const ring = new THREE.Mesh(new THREE.RingGeometry(1.05, 1.09, 96),
+        new THREE.MeshBasicMaterial({ color:COLORS.cyan, transparent:true, opacity:0.18, side:THREE.DoubleSide }));
+    ring.rotation.x = -Math.PI/2; ring.position.y = -0.084; scene.add(ring);
+}
+
+/* ══════════ P8: floor reflection — flipped clone under the semi-
+   transparent floor. Shares live materials, so fault pulse and glow
+   reflect automatically; rebuilt whenever tray visuals change. ══════════ */
+let _mirror = null, _mirrorDead = false;
+function rebuildMirror(){
+    if (_mirrorDead || !rackGroup) return;
+    try {
+        if (_mirror){ scene.remove(_mirror); _mirror = null; }
+        /* P8.2: userData.comp is CIRCULAR (comp→group→userData→comp) and
+           three's clone JSON-stringifies userData → stack overflow.
+           Stash empty userData for the clone, restore after. */
+        const stash = [];
+        rackGroup.traverse(o => { stash.push([o, o.userData]); o.userData = {}; });
+        try {
+            _mirror = rackGroup.clone(true);
+        } finally {
+            for (const [o, u] of stash) o.userData = u;   /* live rack always restored */
+        }
+        _mirror.scale.y = -1;
+        _mirror.position.y = 2 * (-0.086);
+        _mirror.traverse(o => { o.raycast = function(){}; o.castShadow = false; o.receiveShadow = false; });
+        scene.add(_mirror);
+    } catch(e){
+        _mirrorDead = true; _mirror = null;               /* decorative — disable, never crash */
+        showFatal('mirror (disabled)', e);
+    }
+}
+
+/* ══════════ P10: schematic faces — labels, underlines, port grids ══════════ */
+const TYPE_SEQ = {};
+const TYPE_LABEL = { compute:'COMPUTE', nvswitch:'NVLINK', power:'POWER SHELF', cdu:'CDU', mgmt:'MGMT' };
+function nextName(type){
+    TYPE_SEQ[type] = (TYPE_SEQ[type] || 0) + 1;
+    const n = TYPE_SEQ[type];
+    if (type === 'power') return 'POWER SHELF ' + String.fromCharCode(64 + n);
+    if (type === 'cdu')   return n === 1 ? 'CDU' : 'CDU ' + n;
+    return TYPE_LABEL[type] + ' ' + String(n).padStart(2, '0');
+}
+function faceTexture(name, cssHex, ghost, vtype){
+    /* P13: per-type hardware artwork (2D-rack-map reference).
+       Ghost = the SAME device, dimmed — install tracking shows the
+       hardware that's coming, not an empty hole. */
+    /* P14: 2048×128 ≈ the tray face's real 16:1 aspect — text renders
+       1:1 instead of being horizontally smeared 3× */
+    const cv = document.createElement('canvas'); cv.width = 2048; cv.height = 128;
+    const g = cv.getContext('2d');
+    const A = ghost ? 0.45 : 1.0;
+    g.fillStyle = '#10161f';
+    g.fillRect(0, 0, 2048, 128);
+    g.globalAlpha = A;
+
+    g.font = '700 62px ui-monospace, Menlo, monospace';
+    g.fillStyle = ghost ? '#f0a63c' : '#dfe9f5';
+    g.fillText(name, 64, 76);
+    g.fillStyle = ghost ? '#f0a63c' : cssHex;
+    g.fillRect(64, 94, 300, 10);
+    g.fillStyle = ghost ? '#f0a63c' : '#36e2b2';
+    g.beginPath(); g.arc(34, 58, 11, 0, 7); g.fill();
+
+    if (vtype === 'power'){
+        g.fillStyle = '#0a0f18'; g.fillRect(880, 16, 110, 96);
+        g.fillStyle = '#2a3548'; g.fillRect(902, 30, 66, 24); g.fillRect(902, 70, 66, 24);
+        for (let i = 0; i < 6; i++){
+            const x = 1060 + i * 150;
+            g.fillStyle = '#20293a'; g.fillRect(x, 16, 120, 96);
+            g.fillStyle = '#05080d'; g.fillRect(x + 18, 28, 84, 72);
+            g.fillStyle = '#2a3548';
+            g.fillRect(x + 36, 42, 14, 22); g.fillRect(x + 66, 42, 14, 22);
+            g.fillRect(x + 50, 74, 18, 16);
+        }
+    } else if (vtype === 'compute'){
+        for (let i = 0; i < 3; i++){
+            g.fillStyle = '#1a2230'; g.fillRect(440 + i * 200, 78, 170, 36);
+            g.fillStyle = cssHex; g.globalAlpha = A * 0.9;
+            g.fillRect(452 + i * 200, 90, 12, 12);
+            g.globalAlpha = A;
+        }
+        g.fillStyle = '#0c121c'; g.fillRect(1100, 14, 720, 100);
+        g.fillStyle = '#1c2534';
+        for (let vy = 24; vy < 108; vy += 20)
+            for (let vx = 1114; vx < 1800; vx += 30) g.fillRect(vx, vy, 18, 12);
+        g.fillStyle = '#28324a'; g.fillRect(1860, 18, 110, 92);
+        g.fillStyle = '#0a0f18'; g.fillRect(1886, 34, 58, 60);
+    } else {
+        g.fillStyle = '#1c2534';
+        for (let vy = 24; vy < 112; vy += 24) g.fillRect(1000, vy, 900, 12);
+    }
+    g.globalAlpha = 1;
+    const tx = new THREE.CanvasTexture(cv);
+    tx.anisotropy = MAXANISO;
+    return tx;
+}
+function disposeMat(m){
+    if (!m || !m.userData || !m.userData.own) return;
+    if (m.map) m.map.dispose();
+    if (m.emissiveMap && m.emissiveMap !== m.map) m.emissiveMap.dispose();
+    m.dispose();
+}
+
+/* ══════════ HALL — procedural data-center aisle backdrop ══════════ */
+function buildHall(){
+    /* tiled hall floor — semi-transparent like the disc so the hero's
+       mirror still ghosts through */
+    const tileTex = (() => {
+        /* raised-floor perforated tile: bevel edge, corner lift-holes, airflow perfs */
+        const cv = document.createElement('canvas'); cv.width = cv.height = 256;
+        const g = cv.getContext('2d');
+        g.fillStyle = '#070c13'; g.fillRect(0, 0, 256, 256);
+        g.strokeStyle = 'rgba(120,140,170,0.22)'; g.lineWidth = 3; g.strokeRect(3, 3, 250, 250);
+        g.strokeStyle = 'rgba(0,0,0,0.6)'; g.lineWidth = 2; g.strokeRect(7, 7, 242, 242);
+        g.fillStyle = '#04060a';
+        [[20,20],[236,20],[20,236],[236,236]].forEach(function(p){ g.beginPath(); g.arc(p[0],p[1],6,0,7); g.fill(); });
+        g.fillStyle = 'rgba(10,16,24,0.9)';
+        for (let y = 40; y < 216; y += 12)
+            for (let x = 40; x < 216; x += 12){ g.beginPath(); g.arc(x, y, 3, 0, 7); g.fill(); }
+        const tx = new THREE.CanvasTexture(cv);
+        tx.wrapS = tx.wrapT = THREE.RepeatWrapping; tx.repeat.set(22, 22);
+        tx.anisotropy = MAXANISO;
+        return tx;
+    })();
+    const hallFloor = new THREE.Mesh(new THREE.PlaneGeometry(48, 48),
+        new THREE.MeshStandardMaterial({ map:tileTex, color:0x4a5f78, metalness:0.8,
+            roughness:0.12, transparent:true, opacity:0.94, depthWrite:false, envMapIntensity:1.3 }));
+    hallFloor.rotation.x = -Math.PI/2; hallFloor.position.y = -0.09;
+    hallFloor.receiveShadow = true;
+    scene.add(hallFloor);
+    /* cold-aisle containment stripe under the hero row */
+    const stripe = new THREE.Mesh(new THREE.PlaneGeometry(16, 1.4),
+        new THREE.MeshBasicMaterial({ color:0x1a2634, transparent:true, opacity:0.5, depthWrite:false }));
+    stripe.rotation.x = -Math.PI/2; stripe.position.set(0, -0.087, 0); scene.add(stripe);
+
+    /* ceiling plane + light bars running the aisle */
+    const ceil = new THREE.Mesh(new THREE.PlaneGeometry(34, 34),
+        new THREE.MeshStandardMaterial({ color:0x05080e, metalness:0.2, roughness:0.95 }));
+    ceil.rotation.x = Math.PI/2; ceil.position.y = 4.1;
+    scene.add(ceil);
+    const barMat = new THREE.MeshStandardMaterial({ color:0xdff0ff,
+        emissive:0xcfe6ff, emissiveIntensity:1.6, metalness:0.1, roughness:0.4 });
+    [[-0.9, 1.9], [0.9, 1.9], [-0.9, -2.4], [0.9, -2.4]].forEach(([zOff]) => {});
+    [1.9, -2.4].forEach(z => {
+        const bar = new THREE.Mesh(new THREE.BoxGeometry(16, 0.06, 0.24), barMat);
+        bar.position.set(0, 4.05, z);
+        scene.add(bar);
+    });
+
+    /* Forge-style enclosure: dark walls close the room */
+    const wallMat = new THREE.MeshStandardMaterial({ color:0x060c12, roughness:0.85, metalness:0.2 });
+    [ { p:[0, 2, -16], r:[0,0,0], s:[48,4.2] },
+      { p:[-13, 2, -6], r:[0,Math.PI/2,0], s:[28,4.2] },
+      { p:[13, 2, -6], r:[0,-Math.PI/2,0], s:[28,4.2] } ].forEach(function(w){
+        const wall = new THREE.Mesh(new THREE.PlaneGeometry(w.s[0], w.s[1]), wallMat);
+        wall.position.set(w.p[0], w.p[1], w.p[2]); wall.rotation.set(w.r[0], w.r[1], w.r[2]);
+        wall.raycast = function(){}; scene.add(wall);
+    });
+
+    /* ═══════════════════════════════════════════════════════════════
+       FIXED FORGE BACKDROP — buildSingleRack / label / grid / lights are
+       1:1 from forge-base, built at NATIVE Forge scale inside one parent
+       group (BACKDROP). The group is scaled + pushed back so the racks sit
+       BEHIND the orbiting hero as pure decoration. The hero is untouched:
+       its scale, camera, tour, zone-map, auto-frame all stay as tuned.
+       Perspective shrinks the far racks → the crisp receding look.
+       ═══════════════════════════════════════════════════════════════ */
+    const BACKDROP = new THREE.Group();
+    const BG_LIGHTS = [];      /* backdrop point lights — dimmable */
+    const BG_EMISSIVE = [];    /* backdrop LED/label emissives — dimmable */
+    let BG_AMBIENT = null;
+    /* Forge racks are ~3.8 tall; our hero is RACK_HEIGHT (~2.59).
+       Match visual scale, then sit the group behind + below the hero. */
+    const BD_SCALE = RACK_HEIGHT / 3.8 * 1.15;
+    BACKDROP.scale.setScalar(BD_SCALE);
+    BACKDROP.position.set(0, -0.09, -3.2);           /* floor-aligned, pushed back */
+    scene.add(BACKDROP);
+
+    function makeRackLabel(rackId, color){
+        const w = 256, h = 80;
+        const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+        const ctx = cv.getContext('2d');
+        ctx.clearRect(0, 0, w, h);
+        ctx.fillStyle = 'rgba(0,4,10,0.88)';
+        ctx.beginPath(); ctx.roundRect(4, 4, w-8, h-8, 7); ctx.fill();
+        ctx.strokeStyle = color + '66'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.roundRect(4, 4, w-8, h-8, 7); ctx.stroke();
+        ctx.font = 'bold 32px "Courier New", monospace';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillStyle = color; ctx.shadowColor = color; ctx.shadowBlur = 18;
+        ctx.fillText(rackId, w/2, h/2 - 1);
+        ctx.shadowBlur = 5; ctx.fillText(rackId, w/2, h/2 - 1);
+        const tex = new THREE.CanvasTexture(cv);
+        return new THREE.Sprite(new THREE.SpriteMaterial({ map:tex, transparent:true, depthTest:false, sizeAttenuation:true }));
+    }
+
+    const FMAT = {
+        rack:     new THREE.MeshStandardMaterial({ color:0x0d1520, roughness:0.3, metalness:0.7 }),
+        rackFace: new THREE.MeshStandardMaterial({ color:0x080e18, roughness:0.2, metalness:0.9 })
+    };
+
+    function buildForgeRack(rackId, x, z){
+        const group = new THREE.Group();
+        group.position.set(x, 0, z);
+
+        const chassis = new THREE.Mesh(new THREE.BoxGeometry(1.8, 3.8, 1.0), FMAT.rack);
+        chassis.position.y = 1.9; group.add(chassis);
+
+        const face = new THREE.Mesh(new THREE.BoxGeometry(1.74, 3.74, 0.06), FMAT.rackFace);
+        face.position.set(0, 1.9, 0.535); group.add(face);
+
+        const bezel = new THREE.Mesh(new THREE.BoxGeometry(1.74, 0.04, 0.04),
+            new THREE.MeshStandardMaterial({ color:0x1a3040, roughness:0.3, metalness:0.9 }));
+        bezel.position.set(0, 3.77, 0.54); group.add(bezel);
+
+        const ledMat = new THREE.MeshStandardMaterial({ color:0x00ccff,
+            emissive:new THREE.Color(0x00aaee), emissiveIntensity:4, roughness:0.1 });
+        ledMat.userData.base = 4; BG_EMISSIVE.push(ledMat);
+        const led = new THREE.Mesh(new THREE.BoxGeometry(1.65, 0.05, 0.05), ledMat);
+        led.position.set(0, 3.84, 0.52); group.add(led);
+
+        for (let u = 0; u < 10; u++){
+            const slotY = 0.35 + u * 0.36;
+            const divider = new THREE.Mesh(new THREE.BoxGeometry(1.68, 0.008, 0.02),
+                new THREE.MeshStandardMaterial({ color:0x0d1a28, roughness:0.8 }));
+            divider.position.set(0, slotY, 0.56); group.add(divider);
+            const dotMat = new THREE.MeshStandardMaterial({ color:0x00ee55,
+                emissive:new THREE.Color(0x00cc44), emissiveIntensity:2.5 });
+            dotMat.userData.base = 2.5; BG_EMISSIVE.push(dotMat);
+            const dot = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, 0.02), dotMat);
+            dot.position.set(-0.78, slotY + 0.12, 0.565); group.add(dot);
+            const actMat = new THREE.MeshStandardMaterial({ color:0x0044aa,
+                emissive:new THREE.Color(0x003388), emissiveIntensity: Math.random() > 0.3 ? 1.5 : 0.1 });
+            actMat.userData.base = actMat.emissiveIntensity; BG_EMISSIVE.push(actMat);
+            const act = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.02), actMat);
+            act.position.set(-0.68, slotY + 0.12, 0.565); group.add(act);
+        }
+        for (let p = 0; p < 8; p++){
+            const port = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.08, 0.03),
+                new THREE.MeshStandardMaterial({ color:0x001122, roughness:0.2, metalness:0.8 }));
+            port.position.set(-0.7 + p * 0.2, 0.14, 0.565); group.add(port);
+        }
+        const rackLight = new THREE.PointLight(0x0077cc, 0.6, 3.2);   /* dimmer: distant glow */
+        rackLight.position.set(0, 3.5, 0.9); group.add(rackLight);
+        rackLight.userData.base = 0.6; BG_LIGHTS.push(rackLight);
+
+        const labelSprite = makeRackLabel(rackId, '#00c8e0');
+        labelSprite.position.set(0, 4.35, 0.5);
+        labelSprite.scale.set(1.1, 0.38, 1);
+        group.add(labelSprite);
+
+        group.traverse(o => { o.raycast = function(){}; });
+        BACKDROP.add(group);
+    }
+
+    /* Forge floor grid + a subtle floor plane, inside the backdrop group */
+    (function forgeFloor(){
+        const grid = new THREE.GridHelper(60, 60, 0x001a26, 0x001218);
+        grid.position.y = 0.001; grid.raycast = function(){};
+        BACKDROP.add(grid);
+    })();
+    /* ambient + overhead strips (backdrop-local) */
+    BG_AMBIENT = new THREE.AmbientLight(0x01030a, 0.18); BACKDROP.add(BG_AMBIENT); BG_AMBIENT.userData.base = 0.18;
+    [-6, -12, -18].forEach(z => {
+        for (let x = -12; x <= 12; x += 6){
+            /* strip fill lights removed — only rack LEDs light the aisle */
+            const stripMat = new THREE.MeshStandardMaterial({ color:0x0a1620, emissive:0x0a1a26, emissiveIntensity:0.25 });
+            stripMat.userData.base = 0.25; BG_EMISSIVE.push(stripMat);
+            const mesh = new THREE.Mesh(new THREE.BoxGeometry(4, 0.05, 0.1), stripMat);
+            mesh.position.set(x, 3.95, z); mesh.raycast = function(){}; BACKDROP.add(mesh);
+        }
+    });
+
+    /* the aisle: front row F-01..F-06 with F-04 left OPEN (that's where the
+       hero visually sits, in front), then two rows receding. Forge spacing 2.5 */
+    const FRONT = [-6.25, -3.75, -1.25, 1.25, 3.75, 6.25];
+    FRONT.forEach((x, i) => { if (i === 3) return; buildForgeRack('F-0' + (i+1), x, 0); });
+    [-6, -12].forEach((z, ri) => {
+        FRONT.forEach((x, i) =>
+            buildForgeRack('F-' + String((ri+1)*6 + i + 1).padStart(2,'0'), x, z));
+    });
+
+    window._fadeNeighbors = function(){};   /* fixed backdrop; no fade */
+
+    /* ── live backdrop dimmer: 0 = blackout · 1 = full · >1 = boost ── */
+    window.setBackdropLevel = function(lvl){
+        for (const L of BG_LIGHTS) L.intensity = L.userData.base * lvl;
+        for (const M of BG_EMISSIVE) M.emissiveIntensity = M.userData.base * lvl;
+        if (BG_AMBIENT) BG_AMBIENT.intensity = BG_AMBIENT.userData.base * lvl;
+    };
+
+    /* ── BACKGROUND SERVER FARM (Nexus LED trick) ──
+       Far rows implied entirely by grids of emissive LEDs — hundreds of
+       tiny glow points receding into fog. Zero geometry per server; the
+       eye reads "a room full of running machines". One Points object. */
+    (function ledFarm(){
+        const pos = [], col = [];
+        const cyan = [0.13, 0.87, 1.0], grn = [0.21, 0.89, 0.70],
+              amb = [0.94, 0.78, 0.24], vio = [0.55, 0.36, 1.0], dim = [0.10, 0.16, 0.24];
+        /* two deep rows behind + flanking, well past the hero row */
+        const rows = [
+            { z:-9,  xs:[-7,-5,-3,-1,1,3,5,7] },
+            { z:-12, xs:[-8,-6,-4,-2,0,2,4,6,8] },
+            { z:6.5, xs:[-7,-5,-3,3,5,7] },        /* a bit of the facing row, far */
+        ];
+        for (const row of rows){
+            for (const x of row.xs){
+                for (let u = 0; u < 22; u++){           /* ~22 lit trays per cab */
+                    if (Math.random() < 0.22) continue; /* some dark bays */
+                    const y = 0.35 + u * 0.11;
+                    for (let k = 0; k < 3; k++){        /* 2-3 LEDs per tray */
+                        const px = x + (RACK_WIDTH * 0.5) * ((k - 1) * 0.55) + (Math.random()-0.5)*0.05;
+                        pos.push(px, y, row.z + (Math.random()-0.5)*0.1);
+                        const r = Math.random();
+                        const c = r < 0.55 ? cyan : r < 0.72 ? grn : r < 0.82 ? amb : r < 0.9 ? vio : dim;
+                        col.push(c[0], c[1], c[2]);
+                    }
+                }
+            }
+        }
+        const geo = new THREE.BufferGeometry();
+        geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+        geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+        /* soft round sprite so each LED blooms instead of being a hard pixel */
+        const sprite = (() => {
+            const cv = document.createElement('canvas'); cv.width = cv.height = 32;
+            const g = cv.getContext('2d');
+            const rg = g.createRadialGradient(16,16,0,16,16,16);
+            rg.addColorStop(0,'rgba(255,255,255,1)'); rg.addColorStop(0.4,'rgba(255,255,255,0.5)');
+            rg.addColorStop(1,'rgba(255,255,255,0)');
+            g.fillStyle = rg; g.fillRect(0,0,32,32);
+            return new THREE.CanvasTexture(cv);
+        })();
+        const mat = new THREE.PointsMaterial({ size:0.17, map:sprite, vertexColors:true,
+            transparent:true, blending:THREE.AdditiveBlending, depthWrite:false, sizeAttenuation:true });
+        const farm = new THREE.Points(geo, mat);
+        farm.raycast = function(){};
+        scene.add(farm);
+    })();
+
+    window._fadeNeighbors = function(){};   /* Forge racks are far + dim; no fade needed */
+}
+
+/* ══════════ trays ══════════ */
+/* P7: realistic NVSwitch face — QSFP-DD cage band as a TEXTURE.
+   Real-gear read at tour distance, no per-port geometry, no perf cost. */
+let _qsfpMat = null;
+function qsfpMat(){
+    if (_qsfpMat) return _qsfpMat;
+    /* P14: 2048×96 ≈ the band's ~21:1 aspect */
+    const cv = document.createElement('canvas'); cv.width = 2048; cv.height = 96;
+    const g = cv.getContext('2d');
+    g.fillStyle = '#0a0f18'; g.fillRect(0, 0, 2048, 96);
+    for (let row = 0; row < 2; row++){
+        const y = 12 + row * 44;
+        for (let x = 24; x < 1840; x += 46){
+            g.fillStyle = '#2a3548'; g.fillRect(x, y, 38, 32);
+            g.fillStyle = '#05080d'; g.fillRect(x + 4, y + 4, 30, 24);
+            g.fillStyle = '#141b28'; g.fillRect(x + 4, y + 4, 30, 5);
+            g.fillStyle = ((x / 46 + row) % 2 < 1) ? '#8b5cff' : '#1a2230';
+            g.fillRect(x + 13, y - 7, 9, 5);
+        }
+    }
+    g.fillStyle = '#05080d';
+    for (let y = 12; y < 84; y += 12) g.fillRect(1870, y, 150, 5);
+    const tx = new THREE.CanvasTexture(cv);
+    tx.anisotropy = MAXANISO;
+    _qsfpMat = new THREE.MeshStandardMaterial({
+        map: tx, color: 0xffffff, metalness: 0.7, roughness: 0.4, envMapIntensity: 0.6 });
+    return _qsfpMat;
+}
+
+function statusHex(comp){
+    return comp.status === 'fault' ? FAULT_HEX : CATALOG[comp.type].color;
+}
+
+function buildVisual(comp){
+    if (comp.group){
+        rackGroup.remove(comp.group);
+        comp.group.traverse(o => disposeMat(o.material));
+    }
+    const G = geoFor(comp.u);
+    const y = uToY(comp.uStart) + (comp.u - 1) * U_HEIGHT / 2;
+    const group = new THREE.Group();
+    group.position.set(0, y, 0);
+
+    if (comp.type === 'blank'){
+        /* P11: infra/blanking bay — solid dark, teal label, never in burn-down */
+        const bpM = new THREE.MeshStandardMaterial({
+            color:COLORS.panel, metalness:0.6, roughness:0.45, envMapIntensity:0.9 });
+        bpM.userData.own = true;
+        const bp = new THREE.Mesh(G.bezel, bpM);
+        bp.position.set(0, 0, RACK_DEPTH/2 - 0.008);
+        bp.castShadow = true; bp.receiveShadow = true;
+        group.add(bp);
+        const btex = faceTexture(comp.name, '#36e2b2', false, 'infra');
+        const blM = new THREE.MeshBasicMaterial({ map:btex, transparent:true, opacity:0.9 });
+        blM.userData.own = true;
+        const bl = new THREE.Mesh(G.face, blM);
+        bl.position.set(0, 0, RACK_DEPTH/2 + 0.002);
+        bl.raycast = function(){};
+        group.add(bl);
+        comp.face = null;
+
+    } else if (comp.status === 'todo'){
+        /* P13: TO-INSTALL = the real device, dimmed, dashed amber frame —
+           the Master knows what goes here; show the hardware waiting */
+        const dimBodyM = new THREE.MeshStandardMaterial({
+            color:COLORS.chassis, metalness:0.6, roughness:0.4,
+            transparent:true, opacity:0.30, depthWrite:false });
+        dimBodyM.userData.own = true;
+        const gBody = new THREE.Mesh(G.body, dimBodyM);
+        gBody.position.set(0, 0, 0.02);
+        group.add(gBody);
+
+        const gtex = faceTexture(comp.name, CATALOG[comp.type].css, true, comp.type);
+        const gfM = new THREE.MeshStandardMaterial({
+            map:gtex, emissiveMap:gtex, emissive:0xffffff, emissiveIntensity:0.35,
+            color:0xffffff, transparent:true, opacity:0.8,
+            metalness:0.4, roughness:0.5 });
+        gfM.userData.own = true;
+        const gf = new THREE.Mesh(G.face, gfM);
+        gf.position.set(0, 0, RACK_DEPTH/2 + 0.003);
+        group.add(gf);
+
+        const dashM = new THREE.LineDashedMaterial({
+            color:GHOST_HEX, dashSize:0.022, gapSize:0.014, transparent:true, opacity:0.9 });
+        dashM.userData.own = true;
+        const frame = new THREE.LineSegments(G.faceEdges, dashM);
+        frame.computeLineDistances();
+        frame.position.copy(gf.position);
+        frame.raycast = function(){};
+        group.add(frame);
+        comp.face = null;
+
+    } else if (comp.type === 'nvswitch'){
+        /* P7: realistic switch — textured QSFP band + thin status strip */
+        const hex = statusHex(comp);
+
+        const bodyM = new THREE.MeshStandardMaterial({
+            color:COLORS.chassis, metalness:0.76, roughness:0.32, envMapIntensity:1.25,
+            emissive:new THREE.Color(hex),
+            emissiveIntensity:0.025 * GLOW });            /* P9: identity whisper only */
+        bodyM.userData.own = true;
+        const body = new THREE.Mesh(G.body, bodyM);
+        body.position.set(0, 0, 0.02);
+        group.add(body);
+
+        const rearCap = new THREE.Mesh(G.rear, rearCapMat);
+        rearCap.position.set(0, 0, -(RACK_DEPTH/2 - 0.10));
+        group.add(rearCap);
+
+        const bz = new THREE.Mesh(G.bezel, bezelMat);
+        bz.position.set(0, 0, RACK_DEPTH/2 - 0.008);
+        group.add(bz);
+
+        /* the QSFP cage band — one textured surface, real-gear read */
+        const band = new THREE.Mesh(
+            new THREE.BoxGeometry(IW * 0.94, comp.u * U_HEIGHT * 0.62, 0.006), qsfpMat());
+        band.position.set(0, -comp.u * U_HEIGHT * 0.05, RACK_DEPTH/2 + 0.004);
+        group.add(band);
+
+        /* P15: strip removed — violet identity via band LEDs + name plate;
+           fault turns the plate + LEDs red */
+        comp.face = null;
+
+        const ledM = new THREE.MeshBasicMaterial({ color:hex });
+        ledM.userData.own = true;
+        const led = new THREE.Mesh(G.led, ledM);
+        led.position.set(IW * 0.43, comp.u * U_HEIGHT * 0.30, RACK_DEPTH/2 + 0.006);
+        group.add(led);
+
+        /* P10: name plate over the strip */
+        const ntex = faceTexture(comp.name, comp.status === 'fault' ? '#ff5f67' : CATALOG.nvswitch.css, false, 'label');
+        const npM = new THREE.MeshBasicMaterial({ map:ntex, transparent:true, opacity:0.95 });
+        npM.userData.own = true;
+        const np = new THREE.Mesh(
+            new THREE.PlaneGeometry(IW * 0.52, comp.u * U_HEIGHT * 0.30), npM);
+        np.position.set(-IW * 0.21, comp.u * U_HEIGHT * 0.30, RACK_DEPTH/2 + 0.008);
+        np.raycast = function(){};
+        group.add(np);
+
+    } else {
+        /* P9: gunmetal tray — graphite chassis w/ whisper accent, dark front
+           panel, one HOT thin full-width status strip, small health LEDs.
+           Color is the accent, never the base. */
+        const hex = statusHex(comp);
+
+        const chassisM = new THREE.MeshStandardMaterial({
+            color:COLORS.chassis, metalness:0.76, roughness:0.32, envMapIntensity:1.25,
+            emissive:new THREE.Color(hex), emissiveIntensity:0.025 });   /* identity whisper */
+        chassisM.userData.own = true;
+        const body = new THREE.Mesh(G.body, chassisM);
+        body.position.set(0, 0, 0.02);
+        body.castShadow = true; body.receiveShadow = true;
+        group.add(body);
+
+        const rearCap = new THREE.Mesh(G.rear, rearCapMat);
+        rearCap.position.set(0, 0, -(RACK_DEPTH/2 - 0.10));
+        group.add(rearCap);
+
+        const bz = new THREE.Mesh(G.bezel, bezelMat);
+        bz.position.set(0, 0, RACK_DEPTH/2 - 0.008);
+        bz.castShadow = true; bz.receiveShadow = true;
+        group.add(bz);
+
+        /* P10: schematic face — label + underline + port grid, self-lit HUD */
+        const ftex = faceTexture(comp.name, CATALOG[comp.type].css, false, comp.type);
+        const panelM = new THREE.MeshStandardMaterial({
+            map:ftex, emissiveMap:ftex, emissive:0xffffff, emissiveIntensity:0.5,
+            color:0xffffff, metalness:0.55, roughness:0.4, envMapIntensity:0.8 });
+        panelM.userData.own = true;
+        const face = new THREE.Mesh(G.face, panelM);
+        face.position.set(0, 0, RACK_DEPTH/2 + 0.004);
+        face.receiveShadow = true;
+        group.add(face);
+
+        /* P10: outline-first — the type-color frame is the primary read */
+        const olM = new THREE.LineBasicMaterial({ color:hex, transparent:true, opacity:0.85 });
+        olM.userData.own = true;
+        const ol = new THREE.LineSegments(G.faceEdges, olM);
+        ol.position.copy(face.position);
+        ol.raycast = function(){};
+        group.add(ol);
+        comp.pulse = olM;                                  /* P15: fault pulse target */
+
+        /* P15: accent strips removed — status carried by outline, underline,
+           LEDs. Fault pulses the outline frame. */
+        comp.face = null;
+
+        /* health LEDs — healthy green + type identity */
+        const led1M = new THREE.MeshStandardMaterial({ color:COLORS.healthy,
+            emissive:COLORS.healthy, emissiveIntensity:2.6, metalness:0.1, roughness:0.3 });
+        led1M.userData.own = true;
+        const led1 = new THREE.Mesh(G.led, led1M);
+        led1.position.set(IW * 0.40, comp.u * U_HEIGHT * 0.14, RACK_DEPTH/2 + 0.006);
+        group.add(led1);
+        const led2M = new THREE.MeshStandardMaterial({ color:hex,
+            emissive:new THREE.Color(hex), emissiveIntensity:2.6, metalness:0.1, roughness:0.3 });
+        led2M.userData.own = true;
+        const led2 = new THREE.Mesh(G.led, led2M);
+        led2.position.set(IW * 0.34, comp.u * U_HEIGHT * 0.14, RACK_DEPTH/2 + 0.006);
+        group.add(led2);
+    }
+
+    group.traverse(o => { o.userData.comp = comp; });
+    comp.group = group;
+    comp.homeY = y;
+    rackGroup.add(group);
+}
+
+function makeComp(slot){
+    const vtype = MASTER_TYPE_MAP[slot.type] || 'mgmt';
+    const st = slot.status === 'pending' ? 'todo' : (slot.status || 'todo');
+    const comp = {
+        id: slot.type + '-' + slot.uStart + '-' + Math.floor(Math.random() * 9999),
+        name: (slot.name || nextName(vtype)).toUpperCase(),
+        model: slot.model || '',
+        type: vtype, uStart: slot.uStart,
+        u: (slot.uEnd || slot.uStart) - slot.uStart + 1,
+        status: st,
+        slot: slot,                                   /* hybrid: two-way link */
+        group: null, face: null, homeY: 0
+    };
+    slot._comp = comp;
+    buildVisual(comp);
+    for (let i = 0; i < comp.u; i++) slots[comp.uStart + i] = comp;
+    components.push(comp);
+    return comp;
+}
+
+function clearRack(){
+    if (tourMode) exitTour();
+    for (const c of components){
+        rackGroup.remove(c.group);
+        c.group.traverse(o => disposeMat(o.material));
+        if (c.slot) c.slot._comp = null;
+    }
+    components = [];
+    slots.fill(null);
+    for (const k in TYPE_SEQ) delete TYPE_SEQ[k];
+    openZone = -1;
+    selectedComponent = null;
+}
+
+function loadRack(id){
+    CURRENT_RACK = id;
+    clearRack();
+    loadRackData(RACKS[id]);
+    updateStatus();
+    camTween = { from:{ r:spherical.radius, ty:target.y, th:spherical.theta, ph:spherical.phi },
+                 to:{ r:HOME.radius, ty:HOME.ty, th:HOME.theta, ph:HOME.phi }, t:0 };
+    interact();
+    buildPicker();
+}
+
+function loadRackData(data){
+    document.getElementById('hdr-rack').textContent = (data.rackId || 'NVL72') + ' ▾';
+    document.getElementById('hdr-site').textContent = data.siteCode || '';
+    [...data.slots].sort((a, b) => b.uStart - a.uStart).forEach(makeComp);
+    genTour(data);
+    buildZones(data.slots);
+}
+
+/* ══════════ RACK MANIFEST — "what belongs here, what's missing" ══════════
+   Pure Master-vs-state diff. No camera, no CV. Answers the field question:
+   stand at this cab → see the planned build and every empty U. ══════════ */
+function openManifest(){
+    const data = RACKS[CURRENT_RACK];
+    const planned = [...data.slots].sort((a, b) => b.uStart - a.uStart);
+
+    let racked = 0, pending = 0, fault = 0, infra = 0, plannedN = 0;
+    for (const s of planned){
+        if (s.type === 'blank'){ infra++; continue; }
+        plannedN++;
+        if (s.status === 'fault') fault++;
+        else if (s.status === 'racked') racked++;
+        else pending++;
+    }
+    const pct = plannedN ? Math.round(racked / plannedN * 100) : 0;
+
+    document.getElementById('mf-title').textContent = data.rackId + ' — MANIFEST';
+    document.getElementById('mf-sub').textContent =
+        data.siteCode + ' · ' + data.totalU + 'U · Master-planned build';
+
+    /* banner: the headline state, empty-rack case gets special treatment */
+    const banner = document.getElementById('mf-banner');
+    if (racked === 0){
+        banner.style.cssText = 'background:rgba(240,166,60,0.10);border:1px solid rgba(240,166,60,0.4);color:#f0a63c';
+        banner.innerHTML = '⚠ EMPTY PER MASTER — full build ahead<br>' +
+            '<span style="opacity:.8">0 / ' + plannedN + ' racked · ' + plannedN + ' devices to install</span>';
+    } else if (racked === plannedN){
+        banner.style.cssText = 'background:rgba(54,226,178,0.10);border:1px solid rgba(54,226,178,0.4);color:#36e2b2';
+        banner.innerHTML = '✓ RACK COMPLETE — ' + plannedN + ' / ' + plannedN + ' racked' +
+            (fault ? '<br><span style="color:#ff5f67">⚠ ' + fault + ' in fault</span>' : '');
+    } else {
+        banner.style.cssText = 'background:rgba(92,242,255,0.08);border:1px solid rgba(92,242,255,0.35);color:#5cf2ff';
+        banner.innerHTML = 'BUILD IN PROGRESS — ' + racked + ' / ' + plannedN + ' racked · ' +
+            pending + ' to go' + (fault ? ' · <span style="color:#ff5f67">' + fault + ' fault</span>' : '');
+    }
+
+    /* progress bar */
+    document.getElementById('mf-progress').innerHTML =
+        '<div style="height:8px;border-radius:5px;background:#12181f;overflow:hidden">' +
+        '<div style="height:100%;width:' + pct + '%;background:linear-gradient(90deg,#36e2b2,#5cf2ff);border-radius:5px"></div></div>' +
+        '<div style="font-family:ui-monospace,monospace;font-size:10px;color:#43506a;margin-top:4px">' + pct + '% COMPLETE</div>';
+
+    /* MISSING — what belongs here but isn't racked (the whole point) */
+    const missing = planned.filter(s => s.type !== 'blank' && s.status !== 'racked' && s.status !== 'fault');
+    const faults  = planned.filter(s => s.status === 'fault');
+    let mh = '';
+    if (missing.length || faults.length){
+        mh += '<div style="font-family:ui-monospace,monospace;font-size:10px;letter-spacing:.14em;color:#f0a63c;margin-bottom:8px">▽ TO INSTALL / ATTENTION (' + (missing.length + faults.length) + ')</div>';
+        faults.forEach(s => { mh += mfRow(s, 'fault'); });
+        missing.forEach(s => { mh += mfRow(s, 'pending'); });
+    }
+    document.getElementById('mf-missing').innerHTML = mh;
+
+    /* INSTALLED — collapsed reference */
+    const done = planned.filter(s => s.status === 'racked' && s.type !== 'blank');
+    let ih = '';
+    if (done.length){
+        ih = '<div style="font-family:ui-monospace,monospace;font-size:10px;letter-spacing:.14em;color:#36e2b2;margin-bottom:8px">▽ INSTALLED (' + done.length + ')</div>';
+        done.forEach(s => { ih += mfRow(s, 'racked'); });
+    }
+    document.getElementById('mf-installed').innerHTML = ih;
+
+    document.getElementById('manifest').classList.remove('hidden');
+}
+function mfRow(s, state){
+    const c = state === 'fault' ? '#ff5f67' : state === 'racked' ? '#36e2b2' : '#f0a63c';
+    const tag = state === 'fault' ? 'FAULT' : state === 'racked' ? 'RACKED' : 'EMPTY';
+    const uSpan = 'U' + s.uStart + ((s.uEnd || s.uStart) > s.uStart ? '–' + s.uEnd : '');
+    return '<div style="display:flex;align-items:center;gap:10px;padding:9px 11px;margin:4px 0;border-radius:10px;' +
+        'background:#06090f;border:1px solid rgba(255,255,255,0.07);font-family:ui-monospace,monospace">' +
+        '<span style="width:7px;height:7px;border-radius:50%;background:' + c + ';box-shadow:0 0 6px ' + c + '"></span>' +
+        '<div style="flex:1;min-width:0">' +
+          '<div style="font-size:12px;color:#dfe9f5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + s.name + '</div>' +
+          '<div style="font-size:9px;color:#43506a">' + uSpan + (s.model ? ' · ' + s.model : '') + '</div>' +
+        '</div>' +
+        '<span style="font-size:9px;font-weight:700;letter-spacing:.1em;color:' + c + ';border:1px solid ' + c +
+        '55;border-radius:6px;padding:3px 8px' + (state === 'pending' ? ';border-style:dashed' : '') + '">' + tag + '</span>' +
+        '</div>';
+}
+function closeManifest(){ document.getElementById('manifest').classList.add('hidden'); }
+
+/* ══════════ HYBRID: zone map — the working surface ══════════ */
+const TYPE_META = {
+    gpu:{ zone:'COMPUTE', c:'#22ddff' }, switch:{ zone:'NVLINK', c:'#8b5cff' },
+    pdu:{ zone:'POWER', c:'#ffc83d' }, storage:{ zone:'STORAGE', c:'#36e2b2' },
+    server:{ zone:'MGMT', c:'#8ea3c4' }, patch:{ zone:'PATCH', c:'#8ea3c4' },
+    blank:{ zone:'INFRA', c:'#36e2b2' } };
+let ZONES = [], openZone = -1;
+
+function buildZones(slotList){
+    const sorted = [...slotList].sort((a, b) => b.uStart - a.uStart);
+    ZONES = [];
+    for (const s of sorted){
+        const last = ZONES[ZONES.length - 1];
+        if (last && last.type === s.type){ last.slots.push(s); continue; }
+        ZONES.push({ type: s.type, slots: [s] });
+    }
+    const totals = {}, counters = {};
+    ZONES.forEach(z => totals[z.type] = (totals[z.type] || 0) + 1);
+    for (const z of ZONES){
+        const m = TYPE_META[z.type] || TYPE_META.server;
+        counters[z.type] = (counters[z.type] || 0) + 1;
+        const suffix = totals[z.type] > 1 ? ' ' + String.fromCharCode(64 + counters[z.type]) : '';
+        z.name  = m.zone + suffix + (z.slots.length > 1 ? ' ×' + z.slots.length : '');
+        z.color = m.c;
+        z.uHi = Math.max(...z.slots.map(s => s.uEnd || s.uStart));
+        z.uLo = Math.min(...z.slots.map(s => s.uStart));
+        z.span = z.slots.reduce((a, s) => a + ((s.uEnd || s.uStart) - s.uStart + 1), 0);
+        z.infra = z.type === 'blank';
+    }
+    renderMap();
+}
+
+function flyToZone(z){
+    const yLo = uToY(z.uLo), yHi = uToY(z.uHi);
+    const ty = (yLo + yHi) / 2;
+    const r = Math.max(1.5, Math.min(4.0, z.span * U_HEIGHT * 3.6 + 0.9));
+    if (tourMode) exitTour();
+    camTween = { from:{ r:spherical.radius, ty:target.y, th:spherical.theta, ph:spherical.phi },
+                 to:{ r:r, ty:ty, th:spherical.theta, ph:1.28 }, t:0 };
+    interact();
+}
+function flyToComp(c){
+    if (tourMode) exitTour();
+    camTween = { from:{ r:spherical.radius, ty:target.y, th:spherical.theta, ph:spherical.phi },
+                 to:{ r:1.5, ty:c.homeY, th:spherical.theta, ph:1.30 }, t:0 };
+    interact();
+}
+function toggleSlot(s){
+    s.status = (s.status === 'racked' || s.status === 'fault') ? 'pending' : 'racked';
+    const c = s._comp;
+    if (c){
+        c.status = s.status === 'pending' ? 'todo' : s.status;
+        buildVisual(c);
+        flyToComp(c);
+    }
+    updateStatus();                                   /* rebuilds mirror + badges */
+    renderMap();
+}
+
+function renderMap(){
+    const host = document.getElementById('map');
+    if (!host) return;
+    host.innerHTML = '';
+    ZONES.forEach((z, i) => {
+        let r = 0, f = 0, n = 0;
+        for (const s of z.slots){
+            if (z.infra) continue;
+            n++;
+            if (s.status === 'racked' || s.status === 'fault') r++;
+            if (s.status === 'fault') f++;
+        }
+        const band = document.createElement('div');
+        band.className = 'band' + (i === openZone ? ' open' : '') +
+            (!z.infra && r === 0 && n > 0 ? ' pendzone' : '');
+        band.style.setProperty('--zc', z.color);
+        band.style.flexGrow = (i === openZone ? z.span * 3 + 20 : z.span);
+        const cntCls = z.infra ? 'zero' : (n && r === n ? 'done' : (r ? 'part' : 'zero'));
+        band.innerHTML =
+            '<div class="bar"><span class="dot"></span>' +
+            '<span class="nm">' + z.name + '</span>' +
+            '<span class="u">U' + z.uLo + '–' + z.uHi + '</span>' +
+            '<span class="cnt ' + cntCls + '">' + (z.infra ? 'INFRA' : (r + '/' + n)) +
+            (f ? ' <span style="color:#ff5f67">⚠' + f + '</span>' : '') + '</span></div>' +
+            (!z.infra ? '<div class="segs">' + z.slots.map(s =>
+                '<span class="seg ' + (s.status || 'pending') + '"></span>').join('') + '</div>' : '') +
+            '<div class="rows">' + z.slots.map((s, si) =>
+                '<div class="mrow' + (z.infra ? ' infra' : '') + '" data-s="' + si + '">' +
+                '<span class="rnm">' + s.name + '</span>' +
+                '<span class="ru">U' + s.uStart + ((s.uEnd || s.uStart) > s.uStart ? '–' + s.uEnd : '') + '</span>' +
+                (!z.infra ? '<span class="st ' + (s.status || 'pending') + '">' +
+                    (s.status || 'pending').toUpperCase() + '</span>' : '') +
+                '</div>').join('') + '</div>';
+
+        band.addEventListener('click', e => {
+            const row = e.target.closest('.mrow');
+            if (row && i === openZone){
+                const s = z.slots[+row.dataset.s];
+                if (!z.infra) toggleSlot(s);
+                else if (s._comp) flyToComp(s._comp);
+                return;
+            }
+            openZone = (openZone === i) ? -1 : i;
+            if (openZone === i) flyToZone(z);          /* map drives the camera */
+            renderMap();
+        });
+        host.appendChild(band);
+    });
+}
+
+/* NVL72 field state — zone stack per approved isometric (owner-verify):
+   CDU 3U top · POWER ×3 · COMPUTE A ×9 · NVLINK ×9 · COMPUTE B ×9 */
+function populateDefault(){ loadRackData(RACKS[CURRENT_RACK]); buildPicker(); }
+
+/* ── rack picker: in the app, the floor map is the picker; this strip
+   just proves the switch — tap a rack, ONLY it renders ── */
+function togglePicker(){
+    document.getElementById('picker').classList.toggle('hidden');
+}
+function buildPicker(){
+    const p = document.getElementById('picker');
+    p.innerHTML = '';
+    Object.keys(RACKS).forEach(id => {
+        const d = RACKS[id];
+        let r = 0, n = 0, f = 0;
+        d.slots.forEach(s => { if (s.type === 'blank') return; n++;
+            if (s.status === 'racked' || s.status === 'fault') r++;
+            if (s.status === 'fault') f++; });
+        const b = document.createElement('button');
+        const on = id === CURRENT_RACK;
+        b.className = 'px-3 py-2 rounded-xl text-[11px] font-mono border';
+        b.style.cssText = on
+            ? 'color:#5cf2ff;border-color:rgba(92,242,255,0.5);background:rgba(92,242,255,0.10)'
+            : 'color:#8ea3c4;border-color:rgba(255,255,255,0.12);background:rgba(255,255,255,0.03)';
+        b.innerHTML = '<b>' + id + '</b> · ' + r + '/' + n + (f ? ' <span style="color:#ff5f67">⚠</span>' : '');
+        b.onclick = () => { document.getElementById('picker').classList.add('hidden');
+            if (id !== CURRENT_RACK) loadRack(id); };
+        p.appendChild(b);
+    });
+}
+
+/* ══════════ status HUD ══════════ */
+function updateStatus(){
+    let usedU = 0, kw = 0, racked = 0, faults = 0, tracked = 0;
+    components.forEach(c => {
+        usedU += c.u;
+        if (c.type === 'blank') return;                    /* infra: occupies U, never in burn-down */
+        tracked++;
+        if (c.status !== 'todo') kw += CATALOG[c.type].kw;
+        if (c.status === 'racked' || c.status === 'fault') racked++;
+        if (c.status === 'fault') faults++;
+    });
+    document.getElementById('rack-status').textContent =
+        usedU + ' / ' + TOTAL_U + ' U • ' + Math.round(kw) + ' kW';
+    document.getElementById('racked-status').textContent =
+        racked + ' / ' + tracked + ' racked' + (faults ? ' • ' + faults + ' FAULT' : '');
+    rebuildMirror();                                     /* P8: reflection tracks state */
+    renderMap();                                          /* hybrid: map mirrors the 3D */
+}
+function flashStatus(msg){
+    document.getElementById('rack-status').textContent = msg;
+    setTimeout(updateStatus, 1200);
+}
+
+/* ══════════ explode ══════════ */
+function toggleExplode(){
+    explodeTargetAmt = explodeTargetAmt > 0 ? 0 : 1;
+    interact(); hideHint();
+}
+function applyExplode(dt){
+    explodeAmount += (explodeTargetAmt - explodeAmount) * Math.min(1, dt * 6);
+    if (_mirror) _mirror.visible = explodeAmount < 0.02;   /* P8 */
+    const mid = RACK_HEIGHT / 2;
+    for (const c of components){
+        const dir = c.homeY - mid;
+        c.group.position.y = c.homeY + dir * explodeAmount * 0.55;
+        c.group.position.z = explodeAmount * 0.25;
+    }
+}
+
+/* ══════════ P6: TOUR — scroll-driven authored camera path ══════════
+   One continuous 360° journey through six beats; swipe scrubs the rail,
+   momentum + snap settle on the nearest beat, a hard horizontal grab
+   breaks out to free orbit. Cinema by default, control on demand. */
+let TOUR_KEYS = [];
+function genTour(data){
+    /* P11: beats generated from the LIVE manifest — the tour flies to
+       what actually exists: the real fault, the real switch bank */
+    const midY = RACK_HEIGHT / 2;
+    const cy = c => uToY(c.uStart) + (c.u - 1) * U_HEIGHT / 2;
+    const fault  = components.find(c => c.status === 'fault');
+    const sw     = components.filter(c => c.type === 'nvswitch');
+    const swMid  = sw.length ? cy(sw[Math.floor(sw.length / 2)]) : midY;
+    const top    = components.reduce((a, c) => cy(c) > cy(a) ? c : a, components[0]);
+    const pend   = components.filter(c => c.status === 'todo' && c.type !== 'blank');
+    const lowPend= pend.length ? pend.reduce((a, c) => cy(c) < cy(a) ? c : a, pend[0]) : null;
+    let racked = 0, tracked = 0;
+    components.forEach(c => { if (c.type === 'blank') return; tracked++;
+        if (c.status === 'racked' || c.status === 'fault') racked++; });
+
+    TOUR_KEYS = [
+        { r:4.4, th:0.9,  ph:1.25, ty:midY, t:(data.rackId || 'RACK') + ' — GB300 NVL72',
+          s:data.siteCode + ' · live manifest' },
+        { r:1.9, th:0.45, ph:1.15, ty:Math.min(RACK_HEIGHT - 0.2, cy(top)),
+          t:top.name, s:'Top of rack' } ];
+    if (fault) TOUR_KEYS.push({ r:1.35, th:0.15, ph:1.30, ty:cy(fault),
+        t:'⚠ FAULT — ' + fault.name, s:'U' + fault.uStart + ' · flagged for remediation' });
+    TOUR_KEYS.push(
+        { r:1.7, th:-0.45, ph:1.28, ty:swMid, t:'NVLINK SPINE',
+          s:sw.length + '× switch trays · center bank' });
+    if (lowPend) TOUR_KEYS.push({ r:1.6, th:-1.10, ph:1.32, ty:cy(lowPend),
+        t:lowPend.name + ' — PENDING', s:'Next bay in the burn-down' });
+    TOUR_KEYS.push(
+        { r:3.2, th:-2.50, ph:1.20, ty:midY, t:'REAR ASSEMBLY',
+          s:'Copper spine · DC bus · supply/return manifolds' },
+        { r:4.4, th:0.9 - Math.PI*2, ph:1.25, ty:midY,
+          t:racked + ' / ' + tracked + ' RACKED', s:'Swipe to replay · grab to explore' });
+}
+let tourMode = false, tourP = 0, tourV = 0, tourSnap = null, tourCapIdx = -1;
+
+function toggleTour(){ tourMode ? exitTour() : enterTour(); }
+function enterTour(){
+    tourMode = true; tourP = 0; tourV = 0; tourSnap = null; tourCapIdx = -1;
+    hideHint(); interact();
+    const k0 = TOUR_KEYS[0];
+    camTween = { from:{ r:spherical.radius, ty:target.y, th:spherical.theta, ph:spherical.phi },
+                 to:{ r:k0.r, ty:k0.ty, th:k0.th, ph:k0.ph }, t:0 };   /* fly in, don't teleport */
+    tourCapIdx = 0;
+    document.getElementById('tour-cap-title').textContent = k0.t;
+    document.getElementById('tour-cap-sub').textContent  = k0.s;
+    const b = document.getElementById('tour-btn');
+    b.classList.add('glass-open');
+    b.querySelector('span').textContent = 'Exit tour';
+    document.getElementById('tour-cap').style.opacity = '1';
+}
+function exitTour(){
+    tourMode = false;
+    const b = document.getElementById('tour-btn');
+    b.classList.remove('glass-open');
+    b.querySelector('span').textContent = 'Tour';
+    document.getElementById('tour-cap').style.opacity = '0';
+    interact();
+}
+function tourApply(){
+    const N = TOUR_KEYS.length - 1;
+    tourP = Math.max(0, Math.min(N, tourP));
+    const i = Math.min(N - 1, Math.floor(tourP));
+    const f = tourP - i;
+    const k = f * f * (3 - 2 * f);                    /* smoothstep between beats */
+    const a = TOUR_KEYS[i], b = TOUR_KEYS[i + 1];
+    spherical.radius = a.r  + (b.r  - a.r)  * k;
+    spherical.theta  = a.th + (b.th - a.th) * k;
+    spherical.phi    = a.ph + (b.ph - a.ph) * k;
+    target.y         = a.ty + (b.ty - a.ty) * k;
+    const near = Math.round(tourP);
+    if (near !== tourCapIdx){
+        tourCapIdx = near;
+        document.getElementById('tour-cap-title').textContent = TOUR_KEYS[near].t;
+        document.getElementById('tour-cap-sub').textContent  = TOUR_KEYS[near].s;
+    }
+}
+
+/* ══════════ controls ══════════ */
+function interact(){ lastInteract = performance.now(); }
+function hideHint(){
+    if (hintGone) return;
+    hintGone = true;
+    const h = document.getElementById('drag-hint');
+    if (!h) return;
+    h.style.transition = 'opacity .4s'; h.style.opacity = '0';
+    setTimeout(() => h.remove(), 450);
+}
+
+function bindControls(){
+    const el = renderer.domElement;
+
+    el.addEventListener('pointerdown', e => {
+        pointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
+        if (pointers.size === 1){
+            downX = e.clientX; downY = e.clientY; downAt = performance.now(); moved = false;
+            axisLock = null;                                  /* P8.3: decided on first movement */
+            if (tourMode){ tourV = 0; tourSnap = null; }
+        } else if (pointers.size === 2){
+            const p = [...pointers.values()];
+            pinchD = Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y);
+        }
+        interact();
+    });
+    window.addEventListener('pointerup', e => {
+        pointers.delete(e.pointerId);
+        if (tourMode && pointers.size === 0) tourSnap = Math.round(tourP);
+        interact();
+    });
+    window.addEventListener('pointercancel', e => pointers.delete(e.pointerId));
+    window.addEventListener('pointermove', e => {
+        if (!pointers.has(e.pointerId)) return;
+        const prev = pointers.get(e.pointerId);
+        const dx = e.clientX - prev.x, dy = e.clientY - prev.y;
+        pointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
+
+        if (pointers.size === 1){
+            if (Math.hypot(e.clientX - downX, e.clientY - downY) > 8){ moved = true; hideHint(); }
+            if (tourMode){
+                const tdx = e.clientX - downX, tdy = e.clientY - downY;
+                if (axisLock === null && Math.hypot(tdx, tdy) > 14){
+                    axisLock = Math.abs(tdx) > Math.abs(tdy) * 1.6 ? 'h' : 'v';   /* decided once */
+                    if (axisLock === 'h'){ exitTour(); return; }                  /* deliberate grab → orbit */
+                }
+                if (axisLock === 'v'){
+                    camTween = null;
+                    tourP -= dy * 0.006;                       /* swipe scrubs the rail */
+                    tourV = Math.max(-0.04, Math.min(0.04, -dy * 0.0035));  /* capped flick */
+                    tourSnap = null;
+                    tourApply();
+                }
+                interact();
+                return;
+            }
+            spherical.theta -= dx * 0.006;
+            spherical.phi   -= dy * 0.004;
+            spherical.phi = Math.max(0.6, Math.min(1.55, spherical.phi));
+            camTween = null;
+            interact();
+        } else if (pointers.size === 2){
+            const p = [...pointers.values()];
+            const d = Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y);
+            if (pinchD){
+                spherical.radius = Math.max(1.0, Math.min(8.0, spherical.radius * (pinchD / d)));
+            }
+            pinchD = d; moved = true; hideHint(); camTween = null; interact();
+        }
+    });
+    el.addEventListener('wheel', e => {
+        e.preventDefault(); hideHint(); camTween = null; interact();
+        if (tourMode){
+            const N = TOUR_KEYS.length - 1;
+            tourSnap = Math.max(0, Math.min(N, Math.round(tourP) + (e.deltaY > 0 ? 1 : -1)));
+            return;                                            /* one notch = one beat */
+        }
+        spherical.radius = Math.max(1.0, Math.min(8.0, spherical.radius + (e.deltaY > 0 ? 0.2 : -0.2)));
+    }, { passive:false });
+
+    window.addEventListener('resize', () => {
+        const container = document.getElementById('three-container');
+        camera.aspect = container.clientWidth / container.clientHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(container.clientWidth, container.clientHeight);
+    });
+}
+
+/* ══════════ loop ══════════ */
+function placeCamera(){
+    camera.position.set(
+        target.x + spherical.radius * Math.sin(spherical.phi) * Math.sin(spherical.theta),
+        target.y + spherical.radius * Math.cos(spherical.phi),
+        target.z + spherical.radius * Math.sin(spherical.phi) * Math.cos(spherical.theta));
+    camera.lookAt(target);
+}
+
+let _frames = 0, _fpsT = performance.now();
+function animate(){
+    requestAnimationFrame(animate);
+    const dt = clock.getDelta();
+    const now = performance.now();
+
+    /* P6: tour rail owns the camera while active */
+    if (tourMode){
+        if (pointers.size === 0 && !camTween){                          /* fly-in owns the camera first */
+            if (tourSnap !== null){
+                tourP += (tourSnap - tourP) * Math.min(1, dt * 5);      /* settle on the beat */
+                if (Math.abs(tourSnap - tourP) < 0.002){ tourP = tourSnap; tourSnap = null; }
+                tourApply();
+            } else if (Math.abs(tourV) > 0.0005){
+                tourP += tourV * dt * 60;                               /* time-scaled momentum */
+                tourV *= Math.pow(0.02, dt);
+                if (Math.abs(tourV) <= 0.0005) tourSnap = Math.round(tourP);
+                tourApply();
+            }
+        }
+        sweepT = 0;
+    }
+    /* idle: shallow front-biased sweep after 4s — facade stays the hero */
+    else if (pointers.size === 0 && !camTween && now - lastInteract > 4000){
+        sweepT += dt;
+        spherical.theta += ((HOME.theta - 0.55) + Math.sin(sweepT * 0.25) * 0.5 - spherical.theta) * Math.min(1, dt * 1.5);
+    } else {
+        sweepT = 0;
+    }
+
+    if (camTween){
+        camTween.t = Math.min(1, camTween.t + dt * 2.2);
+        const k = 1 - Math.pow(1 - camTween.t, 3);
+        spherical.radius = camTween.from.r  + (camTween.to.r  - camTween.from.r)  * k;
+        spherical.theta  = camTween.from.th + (camTween.to.th - camTween.from.th) * k;
+        spherical.phi    = camTween.from.ph + (camTween.to.ph - camTween.from.ph) * k;
+        target.y         = camTween.from.ty + (camTween.to.ty - camTween.from.ty) * k;
+        if (camTween.t >= 1) camTween = null;
+    }
+
+    /* P15: fault pulse — outline frame throbs */
+    const f = 0.55 + (Math.sin(now * 0.004) * 0.5 + 0.5) * 0.45;
+    for (const c of components){
+        if (c.status === 'fault' && c.pulse) c.pulse.opacity = f;
+    }
+
+    applyExplode(dt);
+    placeCamera();
+    if (window._fadeNeighbors) window._fadeNeighbors();
+    renderer.render(scene, camera);
+
+    _frames++;
+    if (now - _fpsT > 1000){
+        let objs = 0; scene.traverse(() => objs++);
+        document.getElementById('perf-chip').textContent = _frames + ' fps · ' + objs + ' obj';
+        _frames = 0; _fpsT = now;
+    }
+}
+
+window.onBgDim = function(v){
+    const lvl = v / 100;
+    if (window.setBackdropLevel) window.setBackdropLevel(lvl);
+    const el = document.getElementById('bg-dim-val');
+    if (el) el.textContent = v;
+};
+try { init(); } catch(e){ showFatal('init', e); }
+</script>
+</body>
+</html>
