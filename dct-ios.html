@@ -9658,7 +9658,7 @@ body.rd #rd-botnav{display:flex}
 /* v1.14.228 — redesign-only FLAT viewport-fit: whole 48U on one screen, no scroll.
    --u-h (set by rackFlat_applyFit) drives row pitch + markers so they track the
    scaled blocks. body.rd-scoped -> ?legacy=1 keeps the fixed 44px scrolling canvas. */
-body.rd .rack-canvas { max-height: none; overflow-y: auto; }
+body.rd .rack-canvas { max-height: none; overflow: hidden; }
 body.rd .rack-hybrid-canvas .rack-canvas { max-height: none; }
 body.rd .rack-canvas-grid {
   background-image: linear-gradient(to bottom,
@@ -9746,6 +9746,18 @@ body.rd .rack-canvas-block[data-type="pdu"],
 body.rd .rack-canvas-block[data-type="fan"],
 body.rd .rack-canvas-block[data-type="crah"],
 body.rd .rack-canvas-block[data-type="crac"] { border-left-color: var(--green); }
+/* v1.14.230 — fitted (tiny --u-h) readability: at ~10-14px per U the base 8/6 padding + a 13px
+   name line-box overflowed and clipped to a strikethrough band, and 1U rows merged. Tighten
+   padding for all fitted blocks and force 1U rows to a single short line. .reh-fitted is set on
+   the grid under rd only -> legacy untouched. */
+body.rd .reh-fitted .rack-canvas-block { padding: 3px 8px; }
+body.rd .reh-fitted .rack-canvas-block.is-1u { padding: 0 6px; border-top: 0; border-bottom: 0; gap: 6px; line-height: 1; }
+body.rd .reh-fitted .rack-canvas-block.is-1u .rack-canvas-block-u { display: none; }
+body.rd .reh-fitted .rack-canvas-block.is-1u .rack-canvas-block-name { font-size: 10px; line-height: 1; }
+body.rd .reh-fitted .rack-canvas-block.is-1u .rack-canvas-block-meta { font-size: 9px; line-height: 1; }
+/* v1.14.230 — a 1U slot nested inside a larger tray (a master U-collision) shares the tray's top
+   edge; inset it to the right as a badge so it reads as an annotation, not a phantom row. */
+body.rd .rack-canvas-block.is-overlap { left: auto; right: 4px; width: 42%; z-index: 5; box-shadow: -3px 0 6px rgba(4,6,10,0.55); }
 .rack-canvas-block-u {
   font-size: 9px; font-weight: 700;
   letter-spacing: 0.1em;
@@ -11634,7 +11646,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.229';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.230';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -30762,7 +30774,7 @@ function rackElevation_buildHtml(rack) {
     return html;
   }
 
-  html += '<div class="rack-canvas-grid" style="' + (_fit ? '--u-h:calc((100dvh - 232px) / ' + totalU + ');' : '') + 'height:' + uH(totalU) + '">';
+  html += '<div class="rack-canvas-grid' + (_fit ? ' reh-fitted' : '') + '" style="' + (_fit ? '--u-h:max(8px, calc((100dvh - 320px) / ' + totalU + '));' : '') + 'height:' + uH(totalU) + '">';
 
   // U-position markers — show every 6U for readability
   for (var u = totalU; u >= 1; u--) {
@@ -30780,13 +30792,17 @@ function rackElevation_buildHtml(rack) {
     var blockHeight = (uEnd - uStart + 1) * U_HEIGHT;
     var type = (slot.type || '').toLowerCase();
     var uLabel = 'U' + uStart + (uEnd !== uStart ? '–U' + uEnd : '');
+    // v1.14.230: a 1U slot fully inside a larger tray (a master U-collision, e.g. a 1U "other"
+    // sharing U38 with an 8U device) computes the SAME top -> inset it as a badge, not a phantom
+    // floating row. Rendered, not dropped (no silent data loss). rd-only; legacy markup unchanged.
+    var _overlap = _fit && (uEnd === uStart) && slots.some(function(o, j) { if (j === idx) return false; var oS = o.uStart, oE = o.uEnd || o.uStart; return oS <= uStart && oE >= uEnd && (oE - oS) > 0; });
 
     // Clean model string (same filter as Scrub-Bar)
     var modelStr = String(slot.model || '').trim();
     var modelClean = (!modelStr || /^(blank|none|n\/a|unknown|tbd|-)$/i.test(modelStr)) ? '' : modelStr;
     var typeClean = type ? type.toUpperCase() : '';
 
-    html += '<div class="rack-canvas-block' + (blockHeight === U_HEIGHT ? ' is-1u' : '') + '" data-idx="' + idx + '" data-type="' + escHtml(type) + '" ';
+    html += '<div class="rack-canvas-block' + (blockHeight === U_HEIGHT ? ' is-1u' : '') + (_overlap ? ' is-overlap' : '') + '" data-idx="' + idx + '" data-type="' + escHtml(type) + '" ';
     html += 'data-ustart="' + uStart + '" data-uend="' + uEnd + '" ';
     html += 'style="top:' + uH(totalU - uEnd) + ';height:' + uH(uEnd - uStart + 1, 2) + '">';
     html += '<div class="rack-canvas-block-u">' + uLabel + '</div>';
@@ -30807,20 +30823,41 @@ function rackElevation_buildHtml(rack) {
 // v1.14.228: redesign-only — scale the FLAT elevation so the whole rack fits one
 // viewport (no internal scroll). Measures grid-top -> bottom-nav-top, sets
 // --u-h = avail / totalU. Legacy never calls this (keeps the fixed 44px canvas).
-function rackFlat_applyFit(totalU) {
+function rackFlat_applyFit(totalU, _tries) {
   try {
     if (!(typeof redesign_isOn === 'function' && redesign_isOn())) return;
     totalU = totalU || 42;
-    var grid = document.querySelector('#rehFlatWrap .rack-canvas-grid');
-    if (!grid) return;
-    var gTop = grid.getBoundingClientRect().top;
+    rackFlat_applyFit._lastU = totalU;
+    var canvas = document.querySelector('#rehFlatWrap .rack-canvas');
+    var grid = canvas ? canvas.querySelector('.rack-canvas-grid') : null;
+    if (!canvas || !grid) return;
+    var cTop = canvas.getBoundingClientRect().top;
+    if (cTop <= 0) {   // panel not laid out yet (mid entrance-animation) — retry next frame
+      _tries = (_tries || 0) + 1;
+      if (_tries <= 5) requestAnimationFrame(function() { rackFlat_applyFit(totalU, _tries); });
+      return;
+    }
     var nav = document.getElementById('rd-botnav');
     var floor = nav ? nav.getBoundingClientRect().top : window.innerHeight;
-    var avail = floor - gTop - 12;   // 12px breathing room above the nav
-    if (avail < 120) return;         // too little space — keep the calc() default
-    grid.style.setProperty('--u-h', (avail / totalU).toFixed(2) + 'px');
+    var avail = Math.max(120, floor - cTop - 12);
+    // Clip the whole canvas at the nav line so a too-tall grid can never bleed under the fixed nav.
+    canvas.style.height = avail + 'px';
+    canvas.style.overflow = 'hidden';
+    var hdr = canvas.querySelector('.rack-canvas-header');
+    var headerH = hdr ? hdr.getBoundingClientRect().height : 0;
+    // Clamp, never bail to the overflowing calc() default; 8px floor keeps a huge rack shrinking-but-clipped.
+    var uh = Math.max(8, (avail - headerH - 24) / totalU);
+    grid.style.setProperty('--u-h', uh.toFixed(2) + 'px');
   } catch (e) { if (typeof phantom_logErr === 'function') phantom_logErr('rackFlat_applyFit', e); }
 }
+// v1.14.230: re-fit on viewport change (Safari URL-bar collapse, rotation). Registered once;
+// no-ops unless a redesign FLAT elevation is mounted, so legacy is unaffected.
+window.addEventListener('resize', function() {
+  if (rackFlat_applyFit._t) clearTimeout(rackFlat_applyFit._t);
+  rackFlat_applyFit._t = setTimeout(function() {
+    if (document.querySelector('#rehFlatWrap .rack-canvas-grid')) rackFlat_applyFit(rackFlat_applyFit._lastU || 42);
+  }, 150);
+});
 
 function scrubbar_buildHtml(rack) {
   var totalU = rack.totalU || 42;
@@ -31134,11 +31171,11 @@ function deploy_showRackDetail(deployId, rackId) {
       }
       html += '<div class="rack-hybrid-minimap">' + scrubbar_buildHtml(rack) + '</div>';
       html += '</div>';
-      setTimeout(function() {
+      requestAnimationFrame(function() { requestAnimationFrame(function() {
         rackHybrid_initSync(rack);
         rackFlat_applyFit(rack.totalU || 42);
         if (typeof reh3d_restore === 'function' && typeof redesign_isOn === 'function' && redesign_isOn()) reh3d_restore(rack);
-      }, 0);
+      }); });
     }
   } catch (rhErr) {
     if (typeof console !== 'undefined') console.warn('[rack-hybrid] render skipped:', rhErr);
