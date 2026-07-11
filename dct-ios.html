@@ -9655,6 +9655,20 @@ body.rd #rd-botnav{display:flex}
   align-items: center;
   height: 44px;
 }
+/* v1.14.228 — redesign-only FLAT viewport-fit: whole 48U on one screen, no scroll.
+   --u-h (set by rackFlat_applyFit) drives row pitch + markers so they track the
+   scaled blocks. body.rd-scoped -> ?legacy=1 keeps the fixed 44px scrolling canvas. */
+body.rd .rack-canvas { max-height: none; overflow-y: auto; }
+body.rd .rack-hybrid-canvas .rack-canvas { max-height: none; }
+body.rd .rack-canvas-grid {
+  background-image: linear-gradient(to bottom,
+    transparent 0,
+    transparent calc(var(--u-h, 44px) - 1px),
+    rgba(180,194,208,0.08) calc(var(--u-h, 44px) - 1px),
+    rgba(180,194,208,0.08) var(--u-h, 44px));
+  background-size: 100% var(--u-h, 44px);
+}
+body.rd .rack-canvas-u-marker { height: var(--u-h, 44px); }
 .rack-canvas-block {
   position: absolute;
   left: 32px;
@@ -9701,6 +9715,25 @@ body.rd #rd-botnav{display:flex}
 .rack-canvas-block[data-type="cooling"] { background: var(--green); }
 .rack-canvas-block[data-type="server"]  { background: var(--slate-readable); color: var(--white); }
 .rack-canvas-block[data-type="network"] { background: var(--violet-bright); }
+/* v1.14.228 — ghost fix (redesign-only): the FLAT block fill matched only 6 exact
+   type strings, so GPU trays typed compute/accelerator (GB200/GB300 vocab) rendered
+   transparent while the COMPONENTS strip counted them racked. Mirror the strip alias
+   map so aliased types fill their canonical colour. body.rd-scoped -> legacy untouched. */
+body.rd .rack-canvas-block[data-type="compute"],
+body.rd .rack-canvas-block[data-type="accelerator"] { background: var(--cyan); }
+body.rd .rack-canvas-block[data-type="leaf"],
+body.rd .rack-canvas-block[data-type="spine"] { background: var(--violet); }
+body.rd .rack-canvas-block[data-type="disk"],
+body.rd .rack-canvas-block[data-type="nvme"] { background: var(--gold); }
+body.rd .rack-canvas-block[data-type="host"],
+body.rd .rack-canvas-block[data-type="node"] { background: var(--slate-readable); color: var(--white); }
+body.rd .rack-canvas-block[data-type="router"],
+body.rd .rack-canvas-block[data-type="firewall"],
+body.rd .rack-canvas-block[data-type="nic"] { background: var(--violet-bright); }
+body.rd .rack-canvas-block[data-type="pdu"],
+body.rd .rack-canvas-block[data-type="fan"],
+body.rd .rack-canvas-block[data-type="crah"],
+body.rd .rack-canvas-block[data-type="crac"] { background: var(--green); }
 .rack-canvas-block-u {
   font-size: 9px; font-weight: 700;
   letter-spacing: 0.1em;
@@ -9792,6 +9825,13 @@ body.rd #rd-botnav{display:flex}
 .rack-hybrid-minimap .scrubbar-handle {
   display: none;
 }
+/* v1.14.228 — MINI strip (redesign-only): read as a true thumbnail, not decoration.
+   Un-dim to near-solid and snug the track to the canvas height so U markers align;
+   let the body.rd glass rule own the frame (no local border override). Legacy keeps 0.32. */
+body.rd .rack-hybrid-minimap .scrubbar-slot { opacity: 0.9; }
+body.rd .rack-hybrid-minimap .scrubbar-track { height: 100%; min-height: 0; max-height: none; }
+body.rd .rack-hybrid-minimap .scrubbar { padding: 6px 2px; }
+body.rd .rack-hybrid-minimap .scrubbar-u-label { padding: 0 2px; }
 
 /* v1.14.218 — 3D rack view: FLAT|3D toggle + lazy three.js mount (redesign-only,
    body.rd-scoped so ?legacy=1 is byte-identical). .reh-flat-wrap is display:contents
@@ -11582,7 +11622,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.227';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.228';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -17862,7 +17902,7 @@ function showWorkTab(target) {
   var id = 'wk-' + target;
   var btn = document.querySelector('#pg-work .subtab-strip .stab[data-wk="' + id + '"]');
   if (btn) showStab(btn, 'work-sub', id);
-  if (target === 'issues' && typeof issue_pageOpen === 'function') { try { issue_pageOpen(); } catch (_) {} }
+  if (target === 'issues' && typeof issue_pageOpen === 'function') { try { issue_pageOpen(); } catch (e) { phantom_logErr('showWorkTab:issues', e); if (typeof phantomToast === 'function') phantomToast('Blockers failed to open - see SYS > ERRORS', 'error'); } }
   // B4 (v1.14.121): land Work>Deploy directly on the Command Center (LIST/+NEW), never the
   // bare "Open Deploy" launcher stub. Chokepoint so EVERY entry — the Deploy card, the
   // Command-page launcher (cmd_route), Stage-2 graceful-degrades, nav drill — skips the stub.
@@ -18352,7 +18392,7 @@ function cmd_route(mode, target) {
     if (mode === 'work' && target === 'handoff' && typeof handoff_quick === 'function') return handoff_quick();   // Rule C (v1.14.126): Handoff is a modal flow, not an inline panel — open it directly, skip the #wk-handoff "Open Handoff" stub interstitial
     if (mode === 'work') return showWorkTab(target);
     showMode('command');
-  } catch (_) {}
+  } catch (e) { if (typeof phantom_logErr === 'function') phantom_logErr('cmd_route', e); if (typeof phantomToast === 'function') phantomToast('Navigation failed - see SYS > ERRORS', 'error'); }
 }
 function cmd_clock() {
   var d = new Date(), h = d.getHours(), ap = h >= 12 ? 'PM' : 'AM'; h = h % 12; if (h === 0) h = 12;
@@ -30689,6 +30729,10 @@ function rackElevation_render3D(rack, mountEl) {
 function rackElevation_buildHtml(rack) {
   var totalU = rack.totalU || 42;
   var U_HEIGHT = 44; // 44pt base — Cold Aisle tap target floor
+  // v1.14.228: redesign-only viewport-fit. Legacy emits fixed px (byte-identical);
+  // rd emits calc(var(--u-h)*n) so all 48U scale to one screen (--u-h set by rackFlat_applyFit).
+  var _fit = (typeof redesign_isOn === 'function' && redesign_isOn());
+  function uH(n, sub) { sub = sub || 0; return _fit ? ('calc(var(--u-h) * ' + n + (sub ? (' - ' + sub + 'px') : '') + ')') : ((n * U_HEIGHT - sub) + 'px'); }
   var slots = (rack.slots || []).filter(function(s) {
     if (!s || s.uStart == null) return false;
     var uEnd = s.uEnd || s.uStart;
@@ -30696,8 +30740,6 @@ function rackElevation_buildHtml(rack) {
     if (span / totalU >= 0.8) return false;
     return true;
   });
-
-  var totalHeight = totalU * U_HEIGHT;
 
   var html = '<div class="rack-canvas" id="rackCanvas">';
   html += '<div class="rack-canvas-header">RACK ELEVATION · ' + escHtml(rack.id || 'UNKNOWN') + ' · ' + totalU + 'U</div>';
@@ -30708,14 +30750,12 @@ function rackElevation_buildHtml(rack) {
     return html;
   }
 
-  html += '<div class="rack-canvas-grid" style="height:' + totalHeight + 'px">';
+  html += '<div class="rack-canvas-grid" style="' + (_fit ? '--u-h:calc((100dvh - 232px) / ' + totalU + ');' : '') + 'height:' + uH(totalU) + '">';
 
   // U-position markers — show every 6U for readability
   for (var u = totalU; u >= 1; u--) {
     if ((u % 6 === 0) || u === 1 || u === totalU) {
-      // Top of U-row = (totalU - u) * U_HEIGHT
-      var markerTop = (totalU - u) * U_HEIGHT;
-      html += '<div class="rack-canvas-u-marker" style="top:' + markerTop + 'px">U' + u + '</div>';
+      html += '<div class="rack-canvas-u-marker" style="top:' + uH(totalU - u) + '">U' + u + '</div>';
     }
   }
 
@@ -30725,7 +30765,6 @@ function rackElevation_buildHtml(rack) {
     var uEnd = slot.uEnd || slot.uStart;
     // In rack layout: U1 is at bottom, U(totalU) is at top.
     // Block top edge corresponds to uEnd (the higher U-number).
-    var blockTop = (totalU - uEnd) * U_HEIGHT;
     var blockHeight = (uEnd - uStart + 1) * U_HEIGHT;
     var type = (slot.type || '').toLowerCase();
     var uLabel = 'U' + uStart + (uEnd !== uStart ? '–U' + uEnd : '');
@@ -30737,7 +30776,7 @@ function rackElevation_buildHtml(rack) {
 
     html += '<div class="rack-canvas-block' + (blockHeight === U_HEIGHT ? ' is-1u' : '') + '" data-idx="' + idx + '" data-type="' + escHtml(type) + '" ';
     html += 'data-ustart="' + uStart + '" data-uend="' + uEnd + '" ';
-    html += 'style="top:' + blockTop + 'px;height:' + (blockHeight - 2) + 'px">';
+    html += 'style="top:' + uH(totalU - uEnd) + ';height:' + uH(uEnd - uStart + 1, 2) + '">';
     html += '<div class="rack-canvas-block-u">' + uLabel + '</div>';
     html += '<div class="rack-canvas-block-name">' + escHtml(slot.name || 'UNKNOWN') + '</div>';
     if (modelClean || typeClean) {
@@ -30753,8 +30792,28 @@ function rackElevation_buildHtml(rack) {
   return html;
 }
 
+// v1.14.228: redesign-only — scale the FLAT elevation so the whole rack fits one
+// viewport (no internal scroll). Measures grid-top -> bottom-nav-top, sets
+// --u-h = avail / totalU. Legacy never calls this (keeps the fixed 44px canvas).
+function rackFlat_applyFit(totalU) {
+  try {
+    if (!(typeof redesign_isOn === 'function' && redesign_isOn())) return;
+    totalU = totalU || 42;
+    var grid = document.querySelector('#rehFlatWrap .rack-canvas-grid');
+    if (!grid) return;
+    var gTop = grid.getBoundingClientRect().top;
+    var nav = document.getElementById('rd-botnav');
+    var floor = nav ? nav.getBoundingClientRect().top : window.innerHeight;
+    var avail = floor - gTop - 12;   // 12px breathing room above the nav
+    if (avail < 120) return;         // too little space — keep the calc() default
+    grid.style.setProperty('--u-h', (avail / totalU).toFixed(2) + 'px');
+  } catch (e) { if (typeof phantom_logErr === 'function') phantom_logErr('rackFlat_applyFit', e); }
+}
+
 function scrubbar_buildHtml(rack) {
   var totalU = rack.totalU || 42;
+  // v1.14.228: rd MINI mirrors the elevation's true proportions (small floor); legacy keeps 1.2 (byte-identical).
+  var _miniFloor = (typeof redesign_isOn === 'function' && redesign_isOn()) ? 0.4 : 1.2;
   var slots = (rack.slots || []).filter(function(s) {
     if (!s || s.uStart == null) return false;
     // Defensive: skip rack-spanning placeholder slots (e.g. uStart=0, uEnd=47 on a 48U rack).
@@ -30788,7 +30847,7 @@ function scrubbar_buildHtml(rack) {
     var heightPct = ((uEnd - uStart + 1) / totalU) * 100;
     var type = (slot.type || '').toLowerCase();
     html += '<div class="scrubbar-slot" data-idx="' + idx + '" data-type="' + escHtml(type) + '" ';
-    html += 'style="top:' + topPct.toFixed(2) + '%;height:' + Math.max(heightPct, 1.2).toFixed(2) + '%"></div>';
+    html += 'style="top:' + topPct.toFixed(2) + '%;height:' + Math.max(heightPct, _miniFloor).toFixed(2) + '%"></div>';
   });
   // Empty-state overlay: shown when no scrubbable slots after filtering
   if (slots.length === 0) {
@@ -31065,6 +31124,7 @@ function deploy_showRackDetail(deployId, rackId) {
       html += '</div>';
       setTimeout(function() {
         rackHybrid_initSync(rack);
+        rackFlat_applyFit(rack.totalU || 42);
         if (typeof reh3d_restore === 'function' && typeof redesign_isOn === 'function' && redesign_isOn()) reh3d_restore(rack);
       }, 0);
     }
