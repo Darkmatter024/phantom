@@ -9751,10 +9751,26 @@ body.rd .rack-canvas-block[data-type="crac"] { border-left-color: var(--green); 
    padding for all fitted blocks and force 1U rows to a single short line. .reh-fitted is set on
    the grid under rd only -> legacy untouched. */
 body.rd .reh-fitted .rack-canvas-block { padding: 3px 8px; }
-body.rd .reh-fitted .rack-canvas-block.is-1u { padding: 0 6px; border-top: 0; border-bottom: 0; gap: 6px; line-height: 1; }
+/* v1.14.231 — 1U cluster cleanup: the .230 border-top/bottom:0 (to save height) left only the
+   left accent + right border under a 3px radius, so the corners rendered as broken bracket
+   fragments and adjacent dark trays merged (read as "clumped at U42"). Restore a full hairline
+   box (radius 0 -> no fragment; each row a clean bounded list-row), and force full --u-h height
+   so the -2px inline gap can't crush the single text line. Rows are U-quantised, so a full-height
+   box per 1U sits on its own U line with the butting hairline borders as the divider. */
+body.rd .reh-fitted .rack-canvas-block.is-1u {
+  height: var(--u-h) !important;
+  padding: 0 8px; gap: 6px; line-height: 1;
+  border-top: 1px solid rgba(180,194,208,0.20);
+  border-right: 1px solid rgba(180,194,208,0.20);
+  border-bottom: 1px solid rgba(180,194,208,0.20);
+  border-radius: 0;
+}
 body.rd .reh-fitted .rack-canvas-block.is-1u .rack-canvas-block-u { display: none; }
-body.rd .reh-fitted .rack-canvas-block.is-1u .rack-canvas-block-name { font-size: 10px; line-height: 1; }
-body.rd .reh-fitted .rack-canvas-block.is-1u .rack-canvas-block-meta { font-size: 9px; line-height: 1; }
+/* Name shrinks with ellipsis (was flex-shrink:0 -> hard mid-word clip); capped so the model keeps
+   room, and the model (meta) is the first to truncate. Both ellipsize at a word/char boundary,
+   never a raw parent-overflow cut. */
+body.rd .reh-fitted .rack-canvas-block.is-1u .rack-canvas-block-name { font-size: 9px; line-height: 1; flex: 0 1 auto; min-width: 0; max-width: 62%; margin-right: 0; }
+body.rd .reh-fitted .rack-canvas-block.is-1u .rack-canvas-block-meta { font-size: 8px; line-height: 1; flex: 1 1 auto; min-width: 0; }
 /* v1.14.230 — a 1U slot nested inside a larger tray (a master U-collision) shares the tray's top
    edge; inset it to the right as a badge so it reads as an annotation, not a phantom row. */
 body.rd .rack-canvas-block.is-overlap { left: auto; right: 4px; width: 42%; z-index: 5; box-shadow: -3px 0 6px rgba(4,6,10,0.55); }
@@ -11646,7 +11662,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.230';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.231';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
