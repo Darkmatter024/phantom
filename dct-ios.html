@@ -8835,7 +8835,7 @@ body.rd #forge3d-sheet.open { display: flex; }
 #forge3d-mount { position: relative; flex: 1; min-height: 0; overflow: hidden; background: #000508; }
 /* v1.14.226 — persistent build badge (§10): subtle top-right, redesign-only, taps pass through */
 #ver-stamp { display: none; }
-body.rd #ver-stamp { display: block; position: fixed; top: calc(var(--safe-top, 0px) + 3rem); right: 8px; z-index: 45; padding: 2px 8px; border-radius: 8px; font-family: var(--mono); font-size: 9px; font-weight: 600; letter-spacing: .08em; color: #43506a; background: rgba(6,9,15,0.7); border: 1px solid rgba(180,194,208,0.12); pointer-events: none; }
+body.rd #ver-stamp { display: inline-flex; align-items: center; align-self: center; padding: 2px 8px; border-radius: 8px; font-family: var(--mono); font-size: 9px; font-weight: 600; letter-spacing: .08em; color: #43506a; background: rgba(6,9,15,0.7); border: 1px solid rgba(180,194,208,0.12); pointer-events: none; white-space: nowrap; }
 .rd-sheet-hdr { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: calc(12px + var(--safe-top, 0px)) 18px 12px; border-bottom: 1px solid rgba(120,150,200,0.14); }
 .rd-sheet-titles { min-width: 0; }
 .rd-sheet-titles .t { font-family: var(--orb); font-weight: 700; letter-spacing: .14em; font-size: 18px; color: var(--white); }
@@ -9715,25 +9715,37 @@ body.rd .rack-canvas-u-marker { height: var(--u-h, 44px); }
 .rack-canvas-block[data-type="cooling"] { background: var(--green); }
 .rack-canvas-block[data-type="server"]  { background: var(--slate-readable); color: var(--white); }
 .rack-canvas-block[data-type="network"] { background: var(--violet-bright); }
-/* v1.14.228 — ghost fix (redesign-only): the FLAT block fill matched only 6 exact
-   type strings, so GPU trays typed compute/accelerator (GB200/GB300 vocab) rendered
-   transparent while the COMPONENTS strip counted them racked. Mirror the strip alias
-   map so aliased types fill their canonical colour. body.rd-scoped -> legacy untouched. */
+/* v1.14.229 — FLAT block appearance (redesign-only): racked slots read as a DARK tray
+   body + a thin type-colour LEFT accent + readable text. The .228 ghost-fix over-filled
+   to a solid slab that drowned the label; this dark base overrides the legacy full-fill
+   under body.rd, and each type (canonical PLUS the compute/accelerator/etc. aliases the
+   COMPONENTS strip normalises) drives ONLY the accent colour. body.rd-scoped -> legacy untouched. */
+body.rd .rack-canvas-block {
+  background: rgba(9,13,20,0.90);
+  color: var(--white);
+  border-left: 3px solid rgba(180,194,208,0.35);
+}
+body.rd .rack-canvas-block[data-type="gpu"],
 body.rd .rack-canvas-block[data-type="compute"],
-body.rd .rack-canvas-block[data-type="accelerator"] { background: var(--cyan); }
+body.rd .rack-canvas-block[data-type="accelerator"] { border-left-color: var(--cyan); }
+body.rd .rack-canvas-block[data-type="switch"],
 body.rd .rack-canvas-block[data-type="leaf"],
-body.rd .rack-canvas-block[data-type="spine"] { background: var(--violet); }
+body.rd .rack-canvas-block[data-type="spine"] { border-left-color: var(--violet); }
+body.rd .rack-canvas-block[data-type="storage"],
 body.rd .rack-canvas-block[data-type="disk"],
-body.rd .rack-canvas-block[data-type="nvme"] { background: var(--gold); }
+body.rd .rack-canvas-block[data-type="nvme"] { border-left-color: var(--gold); }
+body.rd .rack-canvas-block[data-type="server"],
 body.rd .rack-canvas-block[data-type="host"],
-body.rd .rack-canvas-block[data-type="node"] { background: var(--slate-readable); color: var(--white); }
+body.rd .rack-canvas-block[data-type="node"] { border-left-color: var(--slate-readable); }
+body.rd .rack-canvas-block[data-type="network"],
 body.rd .rack-canvas-block[data-type="router"],
 body.rd .rack-canvas-block[data-type="firewall"],
-body.rd .rack-canvas-block[data-type="nic"] { background: var(--violet-bright); }
+body.rd .rack-canvas-block[data-type="nic"] { border-left-color: var(--violet-bright); }
+body.rd .rack-canvas-block[data-type="cooling"],
 body.rd .rack-canvas-block[data-type="pdu"],
 body.rd .rack-canvas-block[data-type="fan"],
 body.rd .rack-canvas-block[data-type="crah"],
-body.rd .rack-canvas-block[data-type="crac"] { background: var(--green); }
+body.rd .rack-canvas-block[data-type="crac"] { border-left-color: var(--green); }
 .rack-canvas-block-u {
   font-size: 9px; font-weight: 700;
   letter-spacing: 0.1em;
@@ -11622,12 +11634,12 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.228';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.229';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
 // which is exactly the "am I on the latest?" signal — a fresh version.json behind stale HTML would lie.
-document.addEventListener('DOMContentLoaded', function(){ try { var vs = document.getElementById('ver-stamp'); if (vs) vs.textContent = 'v' + PHANTOM_APP_VERSION.replace('phantom-', ''); } catch(_){} });
+document.addEventListener('DOMContentLoaded', function(){ try { var vs = document.getElementById('ver-stamp'); if (vs) vs.textContent = PHANTOM_APP_VERSION.replace('phantom-', ''); } catch(_){} });
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
@@ -12069,6 +12081,7 @@ if (typeof window !== 'undefined') {
           <span class="sw-pill-led"></span>
           <span class="sw-pill-text">SW NONE</span>
         </button>
+        <div id="ver-stamp" aria-hidden="true">v&mdash;</div>
         <div class="hdr-agg-wrap" id="net-pill">
           <!-- Aggregate status pill — quiet when healthy, shouts when not -->
           <button class="hdr-agg-pill" id="hdr-agg-pill" onclick="hdr_aggToggle(event)" aria-label="System status — tap for details" aria-expanded="false" data-state="checking">
@@ -12158,9 +12171,8 @@ if (typeof window !== 'undefined') {
     <div id="forge3d-mount"></div>
   </div>
 
-  <!-- v1.14.226 — persistent build badge (§10). Redesign-only (CSS-gated), pointer-events:none so it
-       never blocks a tap. Text set from PHANTOM_APP_VERSION on DOMContentLoaded (the running build). -->
-  <div id="ver-stamp" aria-hidden="true">v&mdash;</div>
+  <!-- v1.14.226 — persistent build badge (§10). v1.14.229: RELOCATED into the header next to
+       the SYS pill (was a floating overlay that overlapped the fitted FLAT elevation at U48). -->
 
   <!-- DCT-02: Storage warning banner -->
   <div id="storage-warn" style="display:none;background:rgba(255,59,59,0.12);border-bottom:1px solid rgba(255,59,59,0.3);color:var(--alert,#ff3b3b);font-family:var(--mono);font-size: var(--fs-caption);letter-spacing:var(--hud-track-mid);text-align:center;padding:6px 16px;cursor:pointer" onclick="exportAllData()" aria-live="polite"></div>
