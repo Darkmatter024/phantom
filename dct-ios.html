@@ -8842,6 +8842,21 @@ body.rd #ver-stamp { display: inline-flex; align-items: center; align-self: cent
 .rd-sheet-titles .s { font-family: var(--mono); font-weight: 600; font-size: 10px; letter-spacing: .22em; color: var(--slate); margin-top: 3px; }
 .rd-sheet-close { width: 40px; height: 40px; border-radius: 11px; border: 1px solid rgba(120,150,200,0.18); background: rgba(16,22,34,0.55); color: var(--white); font-size: 17px; cursor: pointer; flex: 0 0 auto; -webkit-tap-highlight-color: transparent; }
 .rd-sheet-body { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 16px 18px 28px; }
+/* v1.14.232 — FORGE HUD slice 1 (glass brand lockup + AMBIENT dimmer). All id-scoped to
+   #forge3d-sheet so the shared .rd-sheet-* classes are untouched elsewhere. Redesign-only
+   by inheritance (the sheet is body.rd-gated) -> ?legacy=1 byte-identical. */
+#forge3d-sheet .rd-sheet-hdr { background: linear-gradient(180deg, rgba(8,14,22,0.72), rgba(8,14,22,0.28)); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+#forge3d-sheet .rd-sheet-titles .t { display: flex; align-items: center; gap: 9px; font-size: 15px; letter-spacing: .18em; color: var(--cyan); text-shadow: 0 0 10px rgba(40,224,255,0.45); }
+#forge3d-sheet .rd-sheet-titles .s { letter-spacing: .28em; color: var(--slate); }
+#forge3d-sheet .forge-dot { flex: 0 0 auto; width: 8px; height: 8px; border-radius: 50%; background: var(--teal); box-shadow: 0 0 8px var(--teal); animation: forgePulse 1.8s ease-in-out infinite; }
+@keyframes forgePulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: .35; transform: scale(.7); } }
+#forge3d-hud { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+#forge3d-hud .forge-dim { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(18px + var(--safe-bot, 0px)); display: flex; align-items: center; gap: 12px; padding: 10px 16px; border-radius: 16px; pointer-events: auto; background: rgba(8,14,22,0.55); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); border: 1px solid rgba(120,150,200,0.20); box-shadow: 0 10px 28px -16px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,255,255,0.05); max-width: calc(100vw - 32px); }
+#forge3d-hud .forge-dim-k { font-family: var(--mono); font-size: 10px; letter-spacing: .22em; color: var(--slate); flex: 0 0 auto; }
+#forge3d-hud .forge-dim-val { font-family: var(--mono); font-size: 11px; font-weight: 600; letter-spacing: .06em; color: var(--cyan); flex: 0 0 auto; min-width: 34px; text-align: right; }
+#forge3d-hud .forge-dim-range { -webkit-appearance: none; appearance: none; width: 150px; height: 4px; border-radius: 3px; background: linear-gradient(90deg, var(--cyan), var(--vio)); outline: none; flex: 0 1 auto; }
+#forge3d-hud .forge-dim-range::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #eaf6ff; border: 2px solid var(--cyan); box-shadow: 0 0 8px rgba(40,224,255,0.6); cursor: pointer; }
+#forge3d-hud .forge-dim-range::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: #eaf6ff; border: 2px solid var(--cyan); box-shadow: 0 0 8px rgba(40,224,255,0.6); cursor: pointer; }
 /* ━━━ REDESIGN STEP 4 — Command Center (pg-cmd). Ported from the cc-final mockup,
    every selector scoped under #pg-cmd so the generic class names (.lens/.stat/.nba/
    .route/.clock/.spill) can't collide with app classes or leak to other pages.
@@ -11662,7 +11677,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.231';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.232';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -12193,10 +12208,20 @@ if (typeof window !== 'undefined') {
        .rd-sheet clone; a single persistent canvas mounts into #forge3d-mount. Redesign-only. -->
   <div id="forge3d-sheet" role="dialog" aria-modal="true" aria-label="Forge 3D aisle">
     <div class="rd-sheet-hdr">
-      <div class="rd-sheet-titles"><div class="t">FORGE &middot; 3D AISLE</div><div class="s">STAGE 1 &middot; SCENE PREVIEW</div></div>
+      <div class="rd-sheet-titles"><div class="t"><span class="forge-dot" aria-hidden="true"></span>PHANTOM FORGE</div><div class="s">HYBRID AISLE</div></div>
       <button class="rd-sheet-close" onclick="forge3d_close()" aria-label="Close Forge 3D">&#10005;</button>
     </div>
     <div id="forge3d-mount"></div>
+    <!-- v1.14.232 — Forge HUD slice 1: glass overlay over the mount. pointer-events:none
+         except the AMBIENT dimmer; the brand lockup lives in the restyled header above. -->
+    <div id="forge3d-hud">
+      <div class="forge-dim" role="group" aria-label="Ambient lighting">
+        <span class="forge-dim-k">AMBIENT</span>
+        <input id="forge-dim-range" class="forge-dim-range" type="range" min="0" max="100" value="70"
+               oninput="forge3d_dim(this)" aria-label="Ambient lighting level">
+        <span id="forge-dim-val" class="forge-dim-val">70%</span>
+      </div>
+    </div>
   </div>
 
   <!-- v1.14.226 — persistent build badge (§10). v1.14.229: RELOCATED into the header next to
@@ -17453,6 +17478,17 @@ function forge3d_close() {
   if (mount && mount._forge3dDispose) { try { mount._forge3dDispose(); } catch (e) { phantom_logErr('forge3d_close:dispose', e); } }
 }
 
+// v1.14.232 — AMBIENT dimmer input handler (top-level so the static #forge-dim-range
+// slider reaches the LIVE scene's setter via _forge3dActive; when the scene is torn down
+// _forge3dActive is null -> a stale drag is a guarded no-op, never touches a disposed GL).
+function forge3d_dim(el) {
+  if (!el) return;
+  var pct = parseInt(el.value, 10); if (isNaN(pct)) return;
+  var lab = document.getElementById('forge-dim-val'); if (lab) lab.textContent = pct + '%';
+  if (_forge3dActive && typeof _forge3dActive.setDim === 'function') {
+    try { _forge3dActive.setDim(pct); } catch (e) { phantom_logErr('forge3d_dim', e); }
+  }
+}
 function forge3d_ensure3D(mount) {
   if (!mount) return;
   if (window.THREE) { forge3d_render(mount); return; }
@@ -17724,24 +17760,39 @@ function forge3d_render(mount) {
   }
 
   // ── buildLighting (§2.7, verbatim values; rows front-weighted to {-6,-12,-18}) ──
+  // v1.14.232 — HUD AMBIENT dimmer: keep handles to the ambient/row/dir lights so
+  // forge3d_applyDim can scale their intensity live (no re-render). Values below stay
+  // the verbatim BASE; the dimmer multiplies each by a 0.25..1.0 factor.
+  var _fDimAmb = null, _fDimDir = null, _fDimPts = [];
   function buildLighting() {
-    scene.add(new THREE.AmbientLight(0x020810, 1.0));
+    _fDimAmb = new THREE.AmbientLight(0x020810, 1.0); scene.add(_fDimAmb);
     var rowZs = [-6, -12, -18];
     rowZs.forEach(function (z) {
       for (var x = -12; x <= 12; x += 6) {
         var strip = new THREE.PointLight(0x1a4060, 0.8, 10);
         strip.position.set(x, 3.8, z);
-        scene.add(strip);
+        scene.add(strip); _fDimPts.push(strip);
         var mesh = new THREE.Mesh(new THREE.BoxGeometry(4, 0.05, 0.1),
           new THREE.MeshStandardMaterial({ color: 0x224455, emissive: 0x112233, emissiveIntensity: 0.5 }));
         mesh.position.set(x, 3.95, z);
         scene.add(mesh);
       }
     });
-    var dir = new THREE.DirectionalLight(0x102030, 0.5);
-    dir.position.set(0, 10, 5);
-    dir.castShadow = true;
-    scene.add(dir);
+    _fDimDir = new THREE.DirectionalLight(0x102030, 0.5);
+    _fDimDir.position.set(0, 10, 5);
+    _fDimDir.castShadow = true;
+    scene.add(_fDimDir);
+  }
+  // v1.14.232 — AMBIENT dimmer: pct 0..100 -> factor 0.25..1.0 (100 = tuned baseline
+  // ceiling, never brighter than the hand-calibrated look; 0 = atmospheric dim). Scales
+  // the ambient(1.0)/row-point(0.8)/dir(0.5) bases in place. The hero spotlight is left
+  // untouched (its own rig). Lights-only this slice — fog is not modulated (DEVIATION).
+  function forge3d_applyDim(pct) {
+    var p = Math.max(0, Math.min(100, pct || 0));
+    var f = 0.25 + (p / 100) * 0.75;
+    if (_fDimAmb) _fDimAmb.intensity = 1.0 * f;
+    for (var i = 0; i < _fDimPts.length; i++) _fDimPts[i].intensity = 0.8 * f;
+    if (_fDimDir) _fDimDir.intensity = 0.5 * f;
   }
 
   // ── buildRacks (spec §2.8 placement: front row z=0, receding z=-6/-12; F-01..F-18) ──
@@ -17899,7 +17950,10 @@ function forge3d_render(mount) {
   } catch (e) { phantom_logErr('forge3d_render:build', e); forge3d_fail(mount); return; }
 
   mount._forge3dDispose = teardown;
-  _forge3dActive = { mount: mount, dispose: teardown };
+  _forge3dActive = { mount: mount, dispose: teardown, setDim: forge3d_applyDim };
+  forge3d_applyDim(70);   // v1.14.232 — default AMBIENT dimmer position (moody but gloved-legible)
+  var _dimEl = document.getElementById('forge-dim-range'); if (_dimEl) _dimEl.value = 70;
+  var _dimLab = document.getElementById('forge-dim-val'); if (_dimLab) _dimLab.textContent = '70%';
   resize();
   loop();
 }
