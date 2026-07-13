@@ -11791,7 +11791,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.235';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.236';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -31670,16 +31670,17 @@ function deploy_showRackDetail(deployId, rackId) {
     if (rack.slots && rack.slots.length > 0) {
       html += '<div class="rack-hybrid">';
       if (typeof redesign_isOn === 'function' && redesign_isOn()) {
-        // v1.14.218: opt-in three.js 3D view. FLAT is the instant default; the flat
-        // body is wrapped display:contents so it renders byte-identically, with a
-        // lazy 3D mount as a sibling. Legacy (else) emits the original line verbatim.
+        // v1.14.236 — RETIRED: the .218 opt-in FLAT|3D toggle. FORGE 3D supersedes this
+        // wireframe rack view; two 3D doors onto the same rack violates "one door per
+        // feature", and the old view competes for the single GL context. Per the
+        // re-home law the toggle + its 3D mount are UNWIRED from the rd house, not
+        // deleted: the reh3d_* functions and .reh-3d-* CSS stay resident (physical
+        // removal waits for the R1 deletion pass). FLAT remains the rack-detail
+        // default, unchanged; #rehFlatWrap is display:contents so the fitted
+        // elevation renders exactly as before. Legacy (else) emits the original
+        // line verbatim — ?legacy=1 untouched.
         html += '<div class="rack-hybrid-canvas" id="reh3dCanvasHost">' +
-                  '<div class="reh-3d-toggle" role="group" aria-label="Elevation view mode">' +
-                    '<button type="button" id="reh3dBtnFlat" class="reh-3d-seg is-on" onclick="reh3d_setMode(\'flat\')">FLAT</button>' +
-                    '<button type="button" id="reh3dBtn3d" class="reh-3d-seg" onclick="reh3d_setMode(\'3d\')">3D</button>' +
-                  '</div>' +
                   '<div id="rehFlatWrap" class="reh-flat-wrap">' + rackElevation_buildHtml(rack) + '</div>' +
-                  '<div id="reh3dMount" class="reh-3d-mount"></div>' +
                 '</div>';
       } else {
         html += '<div class="rack-hybrid-canvas">' + rackElevation_buildHtml(rack) + '</div>';
@@ -31689,7 +31690,9 @@ function deploy_showRackDetail(deployId, rackId) {
       requestAnimationFrame(function() { requestAnimationFrame(function() {
         rackHybrid_initSync(rack);
         rackFlat_applyFit(rack.totalU || 42);
-        if (typeof reh3d_restore === 'function' && typeof redesign_isOn === 'function' && redesign_isOn()) reh3d_restore(rack);
+        // v1.14.236 — reh3d_restore() unwired with the toggle above. A stale
+        // sessionStorage phantom_rackview_3d='1' from a pre-.236 session must not be
+        // able to resurrect the retired 3D view into a mount that no longer exists.
       }); });
     }
   } catch (rhErr) {
