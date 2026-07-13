@@ -245,3 +245,87 @@ loses field truth on the first Master re-import. That is the reconciliation ship
    ingestion point (§3.2) → FORGE Command card (§3.4).
 3. Height work is **gated on John's answers to §3 OPEN (a)/(b)** — do not seed `MASTER_U_TABLE`
    from your own knowledge of the hardware. That is exactly the guess this ship exists to kill.
+
+---
+
+# 7. JOHN'S RULINGS — RECORDED 2026-07-13 (VERBATIM, main thread)
+
+**Status: RECORDED ONLY. NO IMPLEMENTATION CODE.** The batch (`.238` + `.239`) is live but
+**UNVERIFIED**. The queue below moves ONLY when John sends "`.238/.239 PASS`".
+
+## RULING 1 — PROVENANCE STRIPS HOUSE-WIDE (already in state doc §3b)
+Refactor deploy_forge_provenance() into ONE global helper first, point
+Forge's call site at it, then add the strip to every Master-fed rd
+surface: SITE · <sourceFile|SOURCE UNKNOWN> · SAVED <date> · RESTORED
+badge; amber when source unknown; tap → Master FILE panel.
+redesign_isOn()-gated; legacy byte-identical.
+
+## RULING 2 — SINGLE MASTER INGESTION POINT
+The Master FILE panel is the ONLY door a Master enters the app.
+Remove the deploy flow's separate master-load path entirely.
+Deployments REFERENCE the site Master store (read-only), scoped via
+SCOPE A JOB. Deploy with no site Master → "NO SITE MASTER — LOAD ONE
+FIRST" + deep link to the FILE panel. Never a second uploader.
+Open sub-question — ask me before implementing: site Master replaced
+while a deployment is active → deployment follows the new Master
+through RECONCILE, not a pinned stale copy. Confirm at build time.
+
+## RULING 3 — NBA GUIDED SETUP + MASTER PILL (ships WITH Ruling 2)
+NEXT BEST ACTION becomes a priority ladder, top unmet condition wins:
+  1. No profile      → "Set your site profile." [SET PROFILE →]
+  2. No site Master  → "Load the site Master — nothing renders
+                        without it." [LOAD MASTER →] (deep link to
+                        FILE panel)
+  3. Handoff draft open → current behavior
+  4. Active deployment states as today
+Command Lens stays status-only (subtitle may reflect state, no load
+button). Status pill row gains a fourth pill: "Master ✓" / amber
+"No Master", tap → FILE panel.
+
+## RULING 4 — ASSISTANT IS FLEET-WIDE, SITE-AWARE
+DCT Assistant answers for ANY platform in the knowledge base
+regardless of loaded site profile. Site context ANNOTATES, never
+gates: platform not at this site → full answer + one line "Note: not
+currently deployed at <SITE>." Ambiguous questions resolve to this
+site's platforms first. Domain guardrails (DC/hardware/ops only)
+unchanged. Audit BOTH paths for site-gating — the offline
+PHANTOM_HW_MATRIX lookup AND the Worker AI prompt. Must-pass example:
+"GB300 optics?" from DFW-05 → full GB300 NVL72 answer + note.
+
+## RULING 5 — FORGE COMMAND CARD
+Tile: forge-card-tile-256.webp · Splash: forge-splash-1024.webp /
+forge-splash-portrait-720.webp behind Forge's NO MASTER LOADED state
+(CSS scrim for text legibility, not baked into image). I supply the
+asset files. Card: title FORGE · 3D AISLE; live status line reusing
+the Ruling-1 provenance helper (loaded: "5 RACKS · c1:001–005 · DFW2
+SAVED 07/08" / empty: amber "NO MASTER LOADED"); tap → Forge scene,
+loadout restored. rd-only.
+
+## SHIP ORDER AFTER JOHN'S ".238/.239 PASS"
+  A) Ruling 1 (provenance refactor + strips)
+  B) Rulings 2+3 together (one architecture ship: ingestion + NBA +
+     pill)
+  C) Reconciliation per the confirmed spec in the state doc — this
+     ship finally signs off the verify-toggle workflow
+  D) Ruling 5 (Forge card)
+  E) Ruling 4 (assistant prompt/logic layer)
+One ship at a time, hard stop for my device verify between each.
+All standing gates apply: str_replace unique anchors, node --check ×3,
+CSS brace balance, CRLF, three-stamp lockstep, legacy curl-diff,
+INTEGRATION-STATE.md updated at session end or low context.
+
+---
+
+## 7b. ⛔ STEP 1 (VAST SEED) — BLOCKED, NOT DONE
+John's 2026-07-13 message intended to answer the VAST DBox height but **sent the template with
+BOTH options still in it**: `VAST DBox at DFW02 = [2U — Lightspeed 44-bay / 1U — Ceres ruler]`.
+One option was meant to be struck out; neither was.
+
+**NOT SEEDED. NOT GUESSED.** Picking either value would be exactly the failure `.238` exists to
+prevent, and this one is not cosmetic — `master_nodeHeightU` feeds the mscope seeder, which
+**persists** slots into deployment records. A wrong VAST height would be baked into every
+deployment created from DFW02.
+
+`VAST DBox` (×50 on DFW02) therefore remains **UNKNOWN → flagged gold** in Forge. DFW02 stays at
+2.2% unknown. **One word from John (Lightspeed or Ceres) closes it — data-only append, rides in
+the current unverified batch, no new batch.**
