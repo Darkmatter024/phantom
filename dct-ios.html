@@ -8913,6 +8913,23 @@ body.rd #forge3d-sheet.open { display: flex; }
 #forge3d-sheet .forge-unplaced{margin:6px 4px 10px;padding:8px 10px;border-radius:6px;
   background:rgba(255,203,69,.10);border:1px solid rgba(255,203,69,.32);color:var(--gold);
   font-size:9px;letter-spacing:.10em;line-height:1.5;word-break:break-word}
+/* v1.14.238 — GEOMETRY TRUTH. Red = the Master's geometry is WRONG (two devices in one U, or a
+   chassis running off the top of the rack): the elevation cannot be trusted until it is fixed.
+   Gold = we simply do not know (model height not in MASTER_U_TABLE) — reuses the existing
+   "surfaced, not lost" language above. A flagged row is never allowed to read as clean. */
+#forge3d-sheet .forge-conflict{margin:6px 4px 10px;padding:8px 10px;border-radius:6px;
+  background:rgba(255,69,58,.12);border:1px solid rgba(255,69,58,.42);color:#ff8a80;
+  font-size:9px;letter-spacing:.10em;line-height:1.5;word-break:break-word}
+#forge3d-sheet .detail-row.row-conflict{background:rgba(255,69,58,.07)}
+#forge3d-sheet .detail-row.row-warn{background:rgba(255,203,69,.06)}
+#forge3d-sheet .detail-row.row-conflict .uslot{color:#ff8a80}
+#forge3d-sheet .detail-row.row-warn .uslot{color:var(--gold)}
+#forge3d-sheet .detail-flag{padding:3px 4px 8px 30px;font-size:8.5px;letter-spacing:.09em;
+  line-height:1.5;color:var(--gold);border-bottom:1px solid rgba(40,224,255,.06);
+  word-break:break-word}
+#forge3d-sheet .detail-flag.flag-conflict{color:#ff8a80}
+#forge3d-sheet .chip.flagged{border-color:rgba(255,69,58,.5)}
+#forge3d-sheet .chip.flagged .cid{color:#ff8a80}
 #forge3d-sheet .detail-footer{display:flex;justify-content:space-between;padding:10px 20px;
   border-top:1px solid rgba(40,224,255,.1);font-size:10px;color:var(--dim);
   letter-spacing:.08em;flex-shrink:0}
@@ -11809,7 +11826,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.237';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.238';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -17780,8 +17797,12 @@ function forge3d_render(mount) {
     var m = deploy_forge_master();
     return (m && m.siteCode) ? String(m.siteCode).toUpperCase() : 'MASTER';
   }
-  function deploy_forge_tagSub(racked, total) {
-    return deploy_forge_siteLabel() + ' · ' + racked + '/' + total + ' RACKED · TAP FLANKS TO WALK';
+  // v1.14.238 — the herotag carries a flag count when the focused rack's geometry is suspect.
+  // Kept to a short glyph+number: .sub is 9px inside an inline-flex box, and a long string glued
+  // here wraps over the scene (the reason .237 put provenance in the subtitle instead).
+  function deploy_forge_tagSub(racked, total, flags) {
+    return deploy_forge_siteLabel() + ' · ' + racked + '/' + total + ' RACKED'
+      + (flags ? ' · ⚠' + flags + ' FLAGGED' : '') + ' · TAP FLANKS TO WALK';
   }
   function deploy_forge_provenance() {
     var el = document.getElementById('forge3d-prov');
@@ -17796,6 +17817,25 @@ function forge3d_render(mount) {
     el.textContent = deploy_forge_siteLabel() + ' · ' + src + ' · '
       + (restored ? 'SAVED ' + ts + ' · RESTORED FROM CACHE' : 'LOADED ' + ts);
   }
+  // v1.14.238 — CROSS-RACK STRAY. Hosts are filed by locCabRu (master_extractRu, :28788); the
+  // hostname is display-only. A host NAMED for a different cab than the one it is FILED in is a
+  // real data defect — but which of the two is wrong is a naming-convention call John has not
+  // made yet. So: render it where the MASTER places it, flag the disagreement, never silently
+  // re-home it. Only a hostname that actually encodes THIS row's prefix can disagree about the
+  // cab, so hostnames with no location in them (leaf-01, spine-a) can never false-positive.
+  function deploy_forge_strayOf(rackId, sl) {
+    var parts = String(rackId || '').split(':');
+    if (parts.length < 2) return '';
+    var row = parts[0].toLowerCase(), cab = parseInt(parts[1], 10);
+    if (!row || !isFinite(cab)) return '';
+    var dns = String((sl && (sl.dns || sl.name)) || '').toLowerCase();
+    var re = new RegExp('(^|[^a-z0-9])' + row.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '[-_](\\d{1,3})(?![0-9])');
+    var m = re.exec(dns);
+    if (!m) return '';
+    var hostCab = parseInt(m[2], 10);
+    if (!isFinite(hostCab) || hostCab === cab) return '';
+    return row + ':' + m[2];
+  }
   function deploy_forge_slots(id) {
     if (_slotCache[id]) return _slotCache[id];
     var out = [];
@@ -17809,10 +17849,29 @@ function forge3d_render(mount) {
         var elev = master_rackToElevation(rack, id);
         (elev && elev.slots ? elev.slots : []).forEach(function (s) {
           var slot = { uStart: s.uStart, uEnd: s.uEnd, type: _TMAP[s.type] || 'blank',
-                       name: s.name || s.dns || s.model || '—', model: s.model || '', dns: s.dns || '', status: 'pending' };
+                       name: s.name || s.dns || s.model || '—', model: s.model || '', dns: s.dns || '', status: 'pending',
+                       hgtUnknown: !!s.hgtUnknown };
           slot.status = statusOf(id, slot);
           out.push(slot);
         });
+        // v1.14.238 — GEOMETRY TRUTH. ONE authority (phantom_rackGeometry) decides collisions for
+        // both Forge and the pre-flight linter; a second detector that could disagree with the
+        // HARD NO-GO one is a "one door per feature" violation.
+        // `conflict` is deliberately its OWN field. It must NEVER become a third value of
+        // sl.status: statusOf() maps anything ≠ 'racked' to 'pending', and the row toggle would
+        // overwrite it on the very first tap. Conflict is geometry; status is verify. Orthogonal.
+        if (typeof phantom_rackGeometry === 'function') {
+          var geom = phantom_rackGeometry(out, (elev && elev.totalU) || 48, id);
+          Object.keys(geom.conflicts).forEach(function (i) { out[i].conflict = geom.conflicts[i]; });
+          Object.keys(geom.overflow).forEach(function (i)  { out[i].overflow = true; });
+          if (Object.keys(geom.conflicts).length) {
+            console.warn('[forge] ' + id + ': ' + Object.keys(geom.conflicts).length +
+                         ' device(s) in a U-span conflict — flagged, not silently overdrawn');
+          }
+        } else {
+          phantom_logErr('deploy_forge_slots:' + id, new Error('phantom_rackGeometry unavailable'));
+        }
+        out.forEach(function (sl) { sl.stray = deploy_forge_strayOf(id, sl); });
         // Never drop a device. RU-less hosts cannot be drawn on the 48U guts canvas at all,
         // so they surface in the detail panel instead — matching the app's existing law
         // (master search's .master-unplaced callout; the mscope seeder's rack.notes).
@@ -17828,6 +17887,15 @@ function forge3d_render(mount) {
     return out;
   }
   function deploy_forge_unplaced(id) { deploy_forge_slots(id); return _unplacedCache[id] || []; }
+  // v1.14.238 — how many devices in this rack carry a geometry flag (conflict / overrun /
+  // unknown height / hostname-location mismatch). Drives the chip + herotag indicators.
+  function deploy_forge_flagCount(id) {
+    var n = 0;
+    deploy_forge_slots(id).forEach(function (s) {
+      if (s.conflict || s.overflow || s.hgtUnknown || s.stray) n++;
+    });
+    return n;
+  }
   // Master-supplied hostnames are concatenated into innerHTML by the detail panel. They are
   // operator-imported spreadsheet text, so they get escaped — never trusted as markup.
   function _fesc(s) {
@@ -17843,34 +17911,86 @@ function forge3d_render(mount) {
   var WINDOW = [null, null, null, null, null];
 
   // ---------- guts renderer (racked → solid, pending → ghosted) ----------
+  // v1.14.238 — OCCLUSION FIX (the trap that a colour branch alone could not solve).
+  // Trays were filled in hosts[] order, so when two devices shared a band the LATER one painted
+  // straight over the earlier: a colliding device was ALREADY INVISIBLE in the 3D face, and no
+  // amount of recolouring brings back a device that never got drawn. So:
+  //   1. clean trays paint first, exactly as before;
+  //   2. flagged trays paint LAST — they can never be buried by a clean neighbour;
+  //   3. colliding trays are SPLIT into half-width lanes, so BOTH sides of an overlap are
+  //      visible side by side instead of one erasing the other.
+  // Every new pixel constant is * S (the GS=2.5 supersample). No new texture, no new material,
+  // and nothing is ever drawn on the CoreWeave plate — photo is photo, data is data.
+  function _spanHits(a, b) { return a.uStart <= b.uEnd && b.uStart <= a.uEnd; }
   function drawGuts(g, X0, Y0, GW, GH, slots, S) {
     S = S || 1;
     g.fillStyle = '#060a10'; g.fillRect(X0, Y0, GW, GH);
     g.strokeStyle = 'rgba(40,224,255,0.14)'; g.lineWidth = 2 * S; g.strokeRect(X0 + S, Y0 + S, GW - 2 * S, GH - 2 * S);
     var uH = GH / 48, toY = function (u) { return Y0 + (48 - u) * uH; };
-    slots.forEach(function (sl) {
+
+    function tray(sl, laneIdx, lanes) {
+      var bad = !!(sl.conflict || sl.overflow), unk = !!sl.hgtUnknown;
       var y = toY(sl.uEnd), h = (sl.uEnd - sl.uStart + 1) * uH - 2 * S;
+      var fullX = X0 + 6 * S, fullW = GW - 12 * S;
+      var w = (lanes > 1) ? (fullW - 4 * S) / 2 : fullW;
+      var x = (lanes > 1) ? fullX + laneIdx * (w + 4 * S) : fullX;
       var col = TYPE_COLOR[sl.type] || '#22303e', racked = sl.status === 'racked';
+
+      g.save();
+      g.beginPath(); g.rect(x, y, w, h); g.clip();   // never bleed into the neighbouring lane
       g.fillStyle = racked ? 'rgba(14,22,32,0.95)' : 'rgba(10,14,20,0.55)';
-      g.fillRect(X0 + 6 * S, y, GW - 12 * S, h);
+      g.fillRect(x, y, w, h);
       g.globalAlpha = racked ? 0.9 : 0.45;
       g.fillStyle = racked ? col : 'rgba(90,107,125,0.35)';
-      g.fillRect(X0 + 6 * S, y, 5 * S, h);
+      g.fillRect(x, y, 5 * S, h);
       g.globalAlpha = 1;
-      g.fillStyle = 'rgba(60,80,100,0.3)'; g.fillRect(X0 + 6 * S, y, GW - 12 * S, S);
+      g.fillStyle = 'rgba(60,80,100,0.3)'; g.fillRect(x, y, w, S);
+      if (bad || unk) {                              // hazard hatch — never reads as clean geometry
+        g.strokeStyle = bad ? 'rgba(255,69,58,0.22)' : 'rgba(255,203,69,0.20)';
+        g.lineWidth = 3 * S;
+        for (var hx = -h; hx < w + h; hx += 12 * S) {
+          g.beginPath(); g.moveTo(x + hx, y + h); g.lineTo(x + hx + h, y); g.stroke();
+        }
+      }
       var fpx = Math.max(10 * S, Math.min(16 * S, h * 0.38));
       g.font = '700 ' + fpx + 'px "Chakra Petch",monospace';
-      g.fillStyle = racked ? '#e8f2fa' : 'rgba(120,140,160,0.75)';
-      g.fillText(sl.name, X0 + 18 * S, y + h / 2 + fpx * 0.36);
-      var dx = X0 + GW - 22 * S, dy = y + h / 2;
+      g.fillStyle = bad ? '#ff8a80' : (unk ? '#ffcb45' : (racked ? '#e8f2fa' : 'rgba(120,140,160,0.75)'));
+      g.fillText(((bad || unk) ? '⚠ ' : '') + sl.name, x + 12 * S, y + h / 2 + fpx * 0.36);
+      var dx = x + w - 16 * S, dy = y + h / 2;
       g.beginPath(); g.arc(dx, dy, 4.5 * S, 0, 7);
       g.fillStyle = racked ? '#1fffd0' : 'rgba(90,107,125,0.5)'; g.fill();
       if (racked) { g.beginPath(); g.arc(dx, dy, 8 * S, 0, 7); g.strokeStyle = 'rgba(31,255,208,0.35)'; g.lineWidth = 1.5 * S; g.stroke(); }
-      if ((sl.type === 'gpu' || sl.type === 'switch') && racked && h > 26 * S) {
+      if ((sl.type === 'gpu' || sl.type === 'switch') && racked && h > 26 * S && lanes === 1 && !bad && !unk) {
         g.fillStyle = 'rgba(40,224,255,0.8)';
-        for (var p = 0; p < 8; p++) g.fillRect(X0 + 18 * S + p * 11 * S, y + h - 9 * S, 6 * S, 4 * S);
+        for (var p = 0; p < 8; p++) g.fillRect(x + 18 * S + p * 11 * S, y + h - 9 * S, 6 * S, 4 * S);
       }
+      g.restore();
+      if (bad || unk) {                              // hard edge, outside the clip so it reads at a glance
+        g.strokeStyle = bad ? '#ff453a' : '#ffcb45';
+        g.lineWidth = 2 * S;
+        g.strokeRect(x + S, y + S, w - 2 * S, h - 2 * S);
+      }
+    }
+
+    var clean = [], flagged = [];
+    slots.forEach(function (sl, i) {
+      if (sl.conflict || sl.overflow || sl.hgtUnknown) flagged.push({ sl: sl, i: i });
+      else clean.push(sl);
     });
+    clean.forEach(function (sl) { tray(sl, 0, 1); });
+    // Lane the colliding trays: a tray takes lane 1 only if it actually overlaps a tray already
+    // placed in lane 0, so a pair splits left/right and non-overlapping flags keep full width.
+    var lane = {};
+    flagged.forEach(function (f) {
+      if (!f.sl.conflict) { lane[f.i] = 0; return; }
+      var taken = {};
+      flagged.forEach(function (o) {
+        if (o.i === f.i || lane[o.i] == null || !o.sl.conflict) return;
+        if (_spanHits(f.sl, o.sl)) taken[lane[o.i]] = 1;
+      });
+      lane[f.i] = taken[0] ? 1 : 0;
+    });
+    flagged.forEach(function (f) { tray(f.sl, lane[f.i] || 0, f.sl.conflict ? 2 : 1); });
   }
   function buildGutTexture(imgEl, slots) {
     var GS = 2.5;
@@ -18025,7 +18145,7 @@ function forge3d_render(mount) {
     var fslots = deploy_forge_slots(rack.userData.label);
     var fracked = fslots.filter(function (s) { return s.status === 'racked'; }).length;
     tagId.textContent = rack.userData.label + ' · FOCUS';
-    tagSub.textContent = deploy_forge_tagSub(fracked, fslots.length);
+    tagSub.textContent = deploy_forge_tagSub(fracked, fslots.length, deploy_forge_flagCount(rack.userData.label));
     radiusTarget = 9.8;
     focused = rack;
     store.set('deploy_forge_view_v1', rack.userData.label);
@@ -18121,7 +18241,7 @@ function forge3d_render(mount) {
     D.meta.textContent = 'ROW ' + info.row.toUpperCase() + ' · POS ' + (info.idx + 1) + '/' + info.arr.length + ' · ' + racked + '/' + slots.length + ' RACKED';
     D.footer.innerHTML = '<span><b>' + slots.length + '</b> COMPONENTS</span><span><b>' + racked + '</b> RACKED · <b>' + (slots.length - racked) + '</b> PENDING</span>';
     if (focused && focused.userData.label === label)
-      tagSub.textContent = deploy_forge_tagSub(racked, slots.length);
+      tagSub.textContent = deploy_forge_tagSub(racked, slots.length, deploy_forge_flagCount(label));
   }
   function rebake(rack) {
     if (!heroImg.complete) return;
@@ -18132,6 +18252,24 @@ function forge3d_render(mount) {
     rack.userData.gutMat.needsUpdate = true;
     if (oldT) oldT.dispose();
   }
+  // v1.14.238 — every geometry flag on a device, in the tech's language. These live BESIDE
+  // status, never inside it: status is what the tech verified, a flag is what the data says.
+  function flagsOf(sl) {
+    var f = [];
+    if (sl.conflict) {
+      f.push('U-SPAN CONFLICT WITH ' + (sl.conflict.with || []).map(_fesc).join(', ')
+             + ' · SHARED U' + (sl.conflict.us || []).join(', U'));
+    }
+    if (sl.overflow) f.push('CHASSIS OVERRUNS THE RACK');
+    if (sl.hgtUnknown) {
+      f.push('MODEL HEIGHT UNKNOWN' + (sl.model ? ' · ' + _fesc(sl.model) : '') + ' — NOT DRAWN TO SCALE');
+    }
+    if (sl.stray) {
+      f.push('HOSTNAME/LOCATION MISMATCH — NAMED FOR ' + _fesc(sl.stray).toUpperCase()
+             + ', FILED HERE BY THE MASTER');
+    }
+    return f;
+  }
   function openDetail(rack) {
     var label = rack.userData.label, slots = deploy_forge_slots(label);
     D.title.textContent = label;
@@ -18139,10 +18277,16 @@ function forge3d_render(mount) {
     slots.forEach(function (sl, i) {
       var col = TYPE_COLOR[sl.type] || '#22303e';
       var u = sl.uStart === sl.uEnd ? ('U' + sl.uStart) : ('U' + sl.uStart + '–' + sl.uEnd);
-      html += '<div class="detail-row toggle" data-i="' + i + '"><span class="type-dot" style="background:' + col + '"></span>'
-        + '<span class="uslot">' + u + '</span>'
+      var fl = flagsOf(sl);
+      var danger = !!(sl.conflict || sl.overflow);
+      html += '<div class="detail-row toggle' + (fl.length ? (danger ? ' row-conflict' : ' row-warn') : '') + '" data-i="' + i + '">'
+        + '<span class="type-dot" style="background:' + col + '"></span>'
+        + '<span class="uslot">' + (fl.length ? '⚠ ' : '') + u + '</span>'
         + '<span>' + _fesc(sl.name) + ' <span style="color:var(--dim);font-size:9px">' + TLABEL[sl.type] + '</span></span>'
         + badgeHTML(sl) + '</div>';
+      if (fl.length) {
+        html += '<div class="detail-flag' + (danger ? ' flag-conflict' : '') + '">' + fl.join('<br>') + '</div>';
+      }
     });
     // v1.14.237 — RU-less hosts, surfaced above the table. Gold callout, same language as
     // the Master search surface. These devices are in the Master but have no U we can place.
@@ -18151,6 +18295,25 @@ function forge3d_render(mount) {
       html = '<div class="forge-unplaced">' + unp.length + ' HOST' + (unp.length === 1 ? '' : 'S')
            + ' WITH NO U POSITION · NOT PLACEABLE IN 3D: '
            + unp.map(_fesc).join(', ') + '</div>' + html;
+    }
+    // v1.14.238 — devices with no CONFIRMED height. They are still drawn (1U placeholder,
+    // hatched and flagged) and still verifiable — dropping them would cost the tech the ability
+    // to mark real gear RACKED — but they are named here so the unknown-model list IS the
+    // worksheet for seeding the site profile. A guessed height is never presented as truth.
+    var unk = slots.filter(function (s) { return s.hgtUnknown; });
+    if (unk.length) {
+      html = '<div class="forge-unplaced">' + unk.length + ' DEVICE' + (unk.length === 1 ? '' : 'S')
+           + ' · MODEL HEIGHT UNKNOWN · NOT DRAWN TO SCALE: '
+           + unk.map(function (s) {
+               return _fesc(s.name) + ' (' + _fesc(s.model || 'no model') + ') @ U' + s.uStart;
+             }).join(', ') + '</div>' + html;
+    }
+    // Collisions ride ABOVE everything: the geometry below them cannot be trusted.
+    var conf = slots.filter(function (s) { return s.conflict || s.overflow; });
+    if (conf.length) {
+      html = '<div class="forge-conflict">⚠ ' + conf.length + ' DEVICE' + (conf.length === 1 ? '' : 'S')
+           + ' IN A U-SPAN CONFLICT — THE MASTER PUTS TWO DEVICES IN THE SAME U. '
+           + 'THE ELEVATION BELOW IS NOT TRUE UNTIL THE MASTER IS FIXED.</div>' + html;
     }
     D.table.innerHTML = html;
     D.table.querySelectorAll('.detail-row.toggle').forEach(function (row) {
@@ -18232,7 +18395,9 @@ function forge3d_render(mount) {
     D.chips.innerHTML = LOADOUT.map(function (id) {
       var slots = deploy_forge_slots(id), racked = slots.filter(function (s) { return s.status === 'racked'; }).length;
       var pct = slots.length ? Math.round(racked / slots.length * 100) : 0;
-      return '<div class="chip" data-rack="' + id + '"><div class="cid">' + id + '</div>'
+      var fl = deploy_forge_flagCount(id);   // v1.14.238 — a flagged rack says so on its chip
+      return '<div class="chip' + (fl ? ' flagged' : '') + '" data-rack="' + id + '">'
+        + '<div class="cid">' + (fl ? '⚠ ' : '') + id + '</div>'
         + '<div class="bar"><i style="width:' + pct + '%"></i></div></div>';
     }).join('');
     D.chips.querySelectorAll('.chip[data-rack]').forEach(function (el) {
@@ -28887,24 +29052,48 @@ function master_renderResultRows(rack, normCab) {
 }
 
 // -- MASTER -> rack elevation (reuses rackElevation_buildHtml) --------
-// A site Master may run e.g. 8U Supermicro HGX H100/H200 nodes. The master export carries
-// each node's BOTTOM U (locCabRu) but not its height, so height is derived
-// here; the site profile will own this mapping later. 8U matches the floor.
-function master_nodeHeightU(host) {
-  // The master is the source of truth, in priority order:
-  // 1) If the model name encodes its height (ps-1ru, cdu-4ru), that wins.
-  // 2) Else a GPU-family fallback for chassis whose U is NOT in the name:
-  //    H100/H200 HGX/DGX nodes are 8U; GB200/GB300 NVL72 trays are 1U.
-  // 3) Else default 1U (correct for switches, panels, NVLink trays, shelves).
+// v1.14.238 — GEOMETRY TRUTH. The master export carries each node's BOTTOM U (locCabRu) but
+// NOT its height, so height is derived here. It used to be GUESSED: anything the family test
+// missed fell through to a silent `return 1`. On a real master that silently mis-sized every
+// non-GPU device — an SN5600 and a DELL-R760 are both 2U and both were drawn 1U.
+// MASTER_U_TABLE is the ONLY height authority and carries ONLY heights confirmed in the field.
+// A model that is not in it is UNKNOWN — never guessed, always flagged. This is site-profile
+// material: the flagged unknown list IS the worksheet for seeding that profile.
+var MASTER_U_TABLE = [
+  // Supermicro SYS-821GE HGX air-cooled chassis — 8U (John: photo + vendor spec, 2026-07-12).
+  { re: /\b(h100|h200|a100)\b|hgx|dgx/, u: 8 },
+  // GB200/GB300/B200 NVL72 compute tray — 1U.
+  { re: /\b(gb200|gb300|b200)\b/,       u: 1 },
+  // Leaf / spine / ToR / mgmt switch — 1U.
+  { re: /\b(leaf|spine|tor|mgmt-sw)\b/, u: 1 }
+];
+// Returns {u, known}. `u` is null when the model is not in the table AND its name does not
+// encode a height. Callers that must not lie about geometry read `.known` (Forge). Callers
+// that only need a footprint keep using master_nodeHeightU().
+function master_nodeHeightInfo(host) {
   var model = String((host && host.model) || '').toLowerCase();
   var dns   = String((host && host.dns) || '').toLowerCase();
   var hay   = model + ' ' + dns;
+  // 1) An explicit height in the model name (ps-1ru, cdu-4ru) is the highest confidence there is.
   var m = model.match(/(\d+)\s*-?\s*ru\b/);
-  if (m) { var n = parseInt(m[1], 10); if (n >= 1 && n <= 48) return n; }
-  // GPU family fallback (only the families whose height isn't in the name)
-  if (/\b(h100|h200|a100)\b|hgx|dgx/.test(hay) && !/nvlink|nvl-/.test(model)) return 8;
-  if (/\b(gb200|gb300|b200)\b/.test(hay) && !/nvlink|nvl-/.test(model)) return 1;
-  return 1;
+  if (m) { var n = parseInt(m[1], 10); if (n >= 1 && n <= 48) return { u: n, known: true }; }
+  // 2) A field-confirmed family.
+  for (var i = 0; i < MASTER_U_TABLE.length; i++) {
+    if (MASTER_U_TABLE[i].re.test(hay) && !/nvlink|nvl-/.test(model)) {
+      return { u: MASTER_U_TABLE[i].u, known: true };
+    }
+  }
+  // 3) Unknown. Deliberately NOT 1U. The caller decides how to surface it.
+  return { u: null, known: false };
+}
+// Numeric accessor. An unknown model resolves to a 1U FOOTPRINT so that every surface which
+// renders or PERSISTS slots (mscope seeder -> deployment records, Rack Map, Master search)
+// behaves exactly as it does today — this function's output is unchanged for every input.
+// The footprint is a placeholder, not a claim: master_rackToElevation stamps those slots
+// hgtUnknown:true, and Forge refuses to draw them as clean geometry.
+function master_nodeHeightU(host) {
+  var info = master_nodeHeightInfo(host);
+  return info.u == null ? 1 : info.u;
 }
 
 // Classify a host into an equipment type (for color-coding) from its model/dns.
@@ -28935,7 +29124,11 @@ function master_rackToElevation(rack, cabId) {
     var name = (h && h.dns) ? String(h.dns) : ((h && h.model) ? String(h.model) : '\u2014');
     var bottomU = master_extractRu(h);
     if (bottomU == null) { unplaced.push(name); return; }
-    var heightU = master_nodeHeightU(h);
+    // v1.14.238 — height may be UNKNOWN. The slot still gets a 1U placeholder footprint so
+    // existing renderers/persisters are unaffected, but it is stamped so a surface that cares
+    // about geometry truth (Forge) can refuse to draw it as a real span.
+    var hgt = master_nodeHeightInfo(h);
+    var heightU = (hgt.u == null) ? 1 : hgt.u;
     var uEnd = bottomU + heightU - 1;
     if (uEnd > maxU) maxU = uEnd;
     slots.push({
@@ -28945,7 +29138,8 @@ function master_rackToElevation(rack, cabId) {
       model:  (h && h.model) ? String(h.model) : '',
       type:   master_hostType(h),
       serial: (h && h.serial) ? String(h.serial) : '',
-      dns:    (h && h.dns) ? String(h.dns) : ''
+      dns:    (h && h.dns) ? String(h.dns) : '',
+      hgtUnknown: !hgt.known
     });
   });
   // Total rack height: honor an explicit value if the master carries one, else
@@ -28955,6 +29149,62 @@ function master_rackToElevation(rack, cabId) {
   // clamp any slot that would exceed the rack
   slots.forEach(function(sl){ if (sl.uEnd > totalU) sl.uEnd = totalU; });
   return { id: cabId, totalU: totalU, slots: slots, unplaced: unplaced };
+}
+
+// ━━━ RACK GEOMETRY — THE SINGLE COLLISION AUTHORITY (v1.14.238) ━━━━━━━━━━━━━━━━━━━━━━━━
+// PURE. Extracted verbatim from preflight_run's block-(A) occ-map, which was the app's only
+// U-collision detector but was blind to Master-derived racks (it reads dep.edpParsed.racks,
+// gated on an active deployment). Preflight now calls this, and so does Forge, so the two can
+// never disagree about the same rack — a second detector would be a "one door per feature"
+// violation on a HARD NO-GO safety check.
+//
+// Operates on the shared slot contract {uStart,uEnd,name,model,type} produced by BOTH
+// master_rackToElevation and the EDP parser. Returns:
+//   findings  — preflight's existing finding objects, same shape/order/message text
+//   needsU    — blank-U slots (preflight's documented exception; never audited)
+//   conflicts — {slotIndex: {us:[U...], with:[label...]}}, BOTH sides of every overlap flagged
+//   overflow  — {slotIndex: true} for a chassis that runs off the top of the rack
+// hgtUnknown slots ARE collision-tested, at their 1U placeholder span. That is deliberate: a
+// rack device occupies AT LEAST 1U, so the placeholder is a sound LOWER BOUND, not a guess —
+// any overlap it turns up is genuinely real. Skipping them would make this detector LOSE
+// findings it catches today (a mscope-seeded deployment carries hgtUnknown slots), and a HARD
+// NO-GO safety check must never quietly under-report. It may under-detect beyond the bottom U
+// — honest, since the true height is unknown — but it will never invent a collision.
+function phantom_rackGeometry(slots, totalU, rackLabel) {
+  slots = Array.isArray(slots) ? slots : [];
+  var rname   = rackLabel || 'rack';
+  var tU      = (typeof totalU === 'number' && totalU > 0) ? totalU : 42;
+  var findings = [], needsU = [], conflicts = {}, overflow = {}, occ = {};
+  function mark(i, u, otherLabel) {
+    var c = conflicts[i] || (conflicts[i] = { us: [], with: [] });
+    if (c.us.indexOf(u) < 0) c.us.push(u);
+    if (otherLabel && c.with.indexOf(otherLabel) < 0) c.with.push(otherLabel);
+  }
+  for (var si = 0; si < slots.length; si++) {
+    var sl = slots[si];
+    var us = parseInt(sl.uStart, 10), ue = parseInt(sl.uEnd, 10);
+    var label = sl.name || sl.model || sl.type || ('slot ' + (si + 1));
+    if (!(us >= 1)) { needsU.push({ rack: rname, label: label }); continue; } // blank-U → exception, skip
+    if (!(ue >= us)) ue = us;
+    if (ue > tU) {
+      overflow[si] = true;
+      findings.push({ kind:'RACK', sev:'high', advisory:false, rackId:rname, label:label,
+        expected:'≤ U' + tU, actual:'U' + us + '-' + ue,
+        message:'Chassis won’t fit — ' + rname + ': ' + label + ' spans U' + us + '-' + ue + ' but rack is ' + tU + 'U.' });
+    }
+    for (var u = us; u <= ue; u++) {
+      if (occ[u] != null && occ[u] !== si) {
+        var other = slots[occ[u]];
+        var olabel = (other && (other.name || other.model || other.type)) || ('slot ' + (occ[u] + 1));
+        findings.push({ kind:'RACK', sev:'high', advisory:false, rackId:rname, label:'U' + u,
+          expected:'1 device @ U' + u, actual:label + ' + ' + olabel,
+          message:'U-collision — ' + rname + ' U' + u + ': ' + label + ' overlaps ' + olabel + '.' });
+        mark(si, u, olabel);        // John's ruling: an overlap flags BOTH devices,
+        mark(occ[u], u, label);     // not just the one that happened to be parsed second.
+      } else { occ[u] = si; }
+    }
+  }
+  return { findings: findings, needsU: needsU, conflicts: conflicts, overflow: overflow };
 }
 
 // Step 1 bridge: resolve a rack-lookup query against the loaded Master.
@@ -43630,33 +43880,15 @@ async function preflight_run(force){
     var have = { master: !!(master && (master.racksByCab || master.cables)), edp: racks.length > 0 };
 
     // ── (A) RACK GEOMETRY — U-collision + chassis-won't-fit (EDP slots only) ──
+    // v1.14.238 — the occ-map that used to sit inline here is now phantom_rackGeometry(),
+    // shared with Forge so the two surfaces can never disagree about the same rack. Same
+    // findings, same messages, same order: this is an extraction, not a rewrite.
     for (var ri = 0; ri < racks.length; ri++){
       var rk = racks[ri];
       var rname = rk.name || ('rack ' + (ri + 1));
-      var totalU = (typeof rk.totalU === 'number' && rk.totalU > 0) ? rk.totalU : 42;
-      var slots = Array.isArray(rk.slots) ? rk.slots : [];
-      var occ = {};
-      for (var si = 0; si < slots.length; si++){
-        var sl = slots[si];
-        var us = parseInt(sl.uStart, 10), ue = parseInt(sl.uEnd, 10);
-        var label = sl.name || sl.model || sl.type || ('slot ' + (si + 1));
-        if (!(us >= 1)){ needsU.push({ rack: rname, label: label }); continue; } // EDP blank-U → exception, skip
-        if (!(ue >= us)) ue = us;
-        if (ue > totalU){
-          findings.push({ kind:'RACK', sev:'high', advisory:false, rackId:rname, label:label,
-            expected:'≤ U' + totalU, actual:'U' + us + '-' + ue,
-            message:'Chassis won’t fit — ' + rname + ': ' + label + ' spans U' + us + '-' + ue + ' but rack is ' + totalU + 'U.' });
-        }
-        for (var u = us; u <= ue; u++){
-          if (occ[u] != null && occ[u] !== si){
-            var other = slots[occ[u]];
-            var olabel = (other && (other.name || other.model || other.type)) || ('slot ' + (occ[u] + 1));
-            findings.push({ kind:'RACK', sev:'high', advisory:false, rackId:rname, label:'U' + u,
-              expected:'1 device @ U' + u, actual:label + ' + ' + olabel,
-              message:'U-collision — ' + rname + ' U' + u + ': ' + label + ' overlaps ' + olabel + '.' });
-          } else { occ[u] = si; }
-        }
-      }
+      var geom = phantom_rackGeometry(rk.slots, rk.totalU, rname);
+      if (geom.findings.length) findings = findings.concat(geom.findings);
+      if (geom.needsU.length)   needsU   = needsU.concat(geom.needsU);
       if (ri % 40 === 39) await _rec_yield();
     }
 
