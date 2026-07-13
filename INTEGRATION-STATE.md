@@ -457,3 +457,41 @@ height — B300 air-cooled node ≠ GB300 NVL72 tray. Needs John or a vendor spe
 4. **VAST DBox** — asked 3×, still an unstruck template. Collision-neutral, non-blocking.
 5. **Build-badge double-`v`** (old memory note): **verified FIXED** — `textContent` overwrites the
    static `v—`, renders `v1.14.240`. Nothing to do; drop it from any punch list.
+
+---
+
+# 11. POLICY RULING — SINGLE RESIDENT MASTER (John, 2026-07-13) · folds into SHIP B
+**Recorded only. No code — batch (.238–.241) is live and UNVERIFIED.**
+
+The store holds exactly ONE site Master at a time. Importing a Master for a DIFFERENT site while
+one is resident does NOT stack — it prompts:
+
+    "SPARKS Master is loaded (saved <date>, <sourceFile>).
+     Replace it with DFW2?   [EXPORT BACKUP]  [REPLACE]  [CANCEL]"
+
+- **Replace** = explicit, logged, provenance updated.
+- **Backup export offered in the SAME dialog** — one tap, not a separate trip.
+- **Same-site re-import = the existing RECONCILE flow, unchanged.**
+- This is the **storage-side twin of the single-ingestion ruling** (Ruling 2): *one door in, one
+  tenant inside.* **Fold into Ship B (Rulings 2+3) — same architecture ship.**
+
+**Side effect (John):** defuses the quota warning as a *workflow* issue — one Master at a time
+fits comfortably. **IndexedDB migration stays queued post-queue as capacity insurance, urgency
+DOWNGRADED.**
+
+## ⚠️ OPEN SUB-QUESTION FOR SHIP B — ASK JOHN BEFORE IMPLEMENTING
+**What happens to the field-verify overlay (`phantom_node_status_v1`) on a cross-site REPLACE?**
+This is not answered by the ruling and it is load-bearing:
+- The overlay is keyed **`rackId|dns`** (`_nk()`, Forge module) — **NOT namespaced by site.**
+- `.237`'s PURGE deliberately does **NOT** touch field-verify status (documented, intentional).
+- So on a SPARKS→DFW2 replace, SPARKS' racked/pending entries **survive in the store**. Two live
+  risks: (a) **stale cross-site keys accumulate forever**; (b) if two sites ever share a
+  `rackId|dns` pair (e.g. both have a `c1:001` + a same-named host), **DFW2 would silently
+  inherit SPARKS' RACKED marks** — field truth invented out of nothing, the exact class of defect
+  `.238` exists to kill.
+- Likely right answer: **namespace the overlay by site** (`siteCode|rackId|dns`) so each site's
+  field truth is preserved and isolated across replaces — and a swap back restores it. But that
+  is a **migration of an existing persisted store**, so it must be designed with the
+  reconciliation ship (C), not improvised inside B.
+- **Do not implement REPLACE until John rules on this.** Silently dropping or silently inheriting
+  field-verify status are both unacceptable.
