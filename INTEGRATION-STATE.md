@@ -51,7 +51,72 @@ silently dropped them); **missing `.status-racked`/`.status-pending` CSS** shipp
 
 ---
 
-## 3. ⚠️ NEXT SHIP — v1.14.238 · GEOMETRY TRUTH (work order Ship 2, NOT built)
+## 3. ✅ SHIPPED — v1.14.238 · GEOMETRY TRUTH (commit bf57e0c, 2026-07-13) — AWAITING JOHN'S DEVICE PASS
+
+**The spec's premise was wrong and the correction matters.** There was never a hardcoded
+`return 8`. `master_nodeHeightU` was ALREADY a table (in-name `NRU` parse → GPU-family →
+silent `return 1`). The real defect was that **DEFAULT**: every model the family test missed
+was silently sized 1U.
+
+**Measured on the real masters (this is the number that drove the design):**
+- `MASTER-US-CENTRAL-DFW02-BRUTAL.xlsx`: **38.8% of hosts (907/2338)** fall through to the
+  1U guess — `NVIDIA Quantum-2 QM9700` ×528, `NVIDIA SN2201` ×240, `Supermicro AS-2125` ×50
+  (**really 2U**), `VAST DBox` ×50, `Dell R760` ×36 (**really 2U**), `Dell R660`.
+  Only the `HGX H100/H200 8-GPU` rows (61%) resolve to a real height.
+- `phantom-stress` master: 10.3% default. `TORTURE-TEST`: 0%.
+
+### ⚠️ THE TRAP THAT ALMOST SANK THIS SHIP — read before touching heights again
+The spec said *unknown → null → position-unknown tray*. **Doing that globally would have been
+silent DATA LOSS.** `mscope_buildRacksFromSnapshot` (`:28536`) writes `elev.slots` into a
+**PERSISTED deployment record** (`deployment.edpParsed.racks[].slots` AND each `deploy_racks`
+record — persisted TWICE, both authoritative for phases/checklists/burndown). Dropping
+unknown-height hosts from `slots[]` would have baked deployments **permanently missing 39–100%
+of their devices**, unfixable by a later master reload. Worse: `refreshCounts` uses
+`slots.length` as its denominator, so a rack would read **"12/12 RACKED · 100%" over eight
+devices nobody ever verified** — a green complete-signal over unverified hardware.
+
+**What shipped instead (containment):** `master_nodeHeightU()` KEEPS its numeric contract
+(unknown → 1U footprint) — **proven identical to `.237` over 60 inputs, 0 differences**, so
+Rack Map / Master search / mscope seeder / persisted deploys are untouched. The new
+`master_nodeHeightInfo()` returns `{u, known}` and `master_rackToElevation` stamps
+`hgtUnknown:true` (additive). **Forge** is the only surface that acts on it: draws those
+devices gold-hatched, flagged, NOT to scale — but still **drawn and tappable**, so the tech
+never loses the ability to mark real gear RACKED. They are also named in a gold callout with
+model + U. That callout IS the site-profile worksheet.
+
+### What shipped
+1. `MASTER_U_TABLE` — the ONLY height authority, carrying ONLY field-confirmed heights
+   (H100/H200/A100/HGX/DGX = 8U; GB200/GB300/B200 = 1U; leaf/spine/tor/mgmt-sw = 1U).
+2. `phantom_rackGeometry(slots, totalU, label)` — `preflight_run`'s occ-map **extracted
+   verbatim**, now shared by preflight AND Forge. **Proven behavior-identical: 400 random
+   racks / 1522 findings / 0 mismatches.** Both sides of an overlap are flagged (John's ruling).
+   ⚠️ **CAUGHT PRE-SHIP:** my first cut made it SKIP `hgtUnknown` slots — that would have made a
+   HARD NO-GO detector **lose findings it catches today**. Every device occupies ≥1U, so the
+   placeholder span is a sound LOWER BOUND: it under-detects honestly, never invents a collision.
+3. `drawGuts` real occlusion fix — clean trays first, flagged trays LAST (never buried),
+   colliding trays SPLIT into half-width lanes so BOTH sides are visible. Hatch + hard border.
+   All constants `* S`; no new texture/material; nothing drawn on the plate.
+4. `sl.conflict` is its OWN field — never a third value of `sl.status`.
+5. Flags surfaced: table row markers + reasons, red "elevation is not true" banner, gold
+   unknown-height callout, ⚠N on rack chips + herotag.
+6. Cross-rack strays flagged `HOSTNAME/LOCATION MISMATCH`, never silently re-homed.
+
+### OPEN FOR JOHN (blocks the next height work)
+- **(a) Confirm the heights** for the models the DFW02 callout will name — `QM9700`,
+  `SN2201`, `Supermicro AS-2125`, `VAST DBox`, `Dell R760`, `Dell R660`, NVLink trays, patch
+  panels. They seed `MASTER_U_TABLE` next ship. **Do NOT guess them into the table.**
+- **(b) Rule:** should Rack Map / Master search also stop guessing 1U? That changes persisted
+  deployment seeding → needs its own ship + its own verify. Today they still show the old guess.
+
+### 🔴 NEW DEFECT FOUND, NOT FIXED, NOT VERIFIED BY ME — needs its own pass
+`MASTER-US-WEST-10A-US-SPK03-SPARKS.xlsx` (a **real** CoreWeave master, 92 sheets) does not
+column-align with the parser's fixed indices: only **398 of 5370 rows** pass `_PHANTOM_MASTER_CAB_RE`,
+and the values landing in the parser's `model` slot are garbage (`vtep_loopback`,
+`10.57.128.1/32`, `swp4`, raw `s1:010:47` cab strings). If that holds, **the app largely cannot
+ingest that master at all** — a far bigger problem than heights. Reported by an inventory agent;
+**I have not confirmed it myself.** Verify before acting.
+
+## 3-OLD. SPEC AS WRITTEN (superseded by the above — kept for the reasoning trail)
 1. **Model→U-height table** replaces the hardcoded `return 8` in `master_nodeHeightU`.
    Seed: H100/H200 air-cooled = 8U; leaf/mgmt switch = 1U. **Unknown model → `null` →
    "position unknown" tray + flag. Never a guessed height.** Site-profile material.
@@ -150,7 +215,13 @@ text (rd-gated by construction, but never eyeballed on device).
 loses field truth on the first Master re-import. That is the reconciliation ship.
 
 ## 6. NEXT SESSION STARTS HERE
-1. Import a real Master; clear the three carry-forward items in §5.
-2. Build **`.238` GEOMETRY TRUTH** per §3 — the spec, the reuse-don't-rebuild instruction
-   (`preflight_run`'s occ-map, `:43493`), and all four implementation traps are written there.
-3. Then reconciliation (§3.5), then the queued provenance strip (§3b).
+0. **`.238` IS SHIPPED AND LIVE (bf57e0c). HARD STOP — it owes John's device pass.** Batch =
+   1 owed. Do not stack another ship on it.
+1. John's `.238` pass (checklist in `version.json`) — **import a REAL master first**; it also
+   clears the three §5 carry-forward items, which have never been exercised on a populated
+   master.
+2. Then, in the brief's order: reconciliation (§3.3) → provenance strips house-wide (§3.1 —
+   **refactor `deploy_forge_provenance` into ONE global helper FIRST**) → single Master
+   ingestion point (§3.2) → FORGE Command card (§3.4).
+3. Height work is **gated on John's answers to §3 OPEN (a)/(b)** — do not seed `MASTER_U_TABLE`
+   from your own knowledge of the hardware. That is exactly the guess this ship exists to kill.
