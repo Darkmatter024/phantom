@@ -1,138 +1,110 @@
 # INTEGRATION-STATE.md — FORGE HYBRID AISLE v2.9.2
 
 **Standing rule (brief A2):** update at the END of every working session, and IMMEDIATELY
-if context runs low mid-plan. Never strand a plan again.
+if context runs low mid-plan.
 
-Last updated: 2026-07-12 — after shipping `.235` + `.236`. Context was at 82%, so this
-was written before the push, not after.
-
-Live target: **v1.14.236** · base was `.234` (`efde2df`) · all Forge work is `body.rd`-only.
+Last updated: 2026-07-12, after shipping `.235` `.236` `.237`.
+Governing doc: `Downloads/FORGE-237-238-WORK-ORDER.md` (supersedes FORGE-CODE-SESSION-BRIEF.md).
 
 ---
 
-## 1. THE BRIEF WAS STALE — read this first
-`FORGE-CODE-SESSION-BRIEF.md` (web-Claude, 2026-07-12) says the prior session "shipped
-Stage 1 only (a scene-preview shell)". **Wrong.** Two full ships landed after the revert:
-`25a1e29` = `.233` (read-only aisle), `efde2df` = `.234` (verify writeback). The **entire
-v2.9.2 module was already integrated**, inside `forge3d_render()` (~line 17690): AISLE_DIM,
-FACE_B64, GUT fractions, drawGuts/rebake, assignSlot/setLoadout, picker, search, chips,
-verify panel, undo toast, five slots.
-
-The job was never "integrate the mock." It was **"repair the integration that shipped."**
-
-Two more brief errors, both corrected in code comments:
-- **`forge3d_*` is NOT the old view.** It is the wrapper that HOSTS the new aisle.
-  Retiring it (brief C1) would have deleted Forge. Real target was `reh3d_*`.
-- **`rowOf()`'s `split(':')` is fine.** Brief called it the prime Defect-2 suspect. It
-  matches the app's canonical row convention (mscope, rackmap use the same).
-
-## 2. SHIPPED THIS SESSION
+## 1. SHIPPED
 
 ### v1.14.235 — Defect 2: Master bridge + honest zero-state
-**Root cause (proven, not suspected):** the bridge read **`window.master` — a global that
-has never existed in this app.** The live Master is `window._lastPhantomMaster`.
-`deploy_forge_rackList()` therefore returned `[]` every open → `RUN` empty →
-`setLoadout([])` → five blank pads, no chips, herotag `—`.
-
-**The Forge aisle had NEVER rendered real Master data — any user, any Master.** `.233`
-("read-only aisle over real Master") and `.234` ("verify writeback") both shipped a data
-path that could not execute. The `try/catch → []` swallowed it — the **No-silent-failures**
-hard rule, and why both passed `node --check` and went out dead.
-
-Confirmed on the live `.234` build in Chrome *before* writing code:
-`window.master` → undefined · `window._lastPhantomMaster` → object · rackList → EMPTY_ARRAY.
-
-Fix: new `deploy_forge_master()` (guard mirrors `master_hasMaster()`); rackList + slots
-route through it; empty is a loud `console.warn`, never `[]`; missing
-`master_rackToElevation` → `phantom_logErr`. New `deploy_forge_zeroState()`: no Master →
-`NO MASTER LOADED · LOAD A MASTER FILE`; Master but empty loadout → `NO RACKS LOADED ·
-TAP ⊞` + picker auto-opens; populated → restores default hint (`#hint` survives close/open
-and would otherwise strand a stale message — **caught in end-to-end verification, not
-review**).
-
-Verified in Chrome vs a synthetic 6-rack Master before push: no-Master → zero-state + warn;
-Master + reopen → first-5 loadout (c1:001…c4:002), focus c1:001, `0/6 RACKED`, 5 chips,
-live canvas, hint recovered; loadout persists across close/open.
+The bridge read **`window.master`, a global that has never existed**. Live Master is
+`window._lastPhantomMaster`. `deploy_forge_rackList()` returned `[]` every open → five
+blank pads. **Forge had NEVER rendered real Master data.** `.233`/`.234` both shipped a
+data path that could not execute; `try/catch → []` swallowed it. Fixed + honest zero-state.
 
 ### v1.14.236 — Defect 1: retire the old rack-detail 3D view
-The `.218` opt-in `FLAT|3D` toggle (wireframe rack + MINI strip). Unwired from rd, **not
-deleted** (re-home law; R1 removes it): rd branch emits `#reh3dCanvasHost > #rehFlatWrap`
-only — no toggle buttons, no `#reh3dMount`; `reh3d_restore()` call unwired so a stale
-`sessionStorage phantom_rackview_3d='1'` can't resurrect it. FLAT unchanged
-(`display:contents`, `rackFlat_applyFit` untouched). All `reh3d_*` fns + `.is-3d` CSS stay
-resident but unreachable. `?legacy=1` byte-identical (toggle was always rd-only).
+The `.218` `FLAT|3D` toggle, unwired from rd, code kept (R1 removes it). **The brief's C1
+was a trap:** `forge3d_*` is the WRAPPER hosting the new aisle — retiring it as instructed
+would have deleted Forge. Real target was `reh3d_*`.
 
-## 3. NOT BUGS (owner-confirmed, do not re-flag)
-- **"Only 3 racks visible."** Five slots ARE built (`for i<5`, `(i-2)*PITCH`). FOV 46 +
-  `radiusTarget=9.8` focus dolly frames the focused rack plus flanks on portrait. Design
-  intent — "TAP FLANKS TO WALK". Read as a defect only because every pad was blank.
+### v1.14.237 — Provenance & trust (work order Ship 1)
+⭐ **BIGGEST FIND — shipped CSS bug, dead since `.233`.** The comment above the Forge token
+block contained `(:root/*/html,...)`. The literal `*/` **closed the CSS comment early**; the
+parser took the trailing prose as a selector, entered error recovery, and **swallowed the
+next rule** — `#forge3d-sheet{--fbg --cyan --vio --teal --gold --ink --dim}`. Proven in
+browser: pre-fix, `--dim`/`--teal` were **empty** and `--gold` resolved to the *global*
+`#ffd60a`, not Forge's `#ffcb45`; the rule was in raw CSS but **absent from the CSSOM**.
+**Every Forge design token has been undefined inside the aisle since day one.** Fixed;
+all four tokens verified resolving.
+
+Also: provenance line replaces the "LIVE MASTER" lie (and the stale "STAGE 1 · SCENE
+PREVIEW" subtitle) → `DFW2 · dfw2.cwz · SAVED 07/09 09:33 · RESTORED FROM CACHE`;
+`sourceFile` persisted (**additive, schemaVersion stays 1** — a v2 bump would have rejected
+and destroyed every cached Master); **PURGE CACHED MASTER** with two-step confirm naming
+what dies; **unplaced RU-less hosts surfaced** (Forge was the only surface in the app that
+silently dropped them); **missing `.status-racked`/`.status-pending` CSS** shipped.
+
+---
+
+## 2. FIELD ANSWERS FROM JOHN (ground truth — supersede my earlier theories)
+- **Chassis is 8U — CONFIRMED** (Supermicro SYS-821GE, photo + vendor spec). So `return 8`
+  is **correct**, my "the constant is wrong" theory was **WRONG**, and the cached Master's
+  6U GPU pitch (RU 1, 7, 13) is **physically impossible data**. The collision is REAL.
+  John's standing ruling holds: *flag the U-collision, never render bad geometry as valid.*
+- **"No Master loaded" screen = DEPLOY Command Center — correct by design.** It is
+  deployment-scoped (no active deployment). Forge reads the site-persisted Master store.
+  Both surfaces are right; **the split was the trust defect** — fixed by `.237` provenance.
+
+---
+
+## 3. ⚠️ NEXT SHIP — v1.14.238 · GEOMETRY TRUTH (work order Ship 2, NOT built)
+1. **Model→U-height table** replaces the hardcoded `return 8` in `master_nodeHeightU`.
+   Seed: H100/H200 air-cooled = 8U; leaf/mgmt switch = 1U. **Unknown model → `null` →
+   "position unknown" tray + flag. Never a guessed height.** Site-profile material.
+2. **Collision detect + flag.** ⚠️ **REUSE, DO NOT REBUILD:** a U-collision detector already
+   exists — `preflight_run`'s occ-map at **`:43493`–`:43518`** (emits
+   `U-collision — <rack> U<n>: <a> overlaps <b>.`). It is **blind to Master-derived racks**
+   because it reads `dep.edpParsed.racks` gated on `deploy_getActive()` (`:43477`/`:43481`).
+   Extract it to a pure helper, have preflight call it (behavior-preserving — it's a HARD
+   NO-GO safety detector), and have Forge render its output. A second authority that can
+   disagree with the first violates "one door per feature".
+3. **Traps for the collision visual (from adversarial review — do not skip):**
+   - **A colour branch is NOT enough.** `drawGuts` fills tray rects in `hosts[]` order, so
+     two devices in the same band mean **the later one paints over the earlier**. A colliding
+     device is *already invisible* in the 3D face. Recolouring does not bring it back — needs
+     a split-band / inset visual (the `.230` inset-badge precedent).
+   - **Do NOT make `conflict` a third value of `sl.status`.** `statusOf` (`:17728`) maps
+     anything ≠ `'racked'` to `'pending'`, the row toggle overwrites it, and `refreshCounts`
+     computes PENDING as `total − racked`. Use a **separate `sl.conflict` field**; conflict is
+     geometry, status is verify — orthogonal.
+   - Every new pixel constant in `drawGuts` must be `* S` (`GS = 2.5` supersample).
+   - Add **no second texture/material** — O(5) memory depends on one CanvasTexture per rack.
+   - Never draw on the CoreWeave plate ("photo is photo, data is data").
+4. **Cross-rack strays** (`gpu-c1-001-01` filed in `c1:002`): render where the Master places
+   it (hosts are filed by `locCabRu`, `:27912`; the hostname is display-only) but flag
+   `HOSTNAME/LOCATION MISMATCH`. Do **not** silently re-home — naming convention is a
+   site-profile decision John has not ruled on.
+5. **Reconciliation** (field-beats-import; ADDED/MOVED/REMOVED; RECONCILE list with CONFIRM
+   REMOVED vs FLAG MASTER ERROR; re-key `rackId|dns` → device identity, unmatched entries
+   become RECONCILE items) — **the ship AFTER `.238`.** Do not fold in.
+   Still-open migration question for John: re-key vs wipe-and-re-verify.
 
 ## 4. D-LEDGER
-- **D1** v2.9.2 device gate — PASSED (John, 2026-07-12).
-- **D2** status precedence — ⚠️ **NOT RESOLVED. `.234`'s ship note OVERCLAIMED it.**
-  See §5. Owner has now ruled; ships as **`.237`**.
-- **D3** three.js — **RESOLVED.** Vendored `vendor/three.min.js` (SW-precached since `.218`)
-  verified mock-compatible: `sRGBEncoding` + `outputEncoding` + `ACESFilmicToneMapping` +
-  `FogExp2` + `PCFSoftShadowMap` present, **no** `outputColorSpace` → pre-r152. No shim.
-- **D4** plate provenance — OPEN, non-blocking. `FACE_B64` intact/untouched.
+- **D1** v2.9.2 device gate — PASSED. **D2** — RULED (field beats import); implementation is
+  the post-`.238` ship. **D3** — RESOLVED (vendored three.js verified pre-r152, mock-compatible).
+  **D4** plate provenance — OPEN, non-blocking.
 
-## 5. ⚠️ NEXT SHIP — v1.14.237 · D2 RECONCILIATION (owner-ruled, NOT yet built)
+## 5. ⛔ HARD STOP — BATCH-VERIFY IS PAST CAP
+`.235` `.236` `.237` are unverified, on top of an already-large owed batch. Work order:
+**after `.238`, HARD STOP — no further ships until John's device pass.**
 
-**Why:** traced the overlay. `phantom_node_status_v1` is written ONLY at `:18044`
-(verify-row toggle) and `:18049` (undo); read ONLY at `:17726` (hydrate) and `:17748`
-(`statusOf`, inside the memoized `deploy_forge_slots`). **There is no reconciliation code
-anywhere.** A device marked RACKED then dropped from a re-imported Master **silently
-vanishes** — no flag, counts just re-base (12/14 → 11/13), orphan entry rots in
-localStorage. Plus: **cross-rack moves lose status** (rackId is in the key), and the
-advertised `'U'+uStart` fallback is **dead code** (`slot.name` defaults to `'—'`, never
-falsy) → two nameless devices in one rack collide on `rackId|—` and **share one status**.
+## 6. DEVICE-VERIFY CHECKLIST (John, iPhone — covers .235/.236/.237)
+1. Forge with **no Master** → honest `NO MASTER LOADED` (not blank pads).
+2. Forge with a Master → **real racks + real hostnames** render (never worked before `.235`).
+3. Subtitle reads `SITE · SOURCE · SAVED <date> · RESTORED FROM CACHE` — never "LIVE MASTER",
+   never "STAGE 1 · SCENE PREVIEW". ⚠️ The existing cached snapshot predates `.237`, so it
+   will honestly say **"source unknown"** until re-imported; SITE + SAVED date still identify it.
+4. **Forge HUD colours look right for the first time** (tokens were dead since `.233`).
+5. Racks with RU-less hosts show the gold `NOT PLACEABLE IN 3D` callout, naming them.
+6. RACKED/PENDING badges visibly distinct (teal vs slate).
+7. Master tab: source file + `RESTORED FROM CACHE` + **Purge cache** → two confirms naming
+   file+date → Forge then shows `NO MASTER LOADED`, ⊞ picker empty-safe.
+8. Work tab → rack detail: **FLAT|3D toggle gone**, FLAT renders as in `.231`.
+9. `?legacy=1`: Master tab has **no** purge button and **no** provenance text; rack detail unchanged.
 
-**Owner's ruling (verbatim intent) — field beats import, conflicts loud.** On every Master
-load, diff overlay keys against new Master geometry:
-1. **ADDED** (in new Master, no overlay entry) → renders pending. Normal.
-2. **MOVED** (same device identity, new rack/U) → status FOLLOWS the device; overlay key
-   rewritten to the new location; logged as a move. **Requires keying on device identity
-   (hostname), not rackId+slot** — fixes the cross-rack bug.
-3. **REMOVED** (overlay says verified, device gone from new Master) → **never silently
-   dropped.** Surfaces in a RECONCILE list: *"GPU-C1A-08 — field-verified RACKED on <ts>,
-   absent from new Master."* Tech resolves each: **CONFIRM REMOVED** (clears overlay entry,
-   logged) or **FLAG MASTER ERROR** (keeps entry, marks conflicted, visible until Master
-   corrected). Unresolved items **badge the rack in Forge and on the Work tab.**
-
-Also in `.237`: **fix the nameless-device key collision** — key on device identity with a
-stable fallback (e.g. rack+uStart+index), never a shared `'—'`.
-
-**Open implementation question for John (needs an answer before `.237` is cut):**
-existing `phantom_node_status_v1` entries are keyed `rackId|dns`. Re-keying to device
-identity needs a **migration**: `rackId|X` → `X` where X matches a hostname in the loaded
-Master; entries that match nothing become the first RECONCILE-list items rather than being
-dropped. Confirm that's the behavior he wants (vs. wiping the overlay and re-verifying).
-
-**`.237` was deliberately NOT stacked on `.235`/`.236`** — it builds on a bridge John has
-not yet seen render.
-
-## 6. STAGES
-| Stage | Status |
-|---|---|
-| Mock → module integration (scene, guts, chips, picker, search, verify, undo) | SHIPPED `.233`/`.234` |
-| three.js vendored, inline copy stripped (D3) | DONE |
-| Master bridge wired to the real Master | **FIXED `.235`** — awaiting device verify |
-| Honest zero-state (no Master / no loadout) | **DONE `.235`** — awaiting device verify |
-| Retire old rack-detail 3D toggle (Defect 1) | **DONE `.236`** — awaiting device verify |
-| **D2 overlay↔Master reconciliation** | ❌ **NOT BUILT — `.237`, owner-ruled, spec in §5** |
-| Work-tab `3D` pill production placement | ⏸ deferred backlog |
-| `?legacy=1` byte-identical | holds |
-
-## 7. DEVICE-VERIFY CHECKLIST (HARD STOP — John, iPhone; one pass covers .235 + .236)
-1. Open FORGE 3D with **no Master** → honest `NO MASTER LOADED` herotag + hint + toast.
-   No blank-pad silence.
-2. Load a real Master → open FORGE 3D → **real racks render**, real hostnames on the gut
-   trays, chips populated, herotag `ROW:CAB · FOCUS / LIVE MASTER · N/M RACKED`.
-3. ⊞ picker lists **every** rack in the Master, grouped by row.
-4. Confirm the ~3-visible framing reads right with real racks in frame.
-5. Work tab → rack detail → **FLAT|3D toggle is gone**; FLAT renders as in `.231` (fitted
-   48U, no scroll, 1U rows readable); MINI/scrubber strip still works; no console errors.
-6. `?legacy=1` unchanged.
-
-**Do NOT verify `.234`'s verify-toggle workflow as "working"** — it persists fine in the
-happy path but loses field truth on the first Master re-import. That's what `.237` fixes.
+**Do NOT sign off `.234`'s verify-toggle as "working"** — it persists in the happy path but
+loses field truth on the first Master re-import. That is the reconciliation ship.

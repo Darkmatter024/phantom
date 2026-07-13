@@ -8835,8 +8835,16 @@ body.rd #forge3d-sheet.open { display: flex; }
 #forge3d-mount { position: relative; flex: 1; min-height: 0; overflow: hidden; background: #000508; }
 /* ── FORGE HYBRID AISLE HUD — scoped under #forge3d-sheet (body.rd only) ── */
 /* Adapted from MOCKUP-FORGE-HYBRID-AISLE-v2.9.2 CSS; every selector prefixed
-   so it cannot leak into the app. Globals (:root/*/html,body/#stage/canvas)
-   intentionally dropped. Keyframe renamed fx-pulse. */
+   so it cannot leak into the app. Global selectors from the mock (:root, the
+   universal selector, html, body, #stage, canvas) were intentionally dropped.
+   Keyframe renamed fx-pulse.
+   v1.14.237 — SHIPPED BUG FIX: this comment used to read "(:root/[star]/html,...)".
+   The literal star-slash inside it CLOSED THE COMMENT EARLY; the CSS parser then took
+   the trailing prose as a selector, entered error recovery, and SWALLOWED THE NEXT RULE
+   — which is the #forge3d-sheet design-token block below. Result: --cyan/--vio/--teal/
+   --gold/--ink/--dim were UNDEFINED inside the Forge sheet from .233 onward, so every
+   token-colored HUD element silently fell back to inherited/global values. Do not
+   reintroduce a star-slash sequence inside a CSS comment. */
 #forge3d-sheet{--fbg:#04060a;--cyan:#28e0ff;--vio:#8a4bff;--teal:#1fffd0;--gold:#ffcb45;--ink:#c9d6e2;--dim:#5a6b7d}
 #forge3d-sheet #forge3d-hud{position:absolute;inset:0;pointer-events:none;z-index:5}
 #forge3d-sheet .hud{position:fixed;left:0;right:0;pointer-events:none;z-index:10}
@@ -8895,6 +8903,16 @@ body.rd #forge3d-sheet.open { display: flex; }
 #forge3d-sheet .uslot{font-family:'Rajdhani',sans-serif;font-weight:600;color:#8fa6ba;font-size:11px}
 #forge3d-sheet .status-badge{font-size:8px;padding:2px 6px;border-radius:3px;letter-spacing:.05em;text-align:center}
 #forge3d-sheet .status-badge.status-none{background:rgba(90,107,125,.12);color:var(--dim)}
+/* v1.14.237 — SHIPPED DEFECT FIX: badgeHTML has emitted .status-racked / .status-pending
+   since .234, but NEITHER had a CSS rule anywhere in the file — the only styled variant was
+   .status-none, which no code emits. The RACKED/PENDING badges have been rendering unstyled. */
+#forge3d-sheet .status-badge.status-racked{background:rgba(31,255,208,.14);color:var(--teal)}
+#forge3d-sheet .status-badge.status-pending{background:rgba(90,107,125,.14);color:var(--dim)}
+/* RU-less hosts: in the Master, but with no U we can place. Gold = the app's existing
+   "surfaced, not lost" language (cf. .master-unplaced). Never silently dropped. */
+#forge3d-sheet .forge-unplaced{margin:6px 4px 10px;padding:8px 10px;border-radius:6px;
+  background:rgba(255,203,69,.10);border:1px solid rgba(255,203,69,.32);color:var(--gold);
+  font-size:9px;letter-spacing:.10em;line-height:1.5;word-break:break-word}
 #forge3d-sheet .detail-footer{display:flex;justify-content:space-between;padding:10px 20px;
   border-top:1px solid rgba(40,224,255,.1);font-size:10px;color:var(--dim);
   letter-spacing:.08em;flex-shrink:0}
@@ -11791,7 +11809,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.236';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.237';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -12322,7 +12340,7 @@ if (typeof window !== 'undefined') {
        .rd-sheet clone; a single persistent canvas mounts into #forge3d-mount. Redesign-only. -->
   <div id="forge3d-sheet" role="dialog" aria-modal="true" aria-label="Forge 3D aisle">
     <div class="rd-sheet-hdr">
-      <div class="rd-sheet-titles"><div class="t">FORGE &middot; 3D AISLE</div><div class="s">STAGE 1 &middot; SCENE PREVIEW</div></div>
+      <div class="rd-sheet-titles"><div class="t">FORGE &middot; 3D AISLE</div><div class="s" id="forge3d-prov">&mdash;</div></div>
       <button class="rd-sheet-close" onclick="forge3d_close()" aria-label="Close Forge 3D">&#10005;</button>
     </div>
     <div id="forge3d-mount"></div>
@@ -12340,7 +12358,7 @@ if (typeof window !== 'undefined') {
       <span class="dot"></span>
       <span>
         <span class="id" id="tagId">—</span><br>
-        <span class="sub" id="tagSub">LIVE MASTER · TAP A RACK TO FOCUS</span>
+        <span class="sub" id="tagSub">TAP A RACK TO FOCUS</span>
       </span>
     </div>
   </div>
@@ -17736,6 +17754,11 @@ function forge3d_render(mount) {
   // Guard mirrors master_hasMaster(): a restoredFromStorage object can carry cab-level
   // data only, so require a non-empty racksByCab. Empty is reported LOUD, never [].
   var _slotCache = {};
+  // v1.14.237 — hosts the Master carries with NO derivable U position. master_rackToElevation
+  // already returns them (`unplaced`); Forge was the ONLY surface in the app that threw them
+  // away, so those devices vanished. Parallel cache — deploy_forge_slots() must keep returning
+  // a plain Array (8+ call sites index it).
+  var _unplacedCache = {};
   var _TMAP = { gpu: 'gpu', sw: 'switch', pwr: 'pdu', patch: 'patch', stor: 'storage', cpu: 'server', cdu: 'pdu', fw: 'switch', other: 'blank' };
   function deploy_forge_master() {
     var m = window._lastPhantomMaster;
@@ -17746,6 +17769,32 @@ function forge3d_render(mount) {
     var m = deploy_forge_master();
     if (!m) { console.warn('[forge] no usable Master on window._lastPhantomMaster — aisle opens in zero-state'); return []; }
     return Object.keys(m.racksByCab);
+  }
+
+  // v1.14.237 — PROVENANCE. Forge must never claim "LIVE MASTER" over a snapshot that
+  // boot-restored from localStorage. `restoredFromStorage` is trustworthy: it has exactly
+  // ONE writer (_phantom_master_bootRestore) and the fresh-parse path never sets it —
+  // verified, not assumed. Rendered into the sheet SUBTITLE, not the herotag: .sub is 9px
+  // inside an inline-flex box and a provenance string glued there wraps over the scene.
+  function deploy_forge_siteLabel() {
+    var m = deploy_forge_master();
+    return (m && m.siteCode) ? String(m.siteCode).toUpperCase() : 'MASTER';
+  }
+  function deploy_forge_tagSub(racked, total) {
+    return deploy_forge_siteLabel() + ' · ' + racked + '/' + total + ' RACKED · TAP FLANKS TO WALK';
+  }
+  function deploy_forge_provenance() {
+    var el = document.getElementById('forge3d-prov');
+    if (!el) return;
+    var m = deploy_forge_master();
+    if (!m) { el.textContent = 'NO MASTER LOADED'; return; }
+    var restored = m.restoredFromStorage === true;
+    var ts = (typeof master_formatTimestamp === 'function')
+      ? master_formatTimestamp(m.savedAt || m.ingestedAt || null) : '—';
+    var src = m.sourceFile ? String(m.sourceFile) : 'SOURCE UNKNOWN';
+    // textContent, never innerHTML — sourceFile is user-controlled filename text.
+    el.textContent = deploy_forge_siteLabel() + ' · ' + src + ' · '
+      + (restored ? 'SAVED ' + ts + ' · RESTORED FROM CACHE' : 'LOADED ' + ts);
   }
   function deploy_forge_slots(id) {
     if (_slotCache[id]) return _slotCache[id];
@@ -17764,16 +17813,33 @@ function forge3d_render(mount) {
           slot.status = statusOf(id, slot);
           out.push(slot);
         });
+        // Never drop a device. RU-less hosts cannot be drawn on the 48U guts canvas at all,
+        // so they surface in the detail panel instead — matching the app's existing law
+        // (master search's .master-unplaced callout; the mscope seeder's rack.notes).
+        _unplacedCache[id] = (elev && Array.isArray(elev.unplaced)) ? elev.unplaced.slice() : [];
+        if (_unplacedCache[id].length) {
+          console.warn('[forge] ' + id + ': ' + _unplacedCache[id].length +
+                       ' host(s) with no U position — surfaced, not dropped');
+        }
       }
     } catch (e) { phantom_logErr('deploy_forge_slots:' + id, e); }
     _slotCache[id] = out;
+    if (!_unplacedCache[id]) _unplacedCache[id] = [];
     return out;
+  }
+  function deploy_forge_unplaced(id) { deploy_forge_slots(id); return _unplacedCache[id] || []; }
+  // Master-supplied hostnames are concatenated into innerHTML by the detail panel. They are
+  // operator-imported spreadsheet text, so they get escaped — never trusted as markup.
+  function _fesc(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
   var RUN = deploy_forge_rackList();
   var ROWS = {};
   RUN.forEach(function (id) { var row = id.split(':')[0]; (ROWS[row] = ROWS[row] || []).push(id); });
   Object.keys(ROWS).forEach(function (k) { ROWS[k].sort(); });
   function rowOf(id) { var row = id.split(':')[0]; var arr = ROWS[row] || []; return { row: row, arr: arr, idx: arr.indexOf(id) }; }
+  deploy_forge_provenance();   // v1.14.237 — stamp the sheet subtitle before anything paints
   var WINDOW = [null, null, null, null, null];
 
   // ---------- guts renderer (racked → solid, pending → ghosted) ----------
@@ -17959,7 +18025,7 @@ function forge3d_render(mount) {
     var fslots = deploy_forge_slots(rack.userData.label);
     var fracked = fslots.filter(function (s) { return s.status === 'racked'; }).length;
     tagId.textContent = rack.userData.label + ' · FOCUS';
-    tagSub.textContent = 'LIVE MASTER · ' + fracked + '/' + fslots.length + ' RACKED · TAP FLANKS TO WALK';
+    tagSub.textContent = deploy_forge_tagSub(fracked, fslots.length);
     radiusTarget = 9.8;
     focused = rack;
     store.set('deploy_forge_view_v1', rack.userData.label);
@@ -18055,7 +18121,7 @@ function forge3d_render(mount) {
     D.meta.textContent = 'ROW ' + info.row.toUpperCase() + ' · POS ' + (info.idx + 1) + '/' + info.arr.length + ' · ' + racked + '/' + slots.length + ' RACKED';
     D.footer.innerHTML = '<span><b>' + slots.length + '</b> COMPONENTS</span><span><b>' + racked + '</b> RACKED · <b>' + (slots.length - racked) + '</b> PENDING</span>';
     if (focused && focused.userData.label === label)
-      tagSub.textContent = 'LIVE MASTER · ' + racked + '/' + slots.length + ' RACKED · TAP FLANKS TO WALK';
+      tagSub.textContent = deploy_forge_tagSub(racked, slots.length);
   }
   function rebake(rack) {
     if (!heroImg.complete) return;
@@ -18075,9 +18141,17 @@ function forge3d_render(mount) {
       var u = sl.uStart === sl.uEnd ? ('U' + sl.uStart) : ('U' + sl.uStart + '–' + sl.uEnd);
       html += '<div class="detail-row toggle" data-i="' + i + '"><span class="type-dot" style="background:' + col + '"></span>'
         + '<span class="uslot">' + u + '</span>'
-        + '<span>' + sl.name + ' <span style="color:var(--dim);font-size:9px">' + TLABEL[sl.type] + '</span></span>'
+        + '<span>' + _fesc(sl.name) + ' <span style="color:var(--dim);font-size:9px">' + TLABEL[sl.type] + '</span></span>'
         + badgeHTML(sl) + '</div>';
     });
+    // v1.14.237 — RU-less hosts, surfaced above the table. Gold callout, same language as
+    // the Master search surface. These devices are in the Master but have no U we can place.
+    var unp = deploy_forge_unplaced(label);
+    if (unp.length) {
+      html = '<div class="forge-unplaced">' + unp.length + ' HOST' + (unp.length === 1 ? '' : 'S')
+           + ' WITH NO U POSITION · NOT PLACEABLE IN 3D: '
+           + unp.map(_fesc).join(', ') + '</div>' + html;
+    }
     D.table.innerHTML = html;
     D.table.querySelectorAll('.detail-row.toggle').forEach(function (row) {
       row.addEventListener('click', function () {
@@ -27641,6 +27715,10 @@ var PHANTOM_MASTER_STORE = {
         savedAt: new Date().toISOString(),
         sourceFileHash: (parseResult.stats && parseResult.stats.sourceFileHash) || null,
         siteCode: parseResult.siteCode || null,
+        // v1.14.237 — persist the import filename alongside the hash. Additive and
+        // OPTIONAL: load() validates only `schemaVersion !== 1`, so payloads written
+        // before .237 restore fine and simply report an unknown source.
+        sourceFile: parseResult.sourceFile || null,
         racksByCab: parseResult.racksByCab
       };
       var compressed = LZString.compressToUTF16(JSON.stringify(payload));
@@ -27689,6 +27767,46 @@ var PHANTOM_MASTER_STORE = {
 
 // Hidden console helper for John's test workflow. Not wired to any UI.
 window.phantom_clearMaster = function() { return PHANTOM_MASTER_STORE.clear(); };
+
+// v1.14.237 — PURGE CACHED MASTER (owner-requested). The site Master snapshot persists in
+// localStorage and boot-restores into window._lastPhantomMaster, so a stale or test import
+// keeps feeding every Master-driven surface — Forge included — with no way to evict it short
+// of importing another file over it. Two-step confirm; NAMES exactly what is being destroyed
+// (source file + save date + rack count) so a tech can never purge the wrong Master blind.
+// Field-verify status (phantom_node_status_v1) is deliberately NOT touched.
+async function master_purgeCached() {
+  var m = window._lastPhantomMaster || {};
+  var src   = m.sourceFile ? String(m.sourceFile) : 'source unknown';
+  var ts    = (typeof master_formatTimestamp === 'function')
+                ? master_formatTimestamp(m.savedAt || m.ingestedAt || null) : '—';
+  var site  = m.siteCode || '—';
+  var racks = (m.racksByCab && typeof m.racksByCab === 'object') ? Object.keys(m.racksByCab).length : 0;
+  var what  = 'SITE ' + site + ' · ' + src + ' · saved ' + ts + ' · ' + racks + ' racks';
+
+  var ok = await phantomConfirmAsk({
+    title: 'Purge cached Master?',
+    body: 'This evicts the persisted Master snapshot from this device. ' + what +
+          '. Master-driven surfaces (Forge, Rack Map, Port Map) will show their empty state ' +
+          'until a new Master is imported. Field-verify status is NOT touched.',
+    confirmLabel: 'Purge', cancelLabel: 'Cancel', destructive: true
+  });
+  if (!ok) return false;
+  var ok2 = await phantomConfirmAsk({
+    title: 'Confirm purge',
+    body: 'Last chance — purge ' + what + '? This cannot be undone without re-importing the file.',
+    confirmLabel: 'PURGE NOW', cancelLabel: 'Keep it', destructive: true
+  });
+  if (!ok2) return false;
+
+  try { PHANTOM_MASTER_STORE.clear(); }
+  catch (e) { if (typeof phantom_logErr === 'function') phantom_logErr('master_purgeCached:clear', e); }
+  window._lastPhantomMaster = undefined;
+  try { console.warn('[master] PURGED cached Master · ' + what); } catch (_) {}
+  if (typeof phantomToast === 'function') phantomToast('CACHED MASTER PURGED · ' + src);
+  if (typeof master_render === 'function') master_render();
+  return true;
+}
+window.master_purgeCached = master_purgeCached;
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // PHANTOM_JOBSNAP_STORE — Ship 1 (v1.6.88) · Master-scope deployment snapshot.
@@ -27958,6 +28076,11 @@ async function phantom_parseMaster(arrayBuffer, options) {
     var site = {
       siteCode: siteCode,
       siteName: siteName,
+      // v1.14.237 — PROVENANCE. The raw import filename, so a tech can always name the
+      // Master they are looking at. siteName is NOT a substitute: it strips the
+      // extension, trims and upper-cases. Additive field; schemaVersion stays 1 so
+      // already-cached Masters keep loading (a v2 bump would reject and destroy them).
+      sourceFile: (options && options.filename) ? String(options.filename) : null,
       stats: {
         totalCabinets: Object.keys(racksByCab).length,
         totalHosts: hosts.length,
@@ -29125,13 +29248,29 @@ function master_renderLoaded(container) {
   var savedAt = m.savedAt || m.ingestedAt || null;
   var ts = master_escHtml(master_formatTimestamp(savedAt));
 
+  // v1.14.237 — provenance + PURGE. Both are redesign-only: this banner is SHARED with the
+  // legacy house, and ?legacy=1 must stay byte-identical, so every addition is rd-gated.
+  var _rdOn = (typeof redesign_isOn === 'function') && redesign_isOn();
+  var _srcTxt = m.sourceFile ? master_escHtml(String(m.sourceFile)) : 'source unknown';
+  var _restored = m.restoredFromStorage === true;
+  var _provExtra = _rdOn
+    ? ' · <span style="color:var(--slate)">' + _srcTxt + '</span>' +
+      (_restored ? ' · <span style="color:var(--gold)">RESTORED FROM CACHE</span>' : '')
+    : '';
+  var _purgeBtn = _rdOn
+    ? '<button type="button" class="master-banner-replace" style="margin-left:6px;color:var(--gold)"' +
+        ' onclick="master_purgeCached()"' +
+        ' aria-label="Purge the cached Master snapshot from this device">Purge cache</button>'
+    : '';
+
   var html = '';
   html += '<div class="master-banner" id="master-banner">' +
             '<div class="master-banner-meta">' +
-              '<strong>' + siteCode + '</strong> · ' + totalRacks + ' racks · loaded ' + ts +
+              '<strong>' + siteCode + '</strong> · ' + totalRacks + ' racks · loaded ' + ts + _provExtra +
             '</div>' +
             '<button type="button" class="master-banner-replace"' +
               ' onclick="master_onReplaceTap()" aria-label="Replace loaded Master">Replace</button>' +
+            _purgeBtn +
             '<button type="button" class="master-banner-replace" style="margin-left:6px"' +
               ' onclick="deviceLead_promptSetPin().then(function(ok){ if(ok &amp;&amp; typeof master_render===\'function\') master_render(); })"' +
               ' aria-label="Set or change the device Lead PIN that protects the Master">' +
