@@ -11826,7 +11826,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.241';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.242';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -29106,6 +29106,47 @@ var MASTER_U_TABLE = [
   { re: /\br760\b/,                       u: 2 },
   // Dell PowerEdge R660 — 1U (Dell: "1U, two-socket"). v1.14.239.
   { re: /\br660\b/,                       u: 1 },
+  // ── SPARKS (US-SPK03) network/dist set — v1.14.242. Seven rows, each carrying its OWN
+  //    evidence class. Five are settled by VENDOR SPEC (the master's pitch permits them but
+  //    cannot PROVE them — it leaves enough clear U above each to fit a taller box, so the
+  //    datasheet is load-bearing, not the geometry). Two are settled by the MASTER'S OWN
+  //    GEOMETRY, where adjacency makes any taller height physically impossible — the same
+  //    evidence class as the HGX 6U ruling.
+  // NVIDIA Spectrum-2 SN3420 — 1U (NVIDIA/Lenovo product guide: 1U open Ethernet switch,
+  // 48x25G SFP28 + 12x100G QSFP28 ToR). VENDOR SPEC ONLY: the 2 hosts on SPARKS
+  // (s3-mgmt-dist-01a/02a) are one-per-rack, so there is no pitch to corroborate.
+  { re: /\bsn3420\b/,                     u: 1 },
+  // NVIDIA Spectrum-3 SN4700 — 1U (NVIDIA SN4000-series datasheet + Dell PowerSwitch SN4700
+  // spec sheet: 32x400G QSFP-DD in 1U). Pitch is CONSISTENT but not probative: the 108 SPARKS
+  // hosts sit at a 2U pitch (dist pairs at U28/U30, U32/U34), which a 2U box would also fit.
+  { re: /\bsn4700\b/,                     u: 1 },
+  // NVIDIA Spectrum-4 SN5610 — 2U (NVIDIA "Spectrum-4 SN5000 2U Switch Systems" hardware user
+  // manual; 64x OSFP 800GbE, 51.2Tb/s). 259 hosts — the SPARKS switch backbone. Pitch is
+  // CONSISTENT (uniform 3U: 214 of 218 intra-rack pairs, e.g. s3:175 fbs-01..04 at U11,14,17,20
+  // and the t1/t2/t3 stacks) = 2U chassis + 1U service gap. ⚠ The \b guard means sn5600 does
+  // NOT reach this row — SN5600 stays DELIBERATELY ABSENT (synthetic fixture only, see below).
+  { re: /\bsn5610\b/,                     u: 2 },
+  // Opengear CM8148 console server — 1U (Opengear CM8100-series datasheet; 48 serial ports,
+  // 1U rack-mount, 1.8in H). VENDOR SPEC ONLY: it is the lone U48 console box in each of its
+  // 46 racks, so there is no pitch to corroborate.
+  { re: /\bcm8148\b/,                     u: 1 },
+  // Cisco Secure Firewall 4245 — 1RU (Cisco Secure Firewall 4200-series: "1RU", 2x NetMod bays;
+  // SKU FPR4245-NGFW-K9 matches this master's "ngfw-4245" slug). Pitch CONSISTENT, not
+  // probative: the 4 hosts sit at a 2U gap (s3:175 U38/U40).
+  { re: /ngfw-4245/,                      u: 1 },
+  // ⭐ "net-6x100g-02" — CoreWeave-internal NetBox slug (6x100G network profile, rev 02). NO
+  // PUBLIC SKU EXISTS; there is nothing to cite. THE LOADED MASTER'S OWN GEOMETRY IS THE
+  // EVIDENCE (same ruling class as HGX 6U): in s3:175 the master places s3-pkey03 at U28 and
+  // s3-pkey01 at U29 — ADJACENT. A 2U box at U28 would overrun into U29 and collide with a
+  // device the master itself put there, so 1U is the only height this rack can hold.
+  // KEYED TO EXACT REV -02: a future -03 is different hardware until its own pitch proves
+  // otherwise. (6 hosts, s3:175/s3:176.)
+  { re: /net-6x100g-02/,                  u: 1 },
+  // ⭐ "12-mpo-48-lc-port-patch-panel" — 1U. The port count IS the product class: 12 MPO trunk
+  // + 48 LC front is the standard 1U high-density modular panel (12 cassettes, 4x LC duplex
+  // each). GEOMETRY CONFIRMS: s3:175 stacks s3-pp-ru06/07/08/09 at U6,U7,U8,U9 — four
+  // CONSECUTIVE U. A 2U panel self-collides with its own neighbour. (12 hosts, s3:175/s3:176.)
+  { re: /12-mpo-48-lc-port-patch-panel/,  u: 1 },
   // Leaf / spine / ToR / mgmt switch — 1U.
   { re: /\b(leaf|spine|tor|mgmt-sw)\b/,   u: 1 }
   // DELIBERATELY ABSENT — do NOT add without John's field call:
@@ -29113,6 +29154,12 @@ var MASTER_U_TABLE = [
   //                DF-5630); the master string "VAST DBox" does not disambiguate. 50 hosts
   //                on DFW02. Stays flagged until John says which is on the floor.
   //   SN5600     — appears only in the synthetic stress fixture, never in a real master yet.
+  //                SN5610 (2U) IS a real SPARKS model and got its own row in .242 — the \b
+  //                guards keep the two apart.
+  //   SPARKS remainder — q3400-ra (448), cpu-gp2-* (165), inf-med-01 (60), om2216-c14 (16),
+  //                fs-media-converter-chassis (5), net-ufm-05 (2), gpu-b40-02 (160). Each needs
+  //                its own research/ruling pass. None collide at the 1U placeholder, so they
+  //                render honest gold rather than falsely red.
 ];
 // Returns {u, known}. `u` is null when the model is not in the table AND its name does not
 // encode a height. Callers that must not lie about geometry read `.known` (Forge). Callers

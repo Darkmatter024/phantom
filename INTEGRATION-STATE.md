@@ -536,3 +536,54 @@ at migration time, **plus a logged, SURFACED note** ("N field-verify marks attri
 upgrade"). **Never a silent migration** — the tech must be able to see their field truth was
 re-keyed. Option (b) (`UNATTRIBUTED|` namespace + adopt-on-load) is DEAD; do not revive.
 This is now settled input for Ship C. No further ruling needed on the overlay migration.
+
+---
+
+# §13 — SHIP v1.14.242 · SPARKS NETWORK/DIST HEIGHTS (data-only, 2026-07-13)
+
+Per `HANDOFF-U-TABLE-SPARKS-NET-242.md` (web-Claude). John's cover note made handing the file
+the sign-off, **conditional on the §4 replay assertions passing**. They all pass — shipped.
+
+**Seven rows, TWO evidence classes.** They are not equally strong and the comments say so:
+
+| class | rows | why |
+|---|---|---|
+| **VENDOR SPEC** (datasheet is load-bearing) | `sn3420`=1U · `sn4700`=1U · `sn5610`=**2U** · `cm8148`=1U · `ngfw-4245`=1U | The master's pitch is *consistent* with these but does **not prove** them — it leaves clear U above each, so a taller box would also fit. Sources: NVIDIA "Spectrum-4 SN5000 **2U** Switch Systems" HW manual · NVIDIA SN4000 + Dell PowerSwitch SN4700 spec sheets · NVIDIA/Lenovo SN3420 guide · Opengear CM8100 datasheet · Cisco Secure Firewall 4200 (SKU `FPR4245-NGFW-K9` matches the slug). |
+| **MASTER GEOMETRY** (same class as the HGX 6U ruling) | `net-6x100g-02`=1U · `12-mpo-48-lc-port-patch-panel`=1U | No public SKU exists / port-count *is* the class. **Adjacency makes any taller height impossible:** `s3:175` puts `s3-pkey03`@U28 and `s3-pkey01`@U29 **adjacent** (a 2U box overruns into a device the master itself placed); it stacks `pp-ru06/07/08/09` at **four consecutive U** (a 2U panel self-collides). |
+
+## ⚠️ THE HANDOFF'S PHOTO EVIDENCE WAS WRONG — CORRECTED AGAINST THE MASTER
+§4 of the handoff explicitly ordered this ("do not trust the photo, trust the master"). Two defects:
+
+1. **`dh1:005` DOES NOT EXIST.** SPARKS row prefixes are **`s1` / `s2` / `s3` only**. The
+   photographed rack is **`s3:175`** (twin `s3:176`) — **21 devices, not 25**. The U positions
+   web-Claude read *were* right (`s3-fbs-01..04` at U11/14/17/20), so it is the **right rack under
+   the wrong name**. **John's §8 verify target is corrected to `s3:175`.**
+2. **The `net-6x100g-02` "U25–U31 zero-gap run" is FALSE.** Real positions are U28 / U29 / U31 —
+   gaps of 1U and 2U, not a 7U run. The **conclusion (1U) survives** via the U28/U29 adjacency, so
+   the row ships with the **true** proof. No row shipped on evidence that failed the replay.
+
+**LESSON (generalises):** a photo can identify the right *hardware* and still be wrong about the
+*label and the layout*. The master is the only citable geometry. This is the second time a
+confident upstream claim ("physically impossible data", now "dh1:005") has dissolved on replay.
+
+## REPLAY (both real masters, through the shipped `phantom_rackGeometry`)
+- **SPARKS:** resolution **68.8% → 79.3%** (2850 → 3287 of 4143). Collisions **0/4143**, overflow 0,
+  bad racks 0. Each of the seven seeded **alone** onto the .241 table adds **zero** collisions.
+- **`s3:175`:** **20 unknown → 1** (only `net-ufm-05` stays gold).
+- **DFW02:** **per-host height drift = 0** across all 2347 placed hosts; resolution 2286/2347 and
+  the 2 collisions are **identical to .241** (they are the pre-existing genuine `c1:002` defect).
+  **The in-flight DFW2 device pass REMAINS VALID** — only the build badge changes.
+- **23 guards PASS:** `sn5600` still UNKNOWN (the `\b` guard keeps it off `sn5610`=2U) ·
+  `net-6x100g-03`, `net-ufm-05`, `cm8132`, `ngfw-4225` still UNKNOWN (rows are model/rev-exact —
+  no family-wide guessing) · in-name NRU still wins · every prior ruling unmoved.
+
+## STILL GOLD ON SPARKS (20.7% — never guessed)
+`q3400-ra` (448) · `cpu-gp2-*` (165) · `gpu-b40-02` (160) · `inf-med-01` (60) · `om2216-c14` (16) ·
+`fs-media-converter-chassis` (5) · `net-ufm-05` (2). Zero collisions at the 1U placeholder, so
+SPARKS renders **honest gold, never falsely red**. Each needs its own ruling pass. The DFW02-vs-
+SPARKS vocabulary split (marketing names vs NetBox slugs) remains the standing argument for
+**SITE PROFILE**.
+
+## BATCH NOW = 5 (.238 .239 .240 .241 .242) — cap is 6
+Device-verify: DFW2 `c1:002` checklist unchanged, **plus** SPARKS **`s3:175`** (NOT `dh1:005`).
+Queue (A → C → B → honesty-parity → D → E) is untouched and still gated on John's PASS.
