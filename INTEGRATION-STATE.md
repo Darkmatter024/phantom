@@ -51,7 +51,7 @@ silently dropped them); **missing `.status-racked`/`.status-pending` CSS** shipp
 
 ---
 
-## 3. ✅ SHIPPED — v1.14.238 · GEOMETRY TRUTH (commit bf57e0c, 2026-07-13) — AWAITING JOHN'S DEVICE PASS
+## 3. ✅ SHIPPED — v1.14.238 GEOMETRY TRUTH (bf57e0c) + v1.14.239 U-TABLE SEED (fb45e4a), 2026-07-13 — BOTH AWAITING JOHN'S DEVICE PASS (batch = 2)
 
 **The spec's premise was wrong and the correction matters.** There was never a hardcoded
 `return 8`. `master_nodeHeightU` was ALREADY a table (in-name `NRU` parse → GPU-family →
@@ -101,12 +101,32 @@ model + U. That callout IS the site-profile worksheet.
    unknown-height callout, ⚠N on rack chips + herotag.
 6. Cross-rack strays flagged `HOSTNAME/LOCATION MISMATCH`, never silently re-homed.
 
-### OPEN FOR JOHN (blocks the next height work)
-- **(a) Confirm the heights** for the models the DFW02 callout will name — `QM9700`,
-  `SN2201`, `Supermicro AS-2125`, `VAST DBox`, `Dell R760`, `Dell R660`, NVLink trays, patch
-  panels. They seed `MASTER_U_TABLE` next ship. **Do NOT guess them into the table.**
-- **(b) Rule:** should Rack Map / Master search also stop guessing 1U? That changes persisted
-  deployment seeding → needs its own ship + its own verify. Today they still show the old guess.
+### ✅ RESOLVED BY v1.14.239 (commit fb45e4a) — table seeded from VENDOR SPEC
+John directed the web lookup ("you can run a check from the web"). A **cited vendor spec is
+evidence, not a guess** — same standard as his SYS-821GE photo. Each row carries its source in
+a code comment. Seeded: `QM9700/QM9790`=1U · `SN2201`=1U · `AS-2125`=**2U** (was drawn 1U —
+WRONG) · `Dell R760`=**2U** (was drawn 1U — WRONG) · `Dell R660`=1U.
+**DFW02: unknown 38.8% → 2.2%, resolved 61.2% → 97.8%, 0 mismatches vs spec.**
+
+⚠️ **NOT SEEDED, STILL FLAGGED — guessing these is the exact sin `.238` exists to kill:**
+- **`VAST DBox` (50 hosts on DFW02)** — VAST ships the enclosure as BOTH **1U (Ceres)** and
+  **2U (Lightspeed DF-5630)**; the master string does not disambiguate. **⬅ ONE WORD FROM JOHN
+  TAKES DFW02 TO 99.9%.**
+- `SN5600` — only in the synthetic stress fixture, never in a real master.
+- model `X` (2 hosts) — garbage data; correctly stays unknown.
+
+⚠️ **`.239` IS NOT DISPLAY-ONLY.** `master_nodeHeightU` now returns 2 (was 1) for AS-2125 and
+R760, which changes the U-span in `master_rackToElevation` → feeds Rack Map, Master search, AND
+the mscope seeder that **persists** slots. Therefore: (i) NEW deployments seed those at the
+correct 2U; deployments created BEFORE `.239` keep old 1U spans (never retroactively
+re-derived); (ii) `preflight_run` may surface **NEW U-collisions** for AS-2125/R760 that the
+undersized 1U guess was hiding. **Those collisions are REAL — surfacing them is the point.**
+
+### OPEN FOR JOHN (still)
+- **(a) Which VAST enclosure is on the floor — 1U Ceres or 2U Lightspeed?** Seeds the last row.
+- **(b) Rule:** should Rack Map / Master search also stop guessing 1U for models that remain
+  unknown? That changes persisted deployment seeding → needs its own ship + its own verify.
+  Today they still render the old 1U guess for anything not in the table.
 
 ### 🔴 NEW DEFECT FOUND, NOT FIXED, NOT VERIFIED BY ME — needs its own pass
 `MASTER-US-WEST-10A-US-SPK03-SPARKS.xlsx` (a **real** CoreWeave master, 92 sheets) does not
