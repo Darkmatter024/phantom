@@ -329,3 +329,51 @@ deployment created from DFW02.
 `VAST DBox` (×50 on DFW02) therefore remains **UNKNOWN → flagged gold** in Forge. DFW02 stays at
 2.2% unknown. **One word from John (Lightspeed or Ceres) closes it — data-only append, rides in
 the current unverified batch, no new batch.**
+
+---
+
+# 8. 🔴 CRITICAL — THE 8U RULE IS WRONG FOR DFW02. "IMPOSSIBLE DATA" WAS PROBABLY GOOD DATA.
+**Found 2026-07-13 replaying the REAL `MASTER-US-CENTRAL-DFW02-BRUTAL.xlsx` through the shipped
+code. NO CODE CHANGED — this is John's field call. Read before the `.238`/`.239` device pass.**
+
+## The measurement
+Every GPU on DFW02 sits at a **uniform 6U pitch** (U1, U7, U13, U19, U25, U31) — **1191 adjacent
+pairs, all 268 cabs, zero exceptions.** Run the shipped detector both ways:
+
+| GPU chassis assumption | devices in U-collision on DFW02 |
+|---|---|
+| **8U** (Supermicro SYS-821GE — what `MASTER_U_TABLE` ships today) | **1435 / 2347 = 61.1%**, across **240 of 268 racks** |
+| **6U** (Dell PowerEdge XE9680) | **2 / 2347 = 0.1%**, in **1 rack** |
+
+## Why 6U is almost certainly right
+- `NVIDIA HGX H200 8-GPU` names the **GPU baseboard, not the chassis.** It does not identify the
+  vendor. John's 8U confirmation was a **Supermicro SYS-821GE** — a different box.
+- **Dell PowerEdge XE9680 = 6U**, 8×HGX H100/H200 SXM5 (Dell spec: 263.20mm ≈ 6U). Real, common.
+- The master's own layout is **self-consistent with 6U**: 6 nodes × 6U = U1–U36, + mgmt/leaf at
+  U42–U44, inside a 48U rack. Six **8U** nodes = 48U **plus** 3U of switches = **51U — it would
+  not fit the rack the master itself describes.**
+- A uniform error across 268 cabs is not a typo. It is a convention.
+
+## What this overturns
+State doc §2 recorded: *"the cached Master's 6U GPU pitch (RU 1,7,13) is physically impossible
+data. The collision is REAL."* **That conclusion was built on assuming Supermicro fleet-wide, and
+is very likely WRONG.** The Master John PURGED on 2026-07-12 had this same 6U pitch — **it was
+probably correct data.** (Recoverable: re-import.)
+
+## The real lesson
+**Chassis height is a SITE/vendor property, not a GPU-baseboard property.** A fleet-wide
+`hgx → 8U` rule cannot be right for a fleet that runs both Supermicro (8U) and Dell (6U). This is
+exactly the site-profile boundary of Design Law 6.
+
+## Options for the next ship — JOHN'S CALL, do NOT pick one autonomously
+- **(a)** Site profile carries the GPU chassis (DFW02 = XE9680/6U; John's Supermicro site = 8U).
+- **(b)** Derive from the master: if a rack's own GPU pitch is uniformly N and N < the table
+  height, that is a **SITE CHASSIS MISMATCH** — flag it ONCE per site, not 240 rack collisions.
+- **(c)** Do nothing → the DFW02 device pass is 61% red and has **no clean rack to verify against**.
+
+## The one REAL defect on DFW02 (survives even under 6U) — best single verify target
+**`c1:002`** trips BOTH new features at once:
+- `gpu-c1-001-01` — a **7th** GPU (every other rack has 6), **named for cab c1:001 but FILED in
+  c1:002** → `HOSTNAME/LOCATION MISMATCH` flag.
+- It sits at **U37–U42** and **overlaps `mgmt-c1-002` (SN2201) at U42** → `U-SPAN CONFLICT`,
+  both devices flagged, split-lane in 3D.
