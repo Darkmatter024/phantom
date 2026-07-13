@@ -11826,7 +11826,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.238';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.239';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -29059,13 +29059,35 @@ function master_renderResultRows(rack, normCab) {
 // MASTER_U_TABLE is the ONLY height authority and carries ONLY heights confirmed in the field.
 // A model that is not in it is UNKNOWN — never guessed, always flagged. This is site-profile
 // material: the flagged unknown list IS the worksheet for seeding that profile.
+// EVERY ROW CITES A SOURCE. A height goes in here ONLY when a vendor spec or John's own
+// field check says so — never because it "looks like a switch". An unlisted model is UNKNOWN,
+// and Forge flags it gold rather than inventing a span. That is the whole point of this table.
 var MASTER_U_TABLE = [
   // Supermicro SYS-821GE HGX air-cooled chassis — 8U (John: photo + vendor spec, 2026-07-12).
-  { re: /\b(h100|h200|a100)\b|hgx|dgx/, u: 8 },
+  // Catches the DFW02 strings "NVIDIA HGX H200 8-GPU" / "NVIDIA HGX H100 8-GPU".
+  { re: /\b(h100|h200|a100)\b|hgx|dgx/,   u: 8 },
   // GB200/GB300/B200 NVL72 compute tray — 1U.
-  { re: /\b(gb200|gb300|b200)\b/,       u: 1 },
+  { re: /\b(gb200|gb300|b200)\b/,         u: 1 },
+  // NVIDIA Quantum-2 QM9700/QM9790 NDR InfiniBand switch — 1U (NVIDIA datasheet: "64 ports of
+  // NDR 400Gb/s InfiniBand per port in a 1U standard chassis"). v1.14.239.
+  { re: /\bqm97(00|90)\b|quantum-2/,      u: 1 },
+  // NVIDIA Spectrum SN2201 1G mgmt switch — 1U (NVIDIA datasheet: "1U open Ethernet switch",
+  // 43.9mm height). v1.14.239.
+  { re: /\bsn2201\b/,                     u: 1 },
+  // Supermicro AS-2125HS-TNR Hyper A+ — 2U (Supermicro product page: "2U Hyper A+ Server").
+  // ⚠ Was being drawn 1U before .239. v1.14.239.
+  { re: /\bas-?2125/,                     u: 2 },
+  // Dell PowerEdge R760 — 2U (Dell spec sheet: H 86.8mm). ⚠ Was drawn 1U before .239. v1.14.239.
+  { re: /\br760\b/,                       u: 2 },
+  // Dell PowerEdge R660 — 1U (Dell: "1U, two-socket"). v1.14.239.
+  { re: /\br660\b/,                       u: 1 },
   // Leaf / spine / ToR / mgmt switch — 1U.
-  { re: /\b(leaf|spine|tor|mgmt-sw)\b/, u: 1 }
+  { re: /\b(leaf|spine|tor|mgmt-sw)\b/,   u: 1 }
+  // DELIBERATELY ABSENT — do NOT add without John's field call:
+  //   VAST DBox  — VAST ships the enclosure as BOTH a 1U (Ceres) and a 2U (Lightspeed
+  //                DF-5630); the master string "VAST DBox" does not disambiguate. 50 hosts
+  //                on DFW02. Stays flagged until John says which is on the floor.
+  //   SN5600     — appears only in the synthetic stress fixture, never in a real master yet.
 ];
 // Returns {u, known}. `u` is null when the model is not in the table AND its name does not
 // encode a height. Callers that must not lie about geometry read `.known` (Forge). Callers
