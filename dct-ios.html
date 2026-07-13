@@ -11791,7 +11791,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.234';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.235';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -17729,17 +17729,33 @@ function forge3d_render(mount) {
   function setStatus(rackId, sl, st) { _nodeStatus[_nk(rackId, sl)] = st; store.set(_NSKEY, _nodeStatus); }
 
   // ---------- REAL MASTER BRIDGE ----------
+  // v1.14.235 — DEFECT-2 FIX. This bridge read `window.master`, a global that has never
+  // existed in this app, so it always fell through to [] and the aisle rendered five
+  // blank pads for every user with every Master (.233 and .234 both shipped this dead
+  // path; the try/catch swallowed it). The live Master is `window._lastPhantomMaster`.
+  // Guard mirrors master_hasMaster(): a restoredFromStorage object can carry cab-level
+  // data only, so require a non-empty racksByCab. Empty is reported LOUD, never [].
   var _slotCache = {};
   var _TMAP = { gpu: 'gpu', sw: 'switch', pwr: 'pdu', patch: 'patch', stor: 'storage', cpu: 'server', cdu: 'pdu', fw: 'switch', other: 'blank' };
+  function deploy_forge_master() {
+    var m = window._lastPhantomMaster;
+    return (m && m.racksByCab && typeof m.racksByCab === 'object'
+            && Object.keys(m.racksByCab).length > 0) ? m : null;
+  }
   function deploy_forge_rackList() {
-    try { return (window.master && master.racksByCab) ? Object.keys(master.racksByCab) : []; }
-    catch (e) { return []; }
+    var m = deploy_forge_master();
+    if (!m) { console.warn('[forge] no usable Master on window._lastPhantomMaster — aisle opens in zero-state'); return []; }
+    return Object.keys(m.racksByCab);
   }
   function deploy_forge_slots(id) {
     if (_slotCache[id]) return _slotCache[id];
     var out = [];
     try {
-      var rack = (window.master && master.racksByCab) ? master.racksByCab[id] : null;
+      var m = deploy_forge_master();
+      var rack = m ? m.racksByCab[id] : null;
+      if (rack && typeof master_rackToElevation !== 'function') {
+        phantom_logErr('deploy_forge_slots:' + id, new Error('master_rackToElevation unavailable'));
+      }
       if (rack && typeof master_rackToElevation === 'function') {
         var elev = master_rackToElevation(rack, id);
         (elev && elev.slots ? elev.slots : []).forEach(function (s) {
@@ -17984,12 +18000,39 @@ function forge3d_render(mount) {
     if (target) setFocus(target, true);
   }
 
+  // v1.14.235 — honest zero-state. An empty aisle must SAY why (hard rule: no silent
+  // failures). Pre-fix, a no-Master open showed five blank pads under the misleading
+  // hint "TAP A RACK TO FOCUS". Distinguish the two real empties and name them.
+  var _HINT_DEFAULT = 'TAP A RACK TO FOCUS · ⊞ PICK UP TO 5 FOR THE 3D';
+  function deploy_forge_zeroState() {
+    var hintEl = document.getElementById('hint');
+    if (LOADOUT.length) {
+      // Populated. Restore the default hint — #hint is shared DOM that survives
+      // close/open, so a prior no-Master open would otherwise leave its message stranded.
+      if (hintEl) hintEl.textContent = _HINT_DEFAULT;
+      return false;
+    }
+    var noMaster = !RUN.length;
+    var msg = noMaster ? 'NO MASTER LOADED · LOAD A MASTER FILE TO BUILD YOUR LOADOUT'
+                       : 'NO RACKS LOADED · TAP ⊞ TO BUILD YOUR LOADOUT';
+    if (tagId) tagId.textContent = '—';
+    if (tagSub) tagSub.textContent = msg;
+    if (hintEl) hintEl.textContent = msg;
+    console.warn('[forge] ' + msg);
+    if (typeof phantomToast === 'function') {
+      phantomToast(noMaster ? 'FORGE · NO MASTER LOADED' : 'FORGE · NO RACKS IN LOADOUT');
+    }
+    return true;
+  }
+
   // composite guts once the photo decodes
   var heroImg = new Image();
   heroImg.onload = function () {
     var saved = store.get('deploy_forge_loadout_v1');
     var ids = (Array.isArray(saved) ? saved.filter(function (id) { return RUN.indexOf(id) >= 0; }) : []);
     setLoadout(ids.length ? ids : RUN.slice(0, 5));
+    // Master present but loadout empty → open the picker so the tech isn't staring at pads.
+    if (deploy_forge_zeroState() && RUN.length) openPicker();
   };
   heroImg.src = 'data:image/webp;base64,' + DEPLOY_FORGE_FACE_B64;
 
