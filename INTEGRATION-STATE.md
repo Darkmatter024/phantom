@@ -83,6 +83,44 @@ silently dropped them); **missing `.status-racked`/`.status-pending` CSS** shipp
    become RECONCILE items) — **the ship AFTER `.238`.** Do not fold in.
    Still-open migration question for John: re-key vs wipe-and-re-verify.
 
+## 3b. QUEUED — PERSISTENT MASTER PROVENANCE STRIP (John policy ruling, 2026-07-12)
+**Status: QUEUED behind `.238` + John's device pass. Batch is at cap. DO NOT BUILD YET.**
+Supersedes the acknowledge-gate draft — that idea is dead, do not revive it.
+
+**The ruling (verbatim intent):** silent restore STAYS (offline-first is non-negotiable), but
+it is never invisible. Every Master-fed surface in the **rd house** carries a thin provenance
+strip: `SITE · <sourceFile | SOURCE UNKNOWN> · SAVED <date>` + a `RESTORED` badge when
+applicable. **Tapping the strip opens the Master FILE panel** (Replace / Purge cache already
+live there — reuse that door, do not build a second one). **Amber accent when `sourceFile` is
+unknown.** Display-only, additive, **no new state, no boot friction.** Reuse `.237`'s
+provenance data verbatim.
+
+**⚠️ DESIGN TRAP — read before writing a line.** `.237`'s `deploy_forge_provenance()` lives
+*inside the `forge3d_render()` closure* and writes `#forge3d-prov` directly. It is **not
+reusable as-is**. Copy-pasting its logic into each surface creates N provenance authorities
+that can disagree — a straight "one door per feature" violation. **First step of this ship is
+to factor the provenance computation out into ONE global helper** (e.g.
+`phantom_masterProvenance()` returning `{site, sourceFile, savedAt, restored, text, unknown}`),
+have Forge's existing call site consume it, then have the strip consume the same helper.
+Refactor first, then add surfaces.
+
+**Data (all already exist, `.237`):** `m.siteCode` · `m.sourceFile` (null pre-`.237` snapshots
+→ render `SOURCE UNKNOWN` + amber) · `m.savedAt || m.ingestedAt` → `master_formatTimestamp()`
+(`:28652`, yields `MM/DD HH:MM`, null-safe) · `m.restoredFromStorage` (trustworthy: exactly one
+writer, `_phantom_master_bootRestore`).
+
+**Surface inventory — VERIFY, don't trust this list.** Known Master consumers to check:
+Forge (already has its subtitle — likely swaps to the shared strip), Rack Map, Port Map, Site
+Profile, Master search/elevation (`master_rackToElevation` callers noted at `:17760` Forge,
+`:28408` mscope seeder, `:28887` Master search, `:29088` `master_renderElevationView`).
+Enumerate properly as step 2.
+
+**Hard constraints:** `body.rd`-only (the Master banner is SHARED with legacy — `.237` gates
+its provenance + Purge on `redesign_isOn()`; the strip must be gated the same way or
+`?legacy=1` stops being byte-identical). `sourceFile` is operator-supplied filename text →
+**escape it or use `textContent`** (`.237` uses `_fesc` / `textContent` for exactly this).
+Strip must not push a legacy `p:` value on tap.
+
 ## 4. D-LEDGER
 - **D1** v2.9.2 device gate — PASSED. **D2** — RULED (field beats import); implementation is
   the post-`.238` ship. **D3** — RESOLVED (vendored three.js verified pre-r152, mock-compatible).
