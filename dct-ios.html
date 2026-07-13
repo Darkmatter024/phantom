@@ -11826,7 +11826,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.240';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.241';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -29084,6 +29084,15 @@ var MASTER_U_TABLE = [
   { re: /\b(h100|h200|a100)\b|hgx|dgx/,   u: 8 },
   // GB200/GB300/B200 NVL72 compute tray — 1U.
   { re: /\b(gb200|gb300|b200)\b/,         u: 1 },
+  // ⭐ B300 LIQUID ORV3 COMPUTE TRAY — 2U / 2-OU (John's ruling, 2026-07-13; vendor spec,
+  // Supermicro SYS-222GS-NB3OT-ALC class). This is NOT the NVL72 tray above (gb300, 1U) and NOT
+  // an air-cooled 8U HGX — the \b guard means "gb300" cannot reach this row.
+  // SANITY-CHECKED against SPARKS' own geometry, per John's rule that pitch and chassis must
+  // agree: `gpu-b300-01` sits at a UNIFORM 3U pitch (1152 pairs, zero exceptions — 9 nodes per
+  // rack at U11,14,17,20,23,26,29,32,35). A 2U tray + 1U service gap fits that exactly. An 8U
+  // chassis is IMPOSSIBLE there: seeding 8U would flag 1872/4143 devices (45%) in collision.
+  // The rack itself confirms liquid: a `cdu-4ru-03` (coolant distribution unit) sits at U2.
+  { re: /\bb300\b/,                       u: 2 },
   // NVIDIA Quantum-2 QM9700/QM9790 NDR InfiniBand switch — 1U (NVIDIA datasheet: "64 ports of
   // NDR 400Gb/s InfiniBand per port in a 1U standard chassis"). v1.14.239.
   { re: /\bqm97(00|90)\b|quantum-2/,      u: 1 },
