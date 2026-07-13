@@ -126,23 +126,31 @@ Strip must not push a legacy `p:` value on tap.
   the post-`.238` ship. **D3** — RESOLVED (vendored three.js verified pre-r152, mock-compatible).
   **D4** plate provenance — OPEN, non-blocking.
 
-## 5. ⛔ HARD STOP — BATCH-VERIFY IS PAST CAP
-`.235` `.236` `.237` are unverified, on top of an already-large owed batch. Work order:
-**after `.238`, HARD STOP — no further ships until John's device pass.**
+## 5. ✅ BATCH-VERIFY CLEARED — `.235` `.236` `.237` DEVICE-VERIFIED (John, iPhone, 2026-07-12)
+John's device pass: **provenance strip PASS · purge PASS · empty state PASS · FLAT-only PASS ·
+HUD colours look right on the phone.** The dead-token bug was NOT masking further colour
+problems underneath it — the aisle reads correctly now.
 
-## 6. DEVICE-VERIFY CHECKLIST (John, iPhone — covers .235/.236/.237)
-1. Forge with **no Master** → honest `NO MASTER LOADED` (not blank pads).
-2. Forge with a Master → **real racks + real hostnames** render (never worked before `.235`).
-3. Subtitle reads `SITE · SOURCE · SAVED <date> · RESTORED FROM CACHE` — never "LIVE MASTER",
-   never "STAGE 1 · SCENE PREVIEW". ⚠️ The existing cached snapshot predates `.237`, so it
-   will honestly say **"source unknown"** until re-imported; SITE + SAVED date still identify it.
-4. **Forge HUD colours look right for the first time** (tokens were dead since `.233`).
-5. Racks with RU-less hosts show the gold `NOT PLACEABLE IN 3D` callout, naming them.
-6. RACKED/PENDING badges visibly distinct (teal vs slate).
-7. Master tab: source file + `RESTORED FROM CACHE` + **Purge cache** → two confirms naming
-   file+date → Forge then shows `NO MASTER LOADED`, ⊞ picker empty-safe.
-8. Work tab → rack detail: **FLAT|3D toggle gone**, FLAT renders as in `.231`.
-9. `?legacy=1`: Master tab has **no** purge button and **no** provenance text; rack detail unchanged.
+Batch is **clear**. `.238` starts from zero owed.
+
+### ⚠️ CARRY-FORWARD — three checklist items not covered by that pass
+The purge ran during the pass, so the device ended with **no Master loaded**. These three
+items exercise the *populated* path and were therefore not exercised. **`.238` depends
+directly on this path** (it renders geometry from real Master slots), so verify them FIRST in
+the `.238` session, immediately after importing a real Master:
+1. **Real racks + real hostnames render** in the aisle. This is the entire point of the `.235`
+   bridge fix and it has never once been confirmed on a phone with a real Master.
+2. **Unplaced RU-less hosts** show the gold `NOT PLACEABLE IN 3D` callout, naming them.
+3. **RACKED / PENDING badges** are visibly distinct (teal vs slate) now that the tokens are alive.
+
+Also still unverified: `?legacy=1` Master tab shows **no** purge button and **no** provenance
+text (rd-gated by construction, but never eyeballed on device).
 
 **Do NOT sign off `.234`'s verify-toggle as "working"** — it persists in the happy path but
 loses field truth on the first Master re-import. That is the reconciliation ship.
+
+## 6. NEXT SESSION STARTS HERE
+1. Import a real Master; clear the three carry-forward items in §5.
+2. Build **`.238` GEOMETRY TRUTH** per §3 — the spec, the reuse-don't-rebuild instruction
+   (`preflight_run`'s occ-map, `:43493`), and all four implementation traps are written there.
+3. Then reconciliation (§3.5), then the queued provenance strip (§3b).
