@@ -11826,7 +11826,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.244';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.245';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -17776,7 +17776,10 @@ function forge3d_render(mount) {
   // away, so those devices vanished. Parallel cache — deploy_forge_slots() must keep returning
   // a plain Array (8+ call sites index it).
   var _unplacedCache = {};
-  var _TMAP = { gpu: 'gpu', sw: 'switch', pwr: 'pdu', patch: 'patch', stor: 'storage', cpu: 'server', cdu: 'pdu', fw: 'switch', other: 'blank' };
+  // v1.14.245 — 'server' bridges master_hostType's vocabulary to the flat one. Without this key
+  // a master_hostType 'server' falls to `|| 'blank'` below and renders as a BLANKING PANEL — so
+  // the UFM classifier fix is INERT without it. TLABEL/TYPE_COLOR already carry 'server'.
+  var _TMAP = { gpu: 'gpu', sw: 'switch', pwr: 'pdu', patch: 'patch', stor: 'storage', cpu: 'server', server: 'server', cdu: 'pdu', fw: 'switch', other: 'blank' };
   function deploy_forge_master() {
     var m = window._lastPhantomMaster;
     return (m && m.racksByCab && typeof m.racksByCab === 'object'
@@ -26640,6 +26643,9 @@ function deploy_classifyDevice(typeStr) {
   if (/console|oob|out.of.band/i.test(t)) return 'switch';
   if (/server/i.test(t)) return 'server';
   if (/storage/i.test(t)) return 'storage';
+  // v1.14.245 — see master_hostType: a UFM is real gear, never a blank. This is the EDP/CSV
+  // path (fed cols[3]); the Master path is master_hostType. Both classifiers were UFM-blind.
+  if (/ufm|fabric\s*manager/i.test(t)) return 'server';
   return 'blank';
 }
 
@@ -29349,6 +29355,10 @@ function master_hostType(host) {
   if (/fw|ngfw|firewall/.test(s)) return 'fw';
   if (/stor|nvme|ceph|vast/.test(s)) return 'stor';
   if (/cpu/.test(s)) return 'cpu';
+  // v1.14.245 — UFM (NVIDIA Unified Fabric Manager) is the appliance managing the InfiniBand
+  // fabric — a rack server running a management stack, NOT a blanking panel. Placed at the
+  // tail so it can never steal a host an earlier, more specific rule already claimed.
+  if (/ufm|fabric\s*manager/.test(s)) return 'server';
   return 'other';
 }
 
