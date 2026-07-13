@@ -377,3 +377,36 @@ exactly the site-profile boundary of Design Law 6.
   c1:002** → `HOSTNAME/LOCATION MISMATCH` flag.
 - It sits at **U37–U42** and **overlaps `mgmt-c1-002` (SN2201) at U42** → `U-SPAN CONFLICT`,
   both devices flagged, split-lane in 3D.
+
+---
+
+# 9. ✅ RESOLVED — v1.14.240 (28fa560): DFW02 GPU = 6U. The 61% red aisle is dead.
+**John's ruling, 2026-07-13:** *"The loaded Master's own uniform 6U pitch IS the height
+evidence — same authority as my rail photo was for AUS."* Shipped data-only, one
+`MASTER_U_TABLE` row, inside the existing unverified batch. §8's finding is now ACTIONED.
+
+- **Row:** `{ re: /hgx.*8-gpu/, u: 6 }`, placed ABOVE the 8U row. Keyed on the **8-GPU baseboard
+  form** specifically. Guard-tested: `H100-HGX` (TST99) still → 8U · `GB300-NVL72` → 1U ·
+  `nvlink`/`nvl-` still excluded · in-name `NRU` still wins. The Supermicro SYS-821GE 8U row
+  (AUS hardware) is intact behind it.
+- **DFW02 collisions: 1435 → 2.** Resolved hosts: 97.8%.
+- **Ruling 2 (recorded, NOT built):** height is per-site, scoped to the Master as loaded. A
+  future import emitting the same model string with **conflicting** height evidence flags
+  `SITE CHASSIS MISMATCH` **at load time**. John: *"we rule on it when it actually exists, not
+  before."* **No hypothetical-site design work in this batch.**
+
+## ⚠️ VAST DBox — STILL OPEN AFTER THREE ASKS, but NOT blocking
+The answer has arrived three times as an **unstruck template**: `[Lightspeed 2U / Ceres 1U]`.
+**Not seeded, not guessed** — it persists into deployment records.
+**The master cannot settle it either:** DFW02 storage cabs run a uniform **4U pitch**
+(`AS-2125 @U1 · VAST @U5 · AS-2125 @U9 …`), which accommodates BOTH a 1U Ceres and a 2U
+Lightspeed. **Collision-neutral either way → it does NOT block the device pass.** It renders
+gold hatch (×50, plus 11 blank-model rows) until John eyeballs one enclosure in the aisle.
+
+## BATCH = 3 (`.238` `.239` `.240`) — HARD STOP, awaiting John's DFW02 device pass
+Checklist lives in `version.json`. Headline: **the aisle should now be mostly CLEAN.** Expect
+**no red anywhere except `c1:002`**, and gold only on VAST + blank-model rows.
+**`c1:002` is THE target** — it trips both new features at once: `gpu-c1-001-01` is a **7th** GPU
+(every other rack has 6), **named for c1:001 but FILED in c1:002**, at **U37–U42**, **overlapping
+`mgmt-c1-002` (SN2201) at U42** → `HOSTNAME/LOCATION MISMATCH` + `U-SPAN CONFLICT`, both devices
+flagged, **both visible side-by-side in split lanes** (the `.238` occlusion fix).
