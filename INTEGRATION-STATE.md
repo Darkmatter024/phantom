@@ -653,3 +653,76 @@ One consolidated device pass covers all six:
    `?legacy=1` still offers LOAD MASTER in place.
 
 Queue (A → C → B → honesty-parity → D → E) untouched, still gated on John's PASS.
+
+---
+
+# §15 — SHIP v1.14.244 · MONOLITH PLATE (visual, Forge module, 2026-07-13)
+
+Per `HANDOFF-FORGE-MONOLITH-PLATE.md`. John device-approved mock **variant D (MONOLITH)**.
+Old plate = flat fill + `strokeRect` + one line of text (256×64) — "basic and blah" (John).
+New plate = machined gunmetal plaque: brushed grain, chamfered slab, bevel pair, corner bolts,
+**engraved** ID (dual-pass emboss), routed light channel that **ignites cyan on focus**.
+Canvas 256×64 → **576×144** (2× res, **same 4:1 plane — geometry untouched**).
+
+**Contract preserved exactly:** `(text, focus) → Mesh{PlaneGeometry 1.5×0.375,
+MeshBasicMaterial{map: CanvasTexture}, toneMapped:false}`. Both plate-recycling callers
+(`assignSlot`, `setFocus`) dispose `old.material.map / .material / .geometry` — unchanged.
+
+## ⚠️ DEVIATION — §3 FONT RE-BAKE HOOK **DROPPED** (evidence, not preference)
+The spec adds a `document.fonts.ready` one-shot re-bake to defend against a first-paint font race.
+**That race cannot happen in this app.** Verified against live source:
+- The **only** `@font-face` is `PhantomBrand`. **Zero** `fonts.googleapis` / `gstatic` links
+  (the offline-first no-CDN guard).
+- `--orb` / `--raj` resolve to `-apple-system, 'Helvetica Neue', Arial, sans-serif`.
+- So `"Orbitron"` and `"Chakra Petch"` **always** fall back to their generics — exactly as the
+  OLD plate's `"Chakra Petch"` already has for several ships. **The fallback IS the approved look.**
+
+The hook is therefore a no-op — **and as specced it would have introduced two bugs:**
+1. It re-bakes via `assignSlot(s, label)` → which calls `plate(label, **false**)`. That strips the
+   lit channel off the **currently focused** rack, and `setFocus` early-returns on
+   `(focused === rack)`, so nothing restores it until the user taps away.
+2. It iterates only `focusables` — the five `'run'` racks. The **`'dummy'` neighbour racks**
+   (built at L18075) **also carry plates** and would never re-bake.
+
+Shipping a no-op that breaks focus state is strictly worse than shipping nothing.
+
+### 🔭 CONDITION FOR REVIVING IT
+**If a real webfont is ever embedded** (an `@font-face` for Orbitron/Chakra/Rajdhani, or a font
+token stops being a system stack), plates **will** need a one-shot re-bake. Correct implementation
+— do NOT reuse the spec's:
+- Iterate **every plate-bearing rack**, not just `focusables` (push each `grp` from `buildRack`
+  into a module-level array, or walk the scene).
+- Re-bake with `plate(label, rack === focused)` so **focus state survives** — do **not** route
+  through `assignSlot` (it forces `focus=false` and needlessly churns gut textures).
+
+## VERIFIED (§4 guards — real browser; shipped `plate()`/`plateChamfer` extracted verbatim,
+## run against a live canvas with THREE stubbed)
+| guard | result |
+|---|---|
+| **Deterministic** | two consecutive `plate('dh1:005', true)` canvases **pixel-identical** → recycled slots never shimmer |
+| **Contract** | all 7 cases: 576×144, plane 1.5×0.375, CanvasTexture, `toneMapped:false`, anisotropy 16 |
+| **Focus** | focused ≈ **12.2%** cyan-dominant px · **every idle plate = cyan 0.0000** (etched, legible, **no glow**) |
+| **Pad** | `'·  ·  ·'` is the quietest surface (ink 0.009) |
+| **No-colon** | `'R42'` (0.027) and the `'F-06'` dummy labels (0.029) render **centered, never blank** |
+| **Real ids** | `c1:002` (DFW2), `s3:175` (SPARKS), `dh1:005` all correct |
+
+Idle legibility is the one that matters — **idle is ~80% of what's on screen**.
+
+## `?legacy=1` — UNAFFECTED
+`#forge3d-sheet` is CSS-gated to `body.rd` (`body.rd #forge3d-sheet.open{display:flex}`), so legacy
+cannot render the Forge scene at all. This ship changes **only pixels inside `plate()`** — no
+gating, no markup, no shared code. *(Honest caveat: I could not prove the module never
+**executes** under legacy — the header is a known cross-house surface — but since only pixels
+changed, legacy behavior is identical either way.)*
+
+## ⚠️ BATCH = 7 (.238 → .244) — **ONE PAST THE 6-CAP**
+John was told the batch was at cap and shipped this anyway. Flagged per CALL 0. **No more ships.**
+The consolidated device pass now owes:
+1. **Heights:** DFW2 `c1:002` · SPARKS `s3:175`.
+2. **Scope flow (.243):** the four guards.
+3. **Forge (.244):** focused plate lit · **idle plates legible WITHOUT glow** · NEXT/PREV walk with
+   no recycle hitch · oblique-angle sharpness · cold PWA reopen.
+
+## OUT OF SCOPE (parked, John's call)
+Etched five-pip rail lit as racked-count (the "E transplant") — needs real data through the plate
+contract; own spec, own ship.
