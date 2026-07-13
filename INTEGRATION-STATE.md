@@ -410,3 +410,50 @@ Checklist lives in `version.json`. Headline: **the aisle should now be mostly CL
 (every other rack has 6), **named for c1:001 but FILED in c1:002**, at **U37–U42**, **overlapping
 `mgmt-c1-002` (SN2201) at U42** → `HOSTNAME/LOCATION MISMATCH` + `U-SPAN CONFLICT`, both devices
 flagged, **both visible side-by-side in split lanes** (the `.238` occlusion fix).
+
+---
+
+# 10. STATE-OF-PLAY AUDIT (2026-07-13, vs `Downloads/PHANTOM-STATE-OF-PLAY.md`)
+That doc was compiled at `.239`. Corrections and gaps found by auditing it against the repo and
+the two REAL masters on disk.
+
+## ✅ RETRACTION — "SPARKS cannot be ingested" WAS FALSE. No defect. Do not chase it.
+§8's earlier note (sourced from an inventory agent, and explicitly marked unverified) claimed the
+real `MASTER-US-WEST-10A-US-SPK03-SPARKS.xlsx` misaligned with the parser. **Verified today: it
+parses correctly.** `SITE-HOSTS` col D is `LOC:CAB:RU`; **4143 of 5370 rows ingest** (matches the
+4143-host count already on record for this master). The agent had conflated it with the
+**`SITE-NODE-DATA`** sheet — a network-data tab the app never parses as hosts, which is where the
+`vtep_loopback` / IP / `swp4` "garbage models" actually live. **Nothing to fix.**
+
+## 🔴 THE REAL FINDING — TWO REAL MASTERS, TWO INCOMPATIBLE MODEL VOCABULARIES
+| | DFW02 (`MASTER-US-CENTRAL-DFW02`) | SPARKS (`US-SPK03`, 4143 hosts, 296 cabs) |
+|---|---|---|
+| GPU model string | `NVIDIA HGX H200 8-GPU` | `gpu-b300-01` |
+| Switch | `NVIDIA Quantum-2 QM9700` | `q3400-ra`, `sn5610`, `sn4700` |
+| Vocabulary | vendor marketing names | **NetBox slugs** |
+| Resolves under the `.240` table | **97.8%** | **37.5% — 62.5% gold-hatches** |
+| Collisions under `.240` | 2 (one real defect) | **0** |
+
+**This is the single strongest argument yet for promoting the SITE PROFILE work (Tier 3).** A
+fleet-wide model→U table cannot serve two sites that don't share a naming vocabulary. Note SPARKS
+already leans on the **in-name `NRU` convention** and it works perfectly (`ps-1ru-06` → 1U ×1152,
+`cdu-4ru-03` → 4U ×144) — the table's highest-confidence rule.
+
+**Good news:** SPARKS produces **ZERO collisions** — the unknowns land on the 1U placeholder and
+its pitch is spacious. So `.238`'s honesty machinery degrades gracefully: lots of gold, no false
+red. **SPARKS is safe to open; it will just be heavily gold until the site profile lands.**
+
+**Table gap spotted:** the B-series row is `/\b(gb200|gb300|b200)\b/` — it has `gb300` and `b200`
+but **NOT plain `b300`**, so SPARKS' 1296× `gpu-b300-01` misses. Do NOT patch it by guessing a
+height — B300 air-cooled node ≠ GB300 NVL72 tray. Needs John or a vendor spec.
+
+## GAPS IN THE STATE-OF-PLAY DOC (not in it, still owed)
+1. **It predates `.240`.** Tier-0 item 1 (DFW02 chassis) is **RESOLVED** — 6U shipped, 61% red
+   killed. **Batch is now 3 (`.238` `.239` `.240`), not 2.**
+2. **The purged Master was probably GOOD DATA.** It carried the same 6U pitch. **John should
+   re-import it** — not listed as an action anywhere.
+3. **Open question (b) from `.239` was never answered:** should Rack Map / Master search stop
+   guessing 1U for unknown models? They still do. Forge is the only honest surface today.
+4. **VAST DBox** — asked 3×, still an unstruck template. Collision-neutral, non-blocking.
+5. **Build-badge double-`v`** (old memory note): **verified FIXED** — `textContent` overwrites the
+   static `v—`, renders `v1.14.240`. Nothing to do; drop it from any punch list.
