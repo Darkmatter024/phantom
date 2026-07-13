@@ -529,3 +529,10 @@ Options, in the app's own idiom:
 Recommend **(a) + a logged, surfaced note** ("N field-verify marks attributed to <SITE> on
 upgrade"). **Do not migrate silently either way** — a tech must be able to see that it happened.
 Ruling needed from John at C build time; do not improvise.
+
+**§12 SUB-QUESTION — RULED (John, 2026-07-13): OPTION (a).**
+Migrate existing `rackId|dns` entries by attributing them to the **resident Master's `siteCode`**
+at migration time, **plus a logged, SURFACED note** ("N field-verify marks attributed to <SITE> on
+upgrade"). **Never a silent migration** — the tech must be able to see their field truth was
+re-keyed. Option (b) (`UNATTRIBUTED|` namespace + adopt-on-load) is DEAD; do not revive.
+This is now settled input for Ship C. No further ruling needed on the overlay migration.
