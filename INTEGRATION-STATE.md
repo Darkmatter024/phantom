@@ -495,3 +495,37 @@ This is not answered by the ruling and it is load-bearing:
   reconciliation ship (C), not improvised inside B.
 - **Do not implement REPLACE until John rules on this.** Silently dropping or silently inheriting
   field-verify status are both unacceptable.
+
+---
+
+# 12. RULING — OVERLAY NAMESPACED BY SITE + QUEUE REORDER (John, 2026-07-13)
+**Recorded only. No code — batch (.238–.241) live, UNVERIFIED.**
+
+1. **APPROVED:** namespace `phantom_node_status_v1` by site → **`siteCode|rackId|dns`**, with
+   migration of existing entries keyed to their site of origin. Each site's field truth is
+   preserved and isolated; swapping Masters **restores** that site's marks rather than losing or
+   leaking them. **Silent inherit and silent drop are BOTH forbidden — per D2.**
+
+2. **QUEUE REORDERED to kill the dependency:**
+   **A** (provenance) → **C** (reconciliation, **now including the namespace migration**) →
+   **B** (single ingestion + single resident + REPLACE dialog + NBA/pill, **building on the
+   namespaced store**) → **honesty-parity** (Rack Map / Master search stop guessing 1U) →
+   **D** (Forge card) → **E** (assistant).
+   One ship per device-verify, unchanged. *(Supersedes the A→B→C→D→E order in §7.)*
+
+3. **Cross-site REPLACE stays BLOCKED until C lands.** Interim = today's manual path
+   (backup → purge → import), which is what John is doing now.
+
+## ⚠️ IMPLEMENTATION NOTE FOR SHIP C — "site of origin" IS NOT RECORDED
+The migration cannot read a site off existing entries: today's keys are **`rackId|dns`** with
+**no site component and no site stored anywhere alongside them**. So "keyed to their site of
+origin" has to be *inferred*, and inference is a guess — the thing this whole arc exists to stop.
+Options, in the app's own idiom:
+- **(a) Attribute to the resident Master's `siteCode` at migration time.** Near-certainly correct
+  in practice (the store has only ever held one Master at a time, which is exactly what §11 now
+  makes law). Cheap, and the failure mode is bounded.
+- **(b) Migrate them to an `UNATTRIBUTED|rackId|dns` namespace** that the first matching site
+  ADOPTS on load — and, per D2, **flags the adoption** rather than performing it silently.
+Recommend **(a) + a logged, surfaced note** ("N field-verify marks attributed to <SITE> on
+upgrade"). **Do not migrate silently either way** — a tech must be able to see that it happened.
+Ruling needed from John at C build time; do not improvise.
