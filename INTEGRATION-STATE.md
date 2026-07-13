@@ -587,3 +587,69 @@ SPARKS vocabulary split (marketing names vs NetBox slugs) remains the standing a
 ## BATCH NOW = 5 (.238 .239 .240 .241 .242) — cap is 6
 Device-verify: DFW2 `c1:002` checklist unchanged, **plus** SPARKS **`s3:175`** (NOT `dh1:005`).
 Queue (A → C → B → honesty-parity → D → E) is untouched and still gated on John's PASS.
+
+---
+
+# §14 — SHIP v1.14.243 · SCOPE FLOW (UI-logic, rd-scoped, 2026-07-13)
+
+Per `HANDOFF-SCOPE-FLOW-243.md`. Two parts, one ship. **Batch is now 6 — AT THE CAP.**
+
+## PART A — the SCOPE A JOB dead-render (John's field report, DFW-05)
+Master page → loaded-master banner → tap **SCOPE A JOB** → *nothing happened*.
+
+**Root cause confirmed against live source.** `mscope_open()` renders into `deploy_opsHost()`
+(= `#wk-deploy` under redesign) but **never made that host visible**. Tapped from `pg-master`, the
+picker painted into a hidden container on a page the user wasn't on. Nothing thrown, nothing
+logged — the exact **silent-success-into-a-hidden-node** class as the `.223` fix. `.223` patched
+only the `nav_restore` dispatch (`d==='mscope'`); **the live tap path was never patched.** ＋NEW
+worked purely by the luck of the user already standing in Work→Deploy.
+
+**Fix = drill at the CHOKEPOINT** (top of `mscope_open`, rd-gated): `showMode('work')` →
+`deploy_ensureDeployPanelVisible()`. `showMode` *re-adds* `.wk-grid` (grid-landing default), so the
+`.223` helper must follow it. Deliberately **not** `showWorkTab('deploy')` — that renders the whole
+Command Center and pushes `d:'command'` first (wasted paint + polluted back-stack). `showMode`'s
+`showPage()` is `_navInternalCall`-guarded, so the drill pushes **no** nav state.
+
+### ⚠️ THE SPEC UNDERCOUNTED THE BLAST RADIUS
+There are **SEVEN** `mscope_open()` callers, not the three the handoff listed. Fixing at the
+chokepoint also repairs **two more dead paths the field report never reached**: the **blocker
+sheet's** NEW FROM MASTER (L19842) and the **handoff sheet's** (L20120) — both reachable from
+pages that are not Work→Deploy. Per-button fixes would have missed them. **Lesson: fix the
+chokepoint, not the button.**
+
+## PART B — MASTER OWNS JOB BIRTH (John ruling)
+The Master is the ONLY place a job is born; Deploy is where jobs **live**. The empty-scope CTA is
+now rd-gated: redesign **routes** to the Master page; legacy keeps its in-place picker verbatim.
+
+### ⚠️ DEVIATION FROM SPEC (deliberate, reported)
+Spec said `onclick="showPage('master')"`. **Shipped `onclick="rd_openMasterFile()"`** — the
+canonical `.167` door. The hard rule is **one door per feature** ("new entry points call the ONE
+canonical `rd_open*` function"); a raw `showPage('master')` would be a *second* hand-built entrance
+to a surface that already has one. It is also strictly better: `rd_openMasterFile` adds the
+defensive `master_showSection('file')` echo, landing on the **FILE browse** — where the LOAD MASTER
+FILE CTA and the loaded-master banner actually live — instead of whatever section `pg-master`
+defaults to. *(Note: `'master'` **is** whitelisted in the Ship-B4 `showPage` rd guard
+(`['cmd','work','ref','master']`), so neither form breaks the no-legacy-page-IDs rule. This was
+about the **door** rule, not the guard.)* `mscope_loadMaster()` survives — legacy CTA + the picker's
+own RE-LOAD button = 4 live call sites, no dead code.
+
+## VERIFIED IN A REAL BROWSER (not just static checks)
+The whole defect class is **invisible to a throw-only instrument**, so static greps could not have
+caught it and cannot prove the fix. Drove headless Chrome against the built file, both houses:
+- **rd:** standing on `pg-cmd`, `#wk-deploy` **not visible** → `mscope_open()` → `pg-work` active,
+  `.wk-grid` stripped, host **VISIBLE (1184×225)**, `.msc-wrap` painted **and non-zero-size**, CTA
+  reads `OPEN MASTER FILE →` wired to `rd_openMasterFile()`.
+- CTA click → lands on **`pg-master`**, visible.
+- **＋NEW regression:** already in Work→Deploy, second drill → still paints. Drill is idempotent.
+- **`?legacy=1`:** `redesign_isOn()` false → drill block **inert** (`wk-grid` untouched), picker
+  paints into `#ops-content`, CTA still `LOAD MASTER` → `mscope_loadMaster()`, RE-LOAD survives.
+- **Zero console errors or warnings in either house.**
+
+## BATCH = 6 (.238 .239 .240 .241 .242 .243) — AT THE CAP, NO MORE SHIPS
+One consolidated device pass covers all six:
+1. **Heights:** DFW2 `c1:002`; SPARKS **`s3:175`** (NOT `dh1:005` — that cab does not exist).
+2. **Scope flow:** Master banner SCOPE A JOB → picker visible, back → Master · Work grid → Deploy →
+   ＋NEW → picker · no master → OPEN MASTER FILE → `pg-master` → load → SCOPE A JOB → picker ·
+   `?legacy=1` still offers LOAD MASTER in place.
+
+Queue (A → C → B → honesty-parity → D → E) untouched, still gated on John's PASS.

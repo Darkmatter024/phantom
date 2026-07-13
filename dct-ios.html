@@ -11826,7 +11826,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.242';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.243';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -28421,6 +28421,32 @@ function mscope_groupByRow(m) {
 // Entry point — the new primary CTA from deploy_showList. Honors "Master
 // required": with no usable Master, prompts a load instead of an empty picker.
 function mscope_open() {
+  // v1.14.243 — SCOPE A JOB DEAD-RENDER FIX (field report, John 2026-07-13, DFW-05). This
+  // function renders into deploy_opsHost() (= #wk-deploy under redesign) but never made that
+  // host VISIBLE. Tapped from the Master banner (pg-master), the picker painted into a hidden
+  // container on a page the user was not on: nothing thrown, nothing logged, nothing happened.
+  // Same class as the .223 DEPLOY DEAD-RENDER fix — but .223 only patched the nav_restore
+  // dispatch (d==='mscope'), never this LIVE tap path. ＋NEW worked purely by the luck of the
+  // user already standing in Work→Deploy.
+  // Drilling HERE (the chokepoint) — not at each button — fixes every entrance at once. There
+  // are SEVEN callers, and the ones NOT in the spec were dead too: the Master banner (.29624),
+  // the STATE-3 spotlight (.21318), the blocker sheet's NEW FROM MASTER (.19842) and the
+  // handoff sheet's (.20120) — all reachable from pages that are not Work→Deploy.
+  // Sequence: showMode('work') activates the Work page but RE-ADDS .wk-grid (the grid-landing
+  // default), so deploy_ensureDeployPanelVisible() (the .223 helper) must follow it to strip the
+  // grid and activate the wk-deploy stab. Deliberately NOT showWorkTab('deploy'): that renders
+  // the whole Command Center and nav_pushes d:'command' first — a wasted paint plus a polluted
+  // back-stack (back out of the picker must return WHERE THE USER CAME FROM, e.g. the Master
+  // page). showMode's showPage() is _navInternalCall-guarded, so the drill pushes no nav state
+  // of its own; mscope_open's own d:'mscope' push below stays the only entry. Idempotent from
+  // ＋NEW (already drilled in). rd-gated → ?legacy=1 byte-identical (the legacy host
+  // #ops-content lives on a page with no grid to drill out of).
+  if (typeof redesign_isOn === 'function' && redesign_isOn()) {
+    try {
+      if (typeof showMode === 'function') showMode('work');
+      if (typeof deploy_ensureDeployPanelVisible === 'function') deploy_ensureDeployPanelVisible();
+    } catch (e) { phantom_logErr('mscope_open:drill', e); }
+  }
   var c = deploy_opsHost();
   if (!c) return;
   if (typeof nav_push === 'function') nav_push({ p: (redesign_isOn() ? 'work' : 'sop'), o: 'deploy', d: 'mscope' });
@@ -28463,7 +28489,23 @@ function mscope_renderLoadPrompt(c) {
   html += '<div class="sop-empty" style="padding:28px 20px;text-align:center">';
   html += '<div style="font-family:var(--raj);font-size:16px;font-weight:700;color:var(--white);margin-bottom:8px">No Master loaded</div>';
   html += '<div style="font-family:var(--mono);font-size:12px;color:var(--slate-readable,#b4c2d0);line-height:1.5;margin-bottom:22px">The Master is the front door. Load the engineering Master to scope this deployment by cab.</div>';
-  html += '<button class="pt-btn pt-btn-primary" style="width:auto;padding:14px 28px" onclick="mscope_loadMaster()">LOAD MASTER</button>';
+  // v1.14.243 — MASTER OWNS JOB BIRTH (John ruling 2026-07-13): the Master is the ONLY place a
+  // job is born; Deploy is where jobs LIVE. Under redesign the empty-scope prompt now ROUTES to
+  // the Master page (the front door) instead of opening its own file picker — Deploy asking for
+  // a file was the confusion this ruling kills. The prompt copy above already said "The Master
+  // is the front door"; now the button agrees with it.
+  // Routed via rd_openMasterFile() — the CANONICAL .167 door — NOT a raw showPage('master').
+  // The hard rule is one door per feature: new entry points call the ONE rd_open* function. It
+  // also lands us where this prompt actually means to send the user (showPage + the defensive
+  // master_showSection('file') echo = the FILE browse, where the LOAD MASTER FILE CTA and the
+  // loaded-master banner live) rather than whatever section pg-master happens to default to.
+  // Legacy keeps the in-place picker VERBATIM (Rule 7). mscope_loadMaster() survives regardless —
+  // the picker's own RE-LOAD button is a second live caller.
+  if (typeof redesign_isOn === 'function' && redesign_isOn()) {
+    html += '<button class="pt-btn pt-btn-primary" style="width:auto;padding:14px 28px" onclick="rd_openMasterFile()" aria-label="Open the Master page to load the engineering Master">OPEN MASTER FILE →</button>';
+  } else {
+    html += '<button class="pt-btn pt-btn-primary" style="width:auto;padding:14px 28px" onclick="mscope_loadMaster()">LOAD MASTER</button>';
+  }
   html += '</div></div>';
   c.innerHTML = html;
 }
