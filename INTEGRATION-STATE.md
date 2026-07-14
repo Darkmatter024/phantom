@@ -1034,3 +1034,78 @@ Precedent set: a census-RETIRED surface's *doors* may be cut ahead of LR-2; its 
   its own comment claims *"KEYED TO EXACT REV -02"* but the regex does not enforce that. Same hyphen
   trap as §18. Harmless on today's masters; a future-rev landmine. **One-line fix, not yet made.**
 - DFW02's one **empty-model** row @`c1:001:38` · **the HEIGHT of `q3400-ra`** (448 hosts still hatched).
+
+---
+
+# §20 — SHIP v1.14.249 · BOUNDARY FIX `net-6x100g-02` (2026-07-14) · BATCH = 5 ⚠️ CAP-1
+
+**One line, data-only, height-only.** Found while scoping the media-converter ruling; John asked for
+it directly.
+
+## The rule lied about itself
+`.242` seeded the height as a **bare substring**:
+
+    { re: /net-6x100g-02/, u: 1 },
+
+while its own comment claimed *"KEYED TO EXACT REV -02: a future -03 is different hardware until its
+own pitch proves otherwise."* **The regex did not enforce that.** Any longer SKU containing the
+substring silently inherited John's 1U ruling.
+
+**⚠️ `\b` would NOT have fixed it either** — `\b` matches **before** a hyphen. That is the exact
+`.247` `q3400-ra` trap seen from the other side. **Generalisation (now proven twice): neither a bare
+substring NOR `\b` is a model-exactness boundary when the SKU contains hyphens.** The only safe form
+is an explicit negated class.
+
+## Shipped
+
+    { re: /(^|[^a-z0-9-])net-6x100g-02([^a-z0-9-]|$)/, u: 1 },
+
+`master_nodeHeightInfo`'s haystack is **`model + ' ' + dns`**, and a **space is a boundary char**
+under this class — so real hosts still hit. (Checked before shipping; this is the detail that would
+have broken a naive `^...$` anchor.)
+
+## GUARD (both real masters, shipped table vs the `.248` baseline)
+| | result |
+|---|---|
+| **HEIGHT drift** | **0 across ALL 6490 placed hosts, BOTH masters** — bit-identical on real data |
+| the 6 real hosts | SPARKS `s3:175`/`s3:176` still resolve `{u:1, known:true}` |
+| **leaks CLOSED** (were 1U-known, now honestly unknown) | `net-6x100g-02-x` · **`net-6x100g-021`** · `xnet-6x100g-02` (prefix leak) |
+| controls | `net-6x100g-03` / `-04` / `net-6x100g` — unknown before, unknown after |
+
+**`net-6x100g-021` is the one that matters.** It is a *far* more plausible future NetBox rev than the
+`-02-x` that first raised the flag — a brand-new rev would have silently inherited a ruling it never
+earned. **The guard found it; reading the regex did not.** (Third time that has been true.)
+
+## ⚠️ SIBLING RULES NOT TOUCHED — John's call, flagged not fixed
+The same latent leak exists in two more `MASTER_U_TABLE` rows:
+- `{ re: /ngfw-4245/, u: 1 }` — **bare substring**, same class exactly.
+- `{ re: /\bas-?2125/, u: 2 }` — **no trailing boundary at all**.
+
+Neither was asked for; **no drive-by changes**. They go in one ship on his word.
+*(Rules keyed on hyphen-less SKUs — `\bsn5610\b`, `\br760\b`, `\bgb300\b` etc. — are SAFE; `\b` works
+fine there. The trap is hyphens, only.)*
+
+## Also noted, NOT fixed
+`sw.js` still precaches `icons/phantom-tool-crashcart-256.webp` — an orphaned asset after `.248`
+retired that surface. Harmless (a cached icon nobody renders), belongs to the LR-2 sweep.
+
+## DEVICE-VERIFY (John) — ONE pass now covers `.245` → `.249` (5 ships, cap is 6)
+- **`.249`** SPARKS `s3:175`/`s3:176` → the 6 `net-6x100g-02` rows (pkey/metal-ztp family) still draw
+  **1U, to scale, NO height hatch** — identical to `.248`. Nothing else on either master changes height.
+- **`.248`** BUILD subtab strip → **Crash-Cart pill GONE**; tap **Rack Map** and **Optics** (the pills
+  that flanked it) — neither dead-taps nor lands on SOPs. Same under `?legacy=1` (pill gone there too
+  — signed break).
+- **`.247`** `s1:001` → `q3400-ra` reads **SWITCH** + still gold hatch + MODEL HEIGHT UNKNOWN.
+- **`.246`** `s3:176` → U31/U29/U28 read **UNKNOWN gold**, solid + to scale, no hatch; no `undefined`.
+- **`.245`** `s3:176` U27 UFM reads **SERVER**.
+
+## STILL OWED — JOHN'S RULING
+1. ⭐ **THE MEDIA-CONVERTER TYPE.** `net-6x100g-02` ×6 **and** `fs-media-converter-chassis` ×5 are
+   **both media converters** (John's field call, 2026-07-14) — but **the app has no media-converter
+   type** (`gpu/switch/pdu/patch/server/storage/unknown/blank`). **Blocked on his type + colour
+   decision.** Heights are already settled and must NOT be inferred from the type ruling:
+   `net-6x100g-02` = **1U known** (this ship); `fs-media-converter-chassis` = **height-unknown**
+   (stays hatched).
+2. The `ngfw-4245` / `as-2125` boundary siblings above.
+3. DFW02's one **empty-model** row @`c1:001:38`.
+4. **The HEIGHT of `q3400-ra`** (448 hosts still hatched).
