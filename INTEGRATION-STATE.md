@@ -1483,3 +1483,84 @@ PASS, not startable now.**
    2U-Lightspeed) · `net-ufm-05` (needs the network engineer).
 3. Does the `.252` **magenta read too loud** on a dense rack? (The board's own watch item.)
 4. Does a **racked slate MEDIA CONV** read as a real device, not an empty slot? (`.253-B`.)
+
+---
+
+# §26 — SHIP v1.14.254 · reh3d FLAT|3D TOGGLE REWIRED (2026-07-14) · BATCH = 4
+**The `.236` retirement is REVERSED** (John's ruling, standing since 2026-07-12). Executes
+`HANDOFF-reh3d-rewire-REV2.md` — the OPEN BOARD calls it **"the original mission"**, and it had been
+**orphaned once** (its `.244` stamp was consumed by MONOLITH PLATE). **Now landed.**
+Three edits, all inside the **rd branch**. **No CSS** (every `.reh-3d-*` rule was already resident),
+no new function, **no scene-internals change.** Live-confirmed (`local == live`).
+
+## WHY `.236`'s REASONING NO LONGER HOLDS — argued, not asserted
+`.236` retired the toggle on two grounds. Both are answered:
+1. **"One door per feature"** — **NOT ENGAGED.** The solo-rack 3D inspect view is a **DISTINCT
+   SURFACE** from the FORGE aisle: **FORGE walks a ROW; this is ONE RACK on the bench.** Two
+   *features*, not two doors onto one. **John's call, and his to make.**
+2. **"Two 3D views compete for the single GL context"** — answered by machinery that **already
+   exists and is unchanged**, and ⭐ **I VERIFIED IT RATHER THAN TRUSTING THE HANDOFF'S CLAIM: the
+   guards are SYMMETRIC IN BOTH DIRECTIONS.** `rackElevation_render3D` disposes a live
+   `_forge3dActive` (`:31752`, added `.222`); `forge3d_open` disposes a live `_reh3dActive`
+   (`:31676`). `_reh3dActive` bounds live contexts to exactly **1**. **A dual-GL crash has no path.**
+
+## THE THREE EDITS
+- **EDIT 1 · re-emit the toggle + the 3D mount.** ⭐ **PLACEMENT WAS THE ONE REAL DECISION, and the
+  handoff punted it to device-verify** (*"if the toggle breaks the canvas/minimap flex split, emit it
+  full-width BEFORE the container instead"*). **The CSS decides it outright — no guessing, no phone
+  needed:** `.rack-hybrid` is `display:flex; align-items:stretch`, so a toggle emitted as its **child
+  becomes a THIRD FLEX COLUMN** and shreds the 85/15 canvas/minimap split. **⇒ emitted full-width
+  BEFORE `.rack-hybrid`.** `#reh3dMount` rejoins as a sibling of `#rehFlatWrap` — **safe while FLAT**,
+  because `.reh-3d-mount` is `display:none` until `.is-3d`, and `#rehFlatWrap` is `display:contents`,
+  so the fitted flat elevation lays out **exactly as today**.
+- **EDIT 2 · restore the session pref** in the rAF block, **AFTER `rackFlat_applyFit`** so a restored
+  3D view can never race the flat fit. ⚠️ **NON-OBVIOUS AND LOAD-BEARING:** `reh3d_restore()` **also
+  sets `window._reh3dRack`, which `reh3d_setMode()` READS.** So the call is **NOT optional when the
+  pref is off** — without it the **FIRST tap on 3D would render a rack of `undefined`.**
+- **EDIT 3 · the `.236` comment is ANNOTATED, NOT DELETED** (re-home law): the reversal is argued
+  **in place**, so the next reader sees both the retirement and why it was overturned.
+
+**LOCKED / UNTOUCHED per spec:** `rackElevation_render3D` internals · the tray raycast →
+`openRmDevice(dev)` wiring · the orbit-drag threshold · the GL cross-dispose guards · FORGE · legacy.
+**FLAT stays the INSTANT DEFAULT**; 3D is a **per-session opt-in** (`REH3D_PREF_KEY`), never
+auto-entered on a cold open; three.js lazy-loads on the first 3D tap only.
+**`?legacy=1` byte-identical BY CONSTRUCTION** — every new emission is inside `if (_rehRd)`, and
+`reh3d_setMode()` is unreachable in the legacy house (no `#reh3dCanvasHost` to find).
+
+## ⚠️ NOTED, NOT FIXED — a hard-rule-#1 shape this rewire RE-ANIMATES
+`reh3d_setMode()` opens with **`if (!host) return;`** — a **silent return on a user-facing path**,
+the exact shape hard rule #1 forbids. It is **unreachable in practice** (the buttons and
+`#reh3dCanvasHost` are emitted in the same render pass, so the host cannot be missing while a button
+exists) — but **this ship makes that code LIVE again after 18 dormant stamps.** Deliberately **NOT**
+patched inside a spec'd rewire (that would be the drive-by ship discipline forbids). **Flagged for a
+future hardening ship.**
+
+## 🔧 CORRECTION TO THE `.254` COMMIT MESSAGE (not the code)
+The commit body lost one code snippet: **backticks in the message ran as a shell subshell**, eating
+the `if (!host) return;` fragment (`bash: undefined: command not found`). **The CODE IS UNAFFECTED**
+and the full note survives **intact in `version.json`**, which is the real audit record. **Not
+force-pushed** — rewriting pushed history on `main` is a genuine risk while a second build line
+exists, and the loss is cosmetic. **Corrected here instead.**
+**LESSON: single-quote or heredoc a commit body that contains code.**
+
+## BATCH = 4 (`.251` · `.252` · `.253` · `.254`) · 2 slots left
+⚠️ **ALL FOUR DEVICE-VERIFIES ARE OWED AND UNWALKED.** The OPEN BOARD's own §6 holds the
+one-unverified-ship rule and calls the 7-deep freeze *"Sunday's lesson."* **John directed this ship
+explicitly with the verifies outstanding — his call to make, recorded here so the trail is honest.**
+
+### DEVICE-VERIFY (John, iPhone) — `.254`
+- [ ] Rack detail opens **FLAT INSTANTLY**, identical to today — no regression, no flash of 3D.
+- [ ] **FLAT|3D toggle visible ABOVE the elevation**, and it does **NOT** break the canvas/minimap
+      split. *(This is the placement call — if it reads wrong above the container, it is a one-block move.)*
+- [ ] Tap **3D** → three.js lazy-loads, the solo rack renders in its locked framing.
+- [ ] **Tap a tray in 3D** → the flat device detail opens. **An ORBIT DRAG does NOT trigger it.**
+- [ ] Toggle back to **FLAT** → GL disposed clean → open **FORGE** → **no dual-GL crash.**
+      **Then the reverse: FORGE first, back out, tap 3D** — both directions are guarded, both worth a tap.
+- [ ] **Kill + relaunch the PWA** → pref is PER-SESSION, so it must return **FLAT**, not 3D.
+- [ ] **`?legacy=1`** → toggle absent, rack detail unchanged.
+
+## STILL OWED — JOHN'S RULING (unchanged by this ship)
+DFW02's empty-model row @`c1:001:38` · heights for `gpu-b40-02` (160) · `cpu-gp2-01` (90) ·
+`cpu-gp2-08` (75) · `inf-med-01` (60) · `om2216-c14` (16) · `fs-media-converter-chassis` (5) ·
+`VAST DBox` (50) · `net-ufm-05` · does the `.252` magenta read too loud on a dense rack · does a
+racked slate MEDIA CONV read as a real device rather than an empty slot.
