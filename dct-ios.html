@@ -11826,7 +11826,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.249';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.250';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -29264,7 +29264,14 @@ var MASTER_U_TABLE = [
   { re: /\bsn2201\b/,                     u: 1 },
   // Supermicro AS-2125HS-TNR Hyper A+ — 2U (Supermicro product page: "2U Hyper A+ Server").
   // ⚠ Was being drawn 1U before .239. v1.14.239.
-  { re: /\bas-?2125/,                     u: 2 },
+  // v1.14.250 — LEFT boundary only. `\b` also matches AFTER a hyphen, so the old /\bas-?2125/
+  // let `foo-as-2125` inherit this ruling; the class below closes that.
+  // ⚠ THE OPEN TAIL IS DELIBERATE — DO NOT "FINISH THE JOB" BY CLOSING IT. The ruled hardware is
+  // the AS-2125HS-TNR; this master merely writes the short form "Supermicro AS-2125" (50 hosts,
+  // DFW02). A trailing boundary would stop matching the moment a master spells the fuller SKU and
+  // would silently DROP 50 hosts to unknown height. It is also correct on the merits: Supermicro
+  // encodes U-height in the number (AS-2125 => 2U), so the whole as-2125* family is 2U.
+  { re: /(^|[^a-z0-9-])as-?2125/,         u: 2 },
   // Dell PowerEdge R760 — 2U (Dell spec sheet: H 86.8mm). ⚠ Was drawn 1U before .239. v1.14.239.
   { re: /\br760\b/,                       u: 2 },
   // Dell PowerEdge R660 — 1U (Dell: "1U, two-socket"). v1.14.239.
@@ -29296,7 +29303,11 @@ var MASTER_U_TABLE = [
   // Cisco Secure Firewall 4245 — 1RU (Cisco Secure Firewall 4200-series: "1RU", 2x NetMod bays;
   // SKU FPR4245-NGFW-K9 matches this master's "ngfw-4245" slug). Pitch CONSISTENT, not
   // probative: the 4 hosts sit at a 2U gap (s3:175 U38/U40).
-  { re: /ngfw-4245/,                      u: 1 },
+  // v1.14.250 — BOUNDARY FIX. This was a BARE substring with no guard on either side, so
+  // `xngfw-4245` or `ngfw-4245-k9` silently inherited the ruling. The master writes the slug
+  // EXACTLY as `ngfw-4245` (4 hosts, s3:175), so both sides close cleanly. Unlike as-2125 above
+  // there is no family-prefix reason to leave the tail open: 4215/4225/4245 are DIFFERENT boxes.
+  { re: /(^|[^a-z0-9-])ngfw-4245([^a-z0-9-]|$)/, u: 1 },
   // ⭐ "net-6x100g-02" — CoreWeave-internal NetBox slug (6x100G network profile, rev 02). NO
   // PUBLIC SKU EXISTS; there is nothing to cite. THE LOADED MASTER'S OWN GEOMETRY IS THE
   // EVIDENCE (same ruling class as HGX 6U): in s3:175 the master places s3-pkey03 at U28 and
