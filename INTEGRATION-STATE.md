@@ -1269,3 +1269,83 @@ per-ship items in §21 were not walked one-by-one. **This ship opens a NEW batch
    but does not determine it).
 3. **The HEIGHT of `fs-media-converter-chassis`** (5 hosts — now named, still hatched).
 4. Whether the `pdu`/`unknown` gold collision matters.
+
+---
+
+# §23 — JOHN'S RULINGS, RECORDED PRE-COMPACT (2026-07-14) · ⛔ NOTHING SHIPPED YET
+
+**This section is a HANDOFF, not a ship note.** John ruled two things and asked that they be written
+down *before* a context compaction. **No code was touched.** Live is still `.251`
+(local == origin == live, CRLF-normalized diff clean). Read this before writing any code.
+
+## RULING 1 — `q3400-ra` = **2U**
+Resolves §22's owed item #2. **448 hosts on SPARKS stop being hatched.** They already type as
+`switch` (`.247`); this is the **HEIGHT** only.
+- ✅ **CONSISTENT WITH THE OBSERVED DATA** — SPARKS' uniform 5U placement pitch *bounds* the model at
+  **≤5U**; 2U sits inside that bound (leaves 3U of air per pitch, which is normal). Had he said 6U I
+  would have had to flag a contradiction. **He did not, so there is nothing to push back on.**
+- Implementation: **one `MASTER_U_TABLE` row.** `q3400-ra` is **MODEL-EXACT** (owner's-word evidence,
+  the §22(b) class — the slug does not self-name a height). It contains a hyphen ⇒ **§18 boundary law
+  applies: `\b` is NOT a boundary on either side of a hyphen.** Use the negated class:
+  `{ re: /(^|[^a-z0-9-])q3400-ra([^a-z0-9-]|$)/, u: 2 },`
+- ⚠️ **GUARD BEFORE SHIPPING** (the `.250` lesson — *replay the real masters even on a "self-evident"
+  fix*): expect **exactly 448 hosts** to move `hgtUnknown → 2U known`, **zero type drift**, and **zero
+  other model** to change on either master.
+
+## RULING 2 — type `unknown` = **MAGENTA `#ff2bd6`**
+> *"unknown type gets magenta #ff2bd6 — spine, legend, detail dots together"*
+
+Resolves §22's owed item #4. Kills the **`pdu`/`unknown` gold collision** (both were `#ffcb45`, so a
+PDU spine and an UNKNOWN spine were indistinguishable by colour alone). **PDU keeps the gold; only
+`unknown` moves.**
+- ✅ **`#ff2bd6` IS ALREADY THE APP'S `--mag` BRAND TOKEN** (`:11017`, and Design Law 5 in `CLAUDE.md`).
+  He picked an existing token, not a new colour. Coherent with the palette.
+
+### ⭐ THE THREE SURFACES ARE ONE EDIT, NOT THREE — "together" is STRUCTURAL
+`TYPE_COLOR.unknown` (`:17763`) is the **single source** feeding every surface he named:
+| surface | site | how it reads the colour |
+|---|---|---|
+| **spine** (5px lane bar) | `:17957` → `:17965` | `var col = TYPE_COLOR[sl.type]` |
+| **detail dots** (`.type-dot`) | `:18408` → `:18413` | `var col = TYPE_COLOR[sl.type]` |
+| **search-result label** | `:18505`–`:18506` | `var col = TYPE_COLOR[rr.comp.type]` |
+**⇒ Changing the ONE value at `:17763` moves all of them in lockstep.** They cannot drift apart.
+(The `.246` invariant still applies: every `_TMAP` value must resolve to a defined `TLABEL` **and**
+`TYPE_COLOR` — re-check it, since a typo'd key here prints the literal word `undefined` on a tray.)
+
+### ⛔ DO **NOT** RECOLOUR THE HAZARD SITES — `unk` THERE MEANS **HEIGHT**, NOT TYPE
+`:17968` (hatch), `:17977` (label text), `:17989` (hard edge) are all gated on **`unk`**, which pairs
+with `bad` (`conflict || overflow`) and tracks **`sl.hgtUnknown`** — see the `flagged` split at
+`:17995`: `if (sl.conflict || sl.overflow || sl.hgtUnknown)`. **That gold is the HEIGHT-UNKNOWN hazard
+signal, and it is a DIFFERENT STATEMENT from type-unknown.** Recolouring it to magenta would **collapse
+the exact distinction §17/§22 exist to protect** (*type-unknown ≠ height-unknown*; type-unknown draws
+SOLID + TO SCALE, hazard means DO NOT TRUST THIS GEOMETRY). **Leave all three gold.**
+Likewise **out of scope** (unrelated gold, must not move): `--gold` token, `.rf-card` RACK MAP / KNOW
+accents (`:12526`, `:12571`), BURNDOWN (`:26390`, `:30756`), `.va-i-type` (`:11457`), `.ctag b` (`:11736`).
+
+### ⚠️ TWO THINGS I OWE JOHN BEFORE THIS SHIPS
+1. **The "legend" is NOT YET LOCATED as a `TYPE_COLOR` consumer.** The only legends in the file are
+   `.rm-legend` (`:2432`/`:14635`, Rack-Map) and `.br-legend` (`:5843`, Blast-Radius) — **neither is
+   driven by `TYPE_COLOR`.** So either he means the detail-list labels (already covered above), or
+   there is a legend that **hardcodes** gold and needs a **second** edit. **Find it before shipping —
+   do not assume the one-edit story covers it.**
+2. **NEW COLOUR ADJACENCY, flagged honestly:** `unknown #ff2bd6` (magenta) now sits next to
+   `storage #ff7bd0` (pink) — **same hue family.** The gold collision is genuinely killed, but this may
+   trade it for a magenta/pink pair. **Needs his eye on a real tray**, not my judgement.
+
+## BATCH STATE
+**Open batch = 1 ship: `.251` (MEDIA CONV).** Device-verify checklist in §22 is **OWED and UNWALKED.**
+⚠️ *"i looked"* on the `.245`–`.250` stack was an **OWNER ACKNOWLEDGEMENT, not an itemized pass** — it
+does **not** carry forward to `.251`. Cap is 6; **5 slots remain** before a consolidated device pass.
+
+## 📥 INBOX — `files (58).zip` (dropped 2026-07-14, **UNREAD**)
+`Downloads/files (58).zip` → `HANDOFF-reh3d-rewire-REV2.md` (3.7KB) · `PHANTOM-OPEN-BOARD-2026-07-14.md`
+(5.6KB). **Not yet opened.** `reh3d` = the 3D rack-elevation module (`_reh3dActive`, `.218`–`.220`);
+it shares a **symmetric cross-dispose** contract with `forge3d_*` (§ `.222`) — **any rewire must
+preserve that or it leaks a WebGL context.** Read both before acting on either.
+
+## STILL OWED — JOHN'S RULING (updated)
+1. DFW02's one **empty-model** row @`c1:001:38` — **the last unknown-type host on either master.**
+2. ~~The HEIGHT of `q3400-ra`~~ → **RULED: 2U** (above; not yet shipped).
+3. **The HEIGHT of `fs-media-converter-chassis`** (5 hosts — named `.251`, still hatched).
+4. ~~Whether the `pdu`/`unknown` gold collision matters~~ → **RULED: `unknown` → magenta `#ff2bd6`**
+   (above; not yet shipped). **New question raised:** magenta vs `storage` pink — his eye needed.
