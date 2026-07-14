@@ -1188,3 +1188,84 @@ Batch = **.245 · .246 · .247 · .248 · .249 · .250**, all unverified.
    ruling: `net-6x100g-02` = 1U known; `fs-media-converter-chassis` = height-unknown (stays hatched).
 2. DFW02's one **empty-model** row @`c1:001:38`.
 3. **The HEIGHT of `q3400-ra`** (448 hosts still hatched).
+
+---
+
+# §22 — SHIP v1.14.251 · MEDIA CONV (2026-07-14) · ⭐ THE HONESTY ARC CLOSES · NEW BATCH = 1
+
+**John's field call (2026-07-14):** *"net-6x100g-02 is a media converter, fs-media-converter-chassis
+too."* The app had **no media-converter type** at all, so those 11 hosts had been sitting as
+honest-but-useless gold **UNKNOWN** since `.246`.
+
+## ⚠️ THE NAMING AND THE COLOUR ARE MINE, NOT JOHN'S
+He ruled the **hardware** and explicitly **delegated** the rest (*"you do whats best"*). He did **not**
+specify the type key, the label, or the colour. **Recorded as a Claude design call, not an owner
+spec** — if he dislikes any of it, it is one token.
+
+**The call:** **NOT a switch** — a media converter does not switch, and typing it as one would be
+precisely the class of lie `.246` exists to kill. **NOT patch either** — a patch panel is **passive**;
+a media converter is **powered active gear**. So it gets its own type:
+`media` · label **`MEDIA CONV`** · colour **`#2ee6a8`**, deliberately held **apart from patch teal
+`#1fffd0`** because patch is the type it sits closest to conceptually, and is therefore the pair a
+gloved tech is likeliest to confuse at arm's length.
+
+## What shipped — 4 edits
+`TYPE_COLOR + media` · `TLABEL + media:'MEDIA CONV'` · `_TMAP + media:'media'` ·
+`master_hostType` gains **two** rules at the tail.
+
+## ⭐ TWO RULES, NOT ONE — DIFFERENT EVIDENCE, DO NOT COLLAPSE THEM LATER
+| | rule | why this shape |
+|---|---|---|
+| **(a) SELF-NAMING** | `/media[\s-]*conv/` | `fs-media-converter-chassis` **says what it is in its own model string.** Reading a device's name is **not an inference**, so a GENERAL rule is legitimate — and a future `*-media-converter-*` rev is covered on the same evidence. Same class as `.245`'s generic `/ufm\|fabric\s*manager/`. |
+| **(b) OWNER'S WORD ONLY** | `/(^\|[^a-z0-9-])net-6x100g-02([^a-z0-9-]\|$)/` | The NetBox slug **does not say what the device is** — nothing in `net-6x100g-02` hints "media converter". **John's ruling is the entire evidence**, so it is **MODEL-EXACT**, exactly like `.247`'s `q3400-ra`. A future `-03`/`-021` is different hardware until he rules on it. Boundary is the negated class, **not `\b`** (per `.250`). |
+
+Both sit at the **tail** so neither can steal a host a more specific classifier already claimed.
+
+## ⚠️ TYPE ONLY — HEIGHTS UNTOUCHED (the §17 design line paying off a third time)
+- `net-6x100g-02` → **1U known** (seeded `.242`, boundary-fixed `.249`) → draws **to scale**.
+- `fs-media-converter-chassis` → **not in `MASTER_U_TABLE`** → reads **MEDIA CONV** *and still carries
+  the gold hazard hatch + MODEL HEIGHT UNKNOWN*.
+
+**Reading MEDIA CONV while hatched is CORRECT, not a bug.** John ruled **what** they are, not **how
+tall**. The app must never quietly infer the second from the first.
+
+## GUARD (both real masters, shipped function vs the `.250` baseline)
+| | result |
+|---|---|
+| movement | **exactly 11 hosts**, all `unknown → media`; the only models that move are the two he ruled. **Zero** other hosts change type on either master. |
+| **HEIGHT drift** | **0** across all 6490 placed hosts |
+| ⭐ **SPARKS** | **ZERO unknown-type hosts** (was **459 = 11.1%** before `.246`) |
+| DFW02 | exactly **1** unknown remains — the **empty-model row @`c1:001:38`**, still owed a ruling |
+| `.246` invariants | every `_TMAP` value resolves to a defined `TLABEL` **and** `TYPE_COLOR` — **0 undefined-label rows** (the failure that prints the literal word `undefined` on a tray) |
+| over-catch | `media-server` → unknown · `net-6x100g-021` / `-02-x` / `-03` → unknown · `q3400-ra` → still switch · `fs-media-converter-chassis-v2` → media (intended, self-naming) |
+
+## ⭐ THE ARC, .238 → .251
+`.238` stop guessing heights · `.242` seed real ones · `.245` UFM is not BLANK · `.246` **`blank` →
+`unknown`** (459 hosts stopped being erased) · `.247` q3400-ra = switch · `.249`/`.250` close the
+boundary leaks · `.251` **the last two unknown models get a real name.**
+**Net: on SPARKS, the app no longer describes a single real device as empty, mis-typed, or
+un-nameable.** Every remaining hazard flag on that master is a *true* statement of ignorance.
+
+## PRE-EXISTING, NOT FIXED (re-flagged from §17)
+`TYPE_COLOR.pdu` and `TYPE_COLOR.unknown` **share `#ffcb45`** — a PDU spine and an UNKNOWN spine are
+indistinguishable **by colour alone** (label + flag still differ). `media` does not participate.
+John's call whether it matters.
+
+## BATCH
+John reviewed the `.245`–`.250` stack (*"i looked"*) and directed continuation (*"keep cooking"*).
+⚠️ **Recorded honestly: that is an OWNER ACKNOWLEDGEMENT, not an itemized checklist pass** — the
+per-ship items in §21 were not walked one-by-one. **This ship opens a NEW batch at 1.**
+
+### DEVICE-VERIFY (John) — `.251`
+- SPARKS `s3:176` → U31 `metal-jump01` / U29 `pkey02` / U28 `pkey04` now read **MEDIA CONV** in green,
+  drawn **solid + to scale, NO hatch** (they are 1U-known).
+- The 5 `fs-media-converter-chassis` rows (`s3:011`/`s3:111`/`s1:010`/`s2:060`/`s3:030`) read
+  **MEDIA CONV** *and still carry the gold hatch + MODEL HEIGHT UNKNOWN* — **both at once is correct.**
+- No tray prints `undefined`. RACKED/PENDING counts unchanged. **DFW02 completely unchanged.**
+
+## STILL OWED — JOHN'S RULING
+1. DFW02's one **empty-model** row @`c1:001:38` — **the last unknown-type host on either master.**
+2. **The HEIGHT of `q3400-ra`** (448 hosts still hatched; SPARKS' uniform 5U pitch **bounds** it at ≤5U
+   but does not determine it).
+3. **The HEIGHT of `fs-media-converter-chassis`** (5 hosts — now named, still hatched).
+4. Whether the `pdu`/`unknown` gold collision matters.
