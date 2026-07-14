@@ -11826,7 +11826,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.251';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.252';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -17758,9 +17758,19 @@ function forge3d_render(mount) {
   // a media converter is powered active gear. It gets its own type. Colour #2ee6a8 is deliberately
   // held APART from patch teal #1fffd0 — patch is the type it sits closest to, so those two are the
   // pair a gloved tech is most likely to confuse at arm's length.
+  // v1.14.252 — `unknown` moves GOLD -> MAGENTA. (John's ruling, 2026-07-14.) It shared #ffcb45
+  // with `pdu`, so a PDU spine and an UNKNOWN spine were indistinguishable BY COLOUR ALONE.
+  // PDU KEEPS the gold; only `unknown` moves. #ff2bd6 is the app's existing --mag brand token.
+  // This ONE value is the sole source for all three surfaces John named — the tray SPINE
+  // (TYPE_COLOR[sl.type], the 5px lane bar), the detail-row DOT (.type-dot) and the search-result
+  // LABEL — so they move in lockstep and cannot drift apart.
+  // ⛔ DO NOT also recolour the gold in the tray's hazard paint (the hatch, the ⚠ name text, the
+  // hard edge). That gold is gated on `unk` = sl.hgtUnknown — the HEIGHT hazard — which is a
+  // DIFFERENT STATEMENT from type-unknown and must stay visually distinct from it. Type-unknown
+  // draws SOLID + TO SCALE (the U-span IS true); the hazard means DO NOT TRUST THIS GEOMETRY.
   var TYPE_COLOR = { gpu: '#28e0ff', switch: '#8a4bff', pdu: '#ffcb45', patch: '#1fffd0',
                      server: '#7fd0ff', storage: '#ff7bd0', media: '#2ee6a8',
-                     unknown: '#ffcb45', blank: '#22303e' };
+                     unknown: '#ff2bd6', blank: '#22303e' };
   var TLABEL = { gpu: 'GPU', switch: 'SWITCH', pdu: 'PDU', patch: 'PATCH', server: 'SERVER', storage: 'STORAGE', media: 'MEDIA CONV', unknown: 'UNKNOWN', blank: 'BLANK' };
 
   // ---------- persistence + per-node status overlay ----------
@@ -29336,6 +29346,19 @@ var MASTER_U_TABLE = [
   // each). GEOMETRY CONFIRMS: s3:175 stacks s3-pp-ru06/07/08/09 at U6,U7,U8,U9 — four
   // CONSECUTIVE U. A 2U panel self-collides with its own neighbour. (12 hosts, s3:175/s3:176.)
   { re: /12-mpo-48-lc-port-patch-panel/,  u: 1 },
+  // ⭐ "q3400-ra" — 2U. (John's ruling, 2026-07-14.) 448 hosts on SPARKS — the single largest
+  // block of height-unknown devices on either master, hatched since .238. Typed as an InfiniBand
+  // switch in .247; this settles the HEIGHT and stops the hatch.
+  // EVIDENCE = JOHN'S WORD, and nothing else. The slug does not self-name a height, and unlike
+  // the HGX 6U / net-6x100g-02 rulings the master's geometry does NOT determine this one: SPARKS
+  // places these at a UNIFORM 5U pitch, which only BOUNDS the chassis at <=5U. 2U sits inside
+  // that bound (a 3U service gap per pitch is unremarkable), so the ruling is CONSISTENT with the
+  // floor — but the floor could not have told us 2U on its own. Recorded as owner-evidence, not
+  // geometry-evidence, so a future import with a conflicting pitch does not get silently overruled.
+  // MODEL-EXACT, and the boundary is the negated class — NOT \b. `\b` matches on BOTH sides of a
+  // hyphen, so `\bq3400-ra\b` would also swallow `q3400-ra-x`. Identical regex to the .247 TYPE
+  // rule above, deliberately: the type and the height must agree on exactly which hosts they mean.
+  { re: /(^|[^a-z0-9-])q3400-ra([^a-z0-9-]|$)/, u: 2 },
   // Leaf / spine / ToR / mgmt switch — 1U.
   { re: /\b(leaf|spine|tor|mgmt-sw)\b/,   u: 1 }
   // DELIBERATELY ABSENT — do NOT add without John's field call:
@@ -29345,7 +29368,8 @@ var MASTER_U_TABLE = [
   //   SN5600     — appears only in the synthetic stress fixture, never in a real master yet.
   //                SN5610 (2U) IS a real SPARKS model and got its own row in .242 — the \b
   //                guards keep the two apart.
-  //   SPARKS remainder — q3400-ra (448), cpu-gp2-* (165), inf-med-01 (60), om2216-c14 (16),
+  //   SPARKS remainder — cpu-gp2-* (165), inf-med-01 (60), om2216-c14 (16),
+  //                (q3400-ra LEFT this list in .252 — John ruled it 2U; row above.)
   //                fs-media-converter-chassis (5), net-ufm-05 (2), gpu-b40-02 (160). Each needs
   //                its own research/ruling pass. None collide at the 1U placeholder, so they
   //                render honest gold rather than falsely red.
