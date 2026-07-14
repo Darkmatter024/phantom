@@ -11826,7 +11826,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.246';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.247';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -29364,6 +29364,16 @@ function master_hostType(host) {
   if (/gpu|gb\d{3}|hgx|dgx|node-/.test(s) && !/nvlink|nvl-/.test(m)) return 'gpu';
   if (/cdu/.test(s)) return 'cdu';
   if (/(^|[^a-z])ps-|power|pdu|busbar|\bps\d/.test(s)) return 'pwr';
+  // v1.14.247 — `q3400-ra` (448 hosts on SPARKS) is an InfiniBand switch. EVIDENCE: John's field
+  // call, 2026-07-13 — same authority class as his 6U/DFW02 and SYS-821GE rulings. Corroborated
+  // by the master's own naming (every one is `s*-ib-ruNN-*`). MODEL-EXACT on John's ruling, NOT a
+  // `q3400` family rule: seeding a family he did not rule on is the guess .238 exists to kill
+  // (cf. the `\b` guard that deliberately keeps `sn5600` off the `sn5610` row).
+  // ⚠️ TYPE only. Its HEIGHT is still UNKNOWN — not in MASTER_U_TABLE, still hatched + flagged.
+  // NB: `\bq3400-ra\b` would be WRONG — `\b` matches before a hyphen, so it also swallows a
+  // longer SKU like `q3400-ra-x`. The boundary below excludes a trailing `-`, so a rev John has
+  // not ruled on stays UNKNOWN rather than silently inheriting this ruling.
+  if (/(^|[^a-z0-9-])q3400-ra([^a-z0-9-]|$)/.test(s)) return 'sw';
   if (/nvlink|nvl-|switch|^sn|\bsn\d|om\d|cm\d|leaf|spine|tor|mgmt-sw/.test(s)) return 'sw';
   if (/pp-|patch|mpo|panel/.test(s)) return 'patch';
   if (/fw|ngfw|firewall/.test(s)) return 'fw';
