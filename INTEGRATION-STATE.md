@@ -1349,3 +1349,65 @@ preserve that or it leaks a WebGL context.** Read both before acting on either.
 3. **The HEIGHT of `fs-media-converter-chassis`** (5 hosts — named `.251`, still hatched).
 4. ~~Whether the `pdu`/`unknown` gold collision matters~~ → **RULED: `unknown` → magenta `#ff2bd6`**
    (above; not yet shipped). **New question raised:** magenta vs `storage` pink — his eye needed.
+
+---
+
+# §24 — SHIP v1.14.252 · BOTH §23 RULINGS SHIPPED (2026-07-14) · BATCH = 2
+**Supersedes §23's "⛔ NOTHING SHIPPED YET".** Live-confirmed (`local == live`, byte-identical).
+Three edits, no markup, no CSS, no new function.
+
+## 1 · `q3400-ra` = 2U — **448 hosts stop being hatched**
+The largest block of height-unknown devices on either master. Typed `switch` in `.247`; this is the
+**height only** (0 type drift). **Evidence = John's word, and the code records that distinction:**
+the uniform 5U pitch only **BOUNDS** the chassis at ≤5U — 2U sits inside the bound, so the ruling is
+*consistent* with the floor, but **the floor could never have proven 2U on its own.** Logged as
+**owner-evidence, not geometry-evidence**, so a future conflicting import can't be silently overruled.
+MODEL-EXACT; boundary is the negated class (§18), **character-identical to the `.247` TYPE regex** —
+type and height must mean exactly the same hosts. Also **struck `q3400-ra` from the U-table's
+DELIBERATELY-ABSENT list**, which would otherwise still be claiming it needs a ruling.
+
+## 2 · type `unknown` GOLD → **MAGENTA `#ff2bd6`** — the pdu collision is dead
+PDU **keeps** the gold. `#ff2bd6` is the existing `--mag` brand token, not a new colour.
+⭐ **John's "spine, legend, detail dots together" is STRUCTURAL, not three parallel edits:**
+`TYPE_COLOR.unknown` is the **single source** for the tray spine (`:17957`), the `.type-dot`
+(`:18413`) and the search-result label (`:18506`). **One value ⇒ they cannot drift apart.**
+**There is no separate legend element in the Forge tray** — the `TLABEL` text beside each name is
+`var(--dim)` grey for *every* type (not a colour key), so it stays untouched; colouring it would
+change all 9 types, which John did not rule.
+
+### ⛔ THE TRAP, AND THE COMMENT THAT NOW GUARDS IT
+The gold in the tray's **hazard paint** (hatch, ⚠ name text, hard edge) is **NOT** type-unknown — it
+is gated on **`unk` = `sl.hgtUnknown`** (see the `flagged` split: `conflict || overflow || hgtUnknown`).
+**A find-and-replace on `#ffcb45` would have recoloured it and COLLAPSED the exact line `.246`/`.247`
+exist to protect:** type-unknown draws **SOLID + TO SCALE** (the U-span IS true); the hazard means
+**DO NOT TRUST THIS GEOMETRY.** Gold hazard and magenta type are now **two different signals on
+screen — that is the whole point.** Also untouched: `--gold`, RACK MAP / KNOW `rf-card` accents,
+BURNDOWN, `.va-i-type`, `.ctag b`.
+
+## GUARD (both real masters, shipped fns vs the `.251` baseline)
+**Exactly 448** hosts change height, **all `q3400-ra`**, `{u:null,known:false}` → `{u:2,known:true}`.
+**Zero** other model moves. **ZERO TYPE DRIFT (0 / 6490).** **DFW02 completely unchanged.**
+Boundary probes: `q3400-ra-x` · `xq3400-ra` · `q3400-rb` · `q3400` · `mqm8700-q3400-ra` → **all still
+unknown.** `.246` invariants green, and **NO TWO TYPES SHARE A COLOUR — first time that has ever
+been true.**
+**HATCH: SPARKS 856 → 408.** DFW02 61 (unchanged).
+
+## ⚠️ NEW ADJACENCY — FLAGGED, NOT HIDDEN
+`unknown #ff2bd6` (magenta) now sits beside `storage #ff7bd0` (pink) — **distinct hex, same hue
+family.** The gold collision is genuinely dead, but this may have **traded** it for a magenta/pink
+pair. **John's eye on a real tray.** One-token change if he dislikes it.
+
+## BATCH = 2 (`.251` + `.252`) · 4 slots left
+⚠️ **`.251` device-verify is STILL OWED and UNWALKED** — *"i looked"* was an owner ACK, not an
+itemized pass. `.252` checklist (A: q3400-ra solid/2U/no-hatch · B: magenta spine+dot+label together,
+PDU still gold · C: a height-unknown host STILL gold-hatched · D: nothing prints `undefined`) is in
+`version.json`.
+
+## STILL OWED — JOHN'S RULING
+1. DFW02's **empty-model** row @`c1:001:38` — the last unknown-**type** host on either master.
+2. The **HEIGHT** of `fs-media-converter-chassis` (5).
+3. The SPARKS height remainder, now top of the hatch list: **`gpu-b40-02` (160) · `cpu-gp2-01` (90) ·
+   `cpu-gp2-08` (75) · `inf-med-01` (60) · `om2216-c14` (16)**. (DFW02: `VAST DBox` (50) still needs
+   the 1U-Ceres-vs-2U-Lightspeed call.)
+4. Whether the new **magenta-vs-storage-pink** adjacency bothers him.
+5. 📥 **UNREAD:** `files (58).zip` → `HANDOFF-reh3d-rewire-REV2.md` · `PHANTOM-OPEN-BOARD-2026-07-14.md`.
