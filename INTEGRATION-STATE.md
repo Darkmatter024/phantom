@@ -810,3 +810,88 @@ In `deploy_classifyDevice` the `/mgmt/` test **precedes** the `/cable\s*mgmt/` t
 Ship 2 (facility-keyed site profiles) and Ship 3 (verified height overrides) of the package are
 **untouched**. The queue from §12 (A → C → B → honesty-parity → D → E) is also untouched.
 ⚠️ Repo `CLAUDE.md` § "Current state & queue" is **stale at `.226`** — the live-state doc is THIS file.
+
+---
+
+# §17 — SHIP v1.14.246 · THE HONEST `unknown` TYPE (2026-07-13) · BATCH = 2, DEVICE PASS OWED
+
+**John's call: taken INSTEAD of the package's Ship 2 (site profiles),** on the systemic finding the
+`.245` audit surfaced. Ship 2 and Ship 3 remain unbuilt.
+
+## The lie this kills
+`_TMAP.other = 'blank'` mapped `master_hostType`'s fallthrough — *"I could not classify this"* —
+onto the flat type **`blank`**: slate `#22303e`, label literally **`BLANK`**. So **every**
+unclassified Master device rendered as a **blanking panel**. The app drew *"nothing is installed
+here"* over real, racked hardware: **459 hosts on SPARKS (11.1%)**, 1 on DFW02.
+
+Same honesty class as the 1U-height guess `.238` exists to kill, but **strictly worse — a wrong
+height still SHOWS a device; BLANK ERASES it.** A gloved tech reading the aisle would walk past
+**448 InfiniBand switches the screen calls empty U.**
+
+## What shipped — 5 edits, all inside `forge3d_render`, all DISPLAY-ONLY
+| # | change |
+|---|---|
+| 1 | `TYPE_COLOR` + `unknown: '#ffcb45'` (gold — the app's existing "we don't know something" token). **`blank` KEEPS slate.** The two claims must never share a colour. |
+| 2 | `TLABEL` + `unknown: 'UNKNOWN'` |
+| 3 | `_TMAP` — `other: 'blank'` → **`other: 'unknown'`** |
+| 4 | `_TMAP[s.type] \|\| 'blank'` → **`\|\| 'unknown'`** — an unmapped key is by definition unknown, never empty |
+| 5 | `flagsOf` + `'DEVICE TYPE UNKNOWN · <model> — REAL GEAR, NOT A BLANKING PANEL'` (gold WARN family, not red conflict) |
+
+**Edit 4 matters beyond this ship:** that `|| 'blank'` is the exact fallback that swallowed `.245`'s
+`'server'` and rendered a UFM as a blanking panel. It is now fail-honest instead of fail-empty.
+
+## ⭐ THE DESIGN LINE — why `unknown` is drawn TO SCALE and NOT hatched
+`drawGuts` reserves the hazard hatch + hard border + ⚠ for `conflict` / `overflow` / `hgtUnknown`.
+All three assert **one** thing: **DO NOT TRUST THIS GEOMETRY.**
+
+**Type-unknown is a different claim.** The U-span **is** true — read straight from the Master
+(`net-6x100g-02`'s height is even vendor-seeded 1U per `.242`). We simply cannot **name** the device.
+So it renders **solid, at correct scale, gold-spined, flagged — and NEVER hatched**, because hatching
+would falsely assert the geometry is untrustworthy. Both flags co-exist where both are true
+(`q3400-ra` is type- **and** height-unknown → gold spine **and** hatch).
+**Getting this line wrong in either direction would have shipped a NEW lie** — which is the whole
+point of the ship. Do not "simplify" these into one flag later.
+
+## Why this was safe to do as a display-only ship
+- **`_TMAP` is display-only.** `mscope_buildRacksFromSnapshot` persists `master_hostType`'s **raw**
+  output (`'other'`); `_TMAP` exists **only** inside `forge3d_render` (2 refs, both display).
+  **Nothing persisted changes.**
+- **Counts are bit-identical.** `refreshCounts` uses `slots.length`; `statusOf` is orthogonal to
+  type; and **`blank` was never special-cased anywhere in the Forge module** — no `drawGuts` skip,
+  no denominator exclusion. **Grep-confirmed BEFORE designing** (this was the `.238`-class trap to
+  rule out: if blanks had been excluded from the burn-down denominator, flipping 459 hosts would
+  have silently moved every RACKED/PENDING count John reads).
+
+## NOT TOUCHED (strict scope)
+`deploy_classifyDevice`'s `'blank'` fallthrough (the **EDP/CSV** path). Unlike `_TMAP` it **is
+PERSISTED** (`deployment.edpParsed.racks[].slots.type`), so flipping it rewrites seeded deployment
+records → **own ship, own verify.** `'blank'` therefore remains a legitimate, reachable type — but
+only from EDP, where it means *"the data positively says blanking panel."*
+
+## GUARD (both real masters, shipped maps extracted verbatim from the edited file)
+| master | census (shipped) | moved vs `.245` | still BLANK |
+|---|---|---|---|
+| DFW02 (2347) | `switch:905 · gpu:1441 · unknown:1` | **1** (blank→unknown) | **0** |
+| SPARKS (4143) | `gpu:1681 · pdu:1296 · switch:693 · unknown:459 · patch:12 · server:2` | **459** (blank→unknown) | **0** |
+
+**Not one host carrying a real type moved.** Invariants green: unknown colour ≠ blank colour
+(`#ffcb45` vs `#22303e`); every `_TMAP` value resolves to a defined `TLABEL` **and** `TYPE_COLOR`
+(**0 undefined-label rows** — the failure that would print the literal word `undefined` on a tray).
+
+**Net: zero Master-sourced devices are described as blanking panels any more.**
+
+## DEVICE-VERIFY OWED (John) — ONE pass covers `.245` + `.246`
+1. **`.246`** SPARKS `s3:176` → U31 `metal-jump01` / U29 `pkey02` / U28 `pkey04` read **UNKNOWN in
+   gold**, not BLANK · tap each → gold flag *DEVICE TYPE UNKNOWN · net-6x100g-02 — REAL GEAR, NOT A
+   BLANKING PANEL* · drawn **solid, to scale, no hatch**.
+2. **`.246`** `s1:001` → the 448 `q3400-ra` read UNKNOWN + gold and — being height-unknown too —
+   **still carry the hatch + MODEL HEIGHT UNKNOWN**.
+3. **`.246`** DFW02 `c1:002` unchanged (its 2 real collisions still red) · **no tray anywhere prints
+   the literal word `undefined`** · RACKED/PENDING counts unchanged from `.245`.
+4. **`.245`** `s3:176` U27 UFM still reads **SERVER**.
+5. Both: `?legacy=1` curl-diff.
+
+## STILL OWED — JOHN'S RULING (this ship makes them HONEST; it does not classify them)
+`q3400-ra` ×448 (every one named `s*-**ib**-ruNN-*` — the master itself says InfiniBand; strong, but
+a **naming inference**, so NOT seeded) · `net-6x100g-02` ×6 · `fs-media-converter-chassis` ×5 ·
+DFW02's one **empty-model** row @`c1:001:38`.
