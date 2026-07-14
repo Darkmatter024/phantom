@@ -1411,3 +1411,75 @@ PDU still gold · C: a height-unknown host STILL gold-hatched · D: nothing prin
    the 1U-Ceres-vs-2U-Lightspeed call.)
 4. Whether the new **magenta-vs-storage-pink** adjacency bothers him.
 5. 📥 **UNREAD:** `files (58).zip` → `HANDOFF-reh3d-rewire-REV2.md` · `PHANTOM-OPEN-BOARD-2026-07-14.md`.
+
+---
+
+# §25 — SHIP v1.14.253 · MEDIA CONV COLOUR CORRECTED (2026-07-14) · BATCH = 3
+Green `#2ee6a8` → **SLATE `#7d93a4`**. One constant + the comment that misrecorded it. No logic, no
+markup, no CSS, no classifier change. Live-confirmed (`local == live`).
+
+## ⚠️ THE RECORD — I HAD IT WRONG IN THE SOURCE, AND THE SOURCE NOW SAYS SO
+`.251` shipped MEDIA CONV green, and its comment **asserted John had DELEGATED the colour to me**
+(*"you do whats best"*). **He had not.** He had already ruled it **in writing** —
+`PHANTOM-OPEN-BOARD-2026-07-14.md` (rev 2, 09:15, against `.248`): *"new MEDIA CONV type → **slate
+`#7d93a4`**"*. **That board was sitting UNREAD in `files (58).zip` when I picked green.** So I
+recorded **a spec of his as a call of mine**, in the code. Both are corrected.
+
+**How we know the board is his ruling and not a proposal:** the same line reads *"UNKNOWN → magenta
+`#ff2bd6`"* — **character-for-character** what he later handed me verbatim and what `.252` shipped.
+It even uses his phrase *"spine colors, legend, detail dots."* The board **is** the source.
+
+### ⭐ LESSON — READ THE DROPPED ARTIFACT BEFORE CLAIMING A DECISION WAS DELEGATED
+*"Do what's best"* is **not a grant of authorship when a written spec already exists.** I could not
+have known that without opening the file — **so open the file.** (Sits beside the `.250` lesson:
+*replay the real masters before shipping even a "self-evident" fix I flagged myself.*)
+
+## AND SLATE IS BETTER ON ITS MERITS, INDEPENDENT OF WHO RULED IT
+A media converter is **quiet infrastructure.** Green `#2ee6a8` (**L=0.610**) shouted at the same
+volume as **GPU cyan** — it drew the eye to the least interesting device in the rack. Slate
+(**L=0.279**) recedes, which is what that hardware should do. It still stays well clear of **patch
+teal `#1fffd0`** — patch is the type it sits nearest conceptually, the pair a gloved tech is
+likeliest to confuse at arm's length. **That separation was the one thing `.251` got right, and it
+survives.**
+
+## GUARD
+`media == #7d93a4` (**byte-matches the board**) · **no two types share a colour** (still true, first
+established `.252`) · every `_TMAP` value resolves to a defined `TLABEL` **and** `TYPE_COLOR` (`.246`
+invariant — a miss prints the literal word `undefined` on a tray).
+
+### ⚠️ THE ONE NEW RISK SLATE INTRODUCES — CHECKED, FLAGGED, NOT BLOCKING
+The Forge tray paints **UNRACKED slots in a slate-grey of its own** (`#5a6b7d`), so a **RACKED** media
+converter must not read as an **EMPTY** slot — *the honesty arc's own failure mode, inverted.*
+**It does not: the two separate by ALPHA, not hue.** A racked spine paints at `globalAlpha 0.90`
+(L=0.279); an unracked one lands at **~16% effective alpha** (`0.35` fill × `0.45` global, L=0.142,
+near-invisible). **Readable in the maths — still the single thing to eyeball on a real tray.**
+Noted, not blocking: `media` L=0.279 and `unknown` L=0.278 are near-identical in **luminance** —
+they separate on **hue** (slate vs magenta), so they'd be indistinguishable in greyscale. **The type
+LABEL differs on every row, so no information rides on colour alone.**
+
+## BATCH = 3 (`.251` + `.252` + `.253`) · 3 slots left
+⚠️ **`.251` AND `.252` device-verifies are BOTH still owed and unwalked.** Checklists in `version.json`.
+
+## 📥 THE ZIP IS READ — `files (58).zip`
+**`PHANTOM-OPEN-BOARD-2026-07-14.md`** — reconciles with our state, with two notes: (a) it calls the
+rulings one ship (`.249`); on our line they landed as **`.249` (boundary) + `.251` (MEDIA CONV) +
+`.252` (magenta) + `.253` (slate)**; (b) its **watch item on the magenta** — *"too loud on a dense
+rack → one-constant revert, say so"* — is the **same** concern I raised independently about magenta
+sitting beside storage pink. **Known risk, cheap to revert.**
+Board also asks: **`pkey` / `metal-jump` — "real gear or true blanks?"** → **THE DATA ANSWERS: REAL
+GEAR.** They are `net-6x100g-02`, typed **MEDIA CONV** since `.251`, 1U-known since `.242`.
+
+**`HANDOFF-reh3d-rewire-REV2.md`** — reverse the `.236` retirement, rewire the solo-rack **FLAT|3D
+toggle** (a distinct surface from FORGE; John-ruled). 3 edits, verified against `.248`; all `reh3d_*`
+machinery **resident and unwired**; scene internals + GL cross-dispose guards **LOCKED**. The board
+calls it *"the original mission"* and it has been **orphaned once** (its `.244` stamp was consumed by
+MONOLITH PLATE). **Board says queue it right after the rulings verify clears ⇒ GATED ON JOHN'S DEVICE
+PASS, not startable now.**
+
+## STILL OWED — JOHN'S RULING
+1. DFW02's **empty-model** row @`c1:001:38` — the last unknown-**type** host on either master.
+2. **Heights:** `gpu-b40-02` (160) · `cpu-gp2-01` (90) · `cpu-gp2-08` (75) · `inf-med-01` (60) ·
+   `om2216-c14` (16) · `fs-media-converter-chassis` (5) · DFW02 `VAST DBox` (50 — 1U-Ceres vs
+   2U-Lightspeed) · `net-ufm-05` (needs the network engineer).
+3. Does the `.252` **magenta read too loud** on a dense rack? (The board's own watch item.)
+4. Does a **racked slate MEDIA CONV** read as a real device, not an empty slot? (`.253-B`.)
