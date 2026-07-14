@@ -11826,7 +11826,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.250';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.251';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -17751,9 +17751,17 @@ function forge3d_render(mount) {
   // positively identifies as a blanking panel. They are not the same claim and must never
   // share a colour: slate #22303e reads as "nothing is installed here". Gold is the app's
   // existing "we don't know something" language (MODEL HEIGHT UNKNOWN uses it).
+  // v1.14.251 — 'media' (MEDIA CONV). John ruled the HARDWARE (net-6x100g-02 and
+  // fs-media-converter-chassis are media converters, 2026-07-14) and DELEGATED the naming/colour
+  // ("you do whats best"). So: NOT a switch — a media converter does not switch, and calling it one
+  // would be the same class of lie .246 exists to kill. NOT patch either: a patch panel is passive,
+  // a media converter is powered active gear. It gets its own type. Colour #2ee6a8 is deliberately
+  // held APART from patch teal #1fffd0 — patch is the type it sits closest to, so those two are the
+  // pair a gloved tech is most likely to confuse at arm's length.
   var TYPE_COLOR = { gpu: '#28e0ff', switch: '#8a4bff', pdu: '#ffcb45', patch: '#1fffd0',
-                     server: '#7fd0ff', storage: '#ff7bd0', unknown: '#ffcb45', blank: '#22303e' };
-  var TLABEL = { gpu: 'GPU', switch: 'SWITCH', pdu: 'PDU', patch: 'PATCH', server: 'SERVER', storage: 'STORAGE', unknown: 'UNKNOWN', blank: 'BLANK' };
+                     server: '#7fd0ff', storage: '#ff7bd0', media: '#2ee6a8',
+                     unknown: '#ffcb45', blank: '#22303e' };
+  var TLABEL = { gpu: 'GPU', switch: 'SWITCH', pdu: 'PDU', patch: 'PATCH', server: 'SERVER', storage: 'STORAGE', media: 'MEDIA CONV', unknown: 'UNKNOWN', blank: 'BLANK' };
 
   // ---------- persistence + per-node status overlay ----------
   var store = {
@@ -17785,7 +17793,8 @@ function forge3d_render(mount) {
   // a master_hostType 'server' falls to `|| 'unknown'` below. TLABEL/TYPE_COLOR already carry it.
   // v1.14.246 — 'other' (master_hostType's fallthrough: "I could not classify this") now maps to
   // 'unknown', NOT 'blank'. It previously claimed 459 real SPARKS devices were blanking panels.
-  var _TMAP = { gpu: 'gpu', sw: 'switch', pwr: 'pdu', patch: 'patch', stor: 'storage', cpu: 'server', server: 'server', cdu: 'pdu', fw: 'switch', other: 'unknown' };
+  // v1.14.251 — `media` bridges master_hostType's new 'media' return to the MEDIA CONV tray.
+  var _TMAP = { gpu: 'gpu', sw: 'switch', pwr: 'pdu', patch: 'patch', stor: 'storage', cpu: 'server', server: 'server', cdu: 'pdu', fw: 'switch', media: 'media', other: 'unknown' };
   function deploy_forge_master() {
     var m = window._lastPhantomMaster;
     return (m && m.racksByCab && typeof m.racksByCab === 'object'
@@ -29394,6 +29403,31 @@ function master_hostType(host) {
   if (/fw|ngfw|firewall/.test(s)) return 'fw';
   if (/stor|nvme|ceph|vast/.test(s)) return 'stor';
   if (/cpu/.test(s)) return 'cpu';
+  // ── v1.14.251 — MEDIA CONVERTERS. John's field call 2026-07-14: "net-6x100g-02 is a media
+  // converter, fs-media-converter-chassis too." TWO RULES, because they rest on TWO DIFFERENT
+  // KINDS OF EVIDENCE and must not be collapsed into one:
+  //
+  // (a) SELF-NAMING. `fs-media-converter-chassis` says what it is IN ITS OWN MODEL STRING. Reading
+  //     a device's name is not an inference, so a general rule is legitimate here and a future
+  //     `*-media-converter-*` rev is covered on the same evidence. Same class as .245's generic
+  //     /ufm|fabric\s*manager/ rule.
+  if (/media[\s-]*conv/.test(s)) return 'media';
+  //
+  // (b) OWNER'S WORD ONLY. `net-6x100g-02` is a CoreWeave NetBox slug that does NOT say what the
+  //     device is — nothing in the string hints "media converter". John's ruling is the ENTIRE
+  //     evidence, so this is MODEL-EXACT, exactly like .247's q3400-ra. A future -03/-021 rev is
+  //     different hardware until he rules on it. Boundary is the negated class, not \b — see .250:
+  //     \b matches on BOTH sides of a hyphen and would leak `net-6x100g-02-x` / `net-6x100g-021`.
+  if (/(^|[^a-z0-9-])net-6x100g-02([^a-z0-9-]|$)/.test(s)) return 'media';
+  //
+  // ⚠ TYPE ONLY — HEIGHTS ARE UNTOUCHED AND MUST NOT BE INFERRED FROM THIS RULING (the .247 line):
+  // net-6x100g-02 is 1U KNOWN (seeded .242, boundary-fixed .249) so it draws to scale; but
+  // fs-media-converter-chassis is NOT in MASTER_U_TABLE, so it stays height-unknown and KEEPS its
+  // gold hatch + "MODEL HEIGHT UNKNOWN". Reading MEDIA CONV and still hatched is CORRECT, not a bug:
+  // John ruled WHAT they are, not HOW TALL they are.
+  //
+  // Placed at the TAIL so neither rule can steal a host an earlier, more specific classifier
+  // already claimed (same discipline as the UFM rule below).
   // v1.14.245 — UFM (NVIDIA Unified Fabric Manager) is the appliance managing the InfiniBand
   // fabric — a rack server running a management stack, NOT a blanking panel. Placed at the
   // tail so it can never steal a host an earlier, more specific rule already claimed.
