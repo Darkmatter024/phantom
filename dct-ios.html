@@ -11826,7 +11826,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.247';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.248';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -14778,7 +14778,8 @@ if (typeof window !== 'undefined') {
         <div class="stab" data-tab="manifest" onclick="showOpsTab('manifest')">Manifest</div>
         <div class="stab" data-tab="portmap" onclick="showOpsTab('portmap')">Port Map</div>
         <div class="stab" data-tab="rackmap" onclick="showOpsTab('rackmap')">Rack Map</div>
-        <div class="stab" data-tab="crashcart" onclick="showOpsTab('crashcart')">Crash-Cart</div>
+        <!-- v1.14.248: Crash-Cart pill REMOVED (mode RETIRED by owner; PHASE0-CENSUS). This pill
+             was the only door into OPS_TABS.crashcart, which is removed in the same ship. -->
         <div class="stab" data-tab="optics" onclick="showOpsTab('optics')">Optics</div>
         <div class="stab" data-tab="power" onclick="showPageSafe('power','sop')">Power</div>
         <div class="stab" data-tab="burndown" onclick="showOpsTab('burndown')">Burndown</div>
@@ -19611,19 +19612,15 @@ const OPS_TABS = {
     //   phantom_deploy_assign_v1  → [ { id, deploymentId, techName, phaseType, rackIds } ]  (Stage 4+)
     deploy_showList(c);
   },
-  manifest: function(c) { manifest_render(c); },
-  crashcart: function(c) {
-    // v1.6.74: Crash-Cart re-homed from NOW tile to a BUILD subtab. This pane is a
-    // launch card only — the mode itself (full-screen #crashcart-layer overlay) is
-    // unchanged. crashcart_toggle() enters; crashcart_exit() removes the overlay and
-    // reveals this subtab beneath it, so exit returns here with no extra wiring.
-    c.innerHTML = `
-      <div class="sh">Crash-Cart Mode</div>
-      <p>Hands-free, four-foot-readable single-rack view for crash-cart work. Enter the mode, then snap to a rack on the scrub-bar. Exiting returns you to this tab.</p>
-      <div style="margin-top:12px">
-        <button class="pt-btn pt-btn-secondary" onclick="crashcart_toggle()" style="width:100%;margin-top:0">▶ &nbsp;ENTER CRASH-CART MODE</button>
-      </div>`;
-  }
+  manifest: function(c) { manifest_render(c); }
+  // v1.14.248: the `crashcart` key is REMOVED. Crash-Cart Mode was RETIRED by owner
+  // decision (PHASE0-CENSUS). Its OPS_TABS launch card and the #ops-tab-strip pill were
+  // its ONLY doors — crashcart_toggle() had no other caller — so the key and the pill go
+  // together. Removing the key ALONE would have left the pill falling through the guard
+  // below (`OPS_TABS[tab] ? tab : (currentOpsTab || 'sops')`) and silently rendering SOPs:
+  // a dead-tap, the exact defect class .223/.224 exist to kill.
+  // The mode's own code (crashcart_toggle/exit/pickRack/render, #crashcart-layer, .crashcart-*
+  // CSS) is now UNREACHABLE dead code and is left intact for the LR-2 atomic sweep that owns it.
 };
 
 function showOpsTab(tab) {
@@ -19642,11 +19639,12 @@ function showOpsTab(tab) {
   // v1.14.113: route the deploy-cluster render host through deploy_opsHost() so in-frame
   // dashboard actions (job-complete->burndown, audits, sops) land in the VISIBLE #wk-deploy
   // under redesign instead of the hidden legacy #ops-content (the "frozen dashboard" bug,
-  // HEALTH B2). EXCEPT the un-homed ops-tabs (rackmap/bom/manifest/portmap/crashcart) have
+  // HEALTH B2). EXCEPT the un-homed ops-tabs (rackmap/bom/manifest/portmap) have
   // no redesign home yet (Stage 3b) — keep them on #ops-content so they stay byte-identical
   // to today (no un-styled surface punched into the dashboard; the Rack Map button @22870 is
   // redesign-reachable). Under legacy, deploy_opsHost() returns #ops-content too = unchanged.
-  var _unhomedOps = (tab === 'rackmap' || tab === 'bom' || tab === 'manifest' || tab === 'portmap' || tab === 'crashcart');
+  // v1.14.248: 'crashcart' dropped from this list with its OPS_TABS key — the tab no longer exists.
+  var _unhomedOps = (tab === 'rackmap' || tab === 'bom' || tab === 'manifest' || tab === 'portmap');
   const c = _unhomedOps ? document.getElementById('ops-content') : deploy_opsHost();
   if (c && OPS_TABS[tab]) OPS_TABS[tab](c);
 
