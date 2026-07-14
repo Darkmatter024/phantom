@@ -726,3 +726,87 @@ The consolidated device pass now owes:
 ## OUT OF SCOPE (parked, John's call)
 Etched five-pip rail lit as racked-count (the "E transplant") — needs real data through the plate
 contract; own spec, own ship.
+
+---
+
+# §16 — SHIP v1.14.245 · UFM CLASSIFIER (f5d6db3, 2026-07-13) · BATCH = 1, AWAITING DEVICE PASS
+
+**✅ BATCH `.238`–`.244` CLEARED by John, 2026-07-13.** That stack is closed. `.245` opens a new batch.
+
+Per `HANDOFF-PKG-FINAL-2026-07-13.md` **Ship 1** (Ships 2 and 3 of that package are NOT started —
+one-unverified-ship-in-flight is still law).
+
+## What shipped — three edits, reusing the existing `server` type
+| # | site | change |
+|---|---|---|
+| 1 | `master_hostType` :29361 | `ufm|fabric manager` → `'server'`, at the **tail** so it can never steal a host an earlier, more specific rule already claimed |
+| 2 | **`_TMAP` :17782** (inside `forge3d_render`) | **added the `server: 'server'` key** |
+| 3 | `deploy_classifyDevice` :26648 | same test before its `'blank'` fallthrough (EDP/CSV path) |
+
+Zero additions to `TYPE_COLOR`/`TLABEL` (:17749) or `TYPE_COLORS` (:39782) — all three already
+carry `server`. Zero CSS.
+
+## ⚠️ THE SPEC'S ROOT CAUSE WAS WRONG AND ITS FIX WAS A PROVEN NO-OP — read before trusting a handoff's blame
+The package blamed `deploy_classifyDevice`. **It is not in that path.** `s3:176` reached the screen
+through the **Master** (SCOPE A JOB → `mscope_buildRacksFromSnapshot` → `master_rackToElevation`,
+which stamps `type: master_hostType(h)`). `deploy_classifyDevice` is only ever fed `cols[3]` by the
+EDP **CSV** parser (:27728). The real chain is:
+
+    master_hostType → 'other' → _TMAP['other'] → 'blank' → TLABEL → BLANK
+
+The spec also sent me to `TYPE_COLORS` to check whether `'server'` was mapped. That is the **Rack
+Map's** map (:39782 — it does carry `server`). The map on the **failing surface** is **`_TMAP`**
+(:17782), the Forge bridge from `master_hostType`'s vocabulary to the flat one, and it had **no
+`server` key**. Applying the spec's line verbatim and pushing a UFM through the real render chain:
+
+    master_hostType -> 'server' · _TMAP['server'] -> undefined · || 'blank' -> STILL BLANK
+
+**Edit 2 is load-bearing, not cosmetic — without it edit 1 is inert.** Edit 3 still ships: that
+classifier is UFM-blind too, same defect class, and a CSV-sourced UFM would hit it.
+**LESSON (third time now): a confident upstream claim dissolves on replay. Execute the spec's fix
+before shipping it — "it compiles" is not "it works."**
+
+## PRE-SHIP GUARD + POST-SHIP VERIFY (both real masters, app's own vendored SheetJS)
+- **Total type drift = 2 hosts, both UFMs** (`s3-ufm1-r175`, `s3-ufm2-r176`; other/blank → server/server).
+- **DFW02: 0 drift** across all 2347 placed hosts. SPARKS: 0 across the other 4141.
+- Token sweep on `deploy_classifyDevice`: only `ufm` / `fabric manager` move; gpu/leaf/mgmt/pdu/
+  patch/console/server/storage/HGX/q3400-ra/`''`/null all identical.
+- `_TMAP` addition is **inert for existing data** — `master_hostType` could not emit `'server'` before this ship.
+- **Shipped bytes re-verified:** `s3:176` U27 → **SERVER**. SPARKS BLANK count **461 → 459**.
+
+## 📋 BLANK-TOKEN AUDIT — JOHN'S RULING OWED (no reclassification performed)
+Every distinct model token still rendering as a **blanking panel** on the real masters:
+
+| master | BLANK | tokens |
+|---|---|---|
+| **DFW02** | **1 / 2347 (0.0%)** | one row with an **empty model cell** @`c1:001:38` |
+| **SPARKS** | **459 / 4143 (11.1%)** | `q3400-ra` ×448 · `net-6x100g-02` ×6 · `fs-media-converter-chassis` ×5 |
+
+- **`q3400-ra` ×448** — every one is named `s*-**ib**-ruNN-*`. The master itself calls them
+  InfiniBand. Strong, but it is a **naming inference, not a vendor spec or a photo** → **NOT seeded.**
+- **`net-6x100g-02` ×6** — these ARE John's `pkey02` / `pkey04` / `metal-jump01` rows. **One token
+  explains three of the four BLANKs on his screen.**
+- `s3:176` reproduced exactly: was **4 BLANK of 21**, now **3** (the UFM cleared).
+
+## 🔴 SYSTEMIC FINDING — SURFACED, NOT FIXED (John's call, its own ship)
+**`_TMAP.other = 'blank'`** means **every unclassified Master device renders as a BLANKING PANEL** —
+the app draws *"nothing is installed here"* over real hardware. This is the same honesty class as the
+1U guess that `.238` exists to kill, but **strictly worse**: a wrong height still **shows** a device;
+BLANK **erases** it. That is **459 hosts on SPARKS today**. An honest **`unknown`** type (gold, like
+the height flag) instead of `blank` would close the whole class rather than one token at a time.
+Fixing this is arguably a better use of the next ship than Ship 2.
+
+## Noted in passing, NOT touched (strict scope)
+In `deploy_classifyDevice` the `/mgmt/` test **precedes** the `/cable\s*mgmt/` test, so
+`'cable mgmt'` classifies as **`switch`**, not `blank`. Pre-existing, unrelated to this ship.
+
+## DEVICE-VERIFY OWED (John) — HARD STOP before Ship 2
+1. `s3:176` → **UFM row (U27) reads SERVER**, not BLANK.
+2. `pkey02` / `pkey04` / `metal-jump01` rows **UNCHANGED** this ship (still BLANK — your ruling pending).
+3. One other rack spot-checked for type regressions.
+4. `?legacy=1` curl-diff.
+
+## NEXT (gated on that pass)
+Ship 2 (facility-keyed site profiles) and Ship 3 (verified height overrides) of the package are
+**untouched**. The queue from §12 (A → C → B → honesty-parity → D → E) is also untouched.
+⚠️ Repo `CLAUDE.md` § "Current state & queue" is **stale at `.226`** — the live-state doc is THIS file.
