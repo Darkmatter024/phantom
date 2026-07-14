@@ -892,6 +892,67 @@ only from EDP, where it means *"the data positively says blanking panel."*
 5. Both: `?legacy=1` curl-diff.
 
 ## STILL OWED — JOHN'S RULING (this ship makes them HONEST; it does not classify them)
-`q3400-ra` ×448 (every one named `s*-**ib**-ruNN-*` — the master itself says InfiniBand; strong, but
-a **naming inference**, so NOT seeded) · `net-6x100g-02` ×6 · `fs-media-converter-chassis` ×5 ·
-DFW02's one **empty-model** row @`c1:001:38`.
+~~`q3400-ra` ×448~~ → **RULED, shipped `.247` — see §18** · `net-6x100g-02` ×6 ·
+`fs-media-converter-chassis` ×5 · DFW02's one **empty-model** row @`c1:001:38`.
+
+---
+
+# §18 — SHIP v1.14.247 · SEED `q3400-ra` = InfiniBand SWITCH (type-only, 2026-07-13) · BATCH = 3
+
+**John's field call:** *"q3400-ra is InfiniBand — seed it as switch."* Same authority class as his
+6U/DFW02 ruling and the SYS-821GE photo. The master's own naming (all 448 are `s*-**ib**-ruNN-*`)
+**corroborates** it — but **John's word is the evidence of record.** Per `.238` discipline a naming
+inference **alone** would NOT have been seeded, and `.246` deliberately shipped them as honest gold
+UNKNOWN rather than acting on the hint.
+
+**ONE EDIT** — `master_hostType`, immediately above the existing sw-family rule:
+
+    if (/(^|[^a-z0-9-])q3400-ra([^a-z0-9-]|$)/.test(s)) return 'sw';
+
+The preceding gpu/cdu/pwr tests don't match `q3400-ra`, so it cannot steal a host from a more
+specific classifier.
+
+## ⚠️ THE OBVIOUS REGEX WAS WRONG — caught by the guard, not by reading
+`\bq3400-ra\b` is a **trap**: **`\b` matches before a hyphen**, so it also swallows a longer SKU like
+`q3400-ra-x` — a rev John never ruled on would **silently inherit the ruling**. The shipped boundary
+excludes a trailing `-`. Same discipline as `.242`'s `\b` guard that keeps `sn5600` off the
+`sn5610`=2U row. **Seeding a family the owner did not rule on is exactly the guess `.238` exists to
+kill.** Generalise: **`\b` is not a model-exactness boundary when the SKU contains hyphens.**
+
+## GUARD (both real masters, shipped function)
+| | result |
+|---|---|
+| SPARKS | **448 move `unknown → switch`**; the ONLY model that moves is `q3400-ra`. Unknown **459 → 11** (11.1% → 0.3%) |
+| DFW02 | **zero** movement, zero models touched |
+| **HEIGHT drift** | **0 on both** — `master_nodeHeightInfo` bit-identical across all 6490 placed hosts |
+| model-exactness | `q3400` → other · `q3400-rb` → other · `q3400-ra-x` → other |
+
+*Control:* `sn5600` → `sw` is **pre-existing** (the long-standing `\bsn\d` rule already typed it;
+`.242`'s sn5600 guard was about **height**). Not a regression, not introduced here.
+
+## ⭐ TYPE ONLY — HEIGHT REMAINS HONESTLY UNKNOWN (do not "finish the job" later without a ruling)
+`q3400-ra` is **NOT** in `MASTER_U_TABLE` and this ship does not add it. Verified post-edit:
+`master_nodeHeightInfo('q3400-ra')` = `{u:null, known:false}`. So all 448 now render **SWITCH**
+(violet spine, label SWITCH) **while STILL carrying** the gold hazard hatch, hard border, ⚠ and
+*MODEL HEIGHT UNKNOWN — NOT DRAWN TO SCALE*.
+
+**That simultaneity is correct, not a bug.** John ruled on **WHAT** the device is, not **HOW TALL**
+it is, and the app must never quietly infer the second from the first. This is the `.246` design line
+(type-unknown ≠ height-unknown) paying off in the opposite direction.
+
+**Lead for the height ruling — NOT seeded:** SPARKS places them at a **uniform 5U pitch**
+(`s1:001` → U42 / U37 / U32), which **bounds** the chassis at ≤5U but does not determine it. A vendor
+spec or John's eyeball closes it, exactly as with VAST DBox.
+
+## DEVICE-VERIFY (John) — one pass now covers `.245` + `.246` + `.247`
+- **`.247`** SPARKS `s1:001` → `q3400-ra` rows read **SWITCH**, not UNKNOWN — **and still show the
+  gold hatch + MODEL HEIGHT UNKNOWN**. Both are correct at once. DFW02 completely unchanged.
+- **`.246`** `s3:176` → U31/U29/U28 read **UNKNOWN gold**, solid + to scale (no hatch), tap → *DEVICE
+  TYPE UNKNOWN · net-6x100g-02 — REAL GEAR, NOT A BLANKING PANEL* · no tray prints `undefined` ·
+  RACKED/PENDING counts unchanged.
+- **`.245`** `s3:176` U27 UFM reads **SERVER**.
+- All: `?legacy=1` curl-diff.
+
+## STILL OWED — JOHN'S RULING
+`net-6x100g-02` ×6 (the pkey / metal-jump rows) · `fs-media-converter-chassis` ×5 · DFW02's one
+**empty-model** row @`c1:001:38` · **and the HEIGHT of `q3400-ra`** (448 hosts still hatched).
