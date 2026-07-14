@@ -11826,7 +11826,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.253';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.254';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -32409,19 +32409,44 @@ function deploy_showRackDetail(deployId, rackId) {
   // with viewport-scroll semantics. rackHybrid_initSync handles all touch interaction.
   try {
     if (rack.slots && rack.slots.length > 0) {
+      // v1.14.236 — RETIRED: the .218 opt-in FLAT|3D toggle. FORGE 3D supersedes this
+      // wireframe rack view; two 3D doors onto the same rack violates "one door per
+      // feature", and the old view competes for the single GL context. Per the
+      // re-home law the toggle + its 3D mount are UNWIRED from the rd house, not
+      // deleted: the reh3d_* functions and .reh-3d-* CSS stay resident (physical
+      // removal waits for the R1 deletion pass). FLAT remains the rack-detail
+      // default, unchanged; #rehFlatWrap is display:contents so the fitted
+      // elevation renders exactly as before. Legacy (else) emits the original
+      // line verbatim — ?legacy=1 untouched.
+      // ── v1.14.254 — REVERSED (John's ruling, standing since 2026-07-12; executed per
+      // HANDOFF-reh3d-rewire-REV2.md). The SOLO-RACK 3D INSPECT VIEW IS A DISTINCT SURFACE
+      // FROM THE FORGE AISLE — FORGE is the cold-aisle walk-through, this is one rack on the
+      // bench — so the "one door per feature" objection above does NOT apply: they are two
+      // features, not two doors onto one. The GL-context objection is answered by machinery
+      // that already exists and is UNCHANGED: _reh3dActive bounds live contexts to exactly 1
+      // and forge3d_open cross-disposes this view symmetrically (see :17676). FLAT REMAINS THE
+      // INSTANT DEFAULT — 3D is a per-session opt-in (REH3D_PREF_KEY), never auto-entered on a
+      // cold open. Scene internals and the raycast->openRmDevice wiring are LOCKED, untouched.
+      var _rehRd = (typeof redesign_isOn === 'function' && redesign_isOn());
+      if (_rehRd) {
+        // PLACEMENT — full-width BEFORE .rack-hybrid, NOT inside it. The handoff left this to
+        // device-verify, but the CSS decides it outright: .rack-hybrid is `display:flex;
+        // align-items:stretch`, so a toggle emitted as its child becomes a THIRD FLEX COLUMN
+        // and breaks the 85/15 canvas/minimap split. Above the container it spans full width
+        // and disturbs no existing geometry.
+        html += '<div class="reh-3d-toggle">' +
+                  '<button type="button" id="reh3dBtnFlat" class="reh-3d-seg is-on" onclick="reh3d_setMode(\'flat\')">FLAT</button>' +
+                  '<button type="button" id="reh3dBtn3d" class="reh-3d-seg" onclick="reh3d_setMode(\'3d\')">3D</button>' +
+                '</div>';
+      }
       html += '<div class="rack-hybrid">';
-      if (typeof redesign_isOn === 'function' && redesign_isOn()) {
-        // v1.14.236 — RETIRED: the .218 opt-in FLAT|3D toggle. FORGE 3D supersedes this
-        // wireframe rack view; two 3D doors onto the same rack violates "one door per
-        // feature", and the old view competes for the single GL context. Per the
-        // re-home law the toggle + its 3D mount are UNWIRED from the rd house, not
-        // deleted: the reh3d_* functions and .reh-3d-* CSS stay resident (physical
-        // removal waits for the R1 deletion pass). FLAT remains the rack-detail
-        // default, unchanged; #rehFlatWrap is display:contents so the fitted
-        // elevation renders exactly as before. Legacy (else) emits the original
-        // line verbatim — ?legacy=1 untouched.
+      if (_rehRd) {
+        // #reh3dMount rejoins as a sibling of the flat wrap. Safe when FLAT: .reh-3d-mount is
+        // display:none until .rack-hybrid-canvas gets .is-3d, and #rehFlatWrap is
+        // display:contents, so the fitted elevation lays out byte-for-byte as it does today.
         html += '<div class="rack-hybrid-canvas" id="reh3dCanvasHost">' +
                   '<div id="rehFlatWrap" class="reh-flat-wrap">' + rackElevation_buildHtml(rack) + '</div>' +
+                  '<div id="reh3dMount" class="reh-3d-mount"></div>' +
                 '</div>';
       } else {
         html += '<div class="rack-hybrid-canvas">' + rackElevation_buildHtml(rack) + '</div>';
@@ -32434,6 +32459,13 @@ function deploy_showRackDetail(deployId, rackId) {
         // v1.14.236 — reh3d_restore() unwired with the toggle above. A stale
         // sessionStorage phantom_rackview_3d='1' from a pre-.236 session must not be
         // able to resurrect the retired 3D view into a mount that no longer exists.
+        // v1.14.254 — REWIRED: the mount exists again, so the session pref is safe to honour.
+        // reh3d_restore() also sets window._reh3dRack, which reh3d_setMode() reads — so this
+        // call is NOT optional even when the pref is off: without it the FIRST tap on 3D would
+        // render a rack of `undefined`. It runs AFTER rackFlat_applyFit so a restored 3D view
+        // never races the flat fit. rd-only: under ?legacy=1 the toggle is not emitted, and
+        // reh3d_setMode() is unreachable with no #reh3dCanvasHost to find.
+        if (_rehRd && typeof reh3d_restore === 'function') reh3d_restore(rack);
       }); });
     }
   } catch (rhErr) {
