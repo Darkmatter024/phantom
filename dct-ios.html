@@ -11826,7 +11826,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.245';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.246';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -17746,9 +17746,13 @@ function forge3d_render(mount) {
   // ---------- constants ----------
   var RW = 1.8, RH = 3.8, RD = 1.2, PITCH = 2.35;
   var GUT = { x0: 0.1046, x1: 0.9041, y0: 0.108, y1: 0.932 };
+  // v1.14.246 — 'unknown' is REAL GEAR WE COULD NOT CLASSIFY. 'blank' is a device the data
+  // positively identifies as a blanking panel. They are not the same claim and must never
+  // share a colour: slate #22303e reads as "nothing is installed here". Gold is the app's
+  // existing "we don't know something" language (MODEL HEIGHT UNKNOWN uses it).
   var TYPE_COLOR = { gpu: '#28e0ff', switch: '#8a4bff', pdu: '#ffcb45', patch: '#1fffd0',
-                     server: '#7fd0ff', storage: '#ff7bd0', blank: '#22303e' };
-  var TLABEL = { gpu: 'GPU', switch: 'SWITCH', pdu: 'PDU', patch: 'PATCH', server: 'SERVER', storage: 'STORAGE', blank: 'BLANK' };
+                     server: '#7fd0ff', storage: '#ff7bd0', unknown: '#ffcb45', blank: '#22303e' };
+  var TLABEL = { gpu: 'GPU', switch: 'SWITCH', pdu: 'PDU', patch: 'PATCH', server: 'SERVER', storage: 'STORAGE', unknown: 'UNKNOWN', blank: 'BLANK' };
 
   // ---------- persistence + per-node status overlay ----------
   var store = {
@@ -17777,9 +17781,10 @@ function forge3d_render(mount) {
   // a plain Array (8+ call sites index it).
   var _unplacedCache = {};
   // v1.14.245 — 'server' bridges master_hostType's vocabulary to the flat one. Without this key
-  // a master_hostType 'server' falls to `|| 'blank'` below and renders as a BLANKING PANEL — so
-  // the UFM classifier fix is INERT without it. TLABEL/TYPE_COLOR already carry 'server'.
-  var _TMAP = { gpu: 'gpu', sw: 'switch', pwr: 'pdu', patch: 'patch', stor: 'storage', cpu: 'server', server: 'server', cdu: 'pdu', fw: 'switch', other: 'blank' };
+  // a master_hostType 'server' falls to `|| 'unknown'` below. TLABEL/TYPE_COLOR already carry it.
+  // v1.14.246 — 'other' (master_hostType's fallthrough: "I could not classify this") now maps to
+  // 'unknown', NOT 'blank'. It previously claimed 459 real SPARKS devices were blanking panels.
+  var _TMAP = { gpu: 'gpu', sw: 'switch', pwr: 'pdu', patch: 'patch', stor: 'storage', cpu: 'server', server: 'server', cdu: 'pdu', fw: 'switch', other: 'unknown' };
   function deploy_forge_master() {
     var m = window._lastPhantomMaster;
     return (m && m.racksByCab && typeof m.racksByCab === 'object'
@@ -17851,7 +17856,9 @@ function forge3d_render(mount) {
       if (rack && typeof master_rackToElevation === 'function') {
         var elev = master_rackToElevation(rack, id);
         (elev && elev.slots ? elev.slots : []).forEach(function (s) {
-          var slot = { uStart: s.uStart, uEnd: s.uEnd, type: _TMAP[s.type] || 'blank',
+          // v1.14.246 — an UNMAPPED key is by definition unknown, never empty. This exact
+          // `|| 'blank'` swallowed the .245 'server' fix and rendered a UFM as a blanking panel.
+          var slot = { uStart: s.uStart, uEnd: s.uEnd, type: _TMAP[s.type] || 'unknown',
                        name: s.name || s.dns || s.model || '—', model: s.model || '', dns: s.dns || '', status: 'pending',
                        hgtUnknown: !!s.hgtUnknown };
           slot.status = statusOf(id, slot);
@@ -18369,6 +18376,13 @@ function forge3d_render(mount) {
     if (sl.overflow) f.push('CHASSIS OVERRUNS THE RACK');
     if (sl.hgtUnknown) {
       f.push('MODEL HEIGHT UNKNOWN' + (sl.model ? ' · ' + _fesc(sl.model) : '') + ' — NOT DRAWN TO SCALE');
+    }
+    // v1.14.246 — TYPE unknown is a different claim from HEIGHT unknown, and both can be true.
+    // Height-unknown says "do not trust this geometry" (hence the hatch). Type-unknown says
+    // "this U-span IS true, we just cannot name the device" — so it is drawn to scale, gold,
+    // flagged, and never hatched. Warn family (gold), not the red conflict family.
+    if (sl.type === 'unknown') {
+      f.push('DEVICE TYPE UNKNOWN' + (sl.model ? ' · ' + _fesc(sl.model) : '') + ' — REAL GEAR, NOT A BLANKING PANEL');
     }
     if (sl.stray) {
       f.push('HOSTNAME/LOCATION MISMATCH — NAMED FOR ' + _fesc(sl.stray).toUpperCase()
