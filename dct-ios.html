@@ -11826,7 +11826,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.248';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.249';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -29304,7 +29304,13 @@ var MASTER_U_TABLE = [
   // device the master itself put there, so 1U is the only height this rack can hold.
   // KEYED TO EXACT REV -02: a future -03 is different hardware until its own pitch proves
   // otherwise. (6 hosts, s3:175/s3:176.)
-  { re: /net-6x100g-02/,                  u: 1 },
+  // v1.14.249 — BOUNDARY FIX. This rule USED to be the bare substring /net-6x100g-02/, which did
+  // NOT enforce the exactness its own comment claims: a longer SKU like `net-6x100g-02-x` matched
+  // and silently inherited this 1U ruling. Same hyphen trap as .247's q3400-ra — and note `\b`
+  // would NOT fix it either, because \b matches BEFORE a hyphen. The class below excludes a
+  // trailing `-` (and a leading one), so only the exact rev John ruled on can match. The haystack
+  // is `model + ' ' + dns`, and a space IS a boundary char here, so real hosts still hit.
+  { re: /(^|[^a-z0-9-])net-6x100g-02([^a-z0-9-]|$)/, u: 1 },
   // ⭐ "12-mpo-48-lc-port-patch-panel" — 1U. The port count IS the product class: 12 MPO trunk
   // + 48 LC front is the standard 1U high-density modular panel (12 cassettes, 4x LC duplex
   // each). GEOMETRY CONFIRMS: s3:175 stacks s3-pp-ru06/07/08/09 at U6,U7,U8,U9 — four
