@@ -1109,3 +1109,82 @@ retired that surface. Harmless (a cached icon nobody renders), belongs to the LR
 2. The `ngfw-4245` / `as-2125` boundary siblings above.
 3. DFW02's one **empty-model** row @`c1:001:38`.
 4. **The HEIGHT of `q3400-ra`** (448 hosts still hatched).
+
+---
+
+# §21 — SHIP v1.14.250 · BOUNDARY FIXES `ngfw-4245` + `as-2125` (2026-07-14) · ⛔ BATCH = 6, CAP REACHED
+
+Completes the sibling sweep §20 flagged. **Data-only, height-only.**
+
+## ⚠️ RECON CHANGED THE PLAN — §20's OWN FLAG WAS PARTLY WRONG
+§20 flagged **both** rules as leaks needing a trailing boundary. **Replaying the real masters BEFORE
+editing showed that would have been a BUG for `as-2125`.** The two rules are not the same shape.
+
+| rule | real model string on the master | count |
+|---|---|---|
+| `ngfw-4245` | written **exactly** `ngfw-4245` | 4 (SPARKS `s3:175`) |
+| `as-2125` | written **`Supermicro AS-2125`** — but the RULED HARDWARE is the **AS-2125HS-TNR** | 50 (DFW02) |
+
+**The lesson: a self-flagged "obvious" fix still gets replayed against real data before it ships.**
+The flag was right about the defect class and wrong about the remedy for one of the two rows.
+
+## What shipped
+**(1) `ngfw-4245` — BOTH sides closed.** Was a bare substring with no guard on either side, so
+`xngfw-4245` and `ngfw-4245-k9` silently inherited the 1U ruling.
+
+    { re: /(^|[^a-z0-9-])ngfw-4245([^a-z0-9-]|$)/, u: 1 },
+
+Correct here because **4215 / 4225 / 4245 are DIFFERENT boxes** — there is no family prefix to preserve.
+
+**(2) `as-2125` — LEFT boundary ONLY.** `\b` matches **after** a hyphen as well as before one, so the
+old `/\bas-?2125/` let `foo-as-2125` inherit. That side is now closed:
+
+    { re: /(^|[^a-z0-9-])as-?2125/, u: 2 },
+
+## ⭐ THE OPEN TAIL ON `as-2125` IS DELIBERATE — DO NOT "FINISH THE JOB" LATER
+Closing it would stop matching the moment a master spells the **fuller SKU** (`AS-2125HS-TNR` — what
+the hardware actually **is**), **silently dropping 50 real hosts to unknown height**: a regression
+*from a correct known value*. It is also right on the merits — **Supermicro encodes U-height in the
+model number** (`AS-2**1**25` → 2U), so the whole `as-2125*` family genuinely **is** 2U.
+**A prefix match is the CORRECT semantics for this row. A bare substring was not.** The two are
+different things and the distinction is the whole point of this ship.
+
+## GUARD (both real masters, shipped table vs the `.249` baseline)
+| | result |
+|---|---|
+| **HEIGHT drift** | **0 across ALL 6490 placed hosts, BOTH masters** — bit-identical |
+| kept | 4 `ngfw-4245` hosts still **1U** · all 50 `as-2125` hosts still **2U** |
+| **leaks CLOSED** | `xngfw-4245` · `ngfw-4245-k9` · `foo-as-2125` |
+| **family preserved** (still 2U, by design) | `supermicro as-2125hs-tnr` · `as-2125gt-hnr` · `as2125` (hyphen-less) |
+| control | `ngfw-4225` — unknown before, unknown after |
+
+## ⭐ THE GENERALISATION (now proven 3× — .247, .249, .250)
+When a SKU contains **hyphens**, **neither a bare substring NOR `\b`** is a model-exactness boundary
+(`\b` matches on *both* sides of a hyphen). Only an explicit negated class `[^a-z0-9-]` is.
+**But WHICH sides to close is a per-rule judgement about the vendor's naming, NOT a mechanical
+rewrite.** Close the tail where the SKU is exact; leave it open where the row is *deliberately* a
+family prefix. Rules keyed on hyphen-less SKUs (`\bsn5610\b`, `\br760\b`, `\bgb300\b`) are **safe as
+they are** — the trap is hyphens, only. `MASTER_U_TABLE` is now clean of this class.
+
+## ⛔ THE 6-SHIP CAP IS REACHED — NO FURTHER SHIPS UNTIL JOHN'S DEVICE PASS (CALL 0)
+Batch = **.245 · .246 · .247 · .248 · .249 · .250**, all unverified.
+
+### DEVICE-VERIFY (John) — ONE pass covers all six
+- **`.250`** DFW02 → the 50 `Supermicro AS-2125` rows still draw **2U**, to scale, no hatch ·
+  SPARKS `s3:175` → the 4 `ngfw-4245` rows still draw **1U** (U38/U40), no hatch. Nothing else on
+  either master may change height.
+- **`.249`** SPARKS `s3:175`/`s3:176` → the 6 `net-6x100g-02` rows still **1U**, no hatch.
+- **`.248`** BUILD subtab strip → **Crash-Cart pill GONE**; tap **Rack Map** and **Optics** (the pills
+  that flanked it) — neither dead-taps nor lands on SOPs. Same under `?legacy=1` (pill gone there too
+  — the signed break).
+- **`.247`** `s1:001` → `q3400-ra` reads **SWITCH** + still gold hatch + MODEL HEIGHT UNKNOWN.
+- **`.246`** `s3:176` → U31/U29/U28 read **UNKNOWN gold**, solid + to scale, no hatch; no `undefined`.
+- **`.245`** `s3:176` U27 UFM reads **SERVER**.
+
+## STILL OWED — JOHN'S RULING (all blocked, nothing buildable)
+1. ⭐ **THE MEDIA-CONVERTER TYPE** — `net-6x100g-02` ×6 **and** `fs-media-converter-chassis` ×5 are
+   **both media converters** (his call, 2026-07-14), but the app has **no such type**. Needs his
+   **type + colour** decision. Heights are already settled and must **not** be inferred from the type
+   ruling: `net-6x100g-02` = 1U known; `fs-media-converter-chassis` = height-unknown (stays hatched).
+2. DFW02's one **empty-model** row @`c1:001:38`.
+3. **The HEIGHT of `q3400-ra`** (448 hosts still hatched).
