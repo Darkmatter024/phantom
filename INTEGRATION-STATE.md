@@ -956,3 +956,81 @@ spec or John's eyeball closes it, exactly as with VAST DBox.
 ## STILL OWED — JOHN'S RULING
 `net-6x100g-02` ×6 (the pkey / metal-jump rows) · `fs-media-converter-chassis` ×5 · DFW02's one
 **empty-model** row @`c1:001:38` · **and the HEIGHT of `q3400-ra`** (448 hosts still hatched).
+
+---
+
+# §19 — SHIP v1.14.248 · RETIRE THE CRASH-CART DOOR (2026-07-14) · BATCH = 4
+
+**John-signed legacy deletion.** The ask was *"remove the crashcart key from OPS_TABS."* Shipping
+that literally would have created a bug; the ship is the key **plus its only door**.
+
+## The lie this kills
+Crash-Cart Mode was **RETIRED by owner decision** (PHASE0-CENSUS: *"do NOT build doors for it;
+physical deletion waits for R1"*). But the door was still live — `OPS_TABS.crashcart` existed and
+`#ops-tab-strip` still rendered a tappable **Crash-Cart** pill. The app offered a working entrance to
+a feature the owner had killed.
+
+**How it surfaced:** a `/graphify` knowledge-graph build over the repo's docs flagged `showOpsTab` as
+the **highest-betweenness node** in the documented architecture. Tracing its edges showed it still
+dispatching to a census-RETIRED surface. **The graph raised the lead; live code was the evidence** —
+every claim was grep-confirmed before a single edit.
+
+## ⚠️ WHY THE KEY ALONE WOULD HAVE SHIPPED A DEAD-TAP
+`showOpsTab` opens with:
+
+    tab = (OPS_TABS[tab]) ? tab : (currentOpsTab || 'sops');
+
+Delete the key, leave the pill @`:14781`, and tapping **Crash-Cart** falls through that guard and
+**silently renders the SOPs tab** — no warning, no toast, no throw. That is precisely the defect class
+`.223` (deploy dead-card) and `.224` (ops-content dead-tap sweep) exist to kill, and it violates
+**hard rule #1 (no silent failures)**. A key and its only door are one unit; deleting half of a door
+leaves a button that lies.
+
+## What shipped — 3 edits
+| # | change |
+|---|---|
+| 1 | `OPS_TABS.crashcart` key + launch-card handler **removed** (`:19615`). Trailing comma moved onto `manifest` so the object literal stays valid. |
+| 2 | `'crashcart'` dropped from the `_unhomedOps` host-routing test (`:19649`) + its comment — the tab no longer exists, so it cannot be un-homed. |
+| 3 | The **Crash-Cart pill removed** from `#ops-tab-strip` (`:14781`). |
+
+## GUARD (post-edit, on the shipped file)
+| | result |
+|---|---|
+| `OPS_TABS` keys | **10** — blast, sops, portmap, rackmap, optics, burndown, audits, bom, deploy, manifest. `crashcart` **absent**. |
+| reachable doors | `showOpsTab('crashcart')` = **0** · `data-tab="crashcart"` = **0** · `onclick="crashcart_toggle()"` = **0** |
+| entry-point proof | `crashcart_toggle()` had **exactly ONE caller** (the OPS_TABS launch card) → the mode is now **fully UNREACHABLE** |
+
+## NOT TOUCHED (strict scope)
+The mode's own implementation — `crashcart_toggle` / `crashcart_exit` / `crashcart_pickRack` /
+`crashcart_render`, the `#crashcart-layer` overlay markup, and the ~100-line `.crashcart-*` CSS
+cluster — is now **dead but INTACT**, left for the **LR-2 atomic sweep that already owns it**
+(order dependency; a CSS-brace-balance job, not a drive-by). Deleting it here would have put a large
+diff on an already-unverified stack.
+
+## ⚠️ LEGACY-STRICT BREAK — EXPLICITLY SIGNED BY JOHN (2026-07-14)
+**This is the first ship to touch `#ops-tab-strip` markup, so `?legacy=1` is NO LONGER
+byte-identical** — the pill is gone in the legacy house too. **Intended:** the surface is RETIRED in
+both houses, and leaving a working door to a killed feature under legacy would be the lie.
+Ship-discipline **rule 7** requires an owner signature for exactly this; it was given.
+Precedent set: a census-RETIRED surface's *doors* may be cut ahead of LR-2; its *code* may not.
+
+## DEVICE-VERIFY (John) — one pass now covers `.245` + `.246` + `.247` + `.248`
+- **`.248`** BUILD subtab strip → the **Crash-Cart pill is GONE**. The remaining pills all still open
+  their correct panes — **especially tap Rack Map and Optics** (the two that flanked the deleted
+  pill): neither may dead-tap or land on SOPs. Same check under `?legacy=1` (pill gone there too —
+  expected, signed).
+- **`.247`** SPARKS `s1:001` → `q3400-ra` reads **SWITCH** + still gold hatch + MODEL HEIGHT UNKNOWN.
+- **`.246`** `s3:176` → U31/U29/U28 read **UNKNOWN gold**, solid + to scale, no hatch; no `undefined`.
+- **`.245`** `s3:176` U27 UFM reads **SERVER**.
+
+## STILL OWED — JOHN'S RULING
+- **`net-6x100g-02` ×6 and `fs-media-converter-chassis` ×5 are BOTH media converters** (John's field
+  call, 2026-07-14) — but **there is no media-converter type in the app** (`gpu/switch/pdu/patch/
+  server/storage/unknown/blank`). **Awaiting his type + colour decision** before that ship. Heights
+  split: `net-6x100g-02` is **1U known**; `fs-media-converter-chassis` is **height-unknown** (stays
+  hatched — do not infer height from the type ruling, per §18).
+- ⚠️ **Latent trap found while scoping it:** the `.242` height rule for `net-6x100g-02` is a **bare
+  substring** `/net-6x100g-02/` with **no boundary**, so `net-6x100g-02-x` would silently inherit 1U —
+  its own comment claims *"KEYED TO EXACT REV -02"* but the regex does not enforce that. Same hyphen
+  trap as §18. Harmless on today's masters; a future-rev landmine. **One-line fix, not yet made.**
+- DFW02's one **empty-model** row @`c1:001:38` · **the HEIGHT of `q3400-ra`** (448 hosts still hatched).
