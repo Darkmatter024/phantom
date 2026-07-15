@@ -11827,7 +11827,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.258';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.259';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -31798,7 +31798,8 @@ function rackElevation_render3D(rack, mountEl) {
   var fitDistH = (RH * 0.5) / Math.tan((FOV * Math.PI / 180) / 2);
   var fitDist = Math.max(fitDistH, RD * 0.65) * 1.3;              // frames full rack height at FOV 28; loop() orbits on this
 
-  var scene = new THREE.Scene();                                  // no solid bg / no fog — the env cubemap + backdrop carry depth
+  var scene = new THREE.Scene();                                  // no solid bg — the env cubemap + backdrop carry depth
+  scene.fog = new THREE.FogExp2(0x030508, 0.008);                 // v1.14.259 — mock's fog (FINAL L327), never ported in .255; its absence is why .258 read washed out vs the mock's deep-black
   var camera = new THREE.PerspectiveCamera(FOV, w / h, 0.3, 500);
   var renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));   // §F mobile cap
@@ -32341,6 +32342,7 @@ function rackElevation_render3D(rack, mountEl) {
     try { for (var i = 0; i < _bayTex.length; i++) { if (_bayTex[i] && _bayTex[i].dispose) _bayTex[i].dispose(); } } catch (e) {}
     _bayTex = [];
     try { if (scene.environment && scene.environment.dispose) scene.environment.dispose(); scene.environment = null; } catch (e) {}
+    scene.fog = null;                                             // v1.14.259 — clear the fog alongside the env (FogExp2 has no dispose; null is the teardown)
   }
 
   // ── camera spherical orbit around rack CENTER — always lookAt(0,0,0) so it never skews/balloons ──
