@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PHANTOM · GB300 NVL72</title>
+<style>
+
+:root {
+  --bg: #030508;
+  --surface: rgba(10,14,22,0.78);
+  --surface-hover: rgba(14,20,32,0.88);
+  --border: rgba(255,255,255,0.05);
+  --border-hover: rgba(255,255,255,0.10);
+  --text: #e8ecf1;
+  --text-secondary: #7a8599;
+  --text-tertiary: #4a5568;
+  --accent: #00d4aa;
+  --accent-dim: rgba(0,212,170,0.12);
+  --accent-glow: rgba(0,212,170,0.25);
+  --warn: #f59e0b;
+  --warn-dim: rgba(245,158,11,0.10);
+  --crit: #ef4444;
+  --crit-dim: rgba(239,68,68,0.10);
+  --info: #3b82f6;
+  --info-dim: rgba(59,130,246,0.10);
+  --purple: #a855f7;
+  --purple-dim: rgba(168,85,247,0.10);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+html,body { height:100%; background:var(--bg); overflow:hidden; font-family:'Inter',sans-serif; color:var(--text); }
+
+#app { position:fixed; inset:0; }
+canvas { display:block; touch-action:none; }
+
+.topbar {
+  position:fixed; top:0; left:0; right:0; height:52px;
+  background: linear-gradient(180deg, rgba(3,5,8,0.95) 0%, rgba(3,5,8,0.5) 100%);
+  border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 20px; z-index:100; pointer-events:none;
+}
+.topbar > * { pointer-events:auto; }
+.topbar-left { display:flex; align-items:center; gap:16px; }
+.logo-mark {
+  width:28px; height:28px; border-radius:7px;
+  background: linear-gradient(135deg, var(--accent), #0891b2);
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:12px;
+  color:#fff; box-shadow:0 0 16px var(--accent-glow);
+}
+.topbar-title {
+  font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:14px;
+  letter-spacing:0.3px; color:var(--text);
+}
+.topbar-title span { color:var(--text-secondary); font-weight:400; }
+.topbar-meta {
+  display:flex; align-items:center; gap:12px;
+  font-family:'IBM Plex Mono',monospace; font-size:11px;
+  color:var(--text-tertiary);
+}
+.meta-pill {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:6px; padding:3px 10px;
+  display:flex; align-items:center; gap:6px;
+}
+.meta-pill .dot {
+  width:6px; height:6px; border-radius:50%;
+  background:var(--accent); box-shadow:0 0 6px var(--accent-glow);
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+@keyframes pulse-dot {
+  0%,100% { opacity:1; transform:scale(1); }
+  50% { opacity:0.5; transform:scale(0.8); }
+}
+.topbar-right { display:flex; align-items:center; gap:10px; }
+.top-btn {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:8px; padding:6px 14px;
+  color:var(--text-secondary); font-family:'Inter',sans-serif;
+  font-size:12px; font-weight:500; cursor:pointer;
+  transition:all 0.2s ease; pointer-events:auto;
+}
+.top-btn:hover { border-color:var(--border-hover); color:var(--text); background:var(--surface-hover); }
+.top-btn.active { border-color:var(--accent); color:var(--accent); background:var(--accent-dim); }
+
+.sidebar {
+  position:fixed; left:0; top:52px; bottom:0; width:240px;
+  background: linear-gradient(90deg, rgba(3,5,8,0.9) 0%, rgba(3,5,8,0.35) 100%);
+  border-right:1px solid var(--border);
+  padding:16px; display:flex; flex-direction:column; gap:14px;
+  z-index:99; pointer-events:none;
+}
+.sidebar > * { pointer-events:auto; }
+
+.panel {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:12px; padding:14px;
+  backdrop-filter:blur(20px) saturate(1.2);
+  transition:border-color 0.2s ease;
+}
+.panel:hover { border-color:var(--border-hover); }
+.panel-header {
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:12px;
+}
+.panel-label {
+  font-size:10px; font-weight:600; letter-spacing:1.5px;
+  text-transform:uppercase; color:var(--text-tertiary);
+}
+.panel-action {
+  font-size:10px; color:var(--text-secondary); cursor:pointer;
+  transition:color 0.2s;
+}
+.panel-action:hover { color:var(--accent); }
+
+.health-wrap { display:flex; align-items:center; gap:14px; }
+.health-ring-svg { width:56px; height:56px; flex-shrink:0; }
+.health-ring-bg { fill:none; stroke:rgba(255,255,255,0.05); stroke-width:4; }
+.health-ring-fill {
+  fill:none; stroke:var(--accent); stroke-width:4;
+  stroke-linecap:round; stroke-dasharray:157;
+  stroke-dashoffset:4.7;
+  filter: drop-shadow(0 0 4px var(--accent-glow));
+  transition:stroke-dashoffset 0.8s ease;
+}
+.health-deets { display:flex; flex-direction:column; gap:2px; }
+.health-val { font-family:'Space Grotesk',sans-serif; font-size:22px; font-weight:700; color:var(--accent); line-height:1; }
+.health-sub { font-size:11px; color:var(--text-secondary); }
+.health-status { font-size:10px; font-weight:600; letter-spacing:0.5px; color:var(--accent); margin-top:2px; }
+
+.unit-row { display:flex; align-items:center; gap:10px; padding:7px 0; }
+.unit-icon { width:8px; height:8px; border-radius:2px; flex-shrink:0; }
+.unit-name { font-size:11px; color:var(--text-secondary); flex:1; }
+.unit-count { font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:500; color:var(--text); }
+.unit-count .of { color:var(--text-tertiary); }
+
+.rsidebar {
+  position:fixed; right:0; top:52px; bottom:0; width:64px;
+  background: linear-gradient(-90deg, rgba(3,5,8,0.9) 0%, rgba(3,5,8,0.35) 100%);
+  border-left:1px solid var(--border);
+  padding:12px 8px; display:flex; flex-direction:column; align-items:center;
+  z-index:99; pointer-events:none;
+}
+.rsidebar > * { pointer-events:auto; }
+.rsidebar-label { font-size:8px; font-weight:600; letter-spacing:2px; text-transform:uppercase; color:var(--text-tertiary); margin-bottom:10px; text-align:center; }
+#umap-track { position:relative; flex:1; width:40px; background:rgba(255,255,255,0.02); border-radius:8px; border:1px solid var(--border); overflow:visible; }
+.umap-tick { position:absolute; left:4px; right:18px; height:1px; background:rgba(255,255,255,0.05); }
+.umap-label { position:absolute; right:3px; font-family:'IBM Plex Mono',monospace; font-size:7px; color:var(--text-tertiary); transform:translateY(-50%); }
+#umap-handle { position:absolute; left:2px; right:2px; height:32px; border:1.5px solid var(--accent); border-radius:6px; background: linear-gradient(180deg, rgba(0,212,170,0.12), rgba(0,212,170,0.04)); box-shadow:0 0 12px var(--accent-glow), inset 0 0 8px var(--accent-dim); cursor:grab; transition:box-shadow 0.2s; }
+#umap-handle:hover { box-shadow:0 0 18px var(--accent-glow), inset 0 0 10px var(--accent-dim); }
+#umap-handle:active { cursor:grabbing; }
+
+.bottombar {
+  position:fixed; bottom:0; left:240px; right:64px; height:44px;
+  background: linear-gradient(0deg, rgba(3,5,8,0.95) 0%, rgba(3,5,8,0.5) 100%);
+  border-top:1px solid var(--border);
+  display:flex; align-items:center; justify-content:center; gap:4px;
+  padding:0 16px; z-index:100; pointer-events:none;
+}
+.bottombar > * { pointer-events:auto; }
+.btm-btn { background:transparent; border:1px solid transparent; border-radius:8px; padding:6px 14px; color:var(--text-tertiary); font-family:'Inter',sans-serif; font-size:11px; font-weight:500; cursor:pointer; transition:all 0.2s ease; display:flex; align-items:center; gap:6px; }
+.btm-btn:hover { color:var(--text); background:rgba(255,255,255,0.03); }
+.btm-btn.active { color:var(--accent); background:var(--accent-dim); border-color:rgba(0,212,170,0.15); }
+.btm-sep { width:1px; height:16px; background:var(--border); }
+
+
+#sel-ring { position:fixed; pointer-events:none; border:2px solid var(--accent); border-radius:6px; box-shadow:0 0 24px var(--accent-glow), inset 0 0 12px var(--accent-dim); opacity:0; transition:opacity 0.25s ease; z-index:999; }
+#sel-ring.visible { opacity:1; }
+
+.hint { position:fixed; left:50%; bottom:100px; transform:translateX(-50%); font-size:10px; letter-spacing:1px; color:var(--text-tertiary); pointer-events:none; opacity:0.7; }
+
+@media (max-width: 700px) {
+  .sidebar { display:none; }
+  .bottombar { left:0; right:64px; }
+  .topbar-meta { display:none; }
+  .topbar-title span { display:none; }
+  .rsidebar { top:60px; bottom:92px; }
+}
+
+.view-wrap { position:relative; }
+#view-menu {
+  position:absolute; right:0; top:calc(100% + 8px); min-width:130px;
+  background:rgba(8,12,20,0.96); border:1px solid var(--border); border-radius:10px;
+  backdrop-filter:blur(20px); overflow:hidden; z-index:300;
+  opacity:0; transform:translateY(-6px); pointer-events:none;
+  transition:opacity .15s ease, transform .15s ease;
+  box-shadow:0 16px 40px rgba(0,0,0,0.5);
+}
+#view-menu.open { opacity:1; transform:translateY(0); pointer-events:auto; }
+.vm-item { padding:10px 14px; font-size:12px; color:var(--text-secondary); cursor:pointer; }
+.vm-item:hover, .vm-item:active { color:var(--accent); background:var(--accent-dim); }
+.vm-sep { height:1px; background:var(--border); }
+#tooltip {
+  position:fixed; left:10px; right:12px;
+  bottom:calc(env(safe-area-inset-bottom,0px) + 10px);
+  height:58px; pointer-events:none;
+  display:flex; align-items:center; gap:0;
+  background:rgba(8,12,20,0.94); border:1px solid var(--border);
+  border-radius:12px; overflow:hidden;
+  backdrop-filter:blur(24px) saturate(1.3);
+  opacity:0; transform:translateY(10px);
+  transition:opacity .18s ease, transform .18s ease;
+  z-index:1000; box-shadow:0 20px 60px rgba(0,0,0,0.5);
+}
+#tooltip.visible { opacity:1; transform:translateY(0); }
+.ib-name {
+  font-family:'IBM Plex Mono',monospace; font-size:13px; font-weight:600;
+  color:var(--text); padding:0 14px; white-space:nowrap;
+  overflow:hidden; text-overflow:ellipsis; max-width:150px;
+  border-right:1px solid var(--border); align-self:stretch;
+  display:flex; align-items:center;
+}
+.ib-field {
+  flex:1; min-width:0; padding:0 12px; align-self:stretch;
+  display:flex; flex-direction:column; justify-content:center; gap:2px;
+  border-right:1px solid var(--border);
+}
+.ib-field:last-child { border-right:none; }
+.ib-l { font-size:8px; font-weight:700; letter-spacing:1.2px; color:var(--text-tertiary); }
+.ib-v { font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:600;
+  color:var(--text); white-space:nowrap; overflow:visible; }
+.ib-v.ok { color:var(--accent); }
+</style>
+<base target="_blank">
+</head>
+<body>
+
+<div id="app"></div>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="logo-mark">P</div>
+    <div class="topbar-title">PHANTOM <span>· Rack L-14 · GB300 NVL72 · DFW2</span></div>
+    <div class="topbar-meta">
+      <div class="meta-pill"><div class="dot"></div>Live</div>
+      <span>48U</span>
+      <span>·</span>
+      <span>120 kW</span>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <button class="top-btn active" id="btn-visual" onclick="setMode('visual')">Visual</button>
+    <button class="top-btn" id="btn-cables" onclick="toggleCables()">Cables</button>
+    <div class="view-wrap">
+      <button class="top-btn" id="btn-view" onclick="toggleViewMenu()">View · <span id="viewCur">ISO</span> ▾</button>
+      <div id="view-menu">
+        <div class="vm-item" onclick="pickView('front')">Front</div>
+        <div class="vm-item" onclick="pickView('side')">Side</div>
+        <div class="vm-item" onclick="pickView('iso')">ISO</div>
+        <div class="vm-sep"></div>
+        <div class="vm-item" onclick="pickView('reset')">Reset</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="sidebar">
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-label">Rack Health</span>
+      <span class="panel-action">Details →</span>
+    </div>
+    <div class="health-wrap">
+      <svg class="health-ring-svg" viewBox="0 0 56 56">
+        <circle class="health-ring-bg" cx="28" cy="28" r="25"/>
+        <circle class="health-ring-fill" id="healthRing" cx="28" cy="28" r="25" transform="rotate(-90 28 28)"/>
+      </svg>
+      <div class="health-deets">
+        <div class="health-val" id="healthVal">97%</div>
+        <div class="health-sub">of 100</div>
+        <div class="health-status" id="healthText">OPTIMAL</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-label">Inventory</span>
+    </div>
+    <div class="unit-row">
+      <div class="unit-icon" style="background:#00d4aa"></div>
+      <span class="unit-name">Compute trays</span>
+      <span class="unit-count">18 <span class="of">/ 18</span></span>
+    </div>
+    <div class="unit-row">
+      <div class="unit-icon" style="background:#a855f7"></div>
+      <span class="unit-name">NVLink switches</span>
+      <span class="unit-count">9 <span class="of">/ 9</span></span>
+    </div>
+    <div class="unit-row">
+      <div class="unit-icon" style="background:#f59e0b"></div>
+      <span class="unit-name">Power shelves</span>
+      <span class="unit-count">8 <span class="of">/ 8</span></span>
+    </div>
+    <div class="unit-row">
+      <div class="unit-icon" style="background:#3b82f6"></div>
+      <span class="unit-name">TOR Switches</span>
+      <span class="unit-count">2 <span class="of">/ 2</span></span>
+    </div>
+  </div>
+</div>
+
+<div class="rsidebar">
+  <div class="rsidebar-label">U-Map</div>
+  <div id="umap-track"></div>
+  <div id="umap-handle" title="drag to scan"></div>
+</div>
+
+<div id="tooltip">
+  <div class="ib-name" id="ibName">—</div>
+  <div class="ib-field"><span class="ib-l">POS</span><span class="ib-v" id="ibPos">—</span></div>
+  <div class="ib-field"><span class="ib-l">SIZE</span><span class="ib-v" id="ibSize">—</span></div>
+  <div class="ib-field"><span class="ib-l">TYPE</span><span class="ib-v" id="ibType">—</span></div>
+  <div class="ib-field"><span class="ib-l">STATUS</span><span class="ib-v" id="ibStatus">—</span></div>
+</div>
+
+<div id="sel-ring"></div>
+<div class="hint">drag to orbit · scroll to zoom · hover for details · click to select</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+  var app = document.getElementById('app');
+  var scene = new THREE.Scene();
+  scene.fog = new THREE.FogExp2(0x030508, 0.008);
+  var W = app.clientWidth, H = app.clientHeight;
+
+  var U = 48, uH = 0.34, RW = 6.0, RD = 4.5, RH = U * uH;
+  var FOV = 28;
+  var cam = new THREE.PerspectiveCamera(FOV, W/H, 0.3, 500);
+  var fitDistH = (RH * 0.5) / Math.tan((FOV * Math.PI/180)/2);
+  var fitDistD = (RD * 0.65);
+  var fitDist = Math.max(fitDistH, fitDistD);
+  var camDist = fitDist * 1.3;
+  var renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(W, H);
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.1;
+  app.appendChild(renderer.domElement);
+
+  scene.add(new THREE.AmbientLight(0x1a2535, 0.6));
+  var key = new THREE.DirectionalLight(0xd4e5f7, 0.9);
+  key.position.set(6, 12, 8);
+  key.castShadow = true;
+  key.shadow.mapSize.set(2048, 2048);
+  key.shadow.camera.near = 0.5; key.shadow.camera.far = 50;
+  key.shadow.camera.left = -8; key.shadow.camera.right = 8;
+  key.shadow.camera.top = 12; key.shadow.camera.bottom = -12;
+  key.shadow.bias = -0.0005;
+  scene.add(key);
+  var fill = new THREE.DirectionalLight(0x4a3a7a, 0.25);
+  fill.position.set(-5, 3, -4); scene.add(fill);
+  var rim = new THREE.DirectionalLight(0x00d4aa, 0.2);
+  rim.position.set(-8, 4, -6); scene.add(rim);
+  var glow = new THREE.PointLight(0x00d4aa, 0.4, 35);
+  glow.position.set(0, 1, 10); scene.add(glow);
+  var underGlow = new THREE.PointLight(0xa855f7, 0.15, 20);
+  underGlow.position.set(0, -RH/2 - 0.3, 2); scene.add(underGlow);
+
+  var rack = new THREE.Group();
+  scene.add(rack);
+
+  var RAIL = 0x0c141c;
+  var steelMat = new THREE.MeshStandardMaterial({
+    color: RAIL, metalness: 0.7, roughness: 0.4,
+    emissive: 0x060e14, emissiveIntensity: 0.3
+  });
+  var edgeMat = new THREE.LineBasicMaterial({
+    color: 0x1e3a4a, transparent: true, opacity: 0.15
+  });
+  var backPanelMat = new THREE.MeshStandardMaterial({
+    color: 0x070d14, metalness: 0.3, roughness: 0.9,
+    emissive: 0x050a12, emissiveIntensity: 0.12,
+    transparent: true, opacity: 0.85, side: THREE.DoubleSide
+  });
+
+  function frame(g, x, y, z) {
+    var m = new THREE.Mesh(g, steelMat);
+    m.position.set(x, y, z);
+    m.castShadow = true; m.receiveShadow = true;
+    rack.add(m);
+    var e = new THREE.LineSegments(new THREE.EdgesGeometry(g), edgeMat);
+    e.position.set(x, y, z); rack.add(e);
+  }
+
+  [[-RW/2,-RD/2],[RW/2,-RD/2],[-RW/2,RD/2],[RW/2,RD/2]].forEach(function(p){
+    frame(new THREE.BoxGeometry(0.16, RH, 0.16), p[0], 0, p[1]);
+  });
+  [RH/2, -RH/2].forEach(function(y){
+    frame(new THREE.BoxGeometry(RW+0.16, 0.16, RD+0.16), 0, y, 0);
+  });
+  [-1, 1].forEach(function(s){
+    frame(new THREE.BoxGeometry(0.08, RH-0.5, 0.08), s*(RW/2-0.13), 0, RD/2-0.24);
+  });
+  var back = new THREE.Mesh(new THREE.PlaneGeometry(RW-0.06, RH-0.06), backPanelMat);
+  back.position.set(0, 0, -RD/2+0.04); rack.add(back);
+  var bgeo = new THREE.EdgesGeometry(new THREE.PlaneGeometry(RW-0.06, RH-0.06));
+  var bl = new THREE.LineSegments(bgeo, new THREE.LineBasicMaterial({
+    color: 0x1e3a4a, transparent: true, opacity: 0.05
+  }));
+  bl.position.copy(back.position); rack.add(bl);
+
+  [-1, 1].forEach(function(s){
+    var sp = new THREE.Mesh(
+      new THREE.BoxGeometry(0.05, RH-0.35, RD-0.35),
+      new THREE.MeshStandardMaterial({ color: 0x0a1018, metalness: 0.5, roughness: 0.7, emissive: 0x050c14, emissiveIntensity: 0.12 })
+    );
+    sp.position.set(s*(RW/2+0.025), 0, -0.2);
+    sp.castShadow = true; rack.add(sp);
+  });
+
+  [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(function(p){
+    var foot = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.1, 0.13, 0.12, 8),
+      new THREE.MeshStandardMaterial({ color: 0x161d26, metalness: 0.8, roughness: 0.3 })
+    );
+    foot.position.set(p[0]*(RW/2-0.3), -RH/2-0.14, p[1]*(RD/2-0.3));
+    rack.add(foot);
+  });
+
+  var C = {
+    compute: 0x1a2332,
+    switch: 0x1e293b,
+    power: 0x1a2028,
+    tor: 0x16202a,
+    blank: 0x0f141c
+  };
+
+  // LAYOUT — PHANTOM PORT NOTE: this array is generated from the Master
+  // contract slots[] {uStart,uEnd,type,name,status}. Type mapping:
+  // gpu->compute · switch->switch · pdu->power · server->tor · patch/storage->compute-style
+  // Rendering below is UNCHANGED from the original GB300 build.
+  var ZONES = [
+    { kind:'tor',    u:1, count:2, name:'TOR-SW',   label:'Management' },
+    { kind:'power',  u:1, count:4, name:'PSU',      label:'Power' },
+    { kind:'compute',u:1, count:10,name:'GB300-CT', label:'Compute' },
+    { kind:'switch', u:1, count:9, name:'NVLink-SW',label:'NVLink' },
+    { kind:'compute',u:1, count:8, name:'GB300-CT', label:'Compute' },
+    { kind:'power',  u:1, count:4, name:'PSU',      label:'Power' },
+    { kind:'blank',  u:1, count:11,name:'BLANK',    label:'Blank' }
+  ];
+
+  function yFor(u) { return -RH/2 + (u - 0.5) * uH; }
+
+  var unitRegistry = [];
+  var ledLights = [];
+  var cableMeshes = [];
+  var cursor = U;
+
+  ZONES.forEach(function(z) {
+    for (var i = 0; i < z.count; i++) {
+      var uh = z.u;
+      var top = cursor; var bot = cursor - uh + 1; cursor -= uh;
+      var col = C[z.kind] || 0x0f141c;
+      var h = uh * uH - 0.04;
+      var yc = (yFor(top) + yFor(bot)) / 2;
+      var isBlank = (z.kind === 'blank');
+      var isRacked = !isBlank;
+
+      var unitGroup = new THREE.Group();
+      unitGroup.position.set(0, yc, 0);
+      rack.add(unitGroup);
+
+      var chassisW = RW - 0.42;
+      var chassisD = RD - 0.42;
+
+      var mat;
+      if (isBlank) {
+        mat = new THREE.MeshStandardMaterial({
+          color: 0x0a0f14, metalness: 0.4, roughness: 0.85,
+          transparent: true, opacity: 0.4
+        });
+      } else {
+        mat = new THREE.MeshStandardMaterial({
+          color: col, emissive: col, emissiveIntensity: 0.06,
+          metalness: 0.55, roughness: 0.4, transparent: true, opacity: 0.92
+        });
+      }
+
+      var chassis = new THREE.Mesh(new THREE.BoxGeometry(chassisW, h, chassisD), mat);
+      chassis.castShadow = true; chassis.receiveShadow = true;
+      unitGroup.add(chassis);
+
+      unitRegistry.push({
+        mesh: chassis, group: unitGroup, kind: z.kind,
+        racked: isRacked, uTop: top, uBot: bot,
+        uHeight: uh, name: z.name + '-' + String(i+1).padStart(2,'0'),
+        index: i, yc: yc, label: z.label
+      });
+
+      if (!isBlank) {
+        if (z.kind === 'compute') {
+          var nicL = new THREE.Mesh(
+            new THREE.BoxGeometry(chassisW * 0.22, h * 0.75, 0.02),
+            new THREE.MeshStandardMaterial({ color: 0x080e14, metalness: 0.6, roughness: 0.4 })
+          );
+          nicL.position.set(-chassisW/2 + chassisW*0.13, 0, chassisD/2 + 0.03);
+          unitGroup.add(nicL);
+
+          [-0.03, 0.03].forEach(function(oy) {
+            var osfp = new THREE.Mesh(
+              new THREE.BoxGeometry(0.08, 0.025, 0.025),
+              new THREE.MeshStandardMaterial({ color: 0x050a10, metalness: 0.5, roughness: 0.5 })
+            );
+            osfp.position.set(-chassisW/2 + chassisW*0.13, oy, chassisD/2 + 0.045);
+            unitGroup.add(osfp);
+          });
+
+          var driveW = chassisW * 0.42;
+          var driveStartX = -driveW/2 + 0.02;
+          for (var d = 0; d < 8; d++) {
+            var dx = driveStartX + d * (driveW/8);
+            var drive = new THREE.Mesh(
+              new THREE.BoxGeometry((driveW/8) - 0.008, h * 0.55, 0.015),
+              new THREE.MeshStandardMaterial({ color: 0x060c12, metalness: 0.5, roughness: 0.5 })
+            );
+            drive.position.set(dx, 0, chassisD/2 + 0.025);
+            unitGroup.add(drive);
+            var dLed = new THREE.Mesh(
+              new THREE.SphereGeometry(0.008, 6, 6),
+              new THREE.MeshBasicMaterial({ color: 0x10b981 })
+            );
+            dLed.position.set(dx + 0.01, -h*0.22, chassisD/2 + 0.035);
+            unitGroup.add(dLed);
+            ledLights.push({ mesh: dLed, kind:'drive', baseColor:0x10b981, blink: Math.random()>0.3 });
+          }
+
+          var nicR = new THREE.Mesh(
+            new THREE.BoxGeometry(chassisW * 0.22, h * 0.75, 0.02),
+            new THREE.MeshStandardMaterial({ color: 0x080e14, metalness: 0.6, roughness: 0.4 })
+          );
+          nicR.position.set(chassisW/2 - chassisW*0.13, 0, chassisD/2 + 0.03);
+          unitGroup.add(nicR);
+
+          var bf3 = new THREE.Mesh(
+            new THREE.BoxGeometry(0.06, 0.04, 0.02),
+            new THREE.MeshStandardMaterial({ color: 0x050a10, metalness: 0.5, roughness: 0.5 })
+          );
+          bf3.position.set(chassisW/2 - chassisW*0.18, 0.04, chassisD/2 + 0.045);
+          unitGroup.add(bf3);
+
+          var statusLed = new THREE.Mesh(
+            new THREE.BoxGeometry(0.04, 0.015, 0.01),
+            new THREE.MeshBasicMaterial({ color: 0x10b981 })
+          );
+          statusLed.position.set(0, -h/2 + 0.04, chassisD/2 + 0.035);
+          unitGroup.add(statusLed);
+          ledLights.push({ mesh: statusLed, kind:'status', baseColor:0x10b981, blink: true });
+
+          [-1, 1].forEach(function(s) {
+            var ear = new THREE.Mesh(
+              new THREE.BoxGeometry(0.03, h * 0.5, 0.03),
+              new THREE.MeshStandardMaterial({ color: 0x141e2a, metalness: 0.7, roughness: 0.3 })
+            );
+            ear.position.set(s * (chassisW/2 - 0.02), 0, chassisD/2 + 0.04);
+            unitGroup.add(ear);
+          });
+
+        } else if (z.kind === 'switch') {
+          [-1, 1].forEach(function(s) {
+            var swBlock = new THREE.Mesh(
+              new THREE.BoxGeometry(chassisW * 0.42, h * 0.7, 0.015),
+              new THREE.MeshStandardMaterial({ color: 0x0a1018, metalness: 0.5, roughness: 0.45 })
+            );
+            swBlock.position.set(s * chassisW * 0.23, 0, chassisD/2 + 0.03);
+            unitGroup.add(swBlock);
+
+            var portRows = 4, portCols = 10;
+            for (var pr = 0; pr < portRows; pr++) {
+              for (var pc = 0; pc < portCols; pc++) {
+                var px = s * chassisW * 0.23 - (chassisW*0.38)/2 + 0.03 + pc * ((chassisW*0.38)/portCols);
+                var py = h*0.25 - pr * 0.06;
+                var port = new THREE.Mesh(
+                  new THREE.BoxGeometry(0.04, 0.025, 0.012),
+                  new THREE.MeshStandardMaterial({ color: 0x050a10, metalness: 0.4, roughness: 0.5 })
+                );
+                port.position.set(px, py, chassisD/2 + 0.04);
+                unitGroup.add(port);
+
+                if (Math.random() > 0.4) {
+                  var pLed = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.008, 6, 6),
+                    new THREE.MeshBasicMaterial({ color: 0xa855f7 })
+                  );
+                  pLed.position.set(px + 0.015, py - 0.018, chassisD/2 + 0.048);
+                  unitGroup.add(pLed);
+                  ledLights.push({ mesh: pLed, kind:'port', baseColor:0xa855f7, blink: Math.random()>0.5 });
+                }
+              }
+            }
+          });
+
+          var swStatus = new THREE.Mesh(
+            new THREE.SphereGeometry(0.02, 8, 8),
+            new THREE.MeshBasicMaterial({ color: 0xa855f7 })
+          );
+          swStatus.position.set(0, h/2 - 0.06, chassisD/2 + 0.035);
+          unitGroup.add(swStatus);
+          ledLights.push({ mesh: swStatus, kind:'status', baseColor:0xa855f7, blink: true });
+
+        } else if (z.kind === 'power') {
+          var psuCount = 6;
+          var psuW = chassisW * 0.85 / psuCount;
+          for (var p = 0; p < psuCount; p++) {
+            var px = -chassisW*0.42 + p * psuW + psuW/2;
+            var psu = new THREE.Mesh(
+              new THREE.BoxGeometry(psuW - 0.015, h * 0.65, chassisD * 0.25),
+              new THREE.MeshStandardMaterial({
+                color: 0x121820, metalness: 0.6, roughness: 0.4,
+                emissive: 0xf59e0b, emissiveIntensity: 0.015
+              })
+            );
+            psu.position.set(px, 0, chassisD/2 - 0.25);
+            unitGroup.add(psu);
+
+            var fan = new THREE.Mesh(
+              new THREE.CircleGeometry(0.09, 14),
+              new THREE.MeshStandardMaterial({ color: 0x060c12, metalness: 0.5, roughness: 0.6, side: THREE.DoubleSide })
+            );
+            fan.position.set(px, 0, chassisD/2 + 0.025);
+            unitGroup.add(fan);
+
+            var psuLed = new THREE.Mesh(
+              new THREE.SphereGeometry(0.018, 8, 8),
+              new THREE.MeshBasicMaterial({ color: 0x10b981 })
+            );
+            psuLed.position.set(px, h/2 - 0.06, chassisD/2 + 0.035);
+            unitGroup.add(psuLed);
+            ledLights.push({ mesh: psuLed, kind:'status', baseColor:0x10b981, blink: false });
+          }
+
+        } else if (z.kind === 'tor') {
+          var torPorts = 24;
+          var portW = chassisW * 0.8 / torPorts;
+          for (var tp = 0; tp < torPorts; tp++) {
+            var px = -chassisW*0.4 + tp * portW + portW/2;
+            var tport = new THREE.Mesh(
+              new THREE.BoxGeometry(portW - 0.005, 0.03, 0.012),
+              new THREE.MeshStandardMaterial({ color: 0x060c12, metalness: 0.5, roughness: 0.5 })
+            );
+            tport.position.set(px, 0, chassisD/2 + 0.03);
+            unitGroup.add(tport);
+
+            if (Math.random() > 0.5) {
+              var tLed = new THREE.Mesh(
+                new THREE.SphereGeometry(0.006, 6, 6),
+                new THREE.MeshBasicMaterial({ color: 0x3b82f6 })
+              );
+              tLed.position.set(px + 0.008, -0.025, chassisD/2 + 0.04);
+              unitGroup.add(tLed);
+              ledLights.push({ mesh: tLed, kind:'port', baseColor:0x3b82f6, blink: Math.random()>0.4 });
+            }
+          }
+
+          var torStatus = new THREE.Mesh(
+            new THREE.SphereGeometry(0.02, 8, 8),
+            new THREE.MeshBasicMaterial({ color: 0x3b82f6 })
+          );
+          torStatus.position.set(-chassisW/2 + 0.1, h/2 - 0.06, chassisD/2 + 0.035);
+          unitGroup.add(torStatus);
+          ledLights.push({ mesh: torStatus, kind:'status', baseColor:0x3b82f6, blink: true });
+        }
+      }
+
+      if (isBlank) {
+        var e = new THREE.LineSegments(
+          new THREE.EdgesGeometry(new THREE.BoxGeometry(chassisW, h, chassisD)),
+          new THREE.LineBasicMaterial({ color: 0x1e293b, transparent: true, opacity: 0.2 })
+        );
+        unitGroup.add(e);
+      }
+    }
+  });
+
+  var cartridgeW = RW * 0.35;
+  var cartridgeH = RH * 0.55;
+  var cartridgeY = RH * 0.05;
+  var cartridgeMat = new THREE.MeshStandardMaterial({
+    color: 0x0e1a10, metalness: 0.4, roughness: 0.7,
+    emissive: 0x051008, emissiveIntensity: 0.1
+  });
+  var cartridge = new THREE.Mesh(
+    new THREE.BoxGeometry(cartridgeW, cartridgeH, 0.08),
+    cartridgeMat
+  );
+  cartridge.position.set(0, cartridgeY, -RD/2 + 0.25);
+  rack.add(cartridge);
+
+  var busBarMat = new THREE.MeshStandardMaterial({
+    color: 0xb87333, metalness: 0.9, roughness: 0.25,
+    emissive: 0x8b5a2b, emissiveIntensity: 0.15
+  });
+  [-1, 1].forEach(function(s) {
+    var busBar = new THREE.Mesh(
+      new THREE.BoxGeometry(0.06, RH * 0.6, 0.04),
+      busBarMat
+    );
+    busBar.position.set(s * (RW/2 - 0.25), 0, -RD/2 + 0.15);
+    rack.add(busBar);
+  });
+
+  var manifoldMat = new THREE.MeshStandardMaterial({
+    color: 0x1a3040, metalness: 0.6, roughness: 0.4
+  });
+  var topManifold = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.08, 0.08, RW * 0.7, 12),
+    manifoldMat
+  );
+  topManifold.rotation.z = Math.PI/2;
+  topManifold.position.set(0, RH/2 - 0.3, -RD/2 + 0.08);
+  rack.add(topManifold);
+  var botManifold = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.08, 0.08, RW * 0.7, 12),
+    manifoldMat
+  );
+  botManifold.rotation.z = Math.PI/2;
+  botManifold.position.set(0, -RH/2 + 0.3, -RD/2 + 0.08);
+  rack.add(botManifold);
+  [-1, 0, 1].forEach(function(s) {
+    var vPipe = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.035, 0.035, RH * 0.5, 8),
+      manifoldMat
+    );
+    vPipe.position.set(s * RW * 0.25, 0, -RD/2 + 0.08);
+    rack.add(vPipe);
+  });
+
+  var cableArmMat = new THREE.MeshStandardMaterial({
+    color: 0x141e2a, metalness: 0.5, roughness: 0.6
+  });
+  for (var ca = 0; ca < 6; ca++) {
+    var caY = -RH/3 + ca * (RH/3.5);
+    var cableArm = new THREE.Mesh(
+      new THREE.BoxGeometry(RW * 0.6, 0.04, 0.06),
+      cableArmMat
+    );
+    cableArm.position.set(0, caY, -RD/2 + 0.35);
+    rack.add(cableArm);
+  }
+
+  var rearDoorMat = new THREE.MeshStandardMaterial({
+    color: 0x080c12, metalness: 0.4, roughness: 0.8,
+    emissive: 0x04080c, emissiveIntensity: 0.08,
+    transparent: true, opacity: 0.7, side: THREE.DoubleSide
+  });
+  var rearDoor = new THREE.Mesh(
+    new THREE.PlaneGeometry(RW - 0.1, RH - 0.1),
+    rearDoorMat
+  );
+  rearDoor.position.set(0, 0, -RD/2 - 0.02);
+  rack.add(rearDoor);
+
+  function createCable(su, eu, ox, col, thick) {
+    var sy = yFor(su), ey = yFor(eu), my = (sy+ey)/2;
+    var sag = Math.abs(sy-ey) * 0.1;
+    var curve = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(ox, sy, RD/2 + 0.25),
+      new THREE.Vector3(ox + 0.08, my, RD/2 + 0.35 + sag),
+      new THREE.Vector3(ox, ey, RD/2 + 0.25)
+    ]);
+    var tube = new THREE.Mesh(
+      new THREE.TubeGeometry(curve, 16, thick||0.01, 6, false),
+      new THREE.MeshStandardMaterial({
+        color: col, emissive: col, emissiveIntensity: 0.2,
+        metalness: 0.3, roughness: 0.5, transparent: true, opacity: 0.5
+      })
+    );
+    tube.visible = false;
+    rack.add(tube);
+    cableMeshes.push(tube);
+  }
+  for (var c = 0; c < 8; c++) {
+    var cx = -RW/3 + c * (RW/3.5);
+    createCable(40-c, 31-c, cx, 0xa855f7, 0.008);
+    createCable(40-c, 30-c, cx+0.06, 0x00d4aa, 0.006);
+  }
+  for (var c = 0; c < 6; c++) {
+    var cx = -RW/3 + c * (RW/3.5);
+    createCable(22-c, 13-c, cx, 0xa855f7, 0.008);
+  }
+
+  // 1U-tall base geometry; scale.y = number of U it should cover
+  var HL_BASE = uH;
+  var hl = new THREE.Mesh(
+    new THREE.BoxGeometry(RW+0.30, HL_BASE, RD+0.30),
+    new THREE.MeshBasicMaterial({ color: 0x00d4aa, transparent: true, opacity: 0.16 })
+  );
+  rack.add(hl);   // ghost fill only — bright edge box removed
+
+  // scrub band: a thin 1U indicator that follows the U-map handle
+  function setHL(u) {
+    var y = yFor(u);
+    hl.scale.y = 1;
+    hl.position.y = y;
+  }
+
+  // SELECT band: snaps to the EXACT geometry of the chosen unit (uTop..uBot)
+  function setHLUnit(unit) {
+    var yTop = yFor(unit.uTop) + uH/2;
+    var yBot = yFor(unit.uBot) - uH/2;
+    var span = (unit.uTop - unit.uBot + 1);      // U count
+    var yc = (yTop + yBot) / 2;
+    hl.scale.y = span;
+    hl.position.y = yc;
+  }
+  setHL(30);
+
+  var disc = new THREE.Mesh(
+    new THREE.CircleGeometry(14, 64),
+    new THREE.MeshBasicMaterial({ color: 0x060a10, transparent: true, opacity: 0.5 })
+  );
+  disc.rotation.x = -Math.PI/2;
+  disc.position.y = -RH/2 - 0.18;
+  scene.add(disc);
+  var grid = new THREE.GridHelper(28, 56, 0x0c141c, 0x080c12);
+  grid.position.y = -RH/2 - 0.17;
+  scene.add(grid);
+
+  var pCount = 120;
+  var pGeo = new THREE.BufferGeometry();
+  var pPos = new Float32Array(pCount * 3);
+  var pSpd = [];
+  for (var p = 0; p < pCount; p++) {
+    pPos[p*3] = (Math.random()-0.5)*14;
+    pPos[p*3+1] = (Math.random()-0.5)*18;
+    pPos[p*3+2] = (Math.random()-0.5)*14;
+    pSpd.push({ y:(Math.random()-0.5)*0.0012, x:(Math.random()-0.5)*0.0006, z:(Math.random()-0.5)*0.0006 });
+  }
+  pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+  var pMat = new THREE.PointsMaterial({ color: 0x00d4aa, size: 0.022, transparent: true, opacity: 0.18 });
+  var particles = new THREE.Points(pGeo, pMat);
+  scene.add(particles);
+
+  var theta = -0.45, targetTheta = -0.45;
+  var elev = 0.06, targetElev = 0.06;
+  var panX = 0, targetPanX = 0;        // rack steps aside for the info rail
+  var drag = false, px, py, idle = 0;
+  var zoom = 1, targetZoom = 1;
+  var cv = renderer.domElement;
+
+  function place() {
+    var d = camDist * zoom;
+    panX += (targetPanX - panX) * 0.08;
+    cam.position.set(Math.sin(theta)*d + panX, elev*d, Math.cos(theta)*d);
+    cam.lookAt(panX, 0, 0);
+  }
+  function dn(x,y) { drag=true; px=x; py=y; idle=0; }
+  function mv(x,y) {
+    if (!drag) return;
+    targetTheta += (x-px)*0.004;
+    targetElev += (y-py)*0.001;
+    targetElev = Math.max(-0.18, Math.min(0.4, targetElev));
+    px=x; py=y; idle=0;
+  }
+  function up() { drag=false; }
+
+  cv.addEventListener('mousedown', function(e){ dn(e.clientX,e.clientY); });
+  window.addEventListener('mousemove', function(e){ mv(e.clientX,e.clientY); });
+  window.addEventListener('mouseup', up);
+  cv.addEventListener('touchstart', function(e){ var t=e.touches[0]; dn(t.clientX,t.clientY); }, {passive:true});
+  cv.addEventListener('touchmove', function(e){ var t=e.touches[0]; mv(t.clientX,t.clientY); }, {passive:true});
+  cv.addEventListener('touchend', up);
+  cv.addEventListener('wheel', function(e){
+    e.preventDefault();
+    targetZoom *= (1 + e.deltaY * 0.0008);
+    targetZoom = Math.max(0.35, Math.min(2.2, targetZoom));
+    idle=0;
+  }, {passive:false});
+
+  var raycaster = new THREE.Raycaster();
+  var mouse = new THREE.Vector2();
+  var hoveredUnit = null, selectedUnit = null;
+
+  function onMouseMove(e) {
+    mouse.x = (e.clientX/W)*2-1;
+    mouse.y = -(e.clientY/H)*2+1;
+    idle=0;
+  }
+  window.addEventListener('mousemove', onMouseMove);
+
+  function onClick(e) {
+    if (hoveredUnit) { selectedUnit = hoveredUnit; setHLUnit(hoveredUnit); updateSelRing(); }
+    else { selectedUnit = null; document.getElementById('sel-ring').classList.remove('visible'); }
+  }
+  cv.addEventListener('click', onClick);
+
+  // PHANTOM PORT: tap = hover+select on touch (iPhone has no hover)
+  cv.addEventListener('touchend', function(e){
+    var t = e.changedTouches[0];
+    mouse.x = (t.clientX/W)*2-1;
+    mouse.y = -(t.clientY/H)*2+1;
+    raycaster.setFromCamera(mouse, cam);
+    var hits = raycaster.intersectObjects(unitRegistry.map(function(u){ return u.mesh; }));
+    if (hits.length > 0) {
+      var hit = unitRegistry.find(function(u){ return u.mesh === hits[0].object; });
+      if (hit) {
+        hoveredUnit = hit;
+        selectedUnit = hit;
+        setHLUnit(hit);
+        updateTooltip(hit, t.clientX, t.clientY);
+        updateSelRing();
+      }
+    } else {
+      selectedUnit = null; hoveredUnit = null;
+      updateTooltip(null, 0, 0);
+      document.getElementById('sel-ring').classList.remove('visible');
+    }
+  }, {passive:true});
+
+  function updateTooltip(unit, sx, sy) {
+    var tt = document.getElementById('tooltip');
+    if (!unit) { tt.classList.remove('visible'); return; }
+    var kl = { compute:'COMPUTE', switch:'NVLINK', power:'POWER', tor:'TOR', blank:'BLANK' };
+    document.getElementById('ibName').textContent = unit.name;
+    document.getElementById('ibPos').textContent = 'U' + unit.uTop + (unit.uHeight>1?'-U'+unit.uBot:'');
+    document.getElementById('ibSize').textContent = unit.uHeight + 'U';
+    document.getElementById('ibType').textContent = kl[unit.kind] || unit.kind.toUpperCase();
+    var sv = document.getElementById('ibStatus');
+    sv.textContent = unit.racked ? 'RACKED' : 'BLANK';
+    sv.className = 'ib-v' + (unit.racked ? ' ok' : '');
+    tt.classList.add('visible');
+  }
+
+  function updateSelRing() {
+    // retired — the in-scene highlight band (setHLUnit) is the single selection
+    // indicator now; it snaps to the unit's exact U geometry and tracks the camera.
+    document.getElementById('sel-ring').classList.remove('visible');
+  }
+
+  var track = document.getElementById('umap-track'), handle = document.getElementById('umap-handle');
+  track.appendChild(handle);   // anchor the handle to the scale itself, not the sidebar
+  [48,42,36,30,24,18,12,6,1].forEach(function(u){
+    var pos = (3 + (48-u)/47*94)+'%';   // inset so U48/U1 labels don't clip
+    var t = document.createElement('div'); t.className = 'umap-tick';
+    t.style.top = pos;
+    track.appendChild(t);
+    var l = document.createElement('div'); l.className = 'umap-label';
+    l.style.top = pos;
+    l.textContent = 'U'+u;
+    track.appendChild(l);
+  });
+  var hDrag = false;
+  // handle rides the SAME 3%..97% scale as the tick labels, centered on its tick
+  function setHandleU(u) {
+    var pct = 3 + (48-u)/47*94;
+    handle.style.top = 'calc(' + pct + '% - 16px)';
+    setHL(u);
+  }
+  function uFrom(cy) {
+    var r = track.getBoundingClientRect();
+    var f = ((cy - r.top) - r.height*0.03) / (r.height*0.94);
+    f = Math.max(0, Math.min(1, f));
+    return Math.round(48 - f * 47);
+  }
+  handle.addEventListener('mousedown', function(e){ e.stopPropagation(); hDrag=true; setHandleU(uFrom(e.clientY)); });
+  track.addEventListener('mousedown', function(e){ hDrag=true; setHandleU(uFrom(e.clientY)); });
+  window.addEventListener('mousemove', function(e){ if(hDrag) setHandleU(uFrom(e.clientY)); });
+  window.addEventListener('mouseup', function(){ hDrag=false; });
+  handle.addEventListener('touchstart', function(e){ e.stopPropagation(); hDrag=true; setHandleU(uFrom(e.touches[0].clientY)); }, {passive:true});
+  track.addEventListener('touchstart', function(e){ hDrag=true; setHandleU(uFrom(e.touches[0].clientY)); }, {passive:true});
+  window.addEventListener('touchmove', function(e){ if(hDrag){ setHandleU(uFrom(e.touches[0].clientY)); e.preventDefault(); } }, {passive:false});
+  window.addEventListener('touchend', function(){ hDrag=false; });
+  setTimeout(function(){ setHandleU(30); }, 60);
+
+  var currentMode = 'visual', cablesVisible = false;
+
+  window.setMode = function(mode) {
+    currentMode = mode;
+    document.querySelectorAll('.top-btn').forEach(function(b){ b.classList.remove('active'); });
+    document.getElementById('btn-'+mode).classList.add('active');
+    // PHANTOM PORT: thermal mode removed (no telemetry source). Visual only.
+  };
+
+  window.toggleCables = function() {
+    cablesVisible = !cablesVisible;
+    cableMeshes.forEach(function(c){ c.visible = cablesVisible; });
+    document.getElementById('btn-cables').classList.toggle('active', cablesVisible);
+  };
+
+  window.setView = function(view) {
+    if (view==='front') { targetTheta=0; targetElev=0.02; targetZoom=0.85; }
+    else if (view==='side') { targetTheta=Math.PI/2; targetElev=0.04; targetZoom=1.0; }
+    else if (view==='iso') { targetTheta=-0.55; targetElev=0.2; targetZoom=1.0; }
+  };
+
+  window.resetView = function() {
+    targetTheta=-0.45; targetElev=0.06; targetZoom=1;
+  };
+
+  window.toggleViewMenu = function() {
+    document.getElementById('view-menu').classList.toggle('open');
+  };
+  window.pickView = function(v) {
+    document.getElementById('view-menu').classList.remove('open');
+    if (v === 'reset') { resetView(); return; }
+    document.getElementById('viewCur').textContent = v.toUpperCase();
+    setView(v);
+  };
+  // any canvas interaction closes the menu
+  cv.addEventListener('pointerdown', function(){
+    document.getElementById('view-menu').classList.remove('open');
+  });
+
+  window.focusUnit = function(uLabel) {
+    var uNum = parseInt(uLabel.replace('U',''));
+    var unit = unitRegistry.find(function(u){ return u.uTop===uNum || u.uBot===uNum; });
+    if (unit) {
+      selectedUnit = unit;
+      targetTheta = 0;
+      targetElev = unit.yc / camDist + 0.04;
+      targetZoom = 1.6;
+      setHandleU(uNum);
+    }
+  };
+
+  function resize() {
+    W = app.clientWidth; H = app.clientHeight;
+    cam.aspect = W/H;
+    fitDistH = (RH * 0.5) / Math.tan((FOV * Math.PI/180)/2);
+    fitDistD = (RD * 0.65);
+    fitDist = Math.max(fitDistH, fitDistD);
+    camDist = fitDist * 1.3;
+    cam.updateProjectionMatrix();
+    renderer.setSize(W, H);
+  }
+  window.addEventListener('resize', resize);
+
+  var time = 0;
+  function loop() {
+    requestAnimationFrame(loop);
+    time += 0.016;
+    idle++;
+
+    if (!drag && idle > 200) { targetTheta += 0.0008; }
+    theta += (targetTheta - theta) * 0.05;
+    elev += (targetElev - elev) * 0.05;
+    zoom += (targetZoom - zoom) * 0.05;
+    place();
+
+    ledLights.forEach(function(led){
+      if (led.blink) {
+        var inten = 0.55 + 0.45 * Math.sin(time * 2.5 + led.mesh.id * 0.7);
+        var col = new THREE.Color(led.baseColor);
+        col.multiplyScalar(inten);
+        led.mesh.material.color.copy(col);
+      }
+    });
+
+    var pos = particles.geometry.attributes.position.array;
+    for (var p = 0; p < pCount; p++) {
+      pos[p*3] += pSpd[p].x;
+      pos[p*3+1] += pSpd[p].y;
+      pos[p*3+2] += pSpd[p].z;
+      if (pos[p*3+1] > 9) pos[p*3+1] = -9;
+      if (pos[p*3+1] < -9) pos[p*3+1] = 9;
+    }
+    particles.geometry.attributes.position.needsUpdate = true;
+
+    raycaster.setFromCamera(mouse, cam);
+    var hits = raycaster.intersectObjects(unitRegistry.map(function(u){ return u.mesh; }));
+    if (hits.length > 0) {
+      var hit = unitRegistry.find(function(u){ return u.mesh === hits[0].object; });
+      if (hit && hit !== hoveredUnit) { hoveredUnit = hit; document.body.style.cursor = 'pointer'; }
+      if (hit) updateTooltip(hit, (mouse.x*0.5+0.5)*W, (-mouse.y*0.5+0.5)*H);
+    } else {
+      if (hoveredUnit) { hoveredUnit = null; document.body.style.cursor = 'default'; updateTooltip(null, 0, 0); }
+    }
+
+    if (selectedUnit) updateSelRing();
+    glow.intensity = 0.35 + 0.08 * Math.sin(time * 0.6);
+
+    renderer.render(scene, cam);
+  }
+  place();
+  loop();
+
+})();
+</script>
+</body>
+</html>

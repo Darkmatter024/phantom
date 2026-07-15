@@ -10043,6 +10043,7 @@ body.rd .rack-hybrid-minimap .scrubbar-u-label { padding: 0 2px; }
 body.rd .reh-3d-toggle { display: flex; gap: 4px; padding: 4px 0 8px; }
 body.rd .reh-3d-seg { font-family: var(--mono); font-size: var(--fs-caption, 10px); letter-spacing: 1px; padding: 4px 12px; border: 1px solid rgba(92,242,255,0.25); border-radius: 6px; background: rgba(8,12,18,0.6); color: var(--slate); cursor: pointer; }
 body.rd .reh-3d-seg.is-on { color: var(--cyan); border-color: var(--cyan); background: rgba(40,224,255,0.10); }
+body.rd .reh-3d-seg.reh-3d-cables { margin-left: 12px; }   /* v1.14.256 — CABLES is a filter, not a mode: gap it from the FLAT|3D pair */
 body.rd .reh-flat-wrap { display: contents; }
 body.rd .reh-3d-mount { display: none; position: relative; height: 60vh; max-height: 60vh; border: 1px solid rgba(92,242,255,0.10); border-radius: 8px; overflow: hidden; background: #06090f; }
 body.rd .rack-hybrid-canvas.is-3d .reh-flat-wrap { display: none; }
@@ -11826,7 +11827,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.255';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.256';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -31781,8 +31782,9 @@ function rackElevation_render3D(rack, mountEl) {
   // type colours John ruled across .251–.253 (magenta UNKNOWN, slate MEDIA CONV). §E
   // requires the bay to show type colour and "never contradict the elevation." So chrome
   // black is applied to the RACK STRUCTURE only; TRAYS keep their type colour (information,
-  // not finish). Full piano-black trays would be a one-flag change but would contradict the
-  // elevation — not shipped without a ruling.
+  // not finish). v1.14.256 — JOHN RULED (device, 2026-07-14): "keep trays type-colored, magenta
+  // unknown looks right." That call is CORRECT and LOCKED; piano-black trays are ruled AGAINST.
+  // Do not revert the chrome-structure / type-colour-tray split in any future session.
   var _bayTex = [];   // CanvasTexture/CubeTexture handles — material.dispose() won't free these
   function _tex(t) { _bayTex.push(t); return t; }
 
@@ -31855,39 +31857,253 @@ function rackElevation_render3D(rack, mountEl) {
   [-1, 1].forEach(function (s) { frame(new THREE.BoxGeometry(0.08, RH - 0.5, 0.08), s * (RW/2 - 0.13), 0, RD/2 - 0.24); });
   var backMat = new THREE.MeshStandardMaterial({ color: 0x070d14, metalness: 0.3, roughness: 0.9, emissive: 0x050a12, emissiveIntensity: 0.12, transparent: true, opacity: 0.85, side: THREE.DoubleSide, envMapIntensity: 0.25 });
   var back = new THREE.Mesh(new THREE.PlaneGeometry(RW - 0.06, RH - 0.06), backMat); back.position.set(0, 0, -RD/2 + 0.04); back.receiveShadow = true; rackGrp.add(back);
-  // rear cooling/manifold hint — chrome, low detail (keeps the "star" the front trays)
-  var manifoldMat = new THREE.MeshStandardMaterial({ color: 0x1a3040, metalness: 0.6, roughness: 0.4, envMapIntensity: 0.25 });
-  [RH/2 - 0.3, -RH/2 + 0.3].forEach(function (y) { var mm = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, RW * 0.7, 12), manifoldMat); mm.rotation.z = Math.PI/2; mm.position.set(0, y, -RD/2 + 0.08); rackGrp.add(mm); });
+  // ── v1.14.256 — PORT THE RACK (HANDOFF-INSPECT3D-RACK-PORT.md). The .255 rack was a bare
+  //    box + sphere per unit + two rear "hint cylinders"; John's device read it as coloured
+  //    shelves on posts. THE RULE (handoff §1): port the mock (MOCKUP-INSPECT3D-FINAL.html)
+  //    VERBATIM — every mesh, dimension, material — changing ONLY the data source (live Master
+  //    slots, not the mock's GB300 ZONES) and adding envMapIntensity 0.25 (§1d). Interior detail
+  //    is decoration keyed to TYPE, never a claim about a specific device (§3 zero-fabrication).
+  //    Two handoff-internal contradictions, resolved toward the mock per THE RULE, FLAGGED for
+  //    John's device call (both are one-edit flips):
+  //      (1) REAR FINISH: §1b/§1d/§7 say port the rear materials verbatim (copper bus bars, green
+  //          cartridge); §2 says chrome-black the rear assembly. The mock + the §7 "looks the same
+  //          as the mock, gaps = fail" bar win → rear ported VERBATIM (copper). If John wants
+  //          chrome-black rear, swap the 4 rear mats to CHROME.
+  //      (2) EARS: the mock builds rack ears on COMPUTE units (mock L555-562); §1a/§7 text says
+  //          switch. Ported per the mock (ears on compute). Flip the kind guard if John rules switch.
+  //    Frame/posts/rails/back stay CHROME (§2 ruling, already shipped & device-seen in .255).
+  //    Chassis stays TYPE-COLOUR (§3 + the .251-.253 honesty arc). §5 budget: shared materials,
+  //    InstancedMesh for the dominant box-repeats (compute drives, switch ports), shared LED
+  //    materials group-blinked in bayTick (no per-frame allocation; near-identical look).
 
-  // ── TRAYS from live Master slots (§E) — coloured from the SHARED map; hgtUnknown → gold hatch ──
+  // shared structure + detail materials (created ONCE, reused across every unit — §5 merge) ──
+  // rear assembly — mock materials VERBATIM + env .25 (§1b; the flagged §2 deviation)
+  var cartridgeMat = new THREE.MeshStandardMaterial({ color: 0x0e1a10, metalness: 0.4, roughness: 0.7, emissive: 0x051008, emissiveIntensity: 0.1, envMapIntensity: 0.25 });
+  var busBarMat    = new THREE.MeshStandardMaterial({ color: 0xb87333, metalness: 0.9, roughness: 0.25, emissive: 0x8b5a2b, emissiveIntensity: 0.15, envMapIntensity: 0.25 });
+  var manifoldMat  = new THREE.MeshStandardMaterial({ color: 0x1a3040, metalness: 0.6, roughness: 0.4, envMapIntensity: 0.25 });
+  var cableArmMat  = new THREE.MeshStandardMaterial({ color: 0x141e2a, metalness: 0.5, roughness: 0.6, envMapIntensity: 0.25 });
+  var rearDoorMat  = new THREE.MeshStandardMaterial({ color: 0x080c12, metalness: 0.4, roughness: 0.8, emissive: 0x04080c, emissiveIntensity: 0.08, transparent: true, opacity: 0.7, side: THREE.DoubleSide, envMapIntensity: 0.25 });
+  // interior detail — mock materials VERBATIM + env .25 (§1a)
+  var nicMat     = new THREE.MeshStandardMaterial({ color: 0x080e14, metalness: 0.6, roughness: 0.4, envMapIntensity: 0.25 });
+  var osfpMat    = new THREE.MeshStandardMaterial({ color: 0x050a10, metalness: 0.5, roughness: 0.5, envMapIntensity: 0.25 });
+  var driveMat   = new THREE.MeshStandardMaterial({ color: 0x060c12, metalness: 0.5, roughness: 0.5, envMapIntensity: 0.25 });
+  var earMat     = new THREE.MeshStandardMaterial({ color: 0x141e2a, metalness: 0.7, roughness: 0.3, envMapIntensity: 0.25 });
+  var swBlockMat = new THREE.MeshStandardMaterial({ color: 0x0a1018, metalness: 0.5, roughness: 0.45, envMapIntensity: 0.25 });
+  var portMat    = new THREE.MeshStandardMaterial({ color: 0x050a10, metalness: 0.4, roughness: 0.5, envMapIntensity: 0.25 });
+  var psuMat     = new THREE.MeshStandardMaterial({ color: 0x121820, metalness: 0.6, roughness: 0.4, emissive: 0xf59e0b, emissiveIntensity: 0.015, envMapIntensity: 0.25 });
+  var fanMat     = new THREE.MeshStandardMaterial({ color: 0x060c12, metalness: 0.5, roughness: 0.6, side: THREE.DoubleSide, envMapIntensity: 0.25 });
+  // LEDs — MeshBasic (self-lit); SHARED per colour, GROUP-blinked in bayTick (see ledMats). psu = static green.
+  var greenLedMat  = new THREE.MeshBasicMaterial({ color: 0x10b981 });   // drive + compute status (blink)
+  var violetLedMat = new THREE.MeshBasicMaterial({ color: 0xa855f7 });   // switch ports + switch status (blink)
+  var psuLedMat    = new THREE.MeshBasicMaterial({ color: 0x10b981 });   // PSU status (static, mock blink:false)
+  var ledMats = [ { mat: greenLedMat, r: 0.063, g: 0.725, b: 0.506, off: 0 },
+                  { mat: violetLedMat, r: 0.659, g: 0.200, b: 0.969, off: 1.7 } ];
+
+  // ── §1 rack side panels + feet (mock L408-424, verbatim + env .25) — omitted in .255 ──
+  var sidePanelMat = new THREE.MeshStandardMaterial({ color: 0x0a1018, metalness: 0.5, roughness: 0.7, emissive: 0x050c14, emissiveIntensity: 0.12, envMapIntensity: 0.25 });
+  [-1, 1].forEach(function (s) {
+    var sp = new THREE.Mesh(new THREE.BoxGeometry(0.05, RH - 0.35, RD - 0.35), sidePanelMat);
+    sp.position.set(s * (RW/2 + 0.025), 0, -0.2); sp.castShadow = true; rackGrp.add(sp);
+  });
+  var footMat = new THREE.MeshStandardMaterial({ color: 0x161d26, metalness: 0.8, roughness: 0.3, envMapIntensity: 0.25 });
+  [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(function (p) {
+    var foot = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.13, 0.12, 8), footMat);
+    foot.position.set(p[0] * (RW/2 - 0.3), -RH/2 - 0.14, p[1] * (RD/2 - 0.3)); rackGrp.add(foot);
+  });
+
+  // ── TRAYS from live Master slots (§3) — chassis = TYPE colour; interior detail keyed to kind ──
   function yFor(u) { return yBase + (u - 0.5) * uH; }
-  var trayMeshes = [];
+  var trayMeshes = [];                                       // raycast targets (chassis) — .255 tap contract, §4
+  var _mtx = new THREE.Matrix4();
   slots.forEach(function (dev) {
     if (dev == null || dev.uStart == null || dev.uEnd == null) return;
     var uS = dev.uStart, uE = dev.uEnd; if (uE < uS) { var tmp = uS; uS = uE; uE = tmp; }
     if (uE > totalU) uE = totalU;
-    var disp = _TMAP[(dev.type || '').toLowerCase()] || 'unknown';   // RAW master code → display key
+    var disp = _TMAP[(dev.type || '').toLowerCase()] || 'unknown';    // RAW master code → display key
+    // §3 interior kind: gpu|server → compute · switch → switch · pdu → power · blank → blank · rest → generic
+    var kind;
+    if (disp === 'gpu' || disp === 'server') kind = 'compute';
+    else if (disp === 'switch') kind = 'switch';
+    else if (disp === 'pdu') kind = 'power';
+    else if (disp === 'blank') kind = 'blank';
+    else kind = 'generic';                                            // patch | media | storage | unknown
     var hex = parseInt((TYPE_COLOR[disp] || TYPE_COLOR.unknown).slice(1), 16);
     var hT = (uE - uS + 1) * uH - 0.04; if (hT <= 0) hT = uH * 0.55;
     var yc = yFor((uS + uE) / 2);
     var cw = RW - 0.42, cd = RD - 0.42;
-    var mat = new THREE.MeshStandardMaterial({ color: hex, emissive: hex, emissiveIntensity: 0.10, metalness: 0.5, roughness: 0.4, transparent: true, opacity: 0.94, envMapIntensity: 0.25 });
-    var chassis = new THREE.Mesh(new THREE.BoxGeometry(cw, hT, cd), mat);
-    chassis.position.set(0, yc, 0); chassis.castShadow = true; chassis.receiveShadow = true;
+
+    var grp = new THREE.Group();
+    grp.position.set(0, yc, 0);
+    rackGrp.add(grp);
+
+    // chassis — TYPE colour (§3), the raycast target
+    var chMat = new THREE.MeshStandardMaterial({ color: hex, emissive: hex, emissiveIntensity: 0.06, metalness: 0.55, roughness: 0.4, transparent: true, opacity: 0.92, envMapIntensity: 0.25 });
+    var chassis = new THREE.Mesh(new THREE.BoxGeometry(cw, hT, cd), chMat);
+    chassis.castShadow = true; chassis.receiveShadow = true;
     chassis.userData.dev = dev;
-    trayMeshes.push(chassis); rackGrp.add(chassis);
-    // front status LED — emissive dot in the type hue (survives chrome finish; it's the tray's "life")
-    var led = new THREE.Mesh(new THREE.SphereGeometry(0.02, 8, 8), new THREE.MeshBasicMaterial({ color: hex }));
-    led.position.set(cw / 2 - 0.08, yc, cd / 2 + 0.03); rackGrp.add(led);
-    // ⚠️ HEIGHT-UNKNOWN HAZARD (§E): the U-span is a 1U PLACEHOLDER, not trusted. Gold hatch =
-    // "DO NOT TRUST THIS GEOMETRY" — the 3D echo of the FLAT elevation's gold hatch. NOT the same
-    // as an UNKNOWN *type* (that reads magenta via TYPE_COLOR.unknown above). Both can co-occur.
+    grp.add(chassis); trayMeshes.push(chassis);
+
+    if (kind === 'compute') {
+      // left + right NIC blocks
+      [-1, 1].forEach(function (sx) {
+        var nic = new THREE.Mesh(new THREE.BoxGeometry(cw * 0.22, hT * 0.75, 0.02), nicMat);
+        nic.position.set(sx * (cw/2 - cw*0.13), 0, cd/2 + 0.03); grp.add(nic);
+      });
+      // OSFP cages (2), left stack
+      [-0.03, 0.03].forEach(function (oy) {
+        var osfp = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.025, 0.025), osfpMat);
+        osfp.position.set(-cw/2 + cw*0.13, oy, cd/2 + 0.045); grp.add(osfp);
+      });
+      // drive bays — 8 boxes as ONE InstancedMesh (§5) + a green LED each
+      var driveW = cw * 0.42, driveStartX = -driveW/2 + 0.02, dPitch = driveW/8;
+      var driveInst = new THREE.InstancedMesh(new THREE.BoxGeometry(dPitch - 0.008, hT * 0.55, 0.015), driveMat, 8);
+      for (var d = 0; d < 8; d++) {
+        var dx = driveStartX + d * dPitch;
+        _mtx.makeTranslation(dx, 0, cd/2 + 0.025); driveInst.setMatrixAt(d, _mtx);
+        var dLed = new THREE.Mesh(new THREE.SphereGeometry(0.008, 6, 6), greenLedMat);
+        dLed.position.set(dx + 0.01, -hT*0.22, cd/2 + 0.035); grp.add(dLed);
+      }
+      driveInst.instanceMatrix.needsUpdate = true; grp.add(driveInst);
+      // BF3 DPU
+      var bf3 = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.04, 0.02), osfpMat);
+      bf3.position.set(cw/2 - cw*0.18, 0.04, cd/2 + 0.045); grp.add(bf3);
+      // status LED (blink) — kept per-mesh
+      var stat = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.015, 0.01), greenLedMat);
+      stat.position.set(0, -hT/2 + 0.04, cd/2 + 0.035); grp.add(stat);
+      // rack ears (mock puts these on COMPUTE — the flagged §1a/§7 deviation)
+      [-1, 1].forEach(function (sx) {
+        var ear = new THREE.Mesh(new THREE.BoxGeometry(0.03, hT * 0.5, 0.03), earMat);
+        ear.position.set(sx * (cw/2 - 0.02), 0, cd/2 + 0.04); grp.add(ear);
+      });
+
+    } else if (kind === 'switch') {
+      var portRows = 4, portCols = 10, portGeo = new THREE.BoxGeometry(0.04, 0.025, 0.012);
+      var portInst = new THREE.InstancedMesh(portGeo, portMat, 2 * portRows * portCols);
+      var pi = 0;
+      [-1, 1].forEach(function (sx) {
+        var swBlock = new THREE.Mesh(new THREE.BoxGeometry(cw * 0.42, hT * 0.7, 0.015), swBlockMat);
+        swBlock.position.set(sx * cw * 0.23, 0, cd/2 + 0.03); grp.add(swBlock);
+        for (var pr = 0; pr < portRows; pr++) {
+          for (var pc = 0; pc < portCols; pc++) {
+            var px = sx * cw * 0.23 - (cw*0.38)/2 + 0.03 + pc * ((cw*0.38)/portCols);
+            var py = hT*0.25 - pr * 0.06;
+            _mtx.makeTranslation(px, py, cd/2 + 0.04); portInst.setMatrixAt(pi++, _mtx);
+            if (Math.random() > 0.4) {
+              var pLed = new THREE.Mesh(new THREE.SphereGeometry(0.008, 6, 6), violetLedMat);
+              pLed.position.set(px + 0.015, py - 0.018, cd/2 + 0.048); grp.add(pLed);
+            }
+          }
+        }
+      });
+      portInst.instanceMatrix.needsUpdate = true; grp.add(portInst);
+      var swStat = new THREE.Mesh(new THREE.SphereGeometry(0.02, 8, 8), violetLedMat);
+      swStat.position.set(0, hT/2 - 0.06, cd/2 + 0.035); grp.add(swStat);
+
+    } else if (kind === 'power') {
+      var psuCount = 6, psuW = cw * 0.85 / psuCount;
+      for (var p = 0; p < psuCount; p++) {
+        var ppx = -cw*0.42 + p * psuW + psuW/2;
+        var psu = new THREE.Mesh(new THREE.BoxGeometry(psuW - 0.015, hT * 0.65, cd * 0.25), psuMat);
+        psu.position.set(ppx, 0, cd/2 - 0.25); grp.add(psu);
+        var fan = new THREE.Mesh(new THREE.CircleGeometry(0.09, 14), fanMat);
+        fan.position.set(ppx, 0, cd/2 + 0.025); grp.add(fan);
+        var pLed2 = new THREE.Mesh(new THREE.SphereGeometry(0.018, 8, 8), psuLedMat);
+        pLed2.position.set(ppx, hT/2 - 0.06, cd/2 + 0.035); grp.add(pLed2);
+      }
+
+    } else if (kind === 'blank') {
+      chMat.transparent = true; chMat.opacity = 0.4; chMat.emissiveIntensity = 0;
+      var e = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(cw, hT, cd)),
+        new THREE.LineBasicMaterial({ color: 0x1e293b, transparent: true, opacity: 0.2 }));
+      grp.add(e);
+
+    } else {
+      // generic (patch | media | storage | unknown): chassis + one status LED, NO invented hardware (§3)
+      var gStat = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.015, 0.01), greenLedMat);
+      gStat.position.set(cw/2 - 0.1, -hT/2 + 0.04, cd/2 + 0.035); grp.add(gStat);
+    }
+
+    // ⚠️ HEIGHT-UNKNOWN HAZARD (§3): the U-span is a 1U PLACEHOLDER, not trusted. Gold hatch =
+    // "DO NOT TRUST THIS GEOMETRY" — the 3D echo of the FLAT elevation's gold hatch. NOT the
+    // same as an UNKNOWN *type* (that reads magenta via TYPE_COLOR.unknown). Both can co-occur.
     if (dev.hgtUnknown) {
       var hz = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(cw + 0.02, hT + 0.02, cd + 0.02)),
         new THREE.LineBasicMaterial({ color: 0xffcb45, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending }));
-      hz.position.set(0, yc, 0); rackGrp.add(hz);
+      grp.add(hz);
     }
   });
+
+  // ── REAR ASSEMBLY (mock L680-757, VERBATIM + env .25) — replaces .255's two hint cylinders.
+  //    §2 asked for chrome-black here; ported verbatim (copper bus bars) per THE RULE — see flag above. ──
+  var cartridge = new THREE.Mesh(new THREE.BoxGeometry(RW * 0.35, RH * 0.55, 0.08), cartridgeMat);
+  cartridge.position.set(0, RH * 0.05, -RD/2 + 0.25); rackGrp.add(cartridge);
+  [-1, 1].forEach(function (s) {
+    var busBar = new THREE.Mesh(new THREE.BoxGeometry(0.06, RH * 0.6, 0.04), busBarMat);
+    busBar.position.set(s * (RW/2 - 0.25), 0, -RD/2 + 0.15); rackGrp.add(busBar);
+  });
+  var topManifold = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, RW * 0.7, 12), manifoldMat);
+  topManifold.rotation.z = Math.PI/2; topManifold.position.set(0, RH/2 - 0.3, -RD/2 + 0.08); rackGrp.add(topManifold);
+  var botManifold = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, RW * 0.7, 12), manifoldMat);
+  botManifold.rotation.z = Math.PI/2; botManifold.position.set(0, -RH/2 + 0.3, -RD/2 + 0.08); rackGrp.add(botManifold);
+  [-1, 0, 1].forEach(function (s) {
+    var vPipe = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, RH * 0.5, 8), manifoldMat);
+    vPipe.position.set(s * RW * 0.25, 0, -RD/2 + 0.08); rackGrp.add(vPipe);
+  });
+  for (var ca = 0; ca < 6; ca++) {
+    var caY = -RH/3 + ca * (RH/3.5);
+    var cableArm = new THREE.Mesh(new THREE.BoxGeometry(RW * 0.6, 0.04, 0.06), cableArmMat);
+    cableArm.position.set(0, caY, -RD/2 + 0.35); rackGrp.add(cableArm);
+  }
+  var rearDoor = new THREE.Mesh(new THREE.PlaneGeometry(RW - 0.1, RH - 0.1), rearDoorMat);
+  rearDoor.position.set(0, 0, -RD/2 - 0.02); rackGrp.add(rearDoor);
+
+  // ── CABLES (mock L758-787, VERBATIM) — hidden by default; a CABLES toggle in the 3D strip flips them ──
+  var cableMeshes = [];
+  var cablesVisible = false;
+  function createCable(su, eu, ox, col, thick) {
+    if (su < 1 || eu < 1 || su > totalU || eu > totalU) return;    // bound the mock's hardcoded rows to THIS rack
+    var sy = yFor(su), ey = yFor(eu), my = (sy + ey) / 2;
+    var sag = Math.abs(sy - ey) * 0.1;
+    var curve = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(ox, sy, RD/2 + 0.25),
+      new THREE.Vector3(ox + 0.08, my, RD/2 + 0.35 + sag),
+      new THREE.Vector3(ox, ey, RD/2 + 0.25)
+    ]);
+    var tube = new THREE.Mesh(new THREE.TubeGeometry(curve, 16, thick || 0.01, 6, false),
+      new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: 0.2, metalness: 0.3, roughness: 0.5, transparent: true, opacity: 0.5, envMapIntensity: 0.25 }));
+    tube.visible = false; rackGrp.add(tube); cableMeshes.push(tube);
+  }
+  for (var cc = 0; cc < 8; cc++) {
+    var cx = -RW/3 + cc * (RW/3.5);
+    createCable(40 - cc, 31 - cc, cx, 0xa855f7, 0.008);
+    createCable(40 - cc, 30 - cc, cx + 0.06, 0x00d4aa, 0.006);
+  }
+  for (var cc2 = 0; cc2 < 6; cc2++) {
+    var cx2 = -RW/3 + cc2 * (RW/3.5);
+    createCable(22 - cc2, 13 - cc2, cx2, 0xa855f7, 0.008);
+  }
+
+  // CABLES toggle — injected into the 3D control strip (§1c). Owns cableMeshes directly, so no
+  // window global; created only while 3D is live and removed in teardown() (exists only in 3D).
+  // Matches the FLAT|3D segmented styling (.reh-3d-seg). Cold Aisle Filter: one tap, big target.
+  var _cablesBtn = null;
+  try {
+    var _strip = document.querySelector('.reh-3d-toggle');
+    if (_strip && !_strip.querySelector('#reh3dBtnCables')) {
+      _cablesBtn = document.createElement('button');
+      _cablesBtn.type = 'button';
+      _cablesBtn.id = 'reh3dBtnCables';
+      _cablesBtn.className = 'reh-3d-seg reh-3d-cables';
+      _cablesBtn.textContent = 'CABLES';
+      _cablesBtn.onclick = function () {
+        cablesVisible = !cablesVisible;
+        for (var ci = 0; ci < cableMeshes.length; ci++) cableMeshes[ci].visible = cablesVisible;
+        if (cablesVisible) _cablesBtn.classList.add('is-on'); else _cablesBtn.classList.remove('is-on');
+        if (typeof haptic === 'function') haptic([8]);
+      };
+      _strip.appendChild(_cablesBtn);
+    }
+  } catch (e) {}
   scene.add(rackGrp);
 
   // ── §C HIGHLIGHT BAND — ghost fill + restored edge box (John re-ruling). hlBand is what the
@@ -32051,6 +32267,8 @@ function rackElevation_render3D(rack, mountEl) {
     var swt = nowMs * 0.00012;                             // §D9 ~50s orbit
     sweepL.position.set(Math.sin(swt) * RH * 0.7, floorY + RH * (0.55 + 0.2 * Math.sin(swt * 0.7)), Math.cos(swt) * RH * 0.7);
     glowL.intensity = 0.08 + 0.04 * Math.sin(nowMs * 0.0006);
+    var _lp = nowMs * 0.0025;                            // v1.14.256 -- shared LED group-blink (no per-frame alloc)
+    for (var _li = 0; _li < ledMats.length; _li++) { var _L = ledMats[_li], _k = 0.55 + 0.45 * Math.sin(_lp + _L.off); _L.mat.color.setRGB(_L.r * _k, _L.g * _k, _L.b * _k); }
   }
   function bayDispose() {
     try { for (var i = 0; i < _bayTex.length; i++) { if (_bayTex[i] && _bayTex[i].dispose) _bayTex[i].dispose(); } } catch (e) {}
@@ -32197,6 +32415,7 @@ function rackElevation_render3D(rack, mountEl) {
     try { renderer.forceContextLoss(); } catch (e) {}   // frees the GL context on iOS
     if (canvas.parentNode) canvas.parentNode.removeChild(canvas);
     trayMeshes = [];
+    try { if (_cablesBtn && _cablesBtn.parentNode) _cablesBtn.parentNode.removeChild(_cablesBtn); } catch (e) {}   // v1.14.256 -- CABLES btn exists only in 3D
     mountEl._rm3dDispose = null;
     if (_reh3dActive && _reh3dActive.mount === mountEl) _reh3dActive = null;
   }
