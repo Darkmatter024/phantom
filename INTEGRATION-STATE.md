@@ -1564,3 +1564,66 @@ DFW02's empty-model row @`c1:001:38` · heights for `gpu-b40-02` (160) · `cpu-g
 `cpu-gp2-08` (75) · `inf-med-01` (60) · `om2216-c14` (16) · `fs-media-converter-chassis` (5) ·
 `VAST DBox` (50) · `net-ufm-05` · does the `.252` magenta read too loud on a dense rack · does a
 racked slate MEDIA CONV read as a real device rather than an empty slot.
+
+---
+
+# §27 — SHIP v1.14.255 · THE INSPECTION BAY (2026-07-14) · BATCH = 5
+The `.218` wireframe rack scene behind the FLAT|3D toggle is **replaced by the John-locked
+Inspection Bay**. Executes `HANDOFF-INSPECT3D-BAY-PORT.md` against `mocks/MOCKUP-INSPECT3D-BAY-LOCKED.html`
+(both committed to `/mocks/` this session). Live-confirmed (`local == live`).
+
+## PART 1 — THE HOIST (3 edits)
+`TYPE_COLOR` / `TLABEL` / `_TMAP` moved from inside `forge3d_render` to **module scope**. Values
+**byte-identical** to `.254`; scope only widened. ⭐ This is the STRUCTURAL reason the Bay can obey
+§E ("never contradict the elevation"): the Bay and the Forge tray now read **one** map, so the next
+colour John rules moves both at once — the `.251→.253` media drift cannot recur.
+
+## PART 2 — THE PORT (1 spliced block; interaction/orbit/raycast/scrub/teardown kept verbatim)
+Fresh scene+renderer+camera (alpha, ACES, **exposure 1.1**, sRGB, **FOV 28** locked framing, env
+cubemap not solid bg) · **§A locked light rig verbatim** · **§B** chrome-black structure + procedural
+env (`envMapIntensity 0.25`) · Master-driven trays · all nine **§D** bay elements · **§C** highlight
+band with the **RESTORED edge box**.
+
+### ⭐ §C EDGE BOX REVERSES AN EARLIER RULING
+The bright edge box was previously removed; **John reversed that** (§C). Recorded per §C's own instruction.
+
+### ⚠️⚠️ ONE DELIBERATE DEVIATION FROM THE LOCKED MOCK — JOHN'S CALL
+The mock's chrome-black finish repaints **every tray piano-black** (`0x0c0f14`), which would **erase
+the type colours** ruled across `.251`–`.253` (magenta UNKNOWN, slate MEDIA CONV, gold PDU). §E
+requires the bay to **show** type colour and never contradict the elevation — the two can't both hold.
+**Resolution: chrome black → rack STRUCTURE only; TRAYS keep type colour** (it is *information*, not
+finish — the whole `.238`→`.253` arc is about that colour meaning something). Full piano-black trays
+are a **one-flag change** but would bury four ships of rulings, so **not shipped without John's word.**
+`hgtUnknown` trays get the **gold hazard hatch in 3D** (echo of FLAT); distinct from an UNKNOWN *type*
+(magenta); both can co-occur — correct.
+
+### GL DISCIPLINE (verified, not assumed)
+Reuses the socket's untouched teardown → symmetric cross-dispose with `forge3d_*` (`:31752` / `:31676`),
+one WebGL context ever. The mock's **three** rAF loops (`animBay`/`hlPulse`/`animSweep`) **collapse
+into one `bayTick(now)`** called from the socket's single `loop()`, so nothing survives dispose.
+`bayDispose()` frees every CanvasTexture + the env CubeTexture (`material.dispose()` won't).
+**§F:** pixelRatio≤2; reflection clone gated `BAY_REFLECT` (auto-off >DPR 2.1, the pre-approved
+fallback); motes 220→120 >DPR 2. **This ship: reflection SHIPPED** at DPR≤2.1.
+
+## 🐞 NOTED, NOT FIXED — a PRE-EXISTING bug the port surfaced (owed its own ship)
+The FLAT rack-elevation CSS is keyed on the **EDP vocabulary** (`switch`/`pdu`/`storage`/`compute`…),
+but `master_rackToElevation` emits `master_hostType` **RAW codes** (`sw`/`pwr`/`stor`/…). Their
+intersection is **only `gpu`** → on a Master-loaded rack **the FLAT elevation colours GPUs and leaves
+everything else default-styled.** The Bay (via `_TMAP→TYPE_COLOR`) is **more correct than FLAT** until
+that lands, so **3D and FLAT will DISAGREE on non-GPU colours** — that disagreement is the *elevation's*
+bug, **not** the Bay's. Recorded so it is not mistaken for a `.255` regression.
+
+## GATES / BATCH
+`node --check` ×4 + sw.js · CSS 3856/3856 · CRLF preserved · UTF-8 box-draw round-trip verified ·
+single-definition check (scene/camera/renderer/canvas/fitDist/rackGrp/trayMeshes/hlBand each ==1) ·
+old `.218` `trayHex`/FOV-32 gone · three-stamp lockstep. **`?legacy=1` byte-identical** (`render3D` is
+reachable only via the rd-gated 3D toggle).
+**BATCH = 5** (`.251`–`.255`). `.251`–`.254` verifies **cleared by John** ("all good" → "build it")
+BEFORE this ship; **`.255` is a NEW unverified ship**, cap is 6 — **one slot left** before a hard pass.
+Full 12-point device-verify checklist [A]–[L] in `version.json` (the deviation is item **[G]**).
+
+## STILL OWED — JOHN'S RULING
+DFW02 empty-model row @`c1:001:38` · heights (`gpu-b40-02` 160 · `cpu-gp2-*` 165 · `inf-med-01` 60 ·
+`om2216-c14` 16 · `fs-media-converter-chassis` 5 · `VAST DBox` 50 · `net-ufm-05`) · does `.252` magenta
+read too loud · **NEW:** the FLAT-elevation EDP-vocabulary colour bug (its own ship) · **the [G]
+deviation:** type-coloured trays vs the mock's piano-black.
