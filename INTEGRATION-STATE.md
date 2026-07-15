@@ -1627,3 +1627,35 @@ DFW02 empty-model row @`c1:001:38` · heights (`gpu-b40-02` 160 · `cpu-gp2-*` 1
 `om2216-c14` 16 · `fs-media-converter-chassis` 5 · `VAST DBox` 50 · `net-ufm-05`) · does `.252` magenta
 read too loud · **NEW:** the FLAT-elevation EDP-vocabulary colour bug (its own ship) · **the [G]
 deviation:** type-coloured trays vs the mock's piano-black.
+
+---
+
+# §28 — DEVICE-VERIFY RESULT (John, 2026-07-14): the `.255` [G] deviation is RATIFIED
+**No ship. A ruling + a partial verify, recorded.** John, on device: *"keep trays type-colored,
+magenta unknown looks right."*
+
+## WHAT THIS SETTLES
+1. ⭐ **The `.255` [G] deviation is now JOHN'S DECISION, not my provisional call.** Trays keep their
+   **type colour**; the mock's uniform piano-black finish is **rejected**. The `.238`→`.253` honesty
+   arc wins over the mock's look — colour carries information. **Do NOT switch trays to piano-black
+   in any future session** — that is now a ruled-against change, not an open question.
+2. **`.252` magenta UNKNOWN is DEVICE-VERIFIED** — reads right on real hardware. The pdu/unknown
+   collision fix is confirmed good on-device.
+
+## ⚠️ WHAT THIS DOES *NOT* SETTLE (do not over-claim — the "i looked ≠ itemized pass" discipline)
+John spoke to **trays + magenta only.** The rest of the `.255` checklist is **still unwalked**:
+[A] flat-default/live-trays · [B] rig-matches-mock · [C] scan wave climb · [D] scrub band · [E] rack
+reads as the star from every angle · [F] tap-tray→detail vs orbit-drag · [H] gold hatch on an
+hgtUnknown tray in 3D · [I] the GL pass BOTH directions (FLAT→FORGE, FORGE→3D) · [J] on-device frame
+rate / reflection clone · [K] cold PWA relaunch · [L] `?legacy=1`. **[I] and [J] especially still owe
+a pass** — a WebGL context leak or a frame-rate cliff won't show in "the trays look right."
+
+## HOUSEKEEPING
+The `.255` code comment still reads *"not shipped without a ruling."* **Intentionally left** — no
+comment-only stamp bump (no churn). **The ruling lives here in §28; fold the comment update into the
+next ship that touches `dct-ios.html`.** BATCH still = 5 (`.251`–`.255`); cap 6, **one slot left.**
+
+## STILL OWED — JOHN'S RULING (unchanged)
+DFW02 empty-model row @`c1:001:38` · heights (`gpu-b40-02` 160 · `cpu-gp2-*` 165 · `inf-med-01` 60 ·
+`om2216-c14` 16 · `fs-media-converter-chassis` 5 · `VAST DBox` 50 · `net-ufm-05`) · the FLAT-elevation
+EDP-vocabulary colour bug (its own ship) · **the rest of the `.255` verify, especially [I]/[J].**
