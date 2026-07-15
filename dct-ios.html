@@ -11827,7 +11827,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.256';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.257';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -31898,6 +31898,14 @@ function rackElevation_render3D(rack, mountEl) {
   var psuLedMat    = new THREE.MeshBasicMaterial({ color: 0x10b981 });   // PSU status (static, mock blink:false)
   var ledMats = [ { mat: greenLedMat, r: 0.063, g: 0.725, b: 0.506, off: 0 },
                   { mat: violetLedMat, r: 0.659, g: 0.200, b: 0.969, off: 1.7 } ];
+  var tealLedMat = new THREE.MeshBasicMaterial({ color: 0x1fffd0 });     // patch port LEDs (static)
+  // v1.14.257 TRAY FIDELITY — chassis palette is DARK gunmetal per KIND (mock C{}); TYPE colour
+  // is demoted to the front bezel strip (EDIT A). Restores the mock look; kills the .256 slabs.
+  var KIND_C = { compute: 0x1a2332, switch: 0x1e293b, power: 0x1a2028, blank: 0x0f141c,
+                 patch: 0x18222e, media: 0x161d26, storage: 0x141c26, generic: 0x121a24 };
+  var magOutlineMat = new THREE.LineBasicMaterial({ color: 0xff2bd6, transparent: true, opacity: 0.85 }); // UNKNOWN chassis outline
+  var _stripCache = {};                                                 // bezel strip mats cached by hex (§5 — ~9 distinct colours)
+  function _stripMat(hx) { return _stripCache[hx] || (_stripCache[hx] = new THREE.MeshBasicMaterial({ color: hx, transparent: true, opacity: 0.9 })); }
 
   // ── §1 rack side panels + feet (mock L408-424, verbatim + env .25) — omitted in .255 ──
   var sidePanelMat = new THREE.MeshStandardMaterial({ color: 0x0a1018, metalness: 0.5, roughness: 0.7, emissive: 0x050c14, emissiveIntensity: 0.12, envMapIntensity: 0.25 });
@@ -31920,13 +31928,18 @@ function rackElevation_render3D(rack, mountEl) {
     var uS = dev.uStart, uE = dev.uEnd; if (uE < uS) { var tmp = uS; uS = uE; uE = tmp; }
     if (uE > totalU) uE = totalU;
     var disp = _TMAP[(dev.type || '').toLowerCase()] || 'unknown';    // RAW master code → display key
-    // §3 interior kind: gpu|server → compute · switch → switch · pdu → power · blank → blank · rest → generic
+    // §3/EDIT-B interior kind: gpu|server → compute · switch → switch · pdu → power · patch → patch ·
+    // media → media · storage → storage · blank → blank · unknown (+ unmapped) → generic. Every REAL
+    // type gets a signature interior; only UNKNOWN gets the bare (honest) box — no BLANK over real gear.
     var kind;
     if (disp === 'gpu' || disp === 'server') kind = 'compute';
     else if (disp === 'switch') kind = 'switch';
     else if (disp === 'pdu') kind = 'power';
+    else if (disp === 'patch') kind = 'patch';
+    else if (disp === 'media') kind = 'media';
+    else if (disp === 'storage') kind = 'storage';
     else if (disp === 'blank') kind = 'blank';
-    else kind = 'generic';                                            // patch | media | storage | unknown
+    else kind = 'generic';                                            // unknown (+ any unmapped)
     var hex = parseInt((TYPE_COLOR[disp] || TYPE_COLOR.unknown).slice(1), 16);
     var hT = (uE - uS + 1) * uH - 0.04; if (hT <= 0) hT = uH * 0.55;
     var yc = yFor((uS + uE) / 2);
@@ -31936,12 +31949,26 @@ function rackElevation_render3D(rack, mountEl) {
     grp.position.set(0, yc, 0);
     rackGrp.add(grp);
 
-    // chassis — TYPE colour (§3), the raycast target
-    var chMat = new THREE.MeshStandardMaterial({ color: hex, emissive: hex, emissiveIntensity: 0.06, metalness: 0.55, roughness: 0.4, transparent: true, opacity: 0.92, envMapIntensity: 0.25 });
+    // chassis — DARK gunmetal per KIND (v1.14.257, mock palette). TYPE colour is DEMOTED to the
+    // bezel strip below; it no longer paints the whole box (the .256 "coloured slabs" defect).
+    // Raycast target + userData.dev unchanged (.255 tap contract).
+    var chMat = new THREE.MeshStandardMaterial({ color: KIND_C[kind] || 0x121a24, emissive: KIND_C[kind] || 0x121a24, emissiveIntensity: 0.06, metalness: 0.55, roughness: 0.4, transparent: true, opacity: 0.92, envMapIntensity: 0.25 });
     var chassis = new THREE.Mesh(new THREE.BoxGeometry(cw, hT, cd), chMat);
     chassis.castShadow = true; chassis.receiveShadow = true;
     chassis.userData.dev = dev;
     grp.add(chassis); trayMeshes.push(chassis);
+    // TYPE colour as ACCENT — a front bezel strip in `hex` on every non-blank tray (this is where
+    // glance-readable honesty now lives; `hex` is unchanged from .256). UNKNOWN additionally gets a
+    // magenta chassis outline so it stays unmissable at arm's length (.251 arc). Gold hgtUnknown
+    // hatch (below) coexists — height-unknown ≠ type-unknown.
+    if (kind !== 'blank') {
+      var strip = new THREE.Mesh(new THREE.PlaneGeometry(cw * 0.92, Math.min(hT * 0.14, uH * 0.20)), _stripMat(hex));
+      strip.position.set(0, -hT/2 + Math.min(hT*0.10, uH*0.14), cd/2 + 0.011); grp.add(strip);
+    }
+    if (disp === 'unknown') {
+      var mo = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(cw, hT, cd)), magOutlineMat);
+      grp.add(mo);
+    }
 
     if (kind === 'compute') {
       // left + right NIC blocks
@@ -32011,17 +32038,53 @@ function rackElevation_render3D(rack, mountEl) {
         pLed2.position.set(ppx, hT/2 - 0.06, cd/2 + 0.035); grp.add(pLed2);
       }
 
+    } else if (kind === 'patch') {
+      // patch-panel signature — two full-width rows of port squares (representative, NOT a count
+      // claim — John's ruling), teal LED on every 4th port. Ports as ONE InstancedMesh (§5).
+      var pcInst = new THREE.InstancedMesh(new THREE.BoxGeometry(0.05, 0.03, 0.012), portMat, 32);
+      var qi = 0;
+      [hT*0.18, -hT*0.18].forEach(function (ry) {
+        for (var q = 0; q < 16; q++) {
+          var qx = -cw*0.42 + q * ((cw*0.84)/15);
+          _mtx.makeTranslation(qx, ry, cd/2 + 0.012); pcInst.setMatrixAt(qi++, _mtx);
+          if (q % 4 === 0) { var tLed = new THREE.Mesh(new THREE.SphereGeometry(0.008, 6, 6), tealLedMat); tLed.position.set(qx, ry - 0.022, cd/2 + 0.02); grp.add(tLed); }
+        }
+      });
+      pcInst.instanceMatrix.needsUpdate = true; grp.add(pcInst);
+
+    } else if (kind === 'media') {
+      // media-converter shelf signature — 6 bricks + a green status LED each + a shelf lip
+      for (var mb = 0; mb < 6; mb++) {
+        var mbx = -cw*0.4 + mb * (cw*0.8/5);
+        var brick = new THREE.Mesh(new THREE.BoxGeometry(cw*0.12, hT*0.55, 0.03), swBlockMat);
+        brick.position.set(mbx, 0, cd/2 + 0.02); grp.add(brick);
+        var mLed = new THREE.Mesh(new THREE.SphereGeometry(0.008, 6, 6), greenLedMat);
+        mLed.position.set(mbx, hT*0.2, cd/2 + 0.04); grp.add(mLed);
+      }
+      var lip = new THREE.Mesh(new THREE.BoxGeometry(cw*0.94, 0.015, 0.02), earMat);
+      lip.position.set(0, -hT/2 + 0.03, cd/2 + 0.02); grp.add(lip);
+
+    } else if (kind === 'storage') {
+      // storage signature — 10 vertical drive blades (the mock's compute drive-bay language, full
+      // width), green LED per blade. Blades as ONE InstancedMesh (§5).
+      var blInst = new THREE.InstancedMesh(new THREE.BoxGeometry(cw*0.07, hT*0.6, 0.015), driveMat, 10);
+      for (var bl = 0; bl < 10; bl++) {
+        var blx = -cw*0.42 + bl * (cw*0.84/9);
+        _mtx.makeTranslation(blx, 0, cd/2 + 0.02); blInst.setMatrixAt(bl, _mtx);
+        var blLed = new THREE.Mesh(new THREE.SphereGeometry(0.008, 6, 6), greenLedMat);
+        blLed.position.set(blx, -hT*0.22, cd/2 + 0.03); grp.add(blLed);
+      }
+      blInst.instanceMatrix.needsUpdate = true; grp.add(blInst);
+
     } else if (kind === 'blank') {
-      chMat.transparent = true; chMat.opacity = 0.4; chMat.emissiveIntensity = 0;
+      chMat.color.setHex(0x0a0f14); chMat.emissive.setHex(0x0a0f14); chMat.transparent = true; chMat.opacity = 0.4; chMat.emissiveIntensity = 0;   // mock ghost (L474-478)
       var e = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(cw, hT, cd)),
         new THREE.LineBasicMaterial({ color: 0x1e293b, transparent: true, opacity: 0.2 }));
       grp.add(e);
 
-    } else {
-      // generic (patch | media | storage | unknown): chassis + one status LED, NO invented hardware (§3)
-      var gStat = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.015, 0.01), greenLedMat);
-      gStat.position.set(cw/2 - 0.1, -hT/2 + 0.04, cd/2 + 0.035); grp.add(gStat);
     }
+    // generic (UNKNOWN + any unmapped): dark chassis + magenta strip + magenta outline (EDIT A) and
+    // NOTHING else — zero invented hardware, honest and loud (§3 / John's TYPE-SIGNATURE ruling).
 
     // ⚠️ HEIGHT-UNKNOWN HAZARD (§3): the U-span is a 1U PLACEHOLDER, not trusted. Gold hatch =
     // "DO NOT TRUST THIS GEOMETRY" — the 3D echo of the FLAT elevation's gold hatch. NOT the
