@@ -1659,3 +1659,27 @@ next ship that touches `dct-ios.html`.** BATCH still = 5 (`.251`–`.255`); cap 
 DFW02 empty-model row @`c1:001:38` · heights (`gpu-b40-02` 160 · `cpu-gp2-*` 165 · `inf-med-01` 60 ·
 `om2216-c14` 16 · `fs-media-converter-chassis` 5 · `VAST DBox` 50 · `net-ufm-05`) · the FLAT-elevation
 EDP-vocabulary colour bug (its own ship) · **the rest of the `.255` verify, especially [I]/[J].**
+
+---
+
+# §29 — DEVICE-VERIFY (John, 2026-07-14): `.255` [I] GL cross-dispose CONFIRMED (FORGE→3D)
+**No ship.** John, on device: *"toggled FORGE then 3D, no crash."*
+
+⭐ **This clears the single highest technical risk of the reh3d/Bay arc.** FORGE→3D is the demanding
+direction: opening the Bay while a FORGE WebGL context is live forces `rackElevation_render3D` to
+dispose `_forge3dActive` (`:31752`). **No crash = that dispose fired and only one GL context was ever
+alive.** The Bay's new renderer + teardown do not leak a context. `bayDispose()` + the symmetric
+cross-dispose work on real hardware.
+
+## VERIFIED SO FAR ON `.255`
+[G] trays type-coloured (ruled, §28) · magenta unknown (§28) · **[I] FORGE→3D GL pass (this turn).**
+
+## STILL WORTH A TAP (not blocking, but honestly still unwalked)
+- **[I] reverse direction 3D→FORGE** — opening FORGE disposes `_reh3dActive` (`:31676`); same guard,
+  opposite way. The high-risk direction is done; this one is lower-risk but not literally observed.
+- **[J] on-device frame rate** — the Bay is heavier than the `.218` scene (shadows, motes, reflection
+  clone). If it drags, `BAY_REFLECT`/`MOTE_COUNT` auto-scale by DPR, but John's read is the ground truth.
+- [C] scan-wave climb · [E] rack-as-star-from-every-angle · [H] gold hatch on an hgtUnknown tray in 3D
+  · [K] cold PWA relaunch · [L] `?legacy=1`.
+
+BATCH still = 5 (`.251`–`.255`), cap 6, **one slot left.**
