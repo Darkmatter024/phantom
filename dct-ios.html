@@ -11826,7 +11826,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.254';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.255';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -17711,6 +17711,40 @@ function forge3d_ensure3D(mount) {
   document.head.appendChild(s);
 }
 
+// ──────────────────────────────────────────────────────────────────────────────
+// v1.14.255 — HOISTED to module scope. These three maps were local to forge3d_render
+// through .254. The INSPECT-3D "Inspection Bay" (rackElevation_render3D, the reh3d
+// socket) must colour its trays from the SAME canonical map as the Forge tray — §E of
+// HANDOFF-INSPECT3D-BAY-PORT: "the bay must never contradict the elevation." Duplicating
+// the table would guarantee drift the next time John rules a colour (the .251→.253 media
+// saga is exactly that failure). One map, two readers. NOT a Forge-canon change — the
+// values are byte-identical to .254; only the scope widened.
+//
+// TWO SEPARATE VOCABULARIES, bridged by _TMAP — do not conflate:
+//   master_hostType() emits RAW codes: gpu/sw/pwr/patch/stor/cpu/cdu/fw/media/other.
+//   _TMAP maps each RAW code to a DISPLAY key; TYPE_COLOR/TLABEL are keyed on DISPLAY keys.
+// (This is also why the FLAT rack-canvas CSS, keyed on the EDP vocabulary, colours only
+//  `gpu` on Master racks — a PRE-EXISTING elevation bug, NOT introduced here; owed its own
+//  ship. The Bay reads _TMAP→TYPE_COLOR and is therefore MORE correct than FLAT until that
+//  fix lands. Recorded so the 3D↔FLAT colour disagreement is understood, not mistaken for a
+//  regression in this ship.)
+//
+// v1.14.246 — 'unknown' is REAL GEAR WE COULD NOT CLASSIFY. 'blank' is positively a blanking
+// panel. Never the same claim, never the same colour: slate #22303e = "nothing installed".
+// v1.14.251/.253 — 'media' (MEDIA CONV): John ruled the hardware; colour #7d93a4 SLATE, ruled
+// in writing (PHANTOM-OPEN-BOARD-2026-07-14), held apart from patch teal #1fffd0.
+// v1.14.252 — 'unknown' GOLD→MAGENTA #ff2bd6: killed the pdu/unknown collision; pdu keeps gold.
+// ⛔ The gold HAZARD paint (hgtUnknown hatch) is a DIFFERENT signal from type — see the render.
+var TYPE_COLOR = { gpu: '#28e0ff', switch: '#8a4bff', pdu: '#ffcb45', patch: '#1fffd0',
+                   server: '#7fd0ff', storage: '#ff7bd0', media: '#7d93a4',
+                   unknown: '#ff2bd6', blank: '#22303e' };
+var TLABEL = { gpu: 'GPU', switch: 'SWITCH', pdu: 'PDU', patch: 'PATCH', server: 'SERVER', storage: 'STORAGE', media: 'MEDIA CONV', unknown: 'UNKNOWN', blank: 'BLANK' };
+// v1.14.245 — 'server' bridges master_hostType's vocabulary to the display one (else a 'server'
+// falls to 'unknown'). .246 — 'other' → 'unknown' NOT 'blank' (it once called 459 real SPARKS
+// devices blanking panels). .251 — 'media' bridges master_hostType's new 'media' return.
+var _TMAP = { gpu: 'gpu', sw: 'switch', pwr: 'pdu', patch: 'patch', stor: 'storage', cpu: 'server', server: 'server', cdu: 'pdu', fw: 'switch', media: 'media', other: 'unknown' };
+// ──────────────────────────────────────────────────────────────────────────────
+
 function forge3d_render(mount) {
   // single GL context: dispose any prior Forge scene first
   try { if (_forge3dActive && _forge3dActive.dispose) _forge3dActive.dispose(); }
@@ -17747,37 +17781,8 @@ function forge3d_render(mount) {
   // ---------- constants ----------
   var RW = 1.8, RH = 3.8, RD = 1.2, PITCH = 2.35;
   var GUT = { x0: 0.1046, x1: 0.9041, y0: 0.108, y1: 0.932 };
-  // v1.14.246 — 'unknown' is REAL GEAR WE COULD NOT CLASSIFY. 'blank' is a device the data
-  // positively identifies as a blanking panel. They are not the same claim and must never
-  // share a colour: slate #22303e reads as "nothing is installed here". Gold is the app's
-  // existing "we don't know something" language (MODEL HEIGHT UNKNOWN uses it).
-  // v1.14.251 — 'media' (MEDIA CONV). John ruled the HARDWARE (net-6x100g-02 and
-  // fs-media-converter-chassis are media converters, 2026-07-14). NOT a switch — a media converter
-  // does not switch, and calling it one would be the same class of lie .246 exists to kill. NOT
-  // patch either: a patch panel is passive, a media converter is powered active gear. Its own type.
-  // v1.14.253 — COLOUR CORRECTED #2ee6a8 -> #7d93a4 (SLATE). ⚠️ THE RECORD, HONESTLY: .251 shipped
-  // green and its comment claimed John had DELEGATED the colour to me ("you do whats best"). HE HAD
-  // NOT — he had already ruled it, in writing, in PHANTOM-OPEN-BOARD-2026-07-14 ("new MEDIA CONV
-  // type -> slate #7d93a4"). I had not read that board when I picked green, so I recorded a spec of
-  // his as a call of mine. The board is the authority; this row now matches it.
-  // AND SLATE IS THE BETTER CALL ON ITS MERITS: a media converter is quiet infrastructure, and the
-  // green shouted at the same volume as GPU cyan. Slate also stays clear of patch teal #1fffd0 —
-  // patch is the type it sits closest to conceptually, so those two are the pair a gloved tech is
-  // likeliest to confuse at arm's length; that separation was the one thing .251 got right.
-  // v1.14.252 — `unknown` moves GOLD -> MAGENTA. (John's ruling, 2026-07-14.) It shared #ffcb45
-  // with `pdu`, so a PDU spine and an UNKNOWN spine were indistinguishable BY COLOUR ALONE.
-  // PDU KEEPS the gold; only `unknown` moves. #ff2bd6 is the app's existing --mag brand token.
-  // This ONE value is the sole source for all three surfaces John named — the tray SPINE
-  // (TYPE_COLOR[sl.type], the 5px lane bar), the detail-row DOT (.type-dot) and the search-result
-  // LABEL — so they move in lockstep and cannot drift apart.
-  // ⛔ DO NOT also recolour the gold in the tray's hazard paint (the hatch, the ⚠ name text, the
-  // hard edge). That gold is gated on `unk` = sl.hgtUnknown — the HEIGHT hazard — which is a
-  // DIFFERENT STATEMENT from type-unknown and must stay visually distinct from it. Type-unknown
-  // draws SOLID + TO SCALE (the U-span IS true); the hazard means DO NOT TRUST THIS GEOMETRY.
-  var TYPE_COLOR = { gpu: '#28e0ff', switch: '#8a4bff', pdu: '#ffcb45', patch: '#1fffd0',
-                     server: '#7fd0ff', storage: '#ff7bd0', media: '#7d93a4',
-                     unknown: '#ff2bd6', blank: '#22303e' };
-  var TLABEL = { gpu: 'GPU', switch: 'SWITCH', pdu: 'PDU', patch: 'PATCH', server: 'SERVER', storage: 'STORAGE', media: 'MEDIA CONV', unknown: 'UNKNOWN', blank: 'BLANK' };
+  // TYPE_COLOR / TLABEL / _TMAP hoisted to module scope in v1.14.255 (shared with the
+  // INSPECT-3D Bay so both surfaces read ONE canonical map). Same names, same values.
 
   // ---------- persistence + per-node status overlay ----------
   var store = {
@@ -17805,12 +17810,7 @@ function forge3d_render(mount) {
   // away, so those devices vanished. Parallel cache — deploy_forge_slots() must keep returning
   // a plain Array (8+ call sites index it).
   var _unplacedCache = {};
-  // v1.14.245 — 'server' bridges master_hostType's vocabulary to the flat one. Without this key
-  // a master_hostType 'server' falls to `|| 'unknown'` below. TLABEL/TYPE_COLOR already carry it.
-  // v1.14.246 — 'other' (master_hostType's fallthrough: "I could not classify this") now maps to
-  // 'unknown', NOT 'blank'. It previously claimed 459 real SPARKS devices were blanking panels.
-  // v1.14.251 — `media` bridges master_hostType's new 'media' return to the MEDIA CONV tray.
-  var _TMAP = { gpu: 'gpu', sw: 'switch', pwr: 'pdu', patch: 'patch', stor: 'storage', cpu: 'server', server: 'server', cdu: 'pdu', fw: 'switch', media: 'media', other: 'unknown' };
+  // _TMAP hoisted to module scope in v1.14.255 (shared with the INSPECT-3D Bay). Same value.
   function deploy_forge_master() {
     var m = window._lastPhantomMaster;
     return (m && m.racksByCab && typeof m.racksByCab === 'object'
@@ -31768,99 +31768,295 @@ function rackElevation_render3D(rack, mountEl) {
   var slots  = (rack && Array.isArray(rack.slots)) ? rack.slots : [];
   var totalU = (rack && rack.totalU) ? rack.totalU : 48;
 
-  // ── locked settings (HANDOFF-3d-rack-render-fix.md, John-approved) ──
-  var RW = 6.0, RD = 2.7, uH = 0.34, RH = totalU * uH, yBase = -RH / 2;
-  var FOV = 32;
-  var fitDist = (RH * 0.60) / Math.tan((FOV * Math.PI / 180) / 2);   // frames the FULL rack height → no taper/balloon
+  // ══════════ v1.14.255 — THE INSPECTION BAY ═══════════════════════════════════
+  // Ports MOCKUP-INSPECT3D-BAY-LOCKED.html (John-locked 2026-07-14) into the reh3d
+  // socket, replacing the .218 shelf scene. The rack is the star: every bay element is
+  // additive, low-opacity, dimmer than the rack's own lights (§ THE DESIGN LAW).
+  // Trays are Master-driven and coloured from the SHARED module map (§E). The camera,
+  // orbit, raycast, scrub wiring and teardown BELOW this block are unchanged — this
+  // block only builds scene/renderer/camera + the bay, and exposes bayTick()/bayDispose().
+  //
+  // ⚠️ DELIBERATE DEVIATION FROM THE MOCK (flagged, John's call): the locked mock's
+  // chrome-black finish repaints EVERY tray piano-black (0x0c0f14), which would erase the
+  // type colours John ruled across .251–.253 (magenta UNKNOWN, slate MEDIA CONV). §E
+  // requires the bay to show type colour and "never contradict the elevation." So chrome
+  // black is applied to the RACK STRUCTURE only; TRAYS keep their type colour (information,
+  // not finish). Full piano-black trays would be a one-flag change but would contradict the
+  // elevation — not shipped without a ruling.
+  var _bayTex = [];   // CanvasTexture/CubeTexture handles — material.dispose() won't free these
+  function _tex(t) { _bayTex.push(t); return t; }
 
-  var scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x06090f);
-  scene.fog = new THREE.FogExp2(0x06090f, 0.018);
-  var camera = new THREE.PerspectiveCamera(FOV, w / h, 0.5, 400);
-  var wide = (w / h) > 1.3;   // wide monitor → nudge bloom/exposure so the glow still reads (phone⇄desktop parity)
-  var renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-  renderer.setClearColor(0x06090f, 1);
-  renderer.outputEncoding = THREE.sRGBEncoding;               // premium color pipeline (r128)
-  renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = wide ? 1.1 : 1.05;
+  var RW = 6.0, RD = 4.5, uH = 0.34, RH = totalU * uH, yBase = -RH / 2;
+  var floorY = yBase - 0.05;
+  var FOV = 28;                                                    // John-locked framing (mock uses 28; socket was 32)
+  var fitDistH = (RH * 0.5) / Math.tan((FOV * Math.PI / 180) / 2);
+  var fitDist = Math.max(fitDistH, RD * 0.65) * 1.3;              // frames full rack height at FOV 28; loop() orbits on this
+
+  var scene = new THREE.Scene();                                  // no solid bg / no fog — the env cubemap + backdrop carry depth
+  var camera = new THREE.PerspectiveCamera(FOV, w / h, 0.3, 500);
+  var renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));   // §F mobile cap
   renderer.setSize(w, h);
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.1;                            // §A locked
+  renderer.outputEncoding = THREE.sRGBEncoding;
   var canvas = renderer.domElement;
   canvas.style.display = 'block'; canvas.style.width = '100%'; canvas.style.height = '100%';
   canvas.style.touchAction = 'none';
   mountEl.appendChild(canvas);
 
-  scene.add(new THREE.AmbientLight(0x243040, 1.05));
-  var keyL = new THREE.DirectionalLight(0xbfe9ff, 0.9);          keyL.position.set(7, 12, 9);  scene.add(keyL);
-  var rimL = new THREE.DirectionalLight(0x9b59ff, 0.55);         rimL.position.set(-9, 5, -7); scene.add(rimL);   // violet rim = signature edge glow
-  var ptL  = new THREE.PointLight(0x5cf2ff, wide ? 0.6 : 0.5, 60); ptL.position.set(0, 0, 14); scene.add(ptL);    // cyan front bloom
+  // ── §A JOHN-LOCKED LIGHT RIG (exact) ──
+  scene.add(new THREE.AmbientLight(0x1a2535, 0.04));
+  var keyL = new THREE.DirectionalLight(0xd4e5f7, 0.78);
+  keyL.position.set(5.45, 13.79, 4.91);
+  keyL.castShadow = true;
+  keyL.shadow.mapSize.set(2048, 2048);
+  keyL.shadow.camera.near = 0.5; keyL.shadow.camera.far = 50;
+  keyL.shadow.camera.left = -8; keyL.shadow.camera.right = 8;
+  keyL.shadow.camera.top = 12; keyL.shadow.camera.bottom = -12;
+  keyL.shadow.bias = -0.0005;
+  scene.add(keyL);
+  var fillL = new THREE.DirectionalLight(0x4a3a7a, 0.10); fillL.position.set(-5, 3, -4); scene.add(fillL);
+  var rimL  = new THREE.DirectionalLight(0x00d4aa, 0.42); rimL.position.set(-8, 4, -6); scene.add(rimL);
+  var glowL = new THREE.PointLight(0x00d4aa, 0.08, 35); glowL.position.set(0, 1, 10); scene.add(glowL);
+  var underL = new THREE.PointLight(0xa855f7, 0.14, 20); underL.position.set(0, yBase - 0.3, 2); scene.add(underL);
 
+  // ── §B ENV CUBEMAP (procedural dark-studio, 128px faces, envMapIntensity 0.25 everywhere) ──
+  function _envCube() {
+    var faces = [];
+    for (var f = 0; f < 6; f++) {
+      var cv = document.createElement('canvas'); cv.width = cv.height = 128;
+      var g = cv.getContext('2d');
+      var grad = g.createLinearGradient(0, 0, 0, 128);
+      if (f === 2) { grad.addColorStop(0, '#3a4d63'); grad.addColorStop(1, '#0a0f16'); }
+      else if (f === 3) { grad.addColorStop(0, '#05070b'); grad.addColorStop(1, '#03050a'); }
+      else { grad.addColorStop(0, '#070b12'); grad.addColorStop(.52, '#1c2a3c'); grad.addColorStop(.58, '#0a1220'); grad.addColorStop(1, '#04060a'); }
+      g.fillStyle = grad; g.fillRect(0, 0, 128, 128);
+      if (f === 0 || f === 1) { g.fillStyle = 'rgba(60,200,235,0.28)'; g.fillRect(0, 58, 128, 4); }
+      faces.push(cv);
+    }
+    var t = new THREE.CubeTexture(faces); t.needsUpdate = true; return _tex(t);
+  }
+  scene.environment = _envCube();
+
+  // ── RACK STRUCTURE (chrome black §B: 0x0c0f14 metal .92 rough .16 env .25) ──
   var rackGrp = new THREE.Group();
-  // ── full cabinet enclosure (§5): posts + rails + side EIA rails + BACK PANEL.
-  //    The back panel is what kills the "floating tiles" look — trays sit against it. ──
-  var RAIL = 0x11202b;   // steel-blue frame (LOCKED default) — neutral, lets the trays carry the color
-  var pm = new THREE.MeshStandardMaterial({ color: RAIL, metalness: 0.62, roughness: 0.5, emissive: 0x0a141c, emissiveIntensity: 0.4 });
+  var CHROME = { color: 0x0c0f14, metalness: 0.92, roughness: 0.16, envMapIntensity: 0.25 };
+  var steelMat = new THREE.MeshStandardMaterial(CHROME);
+  var edgeMat = new THREE.LineBasicMaterial({ color: 0x1e3a4a, transparent: true, opacity: 0.15 });
   function frame(g, x, y, z) {
-    var m = new THREE.Mesh(g, pm); m.position.set(x, y, z); rackGrp.add(m);
-    var e = new THREE.LineSegments(new THREE.EdgesGeometry(g), new THREE.LineBasicMaterial({ color: 0x5cf2ff, transparent: true, opacity: 0.28 }));
-    e.position.set(x, y, z); rackGrp.add(e);   // thin cyan lit edge = crisp cage against the black
+    var m = new THREE.Mesh(g, steelMat); m.position.set(x, y, z); m.castShadow = true; m.receiveShadow = true; rackGrp.add(m);
+    var e = new THREE.LineSegments(new THREE.EdgesGeometry(g), edgeMat); e.position.set(x, y, z); rackGrp.add(e);
   }
-  // 4 corner posts (full-height uprights)
-  [[-RW/2,-RD/2],[RW/2,-RD/2],[-RW/2,RD/2],[RW/2,RD/2]].forEach(function (p) { frame(new THREE.BoxGeometry(0.15, RH, 0.15), p[0], 0, p[1]); });
-  // top + bottom rails (caps)
-  [RH/2,-RH/2].forEach(function (y) { frame(new THREE.BoxGeometry(RW + 0.15, 0.15, RD + 0.15), 0, y, 0); });
-  // side EIA mounting rails (thin front-inset verticals the trays "bolt into")
-  [-1,1].forEach(function (s) { frame(new THREE.BoxGeometry(0.09, RH - 0.4, 0.09), s * (RW/2 - 0.12), 0, RD/2 - 0.22); });
-  // ★ BACK PANEL — the surface behind the trays (kills the floating look)
-  var backMat = new THREE.MeshStandardMaterial({ color: 0x0b131c, metalness: 0.4, roughness: 0.85, emissive: 0x0a1a26, emissiveIntensity: 0.22, transparent: true, opacity: 0.92, side: THREE.DoubleSide });
-  var back = new THREE.Mesh(new THREE.PlaneGeometry(RW - 0.05, RH - 0.05), backMat);
-  back.position.set(0, 0, -RD / 2 + 0.03); rackGrp.add(back);
-  var bl = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.PlaneGeometry(RW - 0.05, RH - 0.05)), new THREE.LineBasicMaterial({ color: 0x5cf2ff, transparent: true, opacity: 0.10 }));
-  bl.position.copy(back.position); rackGrp.add(bl);   // faint vent-slot grid on the back panel
+  [[-RW/2,-RD/2],[RW/2,-RD/2],[-RW/2,RD/2],[RW/2,RD/2]].forEach(function (p) { frame(new THREE.BoxGeometry(0.16, RH, 0.16), p[0], 0, p[1]); });
+  [RH/2, -RH/2].forEach(function (y) { frame(new THREE.BoxGeometry(RW + 0.16, 0.16, RD + 0.16), 0, y, 0); });
+  [-1, 1].forEach(function (s) { frame(new THREE.BoxGeometry(0.08, RH - 0.5, 0.08), s * (RW/2 - 0.13), 0, RD/2 - 0.24); });
+  var backMat = new THREE.MeshStandardMaterial({ color: 0x070d14, metalness: 0.3, roughness: 0.9, emissive: 0x050a12, emissiveIntensity: 0.12, transparent: true, opacity: 0.85, side: THREE.DoubleSide, envMapIntensity: 0.25 });
+  var back = new THREE.Mesh(new THREE.PlaneGeometry(RW - 0.06, RH - 0.06), backMat); back.position.set(0, 0, -RD/2 + 0.04); back.receiveShadow = true; rackGrp.add(back);
+  // rear cooling/manifold hint — chrome, low detail (keeps the "star" the front trays)
+  var manifoldMat = new THREE.MeshStandardMaterial({ color: 0x1a3040, metalness: 0.6, roughness: 0.4, envMapIntensity: 0.25 });
+  [RH/2 - 0.3, -RH/2 + 0.3].forEach(function (y) { var mm = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, RW * 0.7, 12), manifoldMat); mm.rotation.z = Math.PI/2; mm.position.set(0, y, -RD/2 + 0.08); rackGrp.add(mm); });
 
-  // 3D tray palette — matches MOCKUP-rack-threejs.html (John-approved LOCKED SETTINGS).
-  // DELIBERATE view-specific palette (compute cyan / switch violet / power gold / cdu teal),
-  // distinct from the 2D FLAT TYPE_COLORS legend where gpu=violet — see version.json note.
-  function trayHex(dev) {
-    var t = (dev.type || '').toLowerCase();
-    if (t === 'sw' || t === 'switch') return 0xb478ff;                     // NVLink / leaf switch → violet
-    if (t === 'pwr' || t === 'pdu' || t === 'ups') return 0xffd60a;        // power → gold
-    if (t === 'cdu' || t === 'stor' || t === 'storage') return 0x3fd0c8;   // cdu / storage → teal
-    if (t === 'patch' || t === 'fw' || t === 'kvm') return 0x5c7686;       // aux → dim slate
-    return 0x5cf2ff;                                                        // compute (gpu/cpu/server) + default → cyan
-  }
-  // status hook: Part A overlay not shipped → present device = SOLID racked (opaque, no smear).
-  function trayMaterial(dev /*, status */) {
-    var col = trayHex(dev);
-    return new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: 0.32, metalness: 0.35, roughness: 0.42 });
-  }
-
+  // ── TRAYS from live Master slots (§E) — coloured from the SHARED map; hgtUnknown → gold hatch ──
+  function yFor(u) { return yBase + (u - 0.5) * uH; }
   var trayMeshes = [];
   slots.forEach(function (dev) {
     if (dev == null || dev.uStart == null || dev.uEnd == null) return;
-    var uS = dev.uStart, uE = dev.uEnd;
-    if (uE < uS) { var t = uS; uS = uE; uE = t; }
+    var uS = dev.uStart, uE = dev.uEnd; if (uE < uS) { var tmp = uS; uS = uE; uE = tmp; }
     if (uE > totalU) uE = totalU;
-    var hT = (uE - uS + 1) * uH - 0.06; if (hT <= 0) hT = uH * 0.55;   // 0.06 gap → faces never coplanar (kills z-fighting)
-    var yc = yBase + ((uS + uE) / 2 - 0.5) * uH;
-    var g = new THREE.BoxGeometry(RW - 0.34, hT, RD - 0.34);   // inset so trays sit INSIDE the frame
-    var m = new THREE.Mesh(g, trayMaterial(dev, null));
-    m.position.set(0, yc, 0);
-    m.userData.dev = dev;
-    trayMeshes.push(m);
-    rackGrp.add(m);
+    var disp = _TMAP[(dev.type || '').toLowerCase()] || 'unknown';   // RAW master code → display key
+    var hex = parseInt((TYPE_COLOR[disp] || TYPE_COLOR.unknown).slice(1), 16);
+    var hT = (uE - uS + 1) * uH - 0.04; if (hT <= 0) hT = uH * 0.55;
+    var yc = yFor((uS + uE) / 2);
+    var cw = RW - 0.42, cd = RD - 0.42;
+    var mat = new THREE.MeshStandardMaterial({ color: hex, emissive: hex, emissiveIntensity: 0.10, metalness: 0.5, roughness: 0.4, transparent: true, opacity: 0.94, envMapIntensity: 0.25 });
+    var chassis = new THREE.Mesh(new THREE.BoxGeometry(cw, hT, cd), mat);
+    chassis.position.set(0, yc, 0); chassis.castShadow = true; chassis.receiveShadow = true;
+    chassis.userData.dev = dev;
+    trayMeshes.push(chassis); rackGrp.add(chassis);
+    // front status LED — emissive dot in the type hue (survives chrome finish; it's the tray's "life")
+    var led = new THREE.Mesh(new THREE.SphereGeometry(0.02, 8, 8), new THREE.MeshBasicMaterial({ color: hex }));
+    led.position.set(cw / 2 - 0.08, yc, cd / 2 + 0.03); rackGrp.add(led);
+    // ⚠️ HEIGHT-UNKNOWN HAZARD (§E): the U-span is a 1U PLACEHOLDER, not trusted. Gold hatch =
+    // "DO NOT TRUST THIS GEOMETRY" — the 3D echo of the FLAT elevation's gold hatch. NOT the same
+    // as an UNKNOWN *type* (that reads magenta via TYPE_COLOR.unknown above). Both can co-occur.
+    if (dev.hgtUnknown) {
+      var hz = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(cw + 0.02, hT + 0.02, cd + 0.02)),
+        new THREE.LineBasicMaterial({ color: 0xffcb45, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending }));
+      hz.position.set(0, yc, 0); rackGrp.add(hz);
+    }
   });
-
-  var disc = new THREE.Mesh(new THREE.CircleGeometry(8, 48), new THREE.MeshBasicMaterial({ color: 0x0a1119, transparent: true, opacity: 0.55 }));
-  disc.rotation.x = -Math.PI / 2; disc.position.y = yBase - 0.15; scene.add(disc);
-
-  // MINI scrubber → translucent cyan highlight band at a U (rack group is stationary; camera orbits)
-  var hlBand = new THREE.Mesh(
-    new THREE.BoxGeometry(RW + 0.25, uH, RD + 0.25),
-    new THREE.MeshBasicMaterial({ color: 0x5cf2ff, transparent: true, opacity: 0.16, depthWrite: false })
-  );
-  hlBand.visible = false; rackGrp.add(hlBand);
   scene.add(rackGrp);
+
+  // ── §C HIGHLIGHT BAND — ghost fill + restored edge box (John re-ruling). hlBand is what the
+  //    scrub wiring below moves (.position.y / .visible). Breathing folded into bayTick. ──
+  var hlBand = new THREE.Mesh(
+    new THREE.BoxGeometry(RW + 0.30, uH, RD + 0.30),
+    new THREE.MeshBasicMaterial({ color: 0x00d4aa, transparent: true, opacity: 0.30, blending: THREE.AdditiveBlending, depthWrite: false })
+  );
+  var hlEdge = new THREE.LineSegments(
+    new THREE.EdgesGeometry(new THREE.BoxGeometry(RW + 0.32, uH, RD + 0.32)),
+    new THREE.LineBasicMaterial({ color: 0x1fffd0, transparent: true, opacity: 0.80, blending: THREE.AdditiveBlending })
+  );
+  hlBand.add(hlEdge);
+  hlBand.visible = false; rackGrp.add(hlBand);
+
+  // ── §D THE INSPECTION BAY — all elements additive, dimmer than the rack (bayGrp for clean dispose) ──
+  var bayGrp = new THREE.Group();
+  var BAY_REFLECT = (window.devicePixelRatio || 1) <= 2.1;   // §F: the one luxury; auto-fallback to floor gradient on heavy DPR
+  var MOTE_COUNT = ((window.devicePixelRatio || 1) > 2) ? 120 : 220;   // §F second lever
+
+  // 5) floor — glossy black, catches the bands + practicals
+  var floorMesh = new THREE.Mesh(new THREE.PlaneGeometry(RH * 5, RH * 5),
+    new THREE.MeshStandardMaterial({ color: 0x04060a, metalness: 0.9, roughness: 0.38, envMapIntensity: 0.25 }));
+  floorMesh.rotation.x = -Math.PI / 2; floorMesh.position.y = floorY; floorMesh.receiveShadow = true; bayGrp.add(floorMesh);
+
+  // 6) ghost reflection — mirrored rack clone (§F mobile-fungible)
+  if (BAY_REFLECT) {
+    try {
+      var refl = rackGrp.clone(true);
+      refl.traverse(function (o) {
+        if (o.isMesh && o.material) {
+          o.material = o.material.clone();
+          o.material.transparent = true; o.material.opacity = 0.16; o.material.depthWrite = false;
+          if (o.material.emissiveIntensity) o.material.emissiveIntensity *= 0.5;
+        }
+      });
+      refl.scale.y = -1; refl.position.y = 2 * floorY; bayGrp.add(refl);
+    } catch (e) {}
+  }
+
+  // 1) glass platform — slab + cyan edge frame + calibration marks + gliding sweep bar
+  var pad = new THREE.Group(); pad.position.y = floorY;
+  var PW = RH * 0.62, PD = RH * 0.66, PT = RH * 0.018;
+  var slab = new THREE.Mesh(new THREE.BoxGeometry(PW, PT, PD),
+    new THREE.MeshStandardMaterial({ color: 0x0a1420, metalness: 0.35, roughness: 0.12, transparent: true, opacity: 0.85, envMapIntensity: 0.25 }));
+  slab.position.y = PT / 2; pad.add(slab);
+  function edgeStrip(w, x, z, rotZ) {
+    var e = new THREE.Mesh(new THREE.PlaneGeometry(w, RH * 0.008),
+      new THREE.MeshBasicMaterial({ color: 0x28e0ff, transparent: true, opacity: 0.7, blending: THREE.AdditiveBlending, depthWrite: false }));
+    e.position.set(x, PT + 0.002, z); e.rotation.x = -Math.PI / 2; e.rotation.z = rotZ; pad.add(e);
+  }
+  edgeStrip(PW, 0, -PD/2, 0); edgeStrip(PW, 0, PD/2, 0); edgeStrip(PD, -PW/2, 0, Math.PI/2); edgeStrip(PD, PW/2, 0, Math.PI/2);
+  for (var ci = 0; ci <= 20; ci++) {
+    var big = (ci % 5 === 0);
+    var mk = new THREE.Mesh(new THREE.PlaneGeometry(RH * 0.004, big ? RH * 0.028 : RH * 0.014),
+      new THREE.MeshBasicMaterial({ color: 0x28e0ff, transparent: true, opacity: big ? 0.65 : 0.3, blending: THREE.AdditiveBlending, depthWrite: false }));
+    mk.position.set(-PW/2 + (ci/20) * PW, PT + 0.002, PD/2 - RH * 0.03); mk.rotation.x = -Math.PI / 2; pad.add(mk);
+  }
+  var swCv = document.createElement('canvas'); swCv.width = 64; swCv.height = 8;
+  var swG = swCv.getContext('2d'); var swGr = swG.createLinearGradient(0, 0, 64, 0);
+  swGr.addColorStop(0, 'rgba(40,224,255,0)'); swGr.addColorStop(0.5, 'rgba(160,240,255,0.8)'); swGr.addColorStop(1, 'rgba(40,224,255,0)');
+  swG.fillStyle = swGr; swG.fillRect(0, 0, 64, 8);
+  var padSweep = new THREE.Mesh(new THREE.PlaneGeometry(PW * 0.28, PD),
+    new THREE.MeshBasicMaterial({ map: _tex(new THREE.CanvasTexture(swCv)), transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false }));
+  padSweep.rotation.x = -Math.PI / 2; padSweep.rotation.z = Math.PI / 2; padSweep.position.y = PT + 0.004; pad.add(padSweep);
+  bayGrp.add(pad);
+
+  // 2) SCAN WAVE — 4 additive gradient planes wrapping the rack + halo ring + traveling PointLight
+  var scCv = document.createElement('canvas'); scCv.width = 8; scCv.height = 64;
+  var scG = scCv.getContext('2d'); var scGr = scG.createLinearGradient(0, 0, 0, 64);
+  scGr.addColorStop(0, 'rgba(40,224,255,0)'); scGr.addColorStop(0.45, 'rgba(40,224,255,0.35)');
+  scGr.addColorStop(0.5, 'rgba(220,250,255,1.0)'); scGr.addColorStop(0.55, 'rgba(40,224,255,0.35)'); scGr.addColorStop(1, 'rgba(40,224,255,0)');
+  scG.fillStyle = scGr; scG.fillRect(0, 0, 8, 64);
+  var scanW = RH * 0.40, scanD = RH * 0.44;
+  var scan = new THREE.Group();
+  [[0, scanD/2, 0], [0, -scanD/2, Math.PI], [scanW/2, 0, Math.PI/2], [-scanW/2, 0, -Math.PI/2]].forEach(function (fp) {
+    var p = new THREE.Mesh(new THREE.PlaneGeometry(scanW, RH * 0.14),
+      new THREE.MeshBasicMaterial({ map: _tex(new THREE.CanvasTexture(scCv)), transparent: true, opacity: 1.0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
+    p.position.set(fp[0], 0, fp[1]); p.rotation.y = fp[2]; scan.add(p);
+  });
+  var scanLight = new THREE.PointLight(0xbff2ff, 2.4, RH * 1.6);
+  var haloCv = document.createElement('canvas'); haloCv.width = haloCv.height = 64;
+  var hgc = haloCv.getContext('2d'); var hgr = hgc.createRadialGradient(32, 32, 16, 32, 32, 31);
+  hgr.addColorStop(0, 'rgba(120,235,255,0)'); hgr.addColorStop(0.75, 'rgba(160,240,255,0.9)'); hgr.addColorStop(1, 'rgba(40,224,255,0)');
+  hgc.fillStyle = hgr; hgc.fillRect(0, 0, 64, 64);
+  var halo = new THREE.Mesh(new THREE.PlaneGeometry(scanW * 1.7, scanD * 1.7),
+    new THREE.MeshBasicMaterial({ map: _tex(new THREE.CanvasTexture(haloCv)), transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
+  halo.rotation.x = -Math.PI / 2; scan.add(halo); scan.add(scanLight); bayGrp.add(scan);
+
+  // 3) ghost fleet — 6 wireframe racks per side + nearest shelves + distant back rank
+  function ghostMat(op) { return new THREE.LineBasicMaterial({ color: 0x28e0ff, transparent: true, opacity: op, blending: THREE.AdditiveBlending }); }
+  var gW = RH * 0.30, gD = RH * 0.34;
+  [-1, 1].forEach(function (s) {
+    for (var n = 1; n <= 6; n++) {
+      var edges = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(gW, RH * 0.98, gD)), ghostMat(0.15 / (n * 0.9)));
+      edges.position.set(s * (RH * 0.55 + n * gW * 1.35), floorY + RH * 0.49, 0); bayGrp.add(edges);
+      if (n === 1) {
+        for (var u = 1; u < 6; u++) {
+          var shelf = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.PlaneGeometry(gW * 0.92, gD * 0.92)), ghostMat(0.06));
+          shelf.rotation.x = -Math.PI / 2; shelf.position.set(edges.position.x, floorY + (RH * 0.98) * (u / 6), 0); bayGrp.add(shelf);
+        }
+      }
+    }
+  });
+  for (var bx = -5; bx <= 5; bx++) {
+    if (bx === 0) continue;
+    var bg = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(gW, RH * 0.98, gD)), ghostMat(0.05));
+    bg.position.set(bx * gW * 1.5, floorY + RH * 0.49, -RH * 0.95); bayGrp.add(bg);
+  }
+
+  // 4) data motes — slow-rising dust in a cylinder around the bay
+  var motePos = new Float32Array(MOTE_COUNT * 3), moteSpd = new Float32Array(MOTE_COUNT);
+  for (var mi = 0; mi < MOTE_COUNT; mi++) {
+    var ang = Math.random() * Math.PI * 2, rad = RH * (0.25 + Math.random() * 0.9);
+    motePos[mi*3] = Math.cos(ang) * rad; motePos[mi*3+1] = floorY + Math.random() * RH * 1.3; motePos[mi*3+2] = Math.sin(ang) * rad;
+    moteSpd[mi] = 0.0015 + Math.random() * 0.004;
+  }
+  var moteGeo = new THREE.BufferGeometry(); moteGeo.setAttribute('position', new THREE.BufferAttribute(motePos, 3));
+  var motes = new THREE.Points(moteGeo, new THREE.PointsMaterial({ color: 0x9fd9ff, size: RH * 0.008, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false }));
+  bayGrp.add(motes);
+
+  // 7) backdrop glow panel
+  var bkCv = document.createElement('canvas'); bkCv.width = 8; bkCv.height = 256;
+  var bkG = bkCv.getContext('2d'); var bkGr = bkG.createLinearGradient(0, 0, 0, 256);
+  bkGr.addColorStop(0, 'rgba(10,16,28,0)'); bkGr.addColorStop(0.5, 'rgba(40,90,130,0.55)'); bkGr.addColorStop(1, 'rgba(10,16,28,0)');
+  bkG.fillStyle = bkGr; bkG.fillRect(0, 0, 8, 256);
+  var backdrop = new THREE.Mesh(new THREE.PlaneGeometry(RH * 2.2, RH * 1.4),
+    new THREE.MeshBasicMaterial({ map: _tex(new THREE.CanvasTexture(bkCv)), transparent: true, opacity: 0.45, depthWrite: false }));
+  backdrop.position.set(0, floorY + RH * 0.5, -RH * 1.2); backdrop.renderOrder = -1; bayGrp.add(backdrop);
+
+  // 8) invisible practicals — light exists, hardware doesn't (§D8)
+  [-1, 1].forEach(function (s) { var pl = new THREE.PointLight(0xbfe6ff, 0.5, RH * 2.5); pl.position.set(s * RH * 0.55, floorY + RH * 0.52, -RH * 0.25); bayGrp.add(pl); });
+  // floor glow ring
+  var ring = new THREE.Mesh(new THREE.RingGeometry(RH * 0.26, RH * 0.30, 64),
+    new THREE.MeshBasicMaterial({ color: 0x28e0ff, transparent: true, opacity: 0.35, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false }));
+  ring.rotation.x = -Math.PI / 2; ring.position.y = floorY + 0.02; bayGrp.add(ring);
+
+  // 9) slow sweep light — a highlight always travelling, even when the hand is still
+  var sweepL = new THREE.PointLight(0x9fd9ff, 0.9, 40); bayGrp.add(sweepL);
+  scene.add(bayGrp);
+
+  // ── PER-FRAME (folded into the socket's single loop() — NO separate rAF; §E: all bay motion
+  //    dies with the one loop on dispose). Consolidates the mock's animBay + hlPulse + animSweep. ──
+  function bayTick(nowMs) {
+    var pt = (nowMs % 5200) / 5200;
+    padSweep.position.x = -PW/2 + pt * PW; padSweep.material.opacity = 0.5 * Math.sin(pt * Math.PI);
+    var st = (nowMs % 6500) / 6500;                        // §D2 scan cycle 6.5s
+    if (st < 0.5) {
+      var k = st / 0.5;
+      scan.position.y = floorY + k * RH * 1.0;
+      var op = Math.sin(Math.min(k * 4, 1) * Math.PI / 2) * (k > 0.92 ? (1 - k) / 0.08 : 1);
+      scan.children.forEach(function (c) { if (c.material) c.material.opacity = op; });
+      scanLight.intensity = 2.4 * op;
+    } else { scan.children.forEach(function (c) { if (c.material) c.material.opacity = 0; }); scanLight.intensity = 0; }
+    var mp = moteGeo.attributes.position.array;
+    for (var m = 0; m < MOTE_COUNT; m++) { mp[m*3+1] += moteSpd[m]; if (mp[m*3+1] > floorY + RH * 1.35) mp[m*3+1] = floorY; }
+    moteGeo.attributes.position.needsUpdate = true;
+    var bt = nowMs * 0.0016;                               // §C breathing
+    hlBand.material.opacity = 0.30 + 0.10 * Math.sin(bt);
+    hlEdge.material.opacity = 0.80 + 0.18 * Math.sin(bt);
+    var swt = nowMs * 0.00012;                             // §D9 ~50s orbit
+    sweepL.position.set(Math.sin(swt) * RH * 0.7, floorY + RH * (0.55 + 0.2 * Math.sin(swt * 0.7)), Math.cos(swt) * RH * 0.7);
+    glowL.intensity = 0.08 + 0.04 * Math.sin(nowMs * 0.0006);
+  }
+  function bayDispose() {
+    try { for (var i = 0; i < _bayTex.length; i++) { if (_bayTex[i] && _bayTex[i].dispose) _bayTex[i].dispose(); } } catch (e) {}
+    _bayTex = [];
+    try { if (scene.environment && scene.environment.dispose) scene.environment.dispose(); scene.environment = null; } catch (e) {}
+  }
 
   // ── camera spherical orbit around rack CENTER — always lookAt(0,0,0) so it never skews/balloons ──
   var theta = 0.5, elev = 0.18, zoom = 1, tTheta = 0.5, tElev = 0.18;
@@ -31963,6 +32159,7 @@ function rackElevation_render3D(rack, mountEl) {
     var D = fitDist * zoom;
     camera.position.set(Math.sin(theta) * D, elev * D, Math.cos(theta) * D);
     camera.lookAt(0, 0, 0);
+    if (typeof bayTick === 'function') bayTick(performance.now());   // v1.14.255 -- bay motion, one loop
     renderer.render(scene, camera);
   }
   loop();
@@ -31972,6 +32169,7 @@ function rackElevation_render3D(rack, mountEl) {
 
   function teardown() {
     stopped = true;
+    if (typeof bayDispose === 'function') { try { bayDispose(); } catch (e) {} }   // v1.14.255 -- free bay textures/env
     if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
     document.removeEventListener('visibilitychange', onVis);
     canvas.removeEventListener('mousedown', mdown);
