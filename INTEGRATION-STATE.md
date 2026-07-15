@@ -1683,3 +1683,33 @@ cross-dispose work on real hardware.
   · [K] cold PWA relaunch · [L] `?legacy=1`.
 
 BATCH still = 5 (`.251`–`.255`), cap 6, **one slot left.**
+
+
+# §30 — SHIP v1.14.256 · PORT THE RACK (real hardware) (2026-07-14) · BATCH = 6 (AT CAP)
+
+**Handoff:** `mocks/HANDOFF-INSPECT3D-RACK-PORT.md` (committed this ship) · **Visual truth:** `mocks/MOCKUP-INSPECT3D-FINAL.html` (committed this ship). Live == local == **v1.14.256** (Pages served, verified).
+
+**Why:** `.255` shipped the BAY faithfully but rebuilt the RACK from scratch — one `BoxGeometry` chassis + one sphere LED per unit, rear = two "hint cylinders." On John's device it read as **coloured shelves on posts** — the exact failure the port existed to prevent. §1's RULE for this ship: **port the mock VERBATIM**, change ONLY the data source (live Master slots, not the mock's GB300 `ZONES`) + add `envMapIntensity 0.25`.
+
+**What landed (one spliced block replacing the `.255` improvised rack, between the frame build and `scene.add(rackGrp)`; frame + entire bay UNTOUCHED, §4):**
+- **Interior by kind (§1a/§3):** compute = 2 NIC + 2 OSFP + 8 drive bays (ONE `InstancedMesh`) each w/ green LED + BF3 + status + ears · switch = 2 blocks + 4×10×2=80-port grid (ONE `InstancedMesh`) + ~50% violet port LEDs + status · power = 6 PSU + 6 fan + 6 green LED · generic (patch/media/storage/unknown) = chassis + one status LED, **NO invented hardware** (§3 zero-fabrication).
+- **Rear assembly (§1b):** cartridge, 2 **copper** bus bars, top+bottom manifolds + 3 vertical pipes, 6 cable arms, rear door — mock geometry + materials verbatim + env .25. Replaces the two hint cylinders.
+- **Cables (§1c):** `createCable` + every mock call, ported verbatim, **hidden by default**; **new CABLES toggle** injected into the 3D control strip (`#reh3dBtnCables`, `.reh-3d-seg` styling) — owns `cableMeshes` directly (no window global), created only while 3D is live, **removed in `teardown()`**. Bounded to `[1,totalU]` so the mock's hardcoded GB300 rows can't float off a shorter rack.
+- **Side panels + feet** (omitted in `.255`) added per mock.
+- **Chassis stay TYPE-colour** (§3 + the `.251`–`.253` honesty arc); **hgtUnknown gold hatch** unchanged.
+
+**§2 RULING RECORDED (owed-item DONE):** the `.255` flagged tray deviation is now resolved in the in-code comment (~L31779) with John's device ruling — *"keep trays type-colored, magenta unknown looks right"* — type-colour trays **LOCKED**, piano-black ruled AGAINST.
+
+**⚠️ TWO HANDOFF-INTERNAL CONTRADICTIONS — resolved toward the MOCK per THE RULE, FLAGGED loud in-code (~L31858 header) + top of device-verify. BOTH are 1-edit flips:**
+- **(A) REAR FINISH:** §1b/§1d/§7 say port the rear materials verbatim (copper bus bars, green cartridge); §2 says chrome-black the rear assembly/cartridge/door. The mock + §7's *"the rack looks the SAME as the mock side-by-side, any visible gap = fail"* bar OUTWEIGH §2's one clause → **rear ported VERBATIM (COPPER visible).** Swap 4 rear mats to CHROME if John rules §2.
+- **(B) EARS:** the mock CODE builds rack ears on **COMPUTE** units (mock L555-562); §1a/§7 TEXT lists them under switch → **ported on COMPUTE** (mock is reference truth). Move the ear block to the switch branch if John rules switch.
+
+**§5 budget:** shared materials (created once, reused — mock re-allocated per unit) · `InstancedMesh` for the two dominant box-repeats (compute drives 8→1 draw/unit, switch ports 80→1 draw/switch) · LEDs share 2 group-blinked `MeshBasic` materials driven in `bayTick` with scratch `setRGB` — **no per-frame `Color` allocation** (mock did `new THREE.Color()` per LED per frame). Est. ~500-700 meshes on a populated 42U rack; **actual count + on-device FPS = John's read (§7 [12]).**
+
+**GL discipline (unchanged, verified):** `teardown()`'s `scene.traverse` disposes every ported geometry+material (`InstancedMesh` included); `bayDispose` frees env cubemap + CanvasTextures; symmetric `_forge3dActive`/`_reh3dActive` cross-dispose (`:31752`/`:17676`) untouched — one WebGL context ever.
+
+**Gates:** node --check 4 inline + sw.js PASS · CSS **3857/3857** (was 3856; +1 = the single `.reh-3d-cables` rule §6 anticipated) · CRLF preserved (bare-LF 0) · latin1 byte-splice round-trip clean · `InstancedMesh` count 2 · exactly 1 `scene.add(rackGrp)` · old "rear cooling/manifold hint" gone · three-stamp lockstep `.255`→`.256`. **`?legacy=1` byte-identical** (render3D reachable only via the body.rd 3D toggle; the one CSS rule is body.rd-scoped).
+
+**STILL NOTED, NOT FIXED (owed their own ships):** (1) FLAT rack-elevation CSS keyed on EDP vocab while `master_rackToElevation` emits RAW `master_hostType` codes — intersection only `gpu` → FLAT colours only GPUs on Master racks; the 3D rack is MORE correct, so 3D↔FLAT DISAGREE on non-GPU colour = the elevation's bug. (2) `reh3d_setMode` opens `if (!host) return;` — hard-rule-#1 silent return, re-animated by the `.254` rewire, flagged for a hardening ship, deliberately NOT drive-by patched.
+
+**BATCH = 6 (`.251`–`.256`) — AT THE 6-CAP.** `.251`–`.254` cleared by John; `.255` device-verified [G]+[I]; **`.256` is NEW/unverified.** A **consolidated device pass is owed before ANY further ship.** Device-verify checklist (13 items + the two FLAG-FIRST deviation questions) is in `version.json`. **PARKED at the device-verify HARD STOP.**
