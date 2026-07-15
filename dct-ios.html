@@ -11827,7 +11827,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.259';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.260';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -31859,7 +31859,57 @@ function rackElevation_render3D(rack, mountEl) {
   }
   [[-RW/2,-RD/2],[RW/2,-RD/2],[-RW/2,RD/2],[RW/2,RD/2]].forEach(function (p) { frame(new THREE.BoxGeometry(0.16, RH, 0.16), p[0], 0, p[1]); });
   [RH/2, -RH/2].forEach(function (y) { frame(new THREE.BoxGeometry(RW + 0.16, 0.16, RD + 0.16), 0, y, 0); });
-  [-1, 1].forEach(function (s) { frame(new THREE.BoxGeometry(0.08, RH - 0.5, 0.08), s * (RW/2 - 0.13), 0, RD/2 - 0.24); });
+  // ── v1.14.260 — MOUNTING RAILS + EIA-310 PERFORATION (NEW geometry, John-approved 2026-07-15;
+  //    NOT in the mock — recorded so no future session "corrects" it back out). DOCTRINE: "Rails
+  //    are the rack." The Master states totalU, so totalU units of rail + square-hole perforation
+  //    physically exist — drawing them declares NOTHING the Master didn't. This is what makes a
+  //    sparse spine rack (s1:001 = 8 devices in 48U) read as a RACK, not a glass case. Perforation
+  //    is ONE shared CanvasTexture (1 tile per U) on the front face only — 4 rails, +1 draw call,
+  //    not 48×3×4=576 hole meshes. `repeat.y = totalU` is LOAD-BEARING: the hole pitch must land on
+  //    real U boundaries or a tech miscounts — if totalU is falsy, fall back to the plain CHROME
+  //    rail (fail HONEST, never a wrong pitch). Replaces the two ported 0.08-wide front verticals.
+  var railTex = null, railFaceMat = null;
+  if (totalU) {
+    var railCv = document.createElement('canvas'); railCv.width = 32; railCv.height = 64;   // one U tile
+    var rg = railCv.getContext('2d');
+    rg.fillStyle = '#0c0f14'; rg.fillRect(0, 0, 32, 64);                                     // chrome-black rail body
+    [12, 32, 52].forEach(function (cy) {                                                     // EIA-310: 3 square holes per U
+      rg.fillStyle = '#02040a'; rg.fillRect(11, cy - 5, 10, 10);                             // hole void
+      rg.strokeStyle = 'rgba(160,190,215,0.30)'; rg.lineWidth = 1; rg.strokeRect(11.5, cy - 4.5, 9, 9); // machined lip
+    });
+    rg.fillStyle = 'rgba(160,190,215,0.10)'; rg.fillRect(0, 0, 1, 64);                       // edge highlight
+    railTex = new THREE.CanvasTexture(railCv);
+    railTex.wrapS = THREE.RepeatWrapping; railTex.wrapT = THREE.RepeatWrapping;
+    railTex.repeat.set(1, totalU);                                                           // ONE TILE PER U — load-bearing
+    railTex.magFilter = THREE.LinearFilter;
+    _bayTex.push(railTex);                                                                   // dispose registry (CanvasTexture leaks GPU mem otherwise)
+    railFaceMat = new THREE.MeshStandardMaterial({ map: railTex, color: 0xffffff, metalness: 0.88, roughness: 0.34, envMapIntensity: 0.25 });
+  }
+  var railGeo = new THREE.BoxGeometry(0.17, RH - 0.5, 0.09);                                 // ~22mm rail face; x/z kept from the ported verticals
+  // front rails (perforated face = +Z, material index 4) + rear rails (face = -Z, index 5). Real
+  // racks have four; the rear pair sells depth through an empty rack from ISO. Front-only is a
+  // one-entry delete on the array below if John rules it at verify.
+  [ { z: RD/2 - 0.24, fi: 4 }, { z: -(RD/2 - 0.24), fi: 5 } ].forEach(function (rail) {
+    [-1, 1].forEach(function (s) {
+      var mats = [steelMat, steelMat, steelMat, steelMat, steelMat, steelMat];
+      if (railFaceMat) mats[rail.fi] = railFaceMat;
+      var rm = new THREE.Mesh(railGeo, mats);
+      rm.position.set(s * (RW/2 - 0.13), 0, rail.z); rm.castShadow = true; rm.receiveShadow = true; rackGrp.add(rm);
+    });
+  });
+  // ── v1.14.260 — U-POSITION TICKS (EDIT B): every 5U on the inner face of both front rails. The
+  //    Master declared totalU, so U-positions are stated fact (honest). Ticks only, NO numerals
+  //    (the MINI/U-MAP strip carries numbers; text meshes cost + fight legibility at this scale).
+  //    First to go if FPS moves. yFor() is hoisted (defined in the tray section below).
+  var tickMat = new THREE.MeshBasicMaterial({ color: 0x7d93a4, transparent: true, opacity: 0.5 });
+  var tickGeo = new THREE.PlaneGeometry(0.05, 0.012);
+  for (var tu = 5; tu < totalU; tu += 5) {
+    [-1, 1].forEach(function (s) {
+      var tick = new THREE.Mesh(tickGeo, tickMat);
+      tick.position.set(s * (RW/2 - 0.22), yFor(tu), RD/2 - 0.24 + 0.05);                    // inner edge of the front rail, proud of its face
+      rackGrp.add(tick);
+    });
+  }
   var backMat = new THREE.MeshStandardMaterial({ color: 0x070d14, metalness: 0.3, roughness: 0.9, emissive: 0x050a12, emissiveIntensity: 0.12, transparent: true, opacity: 0.85, side: THREE.DoubleSide, envMapIntensity: 0.25 });
   var back = new THREE.Mesh(new THREE.PlaneGeometry(RW - 0.06, RH - 0.06), backMat); back.position.set(0, 0, -RD/2 + 0.04); back.receiveShadow = true; rackGrp.add(back);
   // ── v1.14.256 — PORT THE RACK (HANDOFF-INSPECT3D-RACK-PORT.md). The .255 rack was a bare
@@ -32082,7 +32132,14 @@ function rackElevation_render3D(rack, mountEl) {
       blInst.instanceMatrix.needsUpdate = true; grp.add(blInst);
 
     } else if (kind === 'blank') {
-      chMat.color.setHex(0x0a0f14); chMat.emissive.setHex(0x0a0f14); chMat.transparent = true; chMat.opacity = 0.4; chMat.emissiveIntensity = 0;   // mock ghost (L474-478)
+      // EDIT C (v1.14.260) — a Master-DECLARED blank renders as HARDWARE, mock ghost recipe VERBATIM
+      // (L474-478): 0x0a0f14 · metal .4 · rough .85 · opacity .4 · env .25 · NO strip (gated above),
+      // NO interior. NB: unreached on current Masters — master_hostType has no 'blank' output, so
+      // disp is never 'blank' — this is forward-correct only. An UNDECLARED U never enters here: it
+      // has no slot, so it renders as rails + perforation + back panel and NEVER a panel face (the
+      // "blanks are hardware, rails are the rack" doctrine — no BLANK over a U the Master didn't state).
+      chMat.color.setHex(0x0a0f14); chMat.emissive.setHex(0x0a0f14); chMat.emissiveIntensity = 0;
+      chMat.metalness = 0.4; chMat.roughness = 0.85; chMat.transparent = true; chMat.opacity = 0.4;
       var e = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(cw, hT, cd)),
         new THREE.LineBasicMaterial({ color: 0x1e293b, transparent: true, opacity: 0.2 }));
       grp.add(e);
