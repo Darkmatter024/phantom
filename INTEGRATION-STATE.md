@@ -1741,3 +1741,27 @@ BATCH still = 5 (`.251`–`.255`), cap 6, **one slot left.**
 # §33 — SHIP v1.14.259 · INSPECT-3D FOG (one-line fidelity fix) (2026-07-15)
 
 **John-directed one-liner.** The mock (`MOCKUP-INSPECT3D-FINAL.html` L327) declares `scene.fog = new THREE.FogExp2(0x030508, 0.008)`; the `.255` bay port explicitly DROPPED it (scene comment said "no fog" — the mistake). John's parameter audit: everything else in parity, so the missing fog is why `.258` read **washed out** where the mock reads **deep-black**. Two edits in `rackElevation_render3D`: add the fog right after `var scene = new THREE.Scene()`; clear `scene.fog = null` in `bayDispose` (FogExp2 has no dispose — null is the teardown, per John's note). Applies only to the reh3d bay scene (:31801); the forge3d scene (:17777) untouched. Gates green; NO CSS; three-stamp `.258`→`.259`; `?legacy=1` byte-identical. Live == local == **v1.14.259** (served, verified). **3D-rack consolidated device pass still owed; parked.**
+
+
+# §34 — SHIP v1.14.260 · RACK STRUCTURE (perforated rails + U-ticks; sparse racks read as racks) (2026-07-15) · ENDS THE MOCK-FIDELITY ARC
+
+**Handoff:** `mocks/HANDOFF-INSPECT3D-RACK-STRUCTURE.md` (committed). Live == local == **v1.14.260** (served, verified).
+
+**⚠️ NEW GEOMETRY, NOT A PORT — recorded so no future session "corrects" it out.** The mock has NO perforation and NO per-U rail detail; rails/perforation/ticks are additions, **John-approved 2026-07-15.**
+
+**Why:** John saw the app as a "glass display case" next to the mock. OODA root cause (NOT a render defect): the mock renders a GB300 NVL72 (46U declared hardware); the app rendered **s1:001 / US-SPK03**, a SPINE rack — the SPARKS Master holds s1:*/s3:* spine racks ONLY, no compute cabinets — **s1:001 is 48U with 8 devices. It looks empty because it IS empty.** No renderer change puts 38 devices into a rack the Master says has 8. But a real 48U spine rack with 8 switches still reads as a rack because ~40U of mounting rail + square-hole perforation are physically there, and PHANTOM drew none of it.
+
+**DOCTRINE (John-ruled, verbatim — the whole design rests on it): "RAILS ARE THE RACK. BLANKS ARE HARDWARE."**
+- Master states totalU → totalU of rail/perforation/U-position exist → drawing them declares NOTHING the Master didn't. **Permitted.**
+- Master does NOT say "blank at U15" → a blanking-panel face there CLAIMS a U is filled (tells a Day-0 tech to pull a panel that isn't there) = BLANK over an undeclared U = same family as BLANK over real gear (.246-.251 Unified Law). **Forbidden.**
+- A Master-**declared** blank is data → renders as ghost hardware (EDIT C). An undeclared U → rails + perforation + back panel, **never a panel face.**
+
+**EDIT A — perforated rails (canvas texture, not geometry: 48×3×4=576 hole meshes would kill an iPhone):** the two ported 0.08 front verticals → four rails `BoxGeometry(0.17, RH-0.5, 0.09)` (x/z kept exact, body CHROME), + two REAR rails at `z=-(RD/2-0.24)` (depth through empty U at ISO; front-only is a 1-entry delete). Perforation = ONE shared `CanvasTexture` (32×64 U-tile, 3 EIA-310 holes + machined lip), `repeat.set(1, totalU)`, on the **front face only** via a 6-slot material array (index 4 = +Z front, 5 = -Z rear); pushed to `_bayTex`. **`repeat.y = totalU` is load-bearing** — hole pitch must land on U boundaries or a tech miscounts; **falls back to plain CHROME if totalU falsy** (fail honest, never a wrong pitch).
+
+**EDIT B — U-ticks:** every 5U on the inner front-rail face, `PlaneGeometry(0.05,0.012)` slate `0x7d93a4` opacity 0.5 at `yFor(u)`. Ticks only, NO numerals (MINI strip carries numbers). First to go if FPS moves.
+
+**EDIT C — declared blanks = hardware:** blank branch uses the mock ghost recipe verbatim (0x0a0f14 · metal .4 · rough .85 · opacity .4 · env .25 · no strip/interior). **⚠️ UNREACHED on current Masters** — `master_hostType` has no 'blank' output (the `deploy_classifyDevice` 'blank' is the EDP/CSV path, not this one), so `disp` is never 'blank'. Forward-correct only; fires for no current data. **The doctrine holds automatically:** an undeclared U has no slot → no mesh → rails + back panel, never a face. NO classifier rule was invented to synthesize blanks (no evidence; the .238 guess the honesty arc kills). **The owed DFW02 empty-model row @c1:001:38 ruling may be the signal that makes a declared blank reachable — EDIT C is ready for it.**
+
+**Mesh delta:** ~+18 objects + 1 texture (negligible). Gates green; **CSS 3858/3858 UNCHANGED** (no CSS — verified the diff touches zero `<style>` content; the .257 "3857" was a stale absolute, HEAD .259 was already 3858); railTex disposed via `_bayTex`; three-stamp `.259`→`.260`; `?legacy=1` byte-identical; forge3d untouched.
+
+**CLOSING (handoff, for the record): this ENDS the mock-fidelity arc.** The renderer now matches the mock; the remaining difference between John's two screenshots is **which Master is loaded** — a GB300/HGX Master renders like the mock because that's the rack the mock was built from. **Future "doesn't match the mock" reports run the mechanical parameter diff FIRST (scene/lights/materials, all deltas at once), spot-fix second** — three ships (.257/.259/.260) went to one-variable-at-a-time hunting a 30-second audit catches. **3D-rack consolidated device pass still owed; PARKED.**
