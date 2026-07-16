@@ -11858,7 +11858,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.266';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.267';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -32338,23 +32338,46 @@ function rackElevation_render3D(rack, mountEl) {
     var TILE = 256;                                             // 2x2 tiles per canvas = variety before repeat
     for (var ty = 0; ty < 2; ty++) for (var tx = 0; tx < 2; tx++) {
       var j = 0.97 + ((tx * 2 + ty) % 4) * 0.02;                // deterministic per-tile luminance jitter (+/-3%)
-      g.fillStyle = 'rgb(' + Math.round(10 * j) + ',' + Math.round(13 * j) + ',' + Math.round(18 * j) + ')';
+      // v1.14.267 — base 10,13,18 -> 24,29,37. NOT a brightness preference: _floorTex was the ONLY
+      // CanvasTexture in the file left at the default LinearEncoding (:18070/:18188/:18197 all set
+      // sRGB), so the authored charcoal was read as already-linear and gamma-LIFTED on output to a
+      // ~rgb(56) grey - it has never rendered at the value .266 specced, and that lift was half the
+      // "washed" complaint. Setting sRGB below makes the tile WYSIWYG (unlit MeshBasic now), which
+      // dropped the old numbers to near-invisible against the #04060a void. These are the same tile,
+      // re-authored to land where 10,13,18 was always meant to: charcoal, clearly above the void.
+      g.fillStyle = 'rgb(' + Math.round(24 * j) + ',' + Math.round(29 * j) + ',' + Math.round(37 * j) + ')';
       g.fillRect(tx * TILE, ty * TILE, TILE, TILE);
     }
     g.fillStyle = 'rgba(255,255,255,0.015)';                    // faint material noise
     for (var n = 0; n < 900; n++) g.fillRect((n * 137) % 512, (n * 311) % 512, 1, 1);
-    g.strokeStyle = '#04060a'; g.lineWidth = 2;                 // hairline grout grid, near-black
+    g.strokeStyle = '#090c11'; g.lineWidth = 2;                 // hairline grout, just under the tile (was #04060a = the void colour exactly -> invisible once sRGB landed)
     for (var q = 0; q <= 512; q += TILE) { g.beginPath(); g.moveTo(q, 0); g.lineTo(q, 512); g.moveTo(0, q); g.lineTo(512, q); g.stroke(); }
   })(_fcv.getContext('2d'));
   var _floorTex = _tex(new THREE.CanvasTexture(_fcv));
+  _floorTex.encoding = THREE.sRGBEncoding;                        // v1.14.267 — was defaulted to Linear (the one CanvasTexture in the file that missed it); see the base-colour note above
   _floorTex.wrapS = _floorTex.wrapT = THREE.RepeatWrapping;
-  var _floorReps = Math.max(1, Math.round((RH * 5) / (RW * 2)));  // one canvas tile ~= rack width
+  // v1.14.267 P2 — tile pitch halved (divisor RW*2 -> RW). NOTE: the .266 math was already ~1 rack
+  // width per tile (48U: floor 81.6 / 7 reps = 11.66 per canvas / 2 tiles = 5.83 ~= RW 6.0) - so the
+  // "~2x rack width" read is perspective at elev 0.18, not a maths error. Owner's eye is the gate and
+  // it says smaller, so: one tile ~= HALF a rack width, seams denser. "Halve the repeat" taken as
+  // halve the tile PITCH (= double the repeat count); halving the count would have made tiles bigger.
+  var _floorReps = Math.max(1, Math.round((RH * 5) / RW));
   _floorTex.repeat.set(_floorReps, _floorReps);
   try { _floorTex.anisotropy = Math.min((renderer.capabilities.getMaxAnisotropy && renderer.capabilities.getMaxAnisotropy()) || 1, 4); } catch (e) {}
   _floorTex.needsUpdate = true;
+  // v1.14.267 PUNCH P0+P1 — ONE root cause: the floor was a LIT surface. MeshStandard + metalness 0.5
+  // took a specular lobe from the §A rig's keyL (0xd4e5f7 @0.78, high front-right) -> a bright pool that
+  // SWEPT as you orbited (the "bright state"; there is no LIGHTS toggle), tinted by rimL (0x00d4aa =
+  // the off-palette mint), and keyL's shadow of the rack CUT that pool left of the base = the "dark
+  // angular polygon" (P1) - an absence of highlight, not a gap in the tile. The §A rig is JOHN-LOCKED,
+  // so the fix is here: MeshBasic = unlit. The floor now takes NO direct light, NO env, NO shadow -
+  // it can only show its own tile + the ghost clone through its transparency. Owner's law, literally:
+  // "the floor only ever REFLECTS." Also kills the view-angle dependence at source (deterministic).
+  // Verified in an isolation harness (same r128 + §A rig + env): reproduces the pool/mint/wedge on the
+  // .266 recipe and clears all three on this one. receiveShadow dropped (was the P1 source; no-op here).
   var floorMesh = new THREE.Mesh(new THREE.PlaneGeometry(RH * 5, RH * 5),
-    new THREE.MeshStandardMaterial({ map: _floorTex, metalness: 0.5, roughness: 0.35, transparent: true, opacity: 0.85, envMapIntensity: 0.25 }));
-  floorMesh.rotation.x = -Math.PI / 2; floorMesh.position.y = floorY; floorMesh.receiveShadow = true; floorMesh.renderOrder = 1; bayGrp.add(floorMesh);
+    new THREE.MeshBasicMaterial({ map: _floorTex, transparent: true, opacity: 0.80 }));   // opacity 0.85->0.80 (P3: more clone through the tile)
+  floorMesh.rotation.x = -Math.PI / 2; floorMesh.position.y = floorY; floorMesh.renderOrder = 1; bayGrp.add(floorMesh);
 
   // 6) ghost reflection — mirrored rack clone (§F mobile-fungible)
   if (BAY_REFLECT) {
@@ -32363,7 +32386,7 @@ function rackElevation_render3D(rack, mountEl) {
       refl.traverse(function (o) {
         if (o.isMesh && o.material) {
           o.material = o.material.clone();
-          o.material.transparent = true; o.material.opacity = 0.16; o.material.depthWrite = false;
+          o.material.transparent = true; o.material.opacity = 0.22; o.material.depthWrite = false;   // v1.14.267 P3: 0.16->0.22, the rack's lit trays stand in the polish (satin, never mirror)
           if (o.material.emissiveIntensity) o.material.emissiveIntensity *= 0.5;
         }
       });
