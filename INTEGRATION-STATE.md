@@ -1990,3 +1990,50 @@ The ruling as written asked for "tile roughness 0.35 -> ~0.20 so the scene's own
 Owner ruled "dock above LOG bar is fine, go with that" - closes the last open Task 1 decision. The queue REQUIRES the ship note state which option shipped: **state "dock above LOG bar, all tightened"** in the `.268` note. The other two (merge into the LOG row / auto-collapse to a progress hairline on scroll) are NOT chosen - do not drift into them.
 **Why it is the right one (keep, so nobody re-litigates):** additive - it does not disturb `#omni-bar`'s existing stacking, whose maths **differs materially between rd and legacy** (rd = `#omni-bar` z-25 at `bottom:var(--tabnav-h)` + `#rd-botnav` z-40 at bottom:0; legacy = `#omni-bar` + `#action-stripe`, NO `#rd-botnav`). Auto-collapse was the riskiest and is held until the dock is proven.
 **Constraints from the queue that still bind:** dock must NOT cover map content when closed and must NOT push the page nav off-thumb; `#omni-bar` hides itself via `.omni-inactive` when no deploy is active, so the dock's bottom offset must **not** hard-assume the LOG bar is present. Success criterion is the owner's: *"the U-map is clean and has more room to look the way it should be."*
+
+---
+
+# S45 - SHIP v1.14.268 - PHASE DOCK (CODE-QUEUE Task 1) (2026-07-16)
+
+**Owner asked 3x; the queue said "nothing ships before this."** It is now shipped and **IN FLIGHT (unverified)** - the "ONE unverified ship in flight" rule means **`.269` WET must NOT ship until the owner calls this one.**
+
+## BOTTOM-STACK OPTION SHIPPED (the queue requires the note state which): **DOCK ABOVE THE LOG BAR, ALL TIGHTENED** (per S44b).
+Measured live on a 575px viewport: **dock 384-434 -> LOG bar 435-491 -> nav 489-575.** The dock sits flush above `#omni-bar`. The other two options (merge into the LOG row / auto-collapse hairline) were NOT built - do not drift into them.
+
+## THE BUILD (all additive - the ONLY removed line in `dct-ios.html` is the version stamp)
+- **RE-HOMED, NOT REBUILT.** `deploy_showRackDetail`'s card loop is **byte-identical**: an **IIFE that SHADOWS `html`** captures the cards into `_phCardsHtml`, so the 73-line loop needed **zero edits inside it**. There is **NO second renderer** - `#ph-sheet-body` is fed the exact string deploy already built. ⭐ **This is the pattern to reuse for any future "re-home, don't rebuild" ask.**
+- **LIVE-SYNC IS FREE:** every phase button already re-enters `deploy_showRackDetail`, so one call at its end recomputes the cards and pushes them into the open sheet. Verified live: real BLOCK tap inside the sheet -> persisted -> card re-rendered -> dock chip flipped active->blocked -> sheet stayed open.
+- **BODY-LEVEL BY NECESSITY (new trap, worth keeping):** `#wk-deploy`'s `.work-sub` carries `animation: rf-fade .22s ease both` (`:8729`/keyframes `:8810`) = **a non-none transform for 220ms**, which would make it the containing block for a `position:fixed` child. **The `.212` trap in a different organ.** Any future fixed-position child of a render host must check this first.
+- **Bottom offset does NOT hard-assume the LOG bar:** `#omni-bar` hides itself via `.omni-inactive` (display:none) when no deploy is active, so the `+ --omni-h` term is **`:has()`-gated** on the bar being live, and **`--omni-h` is MEASURED in JS** (57px live), never guessed. No content spacer needed: `.page` already reserves `calc(--tabnav-h + 140px)` > the 107px omni+dock stack.
+- **Sheet = reused primitives, not invented:** (A) `.va-sheet` scrim + `@keyframes sheetUp` + `initSheetDismiss` drag-down · (B) `.rd-sheet` `body.rd` gating · (C) `#ta-sheet` body-scroll lock. `overscroll-behavior:contain`; safe-area both ends; `prefers-reduced-motion` honoured. ⚠️ **`.phs-inner` is ITSELF the scroller** (header sticky INSIDE it) because `initSheetDismiss` keys drag-dismiss off `inner.scrollTop <= 0` - **splitting it into a flex column with a separate scrolling body would let a checklist drag dismiss the sheet. Do not "tidy" this.**
+- **Lifecycle:** CSS gate `body.rd.ops-detail.ph-dock-on`. Belt = every existing `ops-detail` clear kills the dock free. Braces = explicit `phdock_leave()` in the 4 sibling screens that KEEP `ops-detail` (`rd_openOpsTool`, `deploy_detailTool`, `mscope_render`, `deploy_showDetail`) **+ `showMode`**.
+
+## ⭐ TWO REAL BUGS FOUND BY DRIVING THE APP - **THE GATES WERE ALL GREEN THE WHOLE TIME**
+1. **Sheet stranded over the Command Center.** A bottom-nav tap (`showMode`) with the sheet open left `#ph-sheet.open` up over `#pg-cmd` **and `body.overflow` stuck at `hidden`**. Root cause: `showMode` removes `ops-detail`, which hides the **DOCK** - but `#ph-sheet.open` is **not gated on `ops-detail`**. Fixed by calling `phdock_leave()` in `showMode` **right beside the existing `rd_closeProfile()` call, which is there for exactly this reason.** ⭐ **STANDING LESSON: hiding the opener does NOT close the modal. Any future body-level sheet must be dismissed in `showMode` explicitly.**
+2. **Sheet subtitle printed the internal rack id** (`R-TEST-1`) instead of the label the tech reads off the cabinet (`C12-R07`). Now `rack.rackId`.
+
+Self-caught pre-push (both mine): `phdock_activeIdx` shipped **dead** (now wired - it seeds the landing phase in_progress>blocked>first-incomplete, so the sheet "opens scrolled to the active phase" per the queue; a chip tap overrides and persists as last-viewed), and **three comments named a `deploy_phaseCardsHtml` function the IIFE approach never created** (comment rot, corrected).
+
+## ⚠️ METHOD NOTE - A WRONG DIAGNOSIS, CAUGHT AND CORRECTED
+The landing scroll first appeared broken (`scrollTop` stayed 0). I diagnosed "scrollTop written before first paint is discarded" and shipped a **double-rAF** fix. **It was wrong.** Instrumenting proved `phdock_scrollToPhase` was **never called at all**: the automation tab was **backgrounded (`document.hidden=true`), so rAF never fires.** An env artifact - the same class as the `.214` "page won't scroll" ghost. Final code uses **NO rAF**: the scroll runs **synchronously after a forced reflow** (`void inner.offsetHeight`), which is deterministic AND testable in a hidden tab. ⭐ **Rule earned: never "fix" a symptom the harness itself produced - instrument until the call is proven to have happened.** (A second wrong turn: `showMode('cmd')` silently no-ops - the map is `{command:'cmd'}`, so the key is **`'command'`**. The belt only looked broken.)
+
+## DEVIATIONS (both reported to the owner, both deliberate)
+1. **Chip "done" = `--green`, NOT teal.** The queue's legend said "pending gold · active cyan · done teal · gated dim+lock". **`--teal` is not a root token** (only scoped to `#boot` `:11049` and `#forge3d-sheet` `:8848`) and the cards paint complete with `--green`. **A dock chip disagreeing with the card it opens is a field defect**, so chips mirror the card colours exactly. Gold/cyan/dim+lock shipped as written.
+2. **"SET UP SITE flow" premise half-wrong** (unchanged from S43): that flow has NO phase-card markup, so the owner's VERIFY line is trivially true there. ONE renderer/ONE call site = re-homing covers every surface by construction. **Owner still owes: which surface does he call SET UP SITE?**
+
+## VERIFICATION (live, real app served over http, real seeded deploy - not a mock)
+Gates: node --check 4/0 · CSS 12 blocks balanced · CRLF uniform (0 bare-LF) · three-stamp `.267`->`.268`. Driven live: all 5 chip states paint · sheet opens landed on the tapped phase (NET->idx2 @821; MECH->0; VAL clamps at max-scroll 856 and is **fully visible** - correct, not a bug) · drag/X/scrim dismiss + tap-inside does NOT dismiss · live-sync through a real BLOCK · dock cleared on every leave path.
+**`?legacy=1` proven byte-identical LIVE:** `redesign_isOn()`=false · host=`#ops-content` · 5 cards **inline** with all phase buttons · 0 cards in the sheet · dock+sheet `display:none` · **`phdock_render` called 0 times** · and a **simulated `#ta-sheet` body-lock SURVIVED `phdock_leave`** (`phdock_close` restores `overflow` only if IT took the lock - **rule 7**).
+**RACK LOCK: untouched** - no geometry/materials/lighting/camera/floor/reflection/boot.
+
+## OWNER GATE (iPhone, gloves) - `.268` IS THE ONE UNVERIFIED SHIP IN FLIGHT
+- [ ] WORK rack detail: **no phase cards in the scroll**; dock above the LOG bar; nothing covered; nav thumb-reachable
+- [ ] Each chip opens the sheet **on that phase**; START/GATED/OVERRIDE/checklist drawers work as before
+- [ ] Drag-down / X / scrim-tap dismiss; page does not scroll behind; a **checklist drag does NOT dismiss**
+- [ ] Phase action with the sheet open -> card **and** chip update, sheet stays open
+- [ ] **Tap COMMAND in the nav with the sheet open -> the sheet closes** (this was bug [1])
+- [ ] ⭐ **SUCCESS CRITERION (owner's words): "the U-map is clean and has more room to look the way it should be."**
+- [ ] `?legacy=1`: phase cards still inline, unchanged
+
+## QUEUE AS IT NOW STANDS
+**`.268` DOCK = SHIPPED, AWAITING OWNER VERIFY (HARD STOP)** -> **`.269` WET FINISH** (items 1+2+3 ONLY, spec in S44; item 4 DROPPED forever) -> owner verify -> **RACK LOCK RE-ARMS** -> **Task 2 U-map 1U ratchet** (UI, not the rack scene). Task 3 gesture lock = already shipped `.264`, no work, owner device-confirm still owed.
