@@ -1961,3 +1961,27 @@ Spec says the cards "render inline on both the rack WORK view AND the SET UP SIT
 - **Owner decision owed:** which bottom-stack option shipped (dock above LOG bar / merged into LOG row / auto-collapse hairline) - queue requires stating it.
 
 ## TASK 2 - U-MAP 1U RATCHET: not started. Queue-confirmed the U-map COLUMN is UI, not the rack scene (does not violate the lock). Positional quantization only: `position = uToFrac(round(fracToU(rawFingerFrac)))` per frame; DRO + engaged band update ON the step; **the `/47` stays** (47 pitches between 48 centres, not an off-by-one). Surface = `rack-hybrid-minimap`/`.scrubbar` (`scrubbar_buildHtml`/`rackHybrid_initSync`) - **mock `buildUMap` does not exist in the app.**
+
+---
+
+# S44 - OWNER RULINGS (NO CODE): .267 P0 PASSED · WET FINISH scoped 1+2+3, ITEM 4 DROPPED (2026-07-16)
+
+## ⭐ `.267` PASSED THE P0 PASS (owner, iPhone, full 360)
+The unlit floor + the sRGB encoding fix HELD on glass: no flare at any angle, no wedge, no mint. **The `S42` diagnosis is confirmed on device** (the floor was a LIT surface; the isolation-harness method predicted the live result correctly - first reh3d look-bug fixed without burning a device pass, and it landed first try).
+
+## RULING - `Downloads/RULING-FLOOR-WET-FINISH.md` + owner ruling in-session
+Owner verdict: floor passed, but "needs a mirror finish to it, like a wet look - but it's not." Rack lock **formally re-opened for THIS CHANGE ONLY**, re-arms on the wet-pass. Nothing else in the rack scene rides along.
+
+### ⛔ ITEM 4 IS **DROPPED** - OWNER RULED "drop 4, ship 1+2+3 after the dock" (2026-07-16). **DO NOT REINTRODUCE IT IN ANY FUTURE SESSION.**
+The ruling as written asked for "tile roughness 0.35 -> ~0.20 so the scene's own lights draw a tighter specular streak" + metalness +0.05. **That is a P0 REVERT and was pushed back with evidence, and the owner agreed.** WHY (the permanent reason): after `.267` the tile is **`MeshBasicMaterial` = UNLIT - it HAS no roughness/metalness/env**; those were the `.266` values, and `roughness 0.35` is *precisely what drew the bright pool*. Going to `0.20` is a **TIGHTER lobe = a SHARPER, BRIGHTER streak from `keyL` (0.78)** - it would flare WORSE than the original IMG_0721, and it contradicts the same ruling's own hard bound ("if any orbit angle flares, the change has gone too far"). **Item 4 and that bound cannot both hold.** ⭐**STANDING TRAP: any future ask for floor "sheen/gloss/specular/shine" that reaches for roughness/metalness/lights is the SAME P0 revert. The floor is unlit BY RULING. Its look is 100% authored paint + clone compositing.**
+
+### SHIP `.269` = WET FINISH (1+2+3 only). Sequencing: **DOCK `.268` SHIPS AND VERIFIES FIRST** (CODE-QUEUE: "nothing ships before this"; one unverified ship in flight). Then wet as its own ship.
+⚠️ **The ruling doc's baseline is HALF-STALE - it was written against `.266`. Correct baselines are `.267`:**
+1. **Wet = DARKER (the cue everyone forgets).** Tile paint level **-15%**: `24,29,37` -> **~`20,25,31`** (grout `#090c11` scales with it - keep it just under the tile). Authored paint = deterministic, no light involved.
+2. **Reflection presence up:** ghost clone opacity **`0.22` -> `~0.32`**; tile plane opacity **`0.80` -> `~0.78`** (⚠️ the doc says "0.85 -> 0.78" - **0.85 is the STALE `.266` value; `.267` already set 0.80**).
+3. **Contact-sharp falloff = THE wet signature.** Vertical alpha gradient on the clone: **full strength where the rack meets the floor -> gone within ~1.5 rack-heights.** The clone is mirrored BELOW `floorY`, so this is alpha falling off with depth below `floorY` (far-from-contact = the rack's TOP). Implementation note for the builder: clone materials are per-mesh `.clone()`s at `:32389`-ish, so the clean lever is **`onBeforeCompile`** injecting a world-Y smoothstep into the alpha (no geometry change, no Reflector); three caches by shader source so it should stay ~1 program per material type - **watch the build-time recompile cost and the 55fps gate.**
+**BOUNDS (unchanged):** satin-wet, **NOT** a literal mirror - the **tile grid must still read THROUGH the reflection everywhere**; if seams vanish at the contact zone, **back off #2**. **The bright-pool failure mode is the HARD CEILING.** No Reflector pass; same clone+tile architecture; Option-B gating from RULING-RACK-FLOOR-TILE still applies.
+**WET VERIFY (owner, iPhone, full 360 - this RE-RUNS the P0):** [1] floor visibly DARKER than `.267`, reads wet at a glance. [2] rack stands sharply in the polish at contact, dissolves with distance. [3] tile seams read through the reflection everywhere incl. the contact zone. [4] full 360: no flare, no wedge, no mint - **P0 re-passes**. [5] ⭐**REAR VIEW TOO** - the owner judged from the rear last time; it must read wet from the back-panel side, not just the lit face. [6] **ON PASS: THE RACK LOCK RE-ARMS - state it here.**
+
+## QUEUE AS IT NOW STANDS
+**`.268` DOCK (Task 1)** -> owner verify -> **`.269` WET (1+2+3)** -> owner verify -> **RACK LOCK RE-ARMS** -> **Task 2 U-map 1U ratchet** (UI, not the rack scene). Task 3 gesture lock = **already shipped `.264`**, no work, owner device-confirm still owed. Task 1 build map + the legacy-leak trap + the bottom-stack decision owed to the owner: **see `S43`**.
