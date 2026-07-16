@@ -1985,3 +1985,8 @@ The ruling as written asked for "tile roughness 0.35 -> ~0.20 so the scene's own
 
 ## QUEUE AS IT NOW STANDS
 **`.268` DOCK (Task 1)** -> owner verify -> **`.269` WET (1+2+3)** -> owner verify -> **RACK LOCK RE-ARMS** -> **Task 2 U-map 1U ratchet** (UI, not the rack scene). Task 3 gesture lock = **already shipped `.264`**, no work, owner device-confirm still owed. Task 1 build map + the legacy-leak trap + the bottom-stack decision owed to the owner: **see `S43`**.
+
+## S44b - OWNER DECISION (2026-07-16): BOTTOM-STACK OPTION = **DOCK ABOVE THE LOG BAR** (all tightened)
+Owner ruled "dock above LOG bar is fine, go with that" - closes the last open Task 1 decision. The queue REQUIRES the ship note state which option shipped: **state "dock above LOG bar, all tightened"** in the `.268` note. The other two (merge into the LOG row / auto-collapse to a progress hairline on scroll) are NOT chosen - do not drift into them.
+**Why it is the right one (keep, so nobody re-litigates):** additive - it does not disturb `#omni-bar`'s existing stacking, whose maths **differs materially between rd and legacy** (rd = `#omni-bar` z-25 at `bottom:var(--tabnav-h)` + `#rd-botnav` z-40 at bottom:0; legacy = `#omni-bar` + `#action-stripe`, NO `#rd-botnav`). Auto-collapse was the riskiest and is held until the dock is proven.
+**Constraints from the queue that still bind:** dock must NOT cover map content when closed and must NOT push the page nav off-thumb; `#omni-bar` hides itself via `.omni-inactive` when no deploy is active, so the dock's bottom offset must **not** hard-assume the LOG bar is present. Success criterion is the owner's: *"the U-map is clean and has more room to look the way it should be."*
