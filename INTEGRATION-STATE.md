@@ -1898,3 +1898,14 @@ Ship 3 of the MIRROR port (other half of "make the rack more real"; John: "do th
 5 edits in `rackElevation_render3D`. reh3d-only -> ?legacy=1 byte-identical; forge3d untouched. Gates green; three-stamp .264->.265. **Cannot screenshot the live 3D - John iPhone gate.**
 Device-verify: does the rack read as a polished BLACK MIRROR (studio bands + light streaks across the posts/panels), not too dark/dead? If flat: next lever is envMapIntensity up or brighter env bands (the ENV is the mirror, not the material roughness). Trays still read type-colour.
 Batch now .261-.265 (5) PARKED on device-verify - AT the 6-cap next ship. Open: pure-void-vs-floor (.262); fog reconcile. Remaining MIRROR-port ships: boot cover / chrome deletions+identity plate / telemetry / fonts (each own ship).
+
+---
+
+# S41 - SHIP v1.14.266 - FLOOR TILE (2026-07-16)
+
+Per RULING-RACK-FLOOR-TILE.md (Option A). **Resolves the open .262 floor question:** the 3D floor becomes polished data-center tile. 3 edits in `rackElevation_render3D`:
+1. **`BAY_REFLECT` -> true** (was DPR<=2.1). The ghost clone IS the reflection; the ruling needs it visible in the floor on the iPhone. Was perf-gated OFF at DPR>2.1; now all devices - device-verify [6] checks 55fps/2min. (Vindicates the .262 keep-floor deviation - the floor stays and becomes the tile.)
+2. **`floorMesh` -> procedural anisotropic tile:** CanvasTexture 512 (2x2 tiles) = charcoal #0a0d12 + hairline near-black grout grid + per-tile luminance jitter (+/-3%) + faint noise; RepeatWrapping, one tile ~= rack width; `anisotropy min(maxAniso,4)` (stops grout shimmer - the premium tell); `_tex()`-registered. Material map=tile, metal 0.5, rough 0.35, **transparent opacity 0.85**, renderOrder 1 -> composites OVER the dim clone -> reflection through the tile = **satin** (not mirror), strongest at base, dissolving out; fog eats the far edge (no rim).
+3. stamp.
+Option B (THREE.Reflector) NOT used. Reflection inherits the .265 mirror. Pad/ring/motes stay deleted; void/mirror/gesture unchanged - this only ADDS the floor. reh3d-only -> ?legacy=1 byte-identical. Gates green; three-stamp .265->.266. **Cannot screenshot live 3D - John iPhone gate** (grout straight/no shimmer; reflection stands satin; edge dissolves to void; variance=material; cyan/violet tint; 55fps).
+Batch now .261-.266 (6) PARKED on device-verify (owner said keep shipping past the cap). Remaining MIRROR-port: fonts (BLOCKED on font binaries - owner drop) + boot/chrome/telemetry (need the full-screen-view decision).

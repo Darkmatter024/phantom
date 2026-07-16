@@ -11858,7 +11858,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.265';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.266';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -32325,13 +32325,36 @@ function rackElevation_render3D(rack, mountEl) {
   // ── §D THE INSPECTION BAY — all elements additive, dimmer than the rack (bayGrp for clean dispose) ──
   var VOID_SCENE = true;   // v1.14.262 CLEAR-PORT S3 void: hide bay clutter, keep reflective floor + reflection
   var bayGrp = new THREE.Group();
-  var BAY_REFLECT = (window.devicePixelRatio || 1) <= 2.1;   // §F: the one luxury; auto-fallback to floor gradient on heavy DPR
+  var BAY_REFLECT = true;   // v1.14.266 FLOOR TILE (RULING): ghost clone IS the floor reflection, now on all devices (was DPR<=2.1 for perf; device-verify checks 55fps).  Prior note:   // §F: the one luxury; auto-fallback to floor gradient on heavy DPR
   var MOTE_COUNT = ((window.devicePixelRatio || 1) > 2) ? 120 : 220;   // §F second lever
 
   // 5) floor — glossy black, catches the bands + practicals
+  // v1.14.266 FLOOR TILE (RULING-RACK-FLOOR-TILE, Option A): polished data-center tile.
+  // One procedural CanvasTexture (charcoal + hairline grout grid + per-tile luminance jitter + faint
+  // noise), anisotropic so the grout does not shimmer at grazing angles. The floor is TRANSPARENT over
+  // the ghost clone -> the rack reflection shows THROUGH the tile = satin (not mirror). Fog eats the edge.
+  var _fcv = document.createElement('canvas'); _fcv.width = _fcv.height = 512;
+  (function (g) {
+    var TILE = 256;                                             // 2x2 tiles per canvas = variety before repeat
+    for (var ty = 0; ty < 2; ty++) for (var tx = 0; tx < 2; tx++) {
+      var j = 0.97 + ((tx * 2 + ty) % 4) * 0.02;                // deterministic per-tile luminance jitter (+/-3%)
+      g.fillStyle = 'rgb(' + Math.round(10 * j) + ',' + Math.round(13 * j) + ',' + Math.round(18 * j) + ')';
+      g.fillRect(tx * TILE, ty * TILE, TILE, TILE);
+    }
+    g.fillStyle = 'rgba(255,255,255,0.015)';                    // faint material noise
+    for (var n = 0; n < 900; n++) g.fillRect((n * 137) % 512, (n * 311) % 512, 1, 1);
+    g.strokeStyle = '#04060a'; g.lineWidth = 2;                 // hairline grout grid, near-black
+    for (var q = 0; q <= 512; q += TILE) { g.beginPath(); g.moveTo(q, 0); g.lineTo(q, 512); g.moveTo(0, q); g.lineTo(512, q); g.stroke(); }
+  })(_fcv.getContext('2d'));
+  var _floorTex = _tex(new THREE.CanvasTexture(_fcv));
+  _floorTex.wrapS = _floorTex.wrapT = THREE.RepeatWrapping;
+  var _floorReps = Math.max(1, Math.round((RH * 5) / (RW * 2)));  // one canvas tile ~= rack width
+  _floorTex.repeat.set(_floorReps, _floorReps);
+  try { _floorTex.anisotropy = Math.min((renderer.capabilities.getMaxAnisotropy && renderer.capabilities.getMaxAnisotropy()) || 1, 4); } catch (e) {}
+  _floorTex.needsUpdate = true;
   var floorMesh = new THREE.Mesh(new THREE.PlaneGeometry(RH * 5, RH * 5),
-    new THREE.MeshStandardMaterial({ color: 0x04060a, metalness: 0.9, roughness: 0.38, envMapIntensity: 0.25 }));
-  floorMesh.rotation.x = -Math.PI / 2; floorMesh.position.y = floorY; floorMesh.receiveShadow = true; bayGrp.add(floorMesh);
+    new THREE.MeshStandardMaterial({ map: _floorTex, metalness: 0.5, roughness: 0.35, transparent: true, opacity: 0.85, envMapIntensity: 0.25 }));
+  floorMesh.rotation.x = -Math.PI / 2; floorMesh.position.y = floorY; floorMesh.receiveShadow = true; floorMesh.renderOrder = 1; bayGrp.add(floorMesh);
 
   // 6) ghost reflection — mirrored rack clone (§F mobile-fungible)
   if (BAY_REFLECT) {
