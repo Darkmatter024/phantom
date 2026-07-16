@@ -1871,3 +1871,18 @@ Ship 3 = MIRROR/piano-black material finish (CLEAR-PORT S2) - the rack STRUCTURE
 John device-verifying .262: "cant see the RU numbers." **Regression from .261**: full-width glass bands (left/right 3px) + hybrid `.scrubbar-slot` z-index:2 == `.scrubbar-u-label` z-index -> bands paint OVER and HIDE the U numbers where they overlap (the .262 true-black void made it starker). Numbers live on the strip by design (.260 = ticks-only on the 3D rails, numerals on the MINI/U-MAP strip).
 **Fix (CSS-only, 1 rule):** RU labels -> z-index:4 (above bands z-2 / engaged z-3, below carriage z-5) + 9px/600 + #c9d8e4 + contrast text-shadow -> read over the glass. Screenshot self-verified (U42..U1 crisp over every band). ?legacy=1 byte-identical. Gates green; three-stamp .262->.263. Parked on John device-verify.
 Open (unchanged): pure-void-vs-keep-floor ruling (.262); fog true-black reconcile; Ship 3 = mirror finish.
+
+---
+
+# S39 - SHIP v1.14.264 - RACK GESTURE LOCK (2026-07-16)
+
+Per RULING-RACK-GESTURE-LOCK.md. 3D rack canvas: orbit SIDE-TO-SIDE ONLY; vertical swipe over the rack = native PAGE scroll (released, no dead zone). 5 edits in `rackElevation_render3D`:
+1. `canvas.touchAction` none->**pan-y** (CSS primary). Audited: pinch is the app camera zoom (JS), so NOT `pinch-zoom` in touch-action (app owns it).
+2. **Direction lock:** touchstart axis=0; first ~8px |dx|>|dy| -> claim orbit + preventDefault, else release (no preventDefault / no camera write -> page scrolls); committed until touchend.
+3. **Elevation writer killed at source:** removed the `tElev` vertical-tilt assignment in `onMove`; elev stays 0.18 (CLEAR-PORT S1 default). No view-preset / unit-focus tilt exists in this scene.
+4. `touchmove` passive true->**false** (to preventDefault the claimed orbit + pinch); touchstart stays passive:true.
+5. Mouse vertical no-ops (onMove writes theta only); wheel zoom unchanged.
+**Preserved:** horizontal orbit feel; pinch zoom+clamp (0.55-1.7); tap-to-select (clean tap <8px keeps axis 0 -> raycast; vertical scroll sets moved=true so it never mis-selects; 11px tap threshold kept); U-map scrubber (own touches).
+reh3d-only -> ?legacy=1 byte-identical; forge3d untouched. Gates green; three-stamp .263->.264. **CANNOT screenshot-verify touch gestures - John iPhone gate matters here.**
+Device-verify: [1] vertical swipe on rack scrolls page both ways w/ native momentum, NO dead zone. [2] horizontal orbits; elevation never moves. [3] diagonal resolves by dominant first axis, stays committed. [4] clean taps still select. [5] pinch + U-map unchanged. [6] scroll doesnt jump when a drag ends over the canvas.
+Open still: pure-void-vs-floor (.262); fog reconcile; Ship 3 = mirror finish.

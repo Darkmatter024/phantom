@@ -11858,7 +11858,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.263';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.264';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -31865,7 +31865,7 @@ function rackElevation_render3D(rack, mountEl) {
   renderer.outputEncoding = THREE.sRGBEncoding;
   var canvas = renderer.domElement;
   canvas.style.display = 'block'; canvas.style.width = '100%'; canvas.style.height = '100%';
-  canvas.style.touchAction = 'none';
+  canvas.style.touchAction = 'pan-y';   // v1.14.264 RULING-RACK-GESTURE-LOCK: vertical pans = native page scroll; app owns horizontal orbit + pinch
   mountEl.appendChild(canvas);
 
   // ── §A JOHN-LOCKED LIGHT RIG (exact) ──
@@ -32472,6 +32472,7 @@ function rackElevation_render3D(rack, mountEl) {
 
   // ── camera spherical orbit around rack CENTER — always lookAt(0,0,0) so it never skews/balloons ──
   var theta = 0.5, elev = 0.18, zoom = 1, tTheta = 0.5, tElev = 0.18;
+  var axis = 0;   // v1.14.264 gesture-lock: 0 undecided, 1 orbit (horizontal), -1 released to page scroll (vertical)
   var dragging = false, px = 0, py = 0, downX = 0, downY = 0, moved = false, idle = 0, stopped = false, pinch0 = 0;
   var reduce = false; try { reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
   var raycaster = new THREE.Raycaster(), ndc = new THREE.Vector2();
@@ -32481,7 +32482,7 @@ function rackElevation_render3D(rack, mountEl) {
     if (Math.abs(x - downX) > 11 || Math.abs(y - downY) > 11) moved = true;   // ~11px: gloved tap vs orbit
     if (!dragging) return;
     tTheta -= (x - px) * 0.006;
-    tElev = Math.max(-0.15, Math.min(0.5, tElev + (y - py) * 0.004));          // clamped tilt — can't tip into a bad angle
+    /* v1.14.264: elevation LOCKED (RULING) - vertical drag no longer writes tElev; elev stays 0.18 */          // clamped tilt — can't tip into a bad angle
     px = x; py = y; idle = 0;
   }
   function onUp(x, y) { dragging = false; if (!moved) raycast(x, y); }
@@ -32507,14 +32508,22 @@ function rackElevation_render3D(rack, mountEl) {
   function mmove(e) { onMove(e.clientX, e.clientY); }
   function mup(e)   { onUp(e.clientX, e.clientY); }
   function tstart(e) {
-    if (e.touches.length === 1) { onDown(e.touches[0].clientX, e.touches[0].clientY); }
-    else if (e.touches.length === 2) { dragging = false; moved = true; pinch0 = tDist(e.touches); }
+    if (e.touches.length === 1) { axis = 0; onDown(e.touches[0].clientX, e.touches[0].clientY); }
+    else if (e.touches.length === 2) { dragging = false; moved = true; axis = 1; pinch0 = tDist(e.touches); }
   }
   function tmove(e) {
-    if (e.touches.length === 1) { onMove(e.touches[0].clientX, e.touches[0].clientY); }
-    else if (e.touches.length === 2 && pinch0) {
+    if (e.touches.length === 1) {
+      var tx = e.touches[0].clientX, ty = e.touches[0].clientY;
+      if (axis === 0) {                                   // commit direction on the first ~8px, then hold
+        var adx = Math.abs(tx - downX), ady = Math.abs(ty - downY);
+        if (adx > 8 || ady > 8) { axis = (adx > ady) ? 1 : -1; if (axis === -1) { dragging = false; moved = true; } }
+      }
+      if (axis === 1) { onMove(tx, ty); if (e.cancelable) e.preventDefault(); }   // horizontal -> orbit; claim it
+      // axis -1 (vertical) or undecided: no camera write, no preventDefault -> touch-action:pan-y scrolls the page
+    } else if (e.touches.length === 2 && pinch0) {
       var d = tDist(e.touches);
       if (d > 0) { zoom = Math.max(0.55, Math.min(1.7, zoom * (pinch0 / d))); pinch0 = d; }
+      if (e.cancelable) e.preventDefault();               // pinch stays the app camera zoom, not native page zoom
     }
   }
   function tend(e) { var t = (e.changedTouches && e.changedTouches[0]) || null; if (t && e.touches.length === 0) onUp(t.clientX, t.clientY); else dragging = false; }
@@ -32524,7 +32533,7 @@ function rackElevation_render3D(rack, mountEl) {
   window.addEventListener('mousemove', mmove);
   window.addEventListener('mouseup', mup);
   canvas.addEventListener('touchstart', tstart, { passive: true });
-  canvas.addEventListener('touchmove', tmove, { passive: true });
+  canvas.addEventListener('touchmove', tmove, { passive: false });   // v1.14.264: preventDefault on claimed horizontal orbit + pinch
   canvas.addEventListener('touchend', tend);
   canvas.addEventListener('wheel', wheel, { passive: false });
 
