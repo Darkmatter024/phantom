@@ -1863,3 +1863,11 @@ OODA live==local==.261; node --check 4 blocks/0 fail; CSS 3875/3875 BAL; NUL 0; 
 ## Next
 
 Ship 3 = MIRROR/piano-black material finish (CLEAR-PORT S2) - the rack STRUCTURE only (trays keep type colour); watch the no-PMREM 128px env cube (a hard mirror off it looks coarse - may need a modest roughness nudge, not roughness 0). Then boot cover / chrome deletions / identity plate / telemetry / fonts as later ships. Ship 1 (.261 U-map) + this (.262) both PARKED on John device-verify.
+
+---
+
+# S38 - SHIP v1.14.263 - U-MAP RU LABEL LEGIBILITY FIX (2026-07-16)
+
+John device-verifying .262: "cant see the RU numbers." **Regression from .261**: full-width glass bands (left/right 3px) + hybrid `.scrubbar-slot` z-index:2 == `.scrubbar-u-label` z-index -> bands paint OVER and HIDE the U numbers where they overlap (the .262 true-black void made it starker). Numbers live on the strip by design (.260 = ticks-only on the 3D rails, numerals on the MINI/U-MAP strip).
+**Fix (CSS-only, 1 rule):** RU labels -> z-index:4 (above bands z-2 / engaged z-3, below carriage z-5) + 9px/600 + #c9d8e4 + contrast text-shadow -> read over the glass. Screenshot self-verified (U42..U1 crisp over every band). ?legacy=1 byte-identical. Gates green; three-stamp .262->.263. Parked on John device-verify.
+Open (unchanged): pure-void-vs-keep-floor ruling (.262); fog true-black reconcile; Ship 3 = mirror finish.

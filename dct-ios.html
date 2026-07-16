@@ -10052,7 +10052,7 @@ body.rd .rack-hybrid-minimap .umap-dro { font-family: var(--orb); font-size: 11p
 /* Engraved scale - debossed hairlines; no fill pills on labels. */
 body.rd .rack-hybrid-minimap .scrubbar-tick { left: 2px; right: 2px; background: rgba(180,194,208,0.12); box-shadow: 0 1px 0 rgba(0,0,0,0.5); }
 body.rd .rack-hybrid-minimap .scrubbar-tick.scrubbar-tick-major { background: rgba(180,194,208,0.28); }
-body.rd .rack-hybrid-minimap .scrubbar-u-label { background: none; padding: 0; right: 2px; font-size: 8px; color: rgba(125,147,164,0.9); }
+body.rd .rack-hybrid-minimap .scrubbar-u-label { background: none; padding: 0; right: 2px; font-size: 9px; font-weight: 600; color: #c9d8e4; z-index: 4; text-shadow: 0 0 2px rgba(0,0,0,0.95), 0 1px 3px rgba(0,0,0,0.85); }   /* v1.14.263: sat above the glass bands (z tie hid RU #s) + contrast so they read over the tint */
 /* Glass equipment bands (RULING S2): fill 20% + solid 85% rim (identity) + top-light + seat; NO glow.
    Contiguous bands are seamed by every band own top-light/seat insets. Radius scales with span (JS). */
 body.rd .rack-hybrid-minimap .scrubbar-slot { left: 3px; right: 3px; opacity: 1; background: rgba(var(--kc, 138,75,255), 0.20); border: 1px solid rgba(var(--kc, 138,75,255), 0.85); box-shadow: inset 0 1px 0 rgba(255,255,255,0.25), inset 0 -1px 1px rgba(0,0,0,0.38); transition: background 0.12s; }
@@ -11858,7 +11858,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.262';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.263';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
