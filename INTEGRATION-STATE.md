@@ -2037,3 +2037,16 @@ Gates: node --check 4/0 · CSS 12 blocks balanced · CRLF uniform (0 bare-LF) ·
 
 ## QUEUE AS IT NOW STANDS
 **`.268` DOCK = SHIPPED, AWAITING OWNER VERIFY (HARD STOP)** -> **`.269` WET FINISH** (items 1+2+3 ONLY, spec in S44; item 4 DROPPED forever) -> owner verify -> **RACK LOCK RE-ARMS** -> **Task 2 U-map 1U ratchet** (UI, not the rack scene). Task 3 gesture lock = already shipped `.264`, no work, owner device-confirm still owed.
+
+## S45b - OWNER RULING (2026-07-16): **"SET UP SITE" = THE DEPLOY FLOW** (closes the S43/S45 open question)
+
+Owner: *"the deploy flow is what I call set up site."* **The S43 open question is CLOSED - do not re-ask it.**
+
+**Consequence for `.268`: NONE. The verify line is already covered; nothing more to build.** The owner's queue line *"WORK + SET UP SITE: no phase cards in scroll"* names **two ROUTES to the SAME screen** (`deploy_showRackDetail`), not two surfaces. Re-verified against the shipped `.268` code: **exactly ONE place in the file emits a phase card** - `:33473` in `deploy_showRackDetail`. Every other phase loop emits **zero** `hud-card`s (`shiftReport_generate` `:16902` · `deploy_computeDeployRollup` `:26006` · `deploy_seedRacksAndPhases` `:26101` · `deploy_renderPhaseMatrix` `:26392` · **`deploy_showDetail` `:30817`/`:30835`** · `rackLookup_renderRow` `:31535` · `deploy_generateReport` `:34560` · `_asbuilt_rackBuild` `:35208`/`:35210`) - they build the pipeline progress BAR. **So "one component fixes both" was true, and `.268` fixed both by construction.** S43's "the spec's premise is half-wrong" verdict is now **superseded**: the premise was right, the owner's *vocabulary* was what differed - he calls the deploy flow "set up site".
+
+### ⚠️ SURFACED BY THE RULING (owner's call, NOT actioned - `.268` is awaiting verify, one unverified ship in flight)
+**The app uses the literal string `SET UP SITE` for the SITE PROFILE, not the deploy flow** - i.e. the label does not open what the owner means by those words. Two call sites, **both first-run only** (they disappear once `siteProfile_isConfirmed()`):
+1. `cmd_nba` rung A `:19431` - NBA banner `label:'SET UP SITE'` -> `cmd_route('profile')` -> `rd_openProfile()` -> `siteProfile_showEditor`. Body copy *"Set up your site profile. / PHANTOM needs your facility, switches, and rack naming…"* does disambiguate it.
+2. `cmd_setSiteLabel` `:19478` - the `#rd-site` header slot prints `SET UP SITE` (gold `.warn`) while the profile is unconfirmed.
+
+**This is the `MASTER DOC -> SITE PROFILE` precedent again** (hard rule: *"Names say what the door opens. No aspirational or historical labels."*). It is a **naming smell, NOT a live defect**: severity is low (first-run onboarding only, body copy disambiguates, both vanish once configured). **Recommendation on the table: relabel both to `SET UP PROFILE`** (cosmetic, 2 strings, redesign-gated, own micro-ship) so the owner's field vocabulary and the app's labels stop colliding. **Owner has NOT ruled - do not ship it unasked.**
