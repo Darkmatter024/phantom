@@ -9006,6 +9006,94 @@ body.rd #ver-stamp { display: inline-flex; align-items: center; align-self: cent
 .rd-sheet-titles .s { font-family: var(--mono); font-weight: 600; font-size: 10px; letter-spacing: .22em; color: var(--slate); margin-top: 3px; }
 .rd-sheet-close { width: 40px; height: 40px; border-radius: 11px; border: 1px solid rgba(120,150,200,0.18); background: rgba(16,22,34,0.55); color: var(--white); font-size: 17px; cursor: pointer; flex: 0 0 auto; -webkit-tap-highlight-color: transparent; }
 .rd-sheet-body { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 16px 18px 28px; }
+
+/* ━━━ v1.14.268 — PHASE DOCK (CODE-QUEUE Task 1). Bottom-stack option shipped:
+   DOCK ABOVE THE LOG BAR (all tightened) — owner ruling S44b.
+   The five phase cards leave the rack-detail scroll and re-home into #ph-sheet VERBATIM —
+   deploy_showRackDetail's own card loop, unedited, is the ONE renderer for both houses.
+   ⚠️ EVERYTHING here is body.rd-gated: the card renderer and the .hud-card CSS (:5253) are
+   GLOBAL and keep firing under ?legacy=1, which must keep its inline cards byte-identical.
+   ⚠️ Bottom offset must NOT hard-assume the LOG bar exists: #omni-bar hides itself via
+   .omni-inactive (display:none) when no deployment is active, so the +--omni-h term is
+   :has()-gated on the bar being live. --omni-h is measured in JS (phdock_render), never guessed.
+   Gated on .ops-detail TOO so every existing ops-detail clear (showMode / deploy_showList /
+   deploy_showCommandCenter) kills the dock for free — belt; the explicit ph-dock-on clears in
+   the sibling detail screens are the braces. */
+#ph-dock { display: none; }
+body.rd.ops-detail.ph-dock-on #ph-dock {
+  position: fixed; left: 0; right: 0; bottom: var(--tabnav-h); z-index: 30;
+  display: flex; align-items: stretch; gap: 5px;
+  padding: 6px calc(10px + var(--safe-right)) 6px calc(10px + var(--safe-left));
+  background: linear-gradient(180deg, rgba(4,7,11,0.80), rgba(8,14,22,0.96));
+  border-top: 1px solid rgba(92,242,255,0.12);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+}
+body.rd.ops-detail.ph-dock-on:has(#omni-bar:not(.omni-inactive)) #ph-dock {
+  bottom: calc(var(--tabnav-h) + var(--omni-h, 57px));
+}
+#ph-dock .phd-count {
+  flex: 0 0 auto; display: flex; flex-direction: column; justify-content: center;
+  padding: 0 8px 0 2px; border-right: 1px solid rgba(120,150,200,0.14); margin-right: 3px;
+}
+#ph-dock .phd-count .n { font-family: var(--orb); font-weight: 700; font-size: 12px; letter-spacing: .06em; color: var(--white); }
+#ph-dock .phd-count .l { font-family: var(--mono); font-weight: 600; font-size: 8px; letter-spacing: .18em; color: var(--slate); margin-top: 1px; }
+#ph-dock .phd-chip {
+  flex: 1 1 0; min-width: 0; min-height: 38px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  padding: 4px 2px; border-radius: 8px; cursor: pointer;
+  border: 1px solid rgba(255,255,255,0.08); background: rgba(16,22,34,0.55);
+  -webkit-tap-highlight-color: transparent;
+}
+#ph-dock .phd-chip .t { font-family: var(--orb); font-weight: 700; font-size: 8px; letter-spacing: .10em; color: var(--slate); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+#ph-dock .phd-chip .d { width: 5px; height: 5px; border-radius: 50%; background: var(--slate); flex: 0 0 auto; }
+#ph-dock .phd-chip:active { transform: scale(0.96); }
+/* Status paint — mirrors the phase-card status colours EXACTLY so a chip can never disagree with its own card.
+   (Owner's queue legend said "done teal"; --teal is not a root token and the cards use --green. Shipped green. */
+#ph-dock .phd-chip.is-pending .d { background: var(--gold); }
+#ph-dock .phd-chip.is-pending .t { color: var(--gold); }
+#ph-dock .phd-chip.is-active { border-color: rgba(92,242,255,0.45); background: rgba(92,242,255,0.10); }
+#ph-dock .phd-chip.is-active .d { background: var(--cyan); box-shadow: 0 0 6px var(--cyan); }
+#ph-dock .phd-chip.is-active .t { color: var(--cyan); }
+#ph-dock .phd-chip.is-done .d { background: var(--green); }
+#ph-dock .phd-chip.is-done .t { color: var(--green); }
+#ph-dock .phd-chip.is-blocked { border-color: rgba(255,69,58,0.45); }
+#ph-dock .phd-chip.is-blocked .d { background: var(--red); }
+#ph-dock .phd-chip.is-blocked .t { color: var(--red); }
+#ph-dock .phd-chip.is-gated { opacity: 0.45; }
+#ph-dock .phd-chip.is-gated .d { background: transparent; box-shadow: none; }
+
+/* PHASE sheet. Primitive = (A) .va-sheet's scrim + @keyframes sheetUp + initSheetDismiss,
+   (B) .rd-sheet's body.rd gating, (C) the #ta-sheet body-scroll lock. ⚠️ .phs-inner is
+   ITSELF the scroller (header sticky INSIDE it) — initSheetDismiss keys drag-dismiss off
+   inner.scrollTop <= 0, so a flex-column with a separate scrolling body would let a
+   checklist drag dismiss the sheet. Do not split it. */
+#ph-sheet { display: none; }
+body.rd #ph-sheet.open {
+  position: fixed; inset: 0; z-index: 150; display: flex; align-items: flex-end;
+  background: rgba(2,4,8,0.8); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+}
+#ph-sheet .phs-inner {
+  width: 100%; height: 94vh;
+  overflow-y: auto; -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;   /* checklist scroll must not chain to the page */
+  background: linear-gradient(180deg, #06090f, #0a0e16);
+  border-radius: 20px 20px 0 0; border-top: 1px solid var(--cyan-border);
+  padding-bottom: calc(var(--safe-bottom) + 24px);
+  animation: sheetUp 0.3s cubic-bezier(0.32,0.72,0,1);
+}
+@media (prefers-reduced-motion: reduce) { #ph-sheet .phs-inner { animation: none; } }
+#ph-sheet .phs-handle { width: 36px; height: 4px; background: var(--cyan-border); border-radius: 2px; margin: 10px auto 0; }
+#ph-sheet .phs-hdr {
+  position: sticky; top: 0; z-index: 2;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 10px 16px 10px; margin-top: 8px;
+  background: linear-gradient(180deg, rgba(6,9,15,0.98), rgba(6,9,15,0.92));
+  border-bottom: 1px solid rgba(120,150,200,0.14);
+}
+#ph-sheet .phs-titles { min-width: 0; }
+#ph-sheet .phs-titles .t { font-family: var(--orb); font-weight: 700; letter-spacing: .14em; font-size: 15px; color: var(--white); }
+#ph-sheet .phs-titles .s { font-family: var(--mono); font-weight: 600; font-size: 9px; letter-spacing: .20em; color: var(--slate); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#ph-sheet .phs-body { padding: 12px 14px 8px; }
 /* ━━━ REDESIGN STEP 4 — Command Center (pg-cmd). Ported from the cc-final mockup,
    every selector scoped under #pg-cmd so the generic class names (.lens/.stat/.nba/
    .route/.clock/.spill) can't collide with app classes or leak to other pages.
@@ -11858,7 +11946,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.267';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.268';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -12367,6 +12455,23 @@ if (typeof window !== 'undefined') {
 
   <!-- v1.14.104 — New-UI Site Profile sheet (SYS → Profile + Command rung-A). Renders the
        REUSED siteProfile_showEditor; frame-safe (above the bottom nav), no showPage('master'). -->
+  <!-- v1.14.268 — PHASE DOCK (CODE-QUEUE Task 1). Body-level by necessity, NOT a child of the
+       render host: #wk-deploy's .work-sub carries `animation: rf-fade .22s ease both` (:8729/
+       keyframes :8810), so for 220ms it has a non-none transform and would become the containing
+       block for a position:fixed child — the .212 trap in a different organ. Both nodes are inert
+       until body.rd.ops-detail.ph-dock-on / .open, so ?legacy=1 never sees them. -->
+  <div id="ph-dock" role="group" aria-label="Deployment phases"></div>
+  <div id="ph-sheet" role="dialog" aria-modal="true" aria-label="Deployment phases" onclick="if(event.target===this)phdock_close()">
+    <div class="phs-inner">
+      <div class="phs-handle"></div>
+      <div class="phs-hdr">
+        <div class="phs-titles"><div class="t">PHASES</div><div class="s" id="ph-sheet-sub">&mdash;</div></div>
+        <button class="rd-sheet-close" onclick="phdock_close()" aria-label="Close phases">&#10005;</button>
+      </div>
+      <div class="phs-body" id="ph-sheet-body"></div>
+    </div>
+  </div>
+
   <div id="rd-profile-sheet" role="dialog" aria-modal="true" aria-label="Site Profile">
     <div class="rd-sheet-hdr">
       <div class="rd-sheet-titles"><div class="t">SITE PROFILE</div><div class="s">SYSTEM &middot; SITE CONFIGURATION</div></div>
@@ -17018,6 +17123,7 @@ function phantomDeferredInit() {
   initSheetDismiss('sop-sheet',      '.sop-sheet-inner',  closeSopSheet);
   initSheetDismiss('rm-sheet',       '.rm-sheet-inner',   closeRmSheet);
   initSheetDismiss('rm-device-sheet','.rm-device-inner',  closeRmDevice);
+  initSheetDismiss('ph-sheet',       '.phs-inner',        phdock_close);   // v1.14.268 PHASE DOCK — drag-down dismiss
   var entries = safeParse(localStorage.getItem('phantom_crash_log') || '[]', []);
   if (entries.length) {
     var b = document.getElementById('crash-banner');
@@ -17497,6 +17603,11 @@ function showMode(mode) {
   _rdMode = mode;   // v1.14.97: remember the active redesign mode for nav_restore stickiness
   document.body.classList.remove('ops-detail');   // Rule A (v1.14.123): leaving any detail view → grid-back is valid again
   if (typeof rd_closeProfile === 'function') rd_closeProfile();   // v1.14.104: a bottom-nav tap dismisses the Profile sheet
+  // v1.14.268: same reason, same place — a bottom-nav tap must also dismiss the PHASE sheet.
+  // Removing ops-detail above only hides the DOCK; #ph-sheet.open is not gated on ops-detail, so
+  // without this the sheet strands over the Command Center AND body.overflow stays locked (both
+  // reproduced live before this line existed).
+  if (typeof phdock_leave === 'function') phdock_leave();
   // Scaffold pages must NOT write nav/session-restore state. Without this,
   // showPage()'s nav_push persists p:'cmd', which a later normal-mode boot
   // would replay — flipping the live app onto the empty stub. Suppress via
@@ -26480,6 +26591,7 @@ function rd_openOpsTool(tab) {
 
   // Detail render (the canonical tool-into-host body; formerly mirrored by the deleted deploy_showOpsTool).
   document.body.classList.add('ops-detail');
+  phdock_leave();   // v1.14.268: sibling detail screen — keeps ops-detail, so drop the phase dock explicitly
   currentOpsTab = tab;
   if (typeof nav_push === 'function') nav_push({ p: 'work', o: 'deploy', d: 'tool:' + tab });
   var meta = DEPLOY_TOOLS.filter(function (t) { return t.tab === tab; })[0];
@@ -26503,6 +26615,7 @@ function deploy_detailTool(id, tab) {
   if (typeof redesign_isOn === 'function' && !redesign_isOn()) return;
   var host = deploy_opsHost(); if (!host || !OPS_TABS[tab]) return;
   document.body.classList.add('ops-detail');
+  phdock_leave();   // v1.14.268: sibling detail screen — keeps ops-detail, so drop the phase dock explicitly
   currentOpsTab = tab;
   var meta = DEPLOY_TOOLS.filter(function (t) { return t.tab === tab; })[0];
   host.innerHTML = _deploy_toolsBackHdr((meta ? meta.name : 'TOOL'),
@@ -28694,6 +28807,7 @@ function mscope_renderLoadPrompt(c) {
 
 function mscope_render(c, m) {
   document.body.classList.add('ops-detail');   // Rule B (v1.14.125): scope picker is a discard-selection sub-flow — CANCEL is the single exit; hide the redundant grid-back (#work-back). Cleared on return to the list/CC (deploy_showList/deploy_showCommandCenter) or a mode switch (showMode).
+  phdock_leave();   // v1.14.268: sibling detail screen — keeps ops-detail, so drop the phase dock explicitly
   if (!_mscopeState.selected) _mscopeState.selected = {};
   var groups = mscope_groupByRow(m);
   var totalCabs = 0, totalHosts = 0, totalCables = 0;
@@ -30578,6 +30692,7 @@ function deploy_showDetail(id) {
   var dep = deploy_getById(id);
   if (!dep) { phantomToast('Deployment not found', 'error'); deploy_showList(deploy_opsHost()); return; }
   document.body.classList.add('ops-detail');   // Rule A (v1.14.123): this detail renders its own inline '‹ Back' step-back → suppress the redundant grid-back
+  phdock_leave();   // v1.14.268: sibling detail screen — keeps ops-detail, so drop the phase dock explicitly
 
   // Closed deployments are tombstones — no racks/phases/audit exist anymore.
   // Route to the read-only summary view. (Tombstone pushes its own nav state.)
@@ -32949,6 +33064,153 @@ function scrubbar_openSnapped() {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────
+// PHASE DOCK (v1.14.268) — CODE-QUEUE Task 1 (owner asked 3×).
+// The five phase cards leave the rack-detail scroll and re-home into a sheet, fronted by a
+// five-chip dock at the bottom of the screen. Bottom-stack option shipped = DOCK ABOVE THE
+// LOG BAR, all tightened (owner ruling S44b).
+//
+// ⚠️ REDESIGN-ONLY. The card renderer and .hud-card CSS are GLOBAL and keep firing under
+// ?legacy=1 — only the host and this dock differ. Every selector is body.rd-gated so legacy
+// stays byte-identical. Same trap family as the shared-header legacy leak.
+//
+// NO SECOND RENDERER: the sheet is fed the exact string deploy_showRackDetail already built by
+// its own (unedited) card loop. Every phase button re-enters deploy_showRackDetail →
+// recompute → phdock_render pushes the fresh cards back in. That is the whole live-sync path.
+// ─────────────────────────────────────────────────────────────────────
+var _phdock = { deployId: null, rackId: null, lastType: null, open: false, prevOverflow: '' };
+const PHDOCK_SHORT = { mechanical: 'MECH', power: 'PWR', network: 'NET', compute: 'COMP', validation: 'VAL' };
+
+// Chip paint mirrors deploy_showRackDetail's card status colours EXACTLY so a chip can never
+// disagree with the card it opens. (Queue legend said "done teal"; --teal is not a root token
+// and the cards paint complete with --green — shipped green, reported as a deviation.)
+function phdock_stateFor(ph, isGated) {
+  if (ph.status === 'complete')    return 'is-done';
+  if (ph.status === 'in_progress') return 'is-active';
+  if (ph.status === 'blocked')     return 'is-blocked';
+  return isGated ? 'is-gated' : 'is-pending';
+}
+
+// The phase the sheet should land on when opened without an explicit pick: in-progress first,
+// then blocked, then the first not-yet-done phase. Mirrors what a tech is actually working on.
+function phdock_activeIdx(rackPhases) {
+  var i = rackPhases.findIndex(function(p) { return p.status === 'in_progress'; });
+  if (i < 0) i = rackPhases.findIndex(function(p) { return p.status === 'blocked'; });
+  if (i < 0) i = rackPhases.findIndex(function(p) { return p.status !== 'complete'; });
+  return i < 0 ? 0 : i;
+}
+
+function phdock_render(deployId, rackId, rackPhases, cardsHtml, rack) {
+  var dock = document.getElementById('ph-dock');
+  var body = document.getElementById('ph-sheet-body');
+  // Hard rule — no silent failures: under body.rd the sheet is the ONLY door to the phase cards.
+  // If either node is missing the tech loses START/COMPLETE/OVERRIDE with no symptom. Fail loud.
+  if (!dock || !body) {
+    if (typeof console !== 'undefined') console.warn('[phdock] dock/sheet node missing — phase cards unreachable', { dock: !!dock, body: !!body });
+    if (typeof phantomToast === 'function') phantomToast('Phase dock failed to render', 'error');
+    return;
+  }
+
+  // Seed the landing phase on first sight of a rack so the sheet "opens scrolled to the active
+  // phase" (queue). A chip tap overrides it, and it then persists as the last-viewed phase.
+  if (_phdock.rackId !== rackId || _phdock.deployId !== deployId || !_phdock.lastType) {
+    var _seed = rackPhases[phdock_activeIdx(rackPhases)];
+    _phdock.lastType = _seed ? _seed.type : null;
+  }
+  _phdock.deployId = deployId;
+  _phdock.rackId = rackId;
+
+  // Measure the LOG bar rather than assume it: #omni-bar hides itself (.omni-inactive) when no
+  // deployment is active, and the :has() rule only adds this term while the bar is live.
+  var omni = document.getElementById('omni-bar');
+  if (omni && !omni.classList.contains('omni-inactive')) {
+    var oh = omni.getBoundingClientRect().height;
+    if (oh > 0) document.body.style.setProperty('--omni-h', Math.round(oh) + 'px');
+  }
+
+  var done = rackPhases.filter(function(p) { return p.status === 'complete'; }).length;
+  var h = '<div class="phd-count"><div class="n">' + done + '/' + rackPhases.length + '</div><div class="l">PHASES</div></div>';
+  rackPhases.forEach(function(ph) {
+    var isGated = deploy_isPhaseGated(deployId, rackId, ph.type);
+    var lbl = PHDOCK_SHORT[ph.type] || String(ph.type || '').slice(0, 4).toUpperCase();
+    h += '<button class="phd-chip ' + phdock_stateFor(ph, isGated) + '" onclick="phdock_open(\'' + ph.type + '\')"'
+       + ' aria-label="' + escHtml((DEPLOY_PHASE_LABELS_FULL[ph.type] || ph.type) + ' — ' + String(ph.status || '').replace('_', ' ')) + '">'
+       + '<span class="d"></span><span class="t">' + escHtml(lbl) + '</span></button>';
+  });
+  dock.innerHTML = h;
+  document.body.classList.add('ph-dock-on');
+
+  // Sheet content is refreshed on EVERY render, open or not, so a reopen is never stale.
+  body.innerHTML = cardsHtml;
+  var sub = document.getElementById('ph-sheet-sub');
+  // Label, not the internal id: the detail header shows rack.rackId (e.g. "C12-R07"); the sheet
+  // must say the same thing a tech reads off the cabinet, never the storage key.
+  if (sub) sub.innerHTML = escHtml(String((rack && rack.rackId) || rackId || '')) + ' &middot; ' + done + '/' + rackPhases.length + ' COMPLETE';
+  _phdock.phases = rackPhases.map(function(p) { return p.type; });
+}
+
+function phdock_open(type) {
+  var sheet = document.getElementById('ph-sheet');
+  if (!sheet) {
+    if (typeof console !== 'undefined') console.warn('[phdock] #ph-sheet missing — cannot open phases');
+    if (typeof phantomToast === 'function') phantomToast('Phase sheet unavailable', 'error');
+    return;
+  }
+  if (type) _phdock.lastType = type;          // reopen returns to the last-viewed phase
+  _phdock.open = true;
+  sheet.classList.add('open');
+  // Body-scroll lock (the #ta-sheet precedent). The sheet's own scroller carries
+  // overscroll-behavior:contain so a checklist drag can't chain to the page underneath.
+  _phdock.prevOverflow = document.body.style.overflow || '';
+  document.body.style.overflow = 'hidden';
+  if (typeof haptic === 'function') haptic(6);
+  phdock_scrollToPhase(_phdock.lastType);
+}
+
+function phdock_close() {
+  var sheet = document.getElementById('ph-sheet');
+  if (sheet) sheet.classList.remove('open');
+  // ⚠️ Restore the scroll lock ONLY if WE took it. phdock_leave() runs at the sibling detail
+  // screens unconditionally — including under ?legacy=1, where the dock never opens — so an
+  // unguarded write here would clobber another sheet's body lock (#ta-sheet sets overflow:hidden)
+  // and break legacy byte-identical behaviour. Rule 7.
+  if (_phdock.open) document.body.style.overflow = _phdock.prevOverflow || '';
+  _phdock.open = false;
+}
+
+// Leaving the rack detail. The CSS gate is body.rd.ops-detail.ph-dock-on, so every EXISTING
+// ops-detail clear (showMode / deploy_showList / deploy_showCommandCenter) already kills the
+// dock — that is the belt. These are the braces: the sibling detail screens KEEP ops-detail,
+// so they must drop ph-dock-on themselves or the dock strands over another surface.
+function phdock_leave() {
+  document.body.classList.remove('ph-dock-on');
+  phdock_close();
+}
+
+// Land on a phase card without touching the card loop: the cards are direct children of
+// #ph-sheet-body in rackPhases order, so index → nth top-level .hud-card.
+// Runs SYNCHRONOUSLY from phdock_open, right after .open flips the sheet to display:flex.
+// ⚠️ NOT in a requestAnimationFrame: rAF does not fire while the page is hidden, which would
+// silently skip the landing scroll. Reading offsetHeight below forces the layout we need, so
+// this is deterministic and does not depend on a frame ever being painted.
+function phdock_scrollToPhase(type) {
+  var sheet = document.getElementById('ph-sheet');
+  if (!sheet) return;
+  var inner = sheet.querySelector('.phs-inner');
+  var cards = sheet.querySelectorAll('#ph-sheet-body > .hud-card');
+  if (!inner || !cards.length) return;
+  void inner.offsetHeight;   // force layout: the sheet was display:none a statement ago
+  var idx = (_phdock.phases || []).indexOf(type);
+  if (idx < 0) idx = 0;
+  var card = cards[idx];
+  if (!card) return;
+  if (idx === 0) { inner.scrollTop = 0; return; }
+  // Rect delta, not offsetTop: .phs-inner is unpositioned, and a shared translate from the
+  // sheetUp animation cancels out between the two rects.
+  var delta = card.getBoundingClientRect().top - inner.getBoundingClientRect().top;
+  inner.scrollTop += delta - 52;   // clear the sticky header
+}
+
 // ── Screen 4: Rack Detail ──
 function deploy_showRackDetail(deployId, rackId) {
   deploy_ensureDeployPanelVisible();
@@ -33199,6 +33461,15 @@ function deploy_showRackDetail(deployId, rackId) {
   html += nerve_buildRackCard(deployId, rackId, dep, rack, ru, rackPhases);
 
   // ── Phase Cards ──
+  // v1.14.268 (PHASE DOCK): the cards build into their OWN string so the dock sheet can host them
+  // under body.rd while ?legacy=1 keeps appending them inline, byte-identical. The IIFE below
+  // SHADOWS `html` on purpose — that keeps the card loop itself verbatim (zero edits inside it),
+  // which is the whole point: "re-home, don't rebuild; zero logic changes" (CODE-QUEUE Task 1).
+  // No second renderer exists: every phase button re-enters deploy_showRackDetail, which recomputes
+  // this string and pushes it back into the open sheet — that IS the dock's live-sync.
+  var _phCardsHtml = '';
+  (function() {
+  var html = '';
   rackPhases.forEach(function(ph, idx) {
     var isGated = deploy_isPhaseGated(deployId, rackId, ph.type);
     var statusLabel = ph.status.replace('_', ' ').toUpperCase();
@@ -33271,6 +33542,13 @@ function deploy_showRackDetail(deployId, rackId) {
 
     html += '</div>';
   });
+  _phCardsHtml = html;
+  })();
+
+  // v1.14.268 — DOCK SPLIT. Under body.rd the cards leave the scroll entirely and live in the
+  // sheet; under ?legacy=1 nothing changes (cards stay inline, same position, same bytes).
+  var _phDockOn = (typeof redesign_isOn === 'function' && redesign_isOn());
+  if (!_phDockOn) html += _phCardsHtml;
 
   // ── Device List (collapsed) ──
   if (rack.slots && rack.slots.length) {
@@ -33345,6 +33623,11 @@ function deploy_showRackDetail(deployId, rackId) {
   } catch(e) { /* SOP section unavailable — continue */ }
 
   c.innerHTML = html;
+
+  // v1.14.268 — PHASE DOCK. Paint the dock from the phases we just computed and, if the sheet is
+  // open, push the freshly-recomputed cards into it. This runs AFTER c.innerHTML by design: every
+  // phase action re-enters deploy_showRackDetail, so this one line is the entire live-sync path.
+  if (_phDockOn) phdock_render(deployId, rackId, rackPhases, _phCardsHtml, rack);
 }
 
 // ── Delete Deployment (updated for Stage 3 — also cleans rack/phase records) ──
