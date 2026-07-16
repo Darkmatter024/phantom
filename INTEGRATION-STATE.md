@@ -1833,3 +1833,33 @@ OODA: live==local==.260 before edit. node --check 4 inline blocks / 0 fail; CSS 
 
 ## Queue after this
 Ship 2+ = the rest of the MIRROR port (mirror finish / void scene / boot cover+6s failsafe / chrome deletions+identity plate / fitted telemetry / inline Orbitron+Chakra fonts / canon skin), each its own device-verified ship - and tap-to-select + uToFrac 47-pitch fold in there. Prior-arc QUEUE (provenance->reconciliation->ingestion->honesty-parity->Forge card->assistant) still behind Johns PASS. `.251-.260` consolidated device pass still owed (separate).
+
+---
+
+# S37 - SHIP v1.14.262 - VOID SCENE (Ship 2 of the INSPECT-3D MIRROR port; owner chose A) (2026-07-16)
+
+John: after .261 U-map (looks good), "make the rack look more real" -> chose **A = photoreal scene** (mirror finish + void). This ship = the VOID half; mirror/piano-black material finish is Ship 3.
+
+## What shipped (reh3d Inspection Bay, `rackElevation_render3D`)
+Strips the sci-fi diorama dressing so the rack reads as a clean product shot in near-black. One `VOID_SCENE` flag + a prune loop after `scene.add(bayGrp)` sets `visible=false` on every `bayGrp` child EXCEPT `floorMesh` and `refl`. Hidden: motes/particles, background ghost-fleet wireframe racks, backdrop gradient panel, floor glow ring, scan-wave+halo, the inspection PAD group (glass slab/edge strips/calib marks/sweep), 2 practical lights, sweep light. KEPT: dark reflective `floorMesh` (grounding) + mirror `refl` (when on). Mount bg -> true black #000000.
+- **Why visible=false not delete:** teardown `scene.traverse` still disposes them (no GL leak) and `bayTick` animations no-op on hidden objects. Fully reversible (flip the flag). 3 edits total.
+
+## DEVIATION from CLEAR-PORT S3 (reported, CLAUDE.md role rule)
+
+CLEAR-PORT S3 says DELETE the floor slab and let the reflection ground the void. But `BAY_REFLECT = (DPR <= 2.1)` -> the mirror reflection is GATED OFF on the iPhone (DPR 3); a floorless void would float the rack in pure black on Johns device. **Kept the reflective floor as device-safe grounding.** John can rule pure-void-no-floor on device (accepts reflection-off float on iPhone) - one-line change if so.
+
+## Preserved / untouched
+
+.260 perforated rails + U-ticks + blank recipe; the ghost reflection (refl); forge3d; all lights (ambient/key/fill/rim/glow/under stay - only the bay PRACTICAL + sweep lights are hidden). Fog left at 0x030508 (near-black; did NOT change to true-black - the .259/handoff flagged the fog reconcile as OPEN and warned changing it regresses the FINAL-mock match; the mount-bg #000 + hidden dressing already give the void).
+
+## Gates
+
+OODA live==local==.261; node --check 4 blocks/0 fail; CSS 3875/3875 BAL; NUL 0; ctrl == HEAD (0 new); bare-LF 0; content diff 16 ins/2 del; three-stamp .261->.262. body.rd-only (reh3d) -> ?legacy=1 byte-identical. NOT device-verified - John iPhone gate pending.
+
+## DEVICE-VERIFY (John, iPhone)
+
+[1] Open a rack in 3D: the rack sits CLEAN in near-black on a reflective floor - NO floating motes, NO ghost wireframe racks behind, NO painted backdrop, NO glow ring / scan sweep / glass inspection pad. [2] The floor still grounds it (reflective, not a void-float). [3] .260 rails/perforation + mounted gear unchanged. [4] Dense + sparse racks both read right. [5] FLAT toggle + FORGE-after + cold offline reopen all fine (no dual-GL crash, no leak on repeat opens). [6] ?legacy=1 byte-identical. [7] RULE: pure-void-no-floor (delete the floor too, accept reflection-off float on iPhone) - or keep the floor? [8] Fog/black depth reads right, or want true-black fog (open reconcile).
+
+## Next
+
+Ship 3 = MIRROR/piano-black material finish (CLEAR-PORT S2) - the rack STRUCTURE only (trays keep type colour); watch the no-PMREM 128px env cube (a hard mirror off it looks coarse - may need a modest roughness nudge, not roughness 0). Then boot cover / chrome deletions / identity plate / telemetry / fonts as later ships. Ship 1 (.261 U-map) + this (.262) both PARKED on John device-verify.

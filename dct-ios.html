@@ -10076,7 +10076,7 @@ body.rd .reh-3d-seg { font-family: var(--mono); font-size: var(--fs-caption, 10p
 body.rd .reh-3d-seg.is-on { color: var(--cyan); border-color: var(--cyan); background: rgba(40,224,255,0.10); }
 body.rd .reh-3d-seg.reh-3d-cables { margin-left: 12px; }   /* v1.14.256 — CABLES is a filter, not a mode: gap it from the FLAT|3D pair */
 body.rd .reh-flat-wrap { display: contents; }
-body.rd .reh-3d-mount { display: none; position: relative; height: 60vh; max-height: 60vh; border: 1px solid rgba(92,242,255,0.10); border-radius: 8px; overflow: hidden; background: #06090f; }
+body.rd .reh-3d-mount { display: none; position: relative; height: 60vh; max-height: 60vh; border: 1px solid rgba(92,242,255,0.10); border-radius: 8px; overflow: hidden; background: #000000; }
 body.rd .rack-hybrid-canvas.is-3d .reh-flat-wrap { display: none; }
 body.rd .rack-hybrid-canvas.is-3d .reh-3d-mount { display: block; }
 body.rd .reh-3d-loading { padding: 24px 12px; font-family: var(--mono); font-size: var(--fs-caption, 10px); letter-spacing: 1px; color: var(--slate); text-align: center; }
@@ -11858,7 +11858,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.261';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.262';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -32299,6 +32299,7 @@ function rackElevation_render3D(rack, mountEl) {
   hlBand.visible = false; rackGrp.add(hlBand);
 
   // ── §D THE INSPECTION BAY — all elements additive, dimmer than the rack (bayGrp for clean dispose) ──
+  var VOID_SCENE = true;   // v1.14.262 CLEAR-PORT S3 void: hide bay clutter, keep reflective floor + reflection
   var bayGrp = new THREE.Group();
   var BAY_REFLECT = (window.devicePixelRatio || 1) <= 2.1;   // §F: the one luxury; auto-fallback to floor gradient on heavy DPR
   var MOTE_COUNT = ((window.devicePixelRatio || 1) > 2) ? 120 : 220;   // §F second lever
@@ -32423,6 +32424,19 @@ function rackElevation_render3D(rack, mountEl) {
   // 9) slow sweep light — a highlight always travelling, even when the hand is still
   var sweepL = new THREE.PointLight(0x9fd9ff, 0.9, 40); bayGrp.add(sweepL);
   scene.add(bayGrp);
+  // v1.14.262 - VOID SCENE (CLEAR-PORT S3): hide all bay DRESSING (motes, ghost-fleet wireframes,
+  // backdrop panel, glow ring, scan wave, inspection pad, practicals, sweep light) so the rack reads as
+  // a clean product shot in near-black. KEEP floorMesh (device-safe grounding: BAY_REFLECT is DPR<=2.1,
+  // so the mirror reflection is OFF on the iPhone -- the floor is the fallback) and the reflection when on.
+  // visible=false (not delete): teardown scene.traverse still disposes them (no GL leak) and bayTick
+  // animations no-op harmlessly on hidden objects. DEVIATES from CLEAR-PORT S3 (which deletes the floor)
+  // because that spec assumed reflection-always; reported.
+  if (VOID_SCENE) {
+    for (var _vi = 0; _vi < bayGrp.children.length; _vi++) {
+      var _vc = bayGrp.children[_vi];
+      if (_vc !== refl && _vc !== floorMesh) _vc.visible = false;
+    }
+  }
 
   // ── PER-FRAME (folded into the socket's single loop() — NO separate rAF; §E: all bay motion
   //    dies with the one loop on dispose). Consolidates the mock's animBay + hlPulse + animSweep. ──
