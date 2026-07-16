@@ -10037,6 +10037,37 @@ body.rd .rack-hybrid-minimap .scrubbar-track { height: 100%; min-height: 0; max-
 body.rd .rack-hybrid-minimap .scrubbar { padding: 6px 2px; }
 body.rd .rack-hybrid-minimap .scrubbar-u-label { padding: 0 2px; }
 
+/* -- v1.14.261 - U-MAP INSTRUMENT (Ship 1, per HANDOFF-INSPECT3D-STATE-LOCKUP S5 + RULING-UMAP-GLASS-BANDS).
+   Rebuilds the rd rack-detail minimap into the cage-nut-compass instrument language: zero chrome,
+   engraved scale, tinted-GLASS equipment bands (rim carries identity, no bloom), a frosted carriage
+   with an engaged-band detent, and a DRO U-readout. body.rd-scoped -> ?legacy=1 byte-identical (base
+   .scrubbar rules untouched). Detent tracks the CARRIAGE (scroll centre), not selection (DETENT S3);
+   tap-to-select folds in with the mirror/void view redesign, not here. */
+/* Zero chrome (RULING S3): no panel, border, bezel or shadow-plate behind the instrument. */
+body.rd .rack-hybrid-minimap .scrubbar { background: none; border: none; box-shadow: none; padding: 4px 2px; }
+body.rd .rack-hybrid-minimap .scrubbar-header { display: none; }        /* replaced by the DRO */
+body.rd .rack-hybrid-minimap .scrubbar-viewport { display: none; }      /* carriage is the sole indicator */
+/* DRO U-readout - Orbitron phosphor, the only emitter up top. */
+body.rd .rack-hybrid-minimap .umap-dro { font-family: var(--orb); font-size: 11px; letter-spacing: 1px; color: var(--cyan); text-align: center; padding: 1px 0 6px; text-shadow: 0 0 6px rgba(40,224,255,0.45); }
+/* Engraved scale - debossed hairlines; no fill pills on labels. */
+body.rd .rack-hybrid-minimap .scrubbar-tick { left: 2px; right: 2px; background: rgba(180,194,208,0.12); box-shadow: 0 1px 0 rgba(0,0,0,0.5); }
+body.rd .rack-hybrid-minimap .scrubbar-tick.scrubbar-tick-major { background: rgba(180,194,208,0.28); }
+body.rd .rack-hybrid-minimap .scrubbar-u-label { background: none; padding: 0; right: 2px; font-size: 8px; color: rgba(125,147,164,0.9); }
+/* Glass equipment bands (RULING S2): fill 20% + solid 85% rim (identity) + top-light + seat; NO glow.
+   Contiguous bands are seamed by every band own top-light/seat insets. Radius scales with span (JS). */
+body.rd .rack-hybrid-minimap .scrubbar-slot { left: 3px; right: 3px; opacity: 1; background: rgba(var(--kc, 138,75,255), 0.20); border: 1px solid rgba(var(--kc, 138,75,255), 0.85); box-shadow: inset 0 1px 0 rgba(255,255,255,0.25), inset 0 -1px 1px rgba(0,0,0,0.38); transition: background 0.12s; }
+body.rd .rack-hybrid-minimap .scrubbar-slot[data-type="switch"]  { --kc: 138,75,255; }   /* #8a4bff violet */
+body.rd .rack-hybrid-minimap .scrubbar-slot[data-type="gpu"]     { --kc: 31,255,208; }    /* #1fffd0 teal (compute) */
+body.rd .rack-hybrid-minimap .scrubbar-slot[data-type="storage"] { --kc: 255,203,69; }    /* #ffcb45 gold */
+body.rd .rack-hybrid-minimap .scrubbar-slot[data-type="cooling"] { --kc: 10,191,216; }    /* #0abfd8 media-blue */
+body.rd .rack-hybrid-minimap .scrubbar-slot[data-type="server"]  { --kc: 93,116,136; }    /* #5d7488 patch-slate */
+body.rd .rack-hybrid-minimap .scrubbar-slot[data-type="network"] { --kc: 59,130,246; }    /* #3b82f6 azure - RULING S4 resolution (distinct from switch violet); validate on screenshot */
+/* Detent (RULING S2 / DETENT S2): engaged glass brightens (~0.32) + 2.5px cyan ring. */
+body.rd .rack-hybrid-minimap .scrubbar-slot.lt-engaged { background: rgba(var(--kc, 138,75,255), 0.32); box-shadow: inset 0 1px 0 rgba(255,255,255,0.30), inset 0 -1px 1px rgba(0,0,0,0.38), 0 0 0 2px rgba(40,224,255,0.75), 0 0 10px rgba(40,224,255,0.35); z-index: 3; }
+/* Frosted carriage - machined glass, cyan centre index; the sole navigator (DETENT S2). */
+body.rd .rack-hybrid-minimap .scrubbar-handle { display: block; left: -2px; right: -2px; height: 32px; background: linear-gradient(180deg, rgba(255,255,255,0.16), rgba(255,255,255,0.06)); -webkit-backdrop-filter: blur(6px) saturate(1.3); backdrop-filter: blur(6px) saturate(1.3); border: 1px solid rgba(255,255,255,0.35); border-radius: 5px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.40), inset 0 -1px 2px rgba(0,0,0,0.40), 0 2px 6px rgba(0,0,0,0.5); pointer-events: none; transform: translateY(-50%); transition: top 0.1s cubic-bezier(0.23,1,0.32,1); z-index: 5; }
+body.rd .rack-hybrid-minimap .scrubbar-handle::after { content: ''; position: absolute; left: 22%; right: 22%; top: 50%; height: 1px; background: rgba(40,224,255,0.65); box-shadow: 0 0 4px rgba(40,224,255,0.5); }
+
 /* v1.14.218 — 3D rack view: FLAT|3D toggle + lazy three.js mount (redesign-only,
    body.rd-scoped so ?legacy=1 is byte-identical). .reh-flat-wrap is display:contents
    so the FLAT elevation renders exactly as before; .is-3d on the host swaps to 3D. */
@@ -11827,7 +11858,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.260';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.261';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -31619,6 +31650,23 @@ function rackHybrid_initSync(rack) {
   }
 
   // Canvas scroll → update minimap viewport
+  // U-MAP detent + DRO (v1.14.261). ENGAGED = the glass band whose U-span holds the carriage
+  // centre (DETENT S3 - tracks the carriage/scroll, not selection). No-op when rd DRO/bands absent.
+  var _umapDro = document.getElementById('umapDro');
+  function engageAt(centerPct) {
+    if (typeof redesign_isOn === 'function' && !redesign_isOn()) return;   // rd-only instrument: under ?legacy=1 leave the DOM untouched (ship rule 7)
+    var slotEls = bar.querySelectorAll('.scrubbar-slot');
+    for (var i = 0; i < slotEls.length; i++) {
+      var t0 = parseFloat(slotEls[i].style.top) || 0;
+      var h0 = parseFloat(slotEls[i].style.height) || 0;
+      slotEls[i].classList.toggle('lt-engaged', centerPct >= t0 && centerPct <= t0 + h0);
+    }
+    if (_umapDro) {
+      var u = Math.round(totalU - (centerPct / 100) * totalU);
+      _umapDro.textContent = 'U' + Math.max(1, Math.min(totalU, u));
+    }
+  }
+
   canvas.addEventListener('scroll', function() {
     if (_rackHybrid_isSyncing) return;
     _rackHybrid_isSyncing = true;
@@ -31627,6 +31675,7 @@ function rackHybrid_initSync(rack) {
     if (handle) {
       var centerPct = ((canvas.scrollTop + canvas.clientHeight / 2) / totalCanvasHeight) * 100;
       handle.style.top = Math.max(0, Math.min(100, centerPct)) + '%';
+      engageAt(Math.max(0, Math.min(100, centerPct)));
     }
     _rackHybrid_isSyncing = false;
   }, { passive: true });
@@ -31645,6 +31694,7 @@ function rackHybrid_initSync(rack) {
     canvas.scrollTop = Math.max(0, Math.min(totalCanvasHeight - canvas.clientHeight, targetScroll));
     updateViewport();
     if (handle) handle.style.top = (pct * 100) + '%';
+    engageAt(pct * 100);
     _rackHybrid_isSyncing = false;
   };
   bar.addEventListener('touchstart', minimapDrag, { passive: false });
@@ -31652,7 +31702,11 @@ function rackHybrid_initSync(rack) {
   bar.addEventListener('mousedown', minimapDrag);
 
   // First paint
-  setTimeout(updateViewport, 0);
+  setTimeout(function() {
+    updateViewport();
+    var c = ((canvas.scrollTop + canvas.clientHeight / 2) / totalCanvasHeight) * 100;
+    engageAt(Math.max(0, Math.min(100, c)));
+  }, 0);
 }
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -32677,6 +32731,7 @@ function scrubbar_buildHtml(rack) {
 
   html += '<div class="scrubbar" id="scrubbar" data-total-u="' + totalU + '">';
   html += '<div class="scrubbar-header">MINI</div>';
+  if (typeof redesign_isOn === 'function' && redesign_isOn()) { html += '<div class="umap-dro" id="umapDro">U</div>'; }
   html += '<div class="scrubbar-track" id="scrubbarTrack">';
   // Viewport indicator — shows what U-range is currently visible in the Canvas
   html += '<div class="scrubbar-viewport" id="scrubbarViewport" style="top:0;height:0"></div>';
@@ -32693,9 +32748,11 @@ function scrubbar_buildHtml(rack) {
     var uEnd = slot.uEnd || slot.uStart;
     var topPct = ((totalU - uEnd) / totalU) * 100;
     var heightPct = ((uEnd - uStart + 1) / totalU) * 100;
+    var _uSpan = uEnd - uStart + 1;
+    var _rdRad = (typeof redesign_isOn === 'function' && redesign_isOn()) ? (_uSpan <= 1 ? 1.5 : _uSpan <= 2 ? 2.5 : 3.5) : 0;   // v1.14.261: glass radius scales with span (RULING S2)
     var type = (slot.type || '').toLowerCase();
     html += '<div class="scrubbar-slot" data-idx="' + idx + '" data-type="' + escHtml(type) + '" ';
-    html += 'style="top:' + topPct.toFixed(2) + '%;height:' + Math.max(heightPct, _miniFloor).toFixed(2) + '%"></div>';
+    html += 'style="top:' + topPct.toFixed(2) + '%;height:' + Math.max(heightPct, _miniFloor).toFixed(2) + '%' + (_rdRad ? ';border-radius:' + _rdRad + 'px' : '') + '"></div>';
   });
   // Empty-state overlay: shown when no scrubbable slots after filtering
   if (slots.length === 0) {

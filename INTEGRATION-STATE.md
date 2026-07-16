@@ -1803,3 +1803,33 @@ Telemetry strip, health ring, ambient audio (Web-Audio synth), light-mode theme,
 4. **U-MAP scrubber** — if the static strip falls short. (Camera presets fold in cheap.)
 
 The prior-arc QUEUE (A provenance → C reconciliation+namespace → B ingestion/NBA/pill → honesty-parity → D Forge card → E assistant) is UNTOUCHED and still behind John's PASS.
+
+---
+
+# S36 - SHIP v1.14.261 - U-MAP INSTRUMENT (Ship 1 of the INSPECT-3D MIRROR port) (2026-07-16)
+
+**First Code-authored ship of the SPARSE-RACK-MIRROR handoff** (files63.zip: STATE-LOCKUP + CLEAR-PORT + UMAP-DETENT) **+ RULING-UMAP-GLASS-BANDS.** The U-map was the explicitly Code-shaped problem (STATE-LOCKUP S5.2/S5.4: study pg-compass, rebuild the instrument in-repo). NOT DEVICE-VERIFIED - screenshot self-verified only; John iPhone gate pending.
+
+## What shipped
+Rebuilt the rd rack-detail minimap (`rack-hybrid-minimap` / `.scrubbar`, NOT a mock `buildUMap` - that name does not exist in the app) into the cage-nut-compass (`compass_render`) instrument language. Nine edits + a legacy guard, `dct-ios.html` only, all `body.rd`-scoped:
+- **Zero chrome** (RULING S3): killed the `.scrubbar` panel/border/box behind the strip.
+- **Glass bands** (RULING S2): `.scrubbar-slot` -> tinted glass = `rgba(--kc,0.20)` fill + `rgba(--kc,0.85)` 1px rim (identity) + top-light/seat insets, NO bloom. Retires the purple-blob failure. Radius scales with span (JS-inline, rd-gated). Contiguous bands seam via their own insets (verified U32-33 vs U34 on screenshot).
+- **Canon palette** (approved): switch #8a4bff / gpu(compute) #1fffd0 / storage #ffcb45 / cooling #0abfd8 / server(patch) #5d7488. Set via per-`data-type` `--kc` custom prop. Reserved: cyan #28e0ff (active), mag #ff2bd6 (UFM) - no band uses them.
+- **RULING S4 resolved (option a):** network -> #3b82f6 azure (distinct from switch violet), not ship-both-violets. Screenshot-confirmed distinct. NEW closest pair to watch on device: cooling #0abfd8 vs gpu #1fffd0 (teal family).
+- **Frosted carriage** (DETENT S2): un-hid `.scrubbar-handle` under rd, 32px machined glass + cyan centre index; sole navigator indicator (`.scrubbar-viewport` hidden under rd).
+- **Detent + DRO**: `engageAt()` in `rackHybrid_initSync` toggles `.lt-engaged` (fill->0.32 + 2.5px cyan ring) on the band under the carriage centre, and writes an Orbitron DRO U-readout. **ENGAGED tracks the CARRIAGE (scroll centre), not selection** (DETENT S3).
+- **Engraved scale + DRO** replace the `MINI` header; U-labels lose their void-pill.
+
+## Deviations from spec (per CLAUDE.md role rule)
+1. **Scope:** ship 1 is visual instrument + carriage-driven detent + DRO ONLY. **Tap-to-select is DEFERRED** to the mirror/void view-redesign ship - because the app hybrid minimap is a SCROLL-scrubber owned by `rackHybrid_initSync` (`scrubbar_init` is dead in hybrid, comment-confirmed @ its def). Forcing select into the scrollbar would fight the scroll model; it belongs with the redesigned no-scroll view. STATE-LOCKUP treats the U-map as extractable, but it assumed the mock VIEW (no scroll) - the real app entangles them.
+2. **uToFrac 47-pitch:** the app strip uses `(totalU-u)/totalU` linear positioning (internally consistent, slot-height-is-data holds). The mock 47-pitch is for exact map<->3D sync in the redesigned view; folds in there, not here.
+3. **Legacy guard added:** `engageAt` early-returns under `?legacy=1` so the DOM is byte-untouched (rule 7). CSS all `body.rd`-scoped; DRO/radius rd-gated in `scrubbar_buildHtml`.
+
+## Gates (all green)
+OODA: live==local==.260 before edit. node --check 4 inline blocks / 0 fail; CSS braces 3875/3875 BAL (+17 rules); CRLF preserved (bare-LF 0); NUL 0 (caught+fixed a latin1-write mojibake of non-ASCII comment chars - clean rebuild); content diff = 60 ins / 3 del (`--ignore-cr-at-eol`); three-stamp lockstep .260->.261 (dct/sw/version.json). `?legacy=1` byte-identical. forge3d + reh3d GL scene untouched (DOM/CSS-only ship). NOT a `.251-.260` batch item (CLEAR-PORT S11 out-of-scope).
+
+## DEVICE-VERIFY (John, iPhone, gloves) - the gate (RULING S5 + DETENT S7 + CLEAR-PORT S10 U-map rows)
+[1] Open a rack-detail 3D/FLAT hybrid: the side U-map reads as a machined instrument, NOT a panel with colored blocks. [2] Channel scale/ticks readable THROUGH every band tint. [3] Contiguous equipment (two switches touching) reads as separate glass slabs (seam). [4] NO glow/bloom on bands; rim carries colour. [5] NOTHING gray behind/around the instrument, any angle/theme. [6] Scroll the canvas: the band under the carriage brightens + cyan ring; DRO U-number tracks. [7] switch(violet) vs network(azure) distinguishable at arm length; ALSO check cooling vs gpu (teal pair). [8] `?legacy=1` byte-identical (no DRO, no detent, old minimap). [9] Frosted carriage visible against dark bands (else raise white gradient .16->.22).
+
+## Queue after this
+Ship 2+ = the rest of the MIRROR port (mirror finish / void scene / boot cover+6s failsafe / chrome deletions+identity plate / fitted telemetry / inline Orbitron+Chakra fonts / canon skin), each its own device-verified ship - and tap-to-select + uToFrac 47-pitch fold in there. Prior-arc QUEUE (provenance->reconciliation->ingestion->honesty-parity->Forge card->assistant) still behind Johns PASS. `.251-.260` consolidated device pass still owed (separate).
