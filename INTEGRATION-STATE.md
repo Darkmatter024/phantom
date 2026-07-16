@@ -1886,3 +1886,15 @@ Per RULING-RACK-GESTURE-LOCK.md. 3D rack canvas: orbit SIDE-TO-SIDE ONLY; vertic
 reh3d-only -> ?legacy=1 byte-identical; forge3d untouched. Gates green; three-stamp .263->.264. **CANNOT screenshot-verify touch gestures - John iPhone gate matters here.**
 Device-verify: [1] vertical swipe on rack scrolls page both ways w/ native momentum, NO dead zone. [2] horizontal orbits; elevation never moves. [3] diagonal resolves by dominant first axis, stays committed. [4] clean taps still select. [5] pinch + U-map unchanged. [6] scroll doesnt jump when a drag ends over the canvas.
 Open still: pure-void-vs-floor (.262); fog reconcile; Ship 3 = mirror finish.
+
+---
+
+# S40 - SHIP v1.14.265 - MIRROR FINISH (2026-07-16)
+
+Ship 3 of the MIRROR port (other half of "make the rack more real"; John: "do the mirror finish"). Ports the mock `setFinish("mirror")` recipe (read from the v32 mock, authoritative per CLEAR-PORT S2) onto the rack STRUCTURE.
+**Material (mock-exact):** color 0x04060a, metalness 1.0, roughness 0.05, envMapIntensity 0.25, emissive off = black-lacquer piano mirror. Applied to `steelMat`/CHROME (posts+rail bodies), `sidePanelMat` (big flats, were matte 0.7/0.5), `footMat`. **Honors the .256 lock: STRUCTURE ONLY - trays keep type colour, untouched.**
+**Env (the key):** ported mock `buildEnvMirror` as `_envCubeMirror()` + swapped `scene.environment` to it - a black studio room with white/cyan/violet light BANDS + top softbox. ESSENTIAL: a roughness-0.05 metal reflecting the old dark gradient shows almost nothing (mock note). Registered via `_tex()` -> bayDispose cleans it.
+**Left alone (deviations from mock-mirrors-everything, reported):** semi-transparent emissive back panel (`backMat`, depth contrast) + the .260 perforated rail FACES (`railFaceMat`, machined-matte + preserve the .260 boundary). Ghost reflection clones rackGrp AFTER build -> inherits the mirror. Trays catch the studio env faintly (global env) - colour unchanged, allowed.
+5 edits in `rackElevation_render3D`. reh3d-only -> ?legacy=1 byte-identical; forge3d untouched. Gates green; three-stamp .264->.265. **Cannot screenshot the live 3D - John iPhone gate.**
+Device-verify: does the rack read as a polished BLACK MIRROR (studio bands + light streaks across the posts/panels), not too dark/dead? If flat: next lever is envMapIntensity up or brighter env bands (the ENV is the mirror, not the material roughness). Trays still read type-colour.
+Batch now .261-.265 (5) PARKED on device-verify - AT the 6-cap next ship. Open: pure-void-vs-floor (.262); fog reconcile. Remaining MIRROR-port ships: boot cover / chrome deletions+identity plate / telemetry / fonts (each own ship).

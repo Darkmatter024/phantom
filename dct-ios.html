@@ -11858,7 +11858,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.264';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.265';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -31900,11 +31900,35 @@ function rackElevation_render3D(rack, mountEl) {
     }
     var t = new THREE.CubeTexture(faces); t.needsUpdate = true; return _tex(t);
   }
-  scene.environment = _envCube();
+  // -- v1.14.265 MIRROR ENV (CLEAR-PORT S2, port of the mock buildEnvMirror): a black studio room with
+  // white/cyan/violet light BANDS + a top softbox. The black-mirror rack reflects THESE - the plain dark
+  // gradient (_envCube) shows almost nothing on a roughness-0.05 metal. --
+  function _envCubeMirror() {
+    var faces = [];
+    for (var f = 0; f < 6; f++) {
+      var cv = document.createElement('canvas'); cv.width = cv.height = 128;
+      var g = cv.getContext('2d');
+      g.fillStyle = '#04060c'; g.fillRect(0, 0, 128, 128);
+      if (f === 2) {                                   // +Y top: broad cold softbox pool
+        var rg = g.createRadialGradient(64, 64, 10, 64, 64, 88);
+        rg.addColorStop(0, 'rgba(140,180,220,0.85)'); rg.addColorStop(1, 'rgba(4,6,12,0)');
+        g.fillStyle = rg; g.fillRect(0, 0, 128, 128);
+      } else if (f !== 3) {                            // walls: studio bands (white + cyan + violet)
+        g.fillStyle = 'rgba(200,225,245,0.75)'; g.fillRect(0, 30, 128, 9);
+        g.fillStyle = 'rgba(60,205,240,0.65)';  g.fillRect(0, 62, 128, 6);
+        g.fillStyle = 'rgba(138,75,255,0.35)';  g.fillRect(0, 92, 128, 5);
+      } else {                                         // -Y floor: soft bounce
+        g.fillStyle = 'rgba(40,60,85,0.4)'; g.fillRect(0, 0, 128, 128);
+      }
+      faces.push(cv);
+    }
+    var t = new THREE.CubeTexture(faces); t.needsUpdate = true; return _tex(t);   // _tex registers it for bayDispose
+  }
+  scene.environment = _envCubeMirror();   // v1.14.265 MIRROR FINISH (was _envCube gradient)
 
   // ── RACK STRUCTURE (chrome black §B: 0x0c0f14 metal .92 rough .16 env .25) ──
   var rackGrp = new THREE.Group();
-  var CHROME = { color: 0x0c0f14, metalness: 0.92, roughness: 0.16, envMapIntensity: 0.25 };
+  var CHROME = { color: 0x04060a, metalness: 1.0, roughness: 0.05, envMapIntensity: 0.25 };   // v1.14.265 MIRROR FINISH (CLEAR-PORT S2; structure only, trays keep type colour per .256 lock)
   var steelMat = new THREE.MeshStandardMaterial(CHROME);
   var edgeMat = new THREE.LineBasicMaterial({ color: 0x1e3a4a, transparent: true, opacity: 0.15 });
   function frame(g, x, y, z) {
@@ -32017,12 +32041,12 @@ function rackElevation_render3D(rack, mountEl) {
   function _stripMat(hx) { return _stripCache[hx] || (_stripCache[hx] = new THREE.MeshBasicMaterial({ color: hx, transparent: true, opacity: 0.9 })); }
 
   // ── §1 rack side panels + feet (mock L408-424, verbatim + env .25) — omitted in .255 ──
-  var sidePanelMat = new THREE.MeshStandardMaterial({ color: 0x0a1018, metalness: 0.5, roughness: 0.7, emissive: 0x050c14, emissiveIntensity: 0.12, envMapIntensity: 0.25 });
+  var sidePanelMat = new THREE.MeshStandardMaterial({ color: 0x04060a, metalness: 1.0, roughness: 0.05, emissive: 0x000000, emissiveIntensity: 0, envMapIntensity: 0.25 });   // v1.14.265 MIRROR FINISH
   [-1, 1].forEach(function (s) {
     var sp = new THREE.Mesh(new THREE.BoxGeometry(0.05, RH - 0.35, RD - 0.35), sidePanelMat);
     sp.position.set(s * (RW/2 + 0.025), 0, -0.2); sp.castShadow = true; rackGrp.add(sp);
   });
-  var footMat = new THREE.MeshStandardMaterial({ color: 0x161d26, metalness: 0.8, roughness: 0.3, envMapIntensity: 0.25 });
+  var footMat = new THREE.MeshStandardMaterial({ color: 0x04060a, metalness: 1.0, roughness: 0.05, envMapIntensity: 0.25 });   // v1.14.265 MIRROR FINISH
   [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(function (p) {
     var foot = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.13, 0.12, 8), footMat);
     foot.position.set(p[0] * (RW/2 - 0.3), -RH/2 - 0.14, p[1] * (RD/2 - 0.3)); rackGrp.add(foot);
