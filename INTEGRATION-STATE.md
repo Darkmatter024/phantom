@@ -1765,3 +1765,41 @@ BATCH still = 5 (`.251`–`.255`), cap 6, **one slot left.**
 **Mesh delta:** ~+18 objects + 1 texture (negligible). Gates green; **CSS 3858/3858 UNCHANGED** (no CSS — verified the diff touches zero `<style>` content; the .257 "3857" was a stale absolute, HEAD .259 was already 3858); railTex disposed via `_bayTex`; three-stamp `.259`→`.260`; `?legacy=1` byte-identical; forge3d untouched.
 
 **CLOSING (handoff, for the record): this ENDS the mock-fidelity arc.** The renderer now matches the mock; the remaining difference between John's two screenshots is **which Master is loaded** — a GB300/HGX Master renders like the mock because that's the rack the mock was built from. **Future "doesn't match the mock" reports run the mechanical parameter diff FIRST (scene/lights/materials, all deltas at once), spot-fix second** — three ships (.257/.259/.260) went to one-variable-at-a-time hunting a 30-second audit catches. **3D-rack consolidated device pass still owed; PARKED.**
+
+---
+
+# §35 — RECON (NO CODE SHIP): SPARSE-RACK-CLEAR PRO mock scoped; verify-first plan set (2026-07-15)
+
+**No code shipped.** John dropped `Downloads/PHANTOM-SPARSE-RACK-CLEAR.html` (716KB; end of today's `MOCKUP-SPARSE-RACK-TUNER` → `-5/-7/-8` → `CLEAR` lineage; **NO companion handoff .md — I author the plan**). John said **"do whats best."** Per the §25 lesson (*"do what's best" is NOT a blank grant when discipline/gates exist*) + ship-rule #6 (device verify = hard stop, I can't do it), that = **execute the recon's recommended plan WITHIN the gates, NOT override the hard stop.** Mapped by a 6-agent recon workflow (2 agents died mid-stream → synth made confident-negative errors → the adversarial critic caught them; param/geometry half is source-verified and solid, mechanic inventory was corrected).
+
+## THE MOCK IS PORT-AWARE, not desktop chrome
+Touch handlers + explicit `// PHANTOM PORT: tap = hover+select on touch`; thermal/cables/holo already stripped by web-Claude with `"no telemetry source"`. This is the next 3D-rack vision, not a desktop toy.
+
+## PARAMETER DIFF (the §34 mechanical-diff-first, DONE) — "doesn't match the mock" = LIGHT, not geometry
+App bay is **1.5–7× darker per light source + 22% lower exposure + 2× denser fog** than this mock:
+exposure **1.1 vs 1.42** · ambient **0.04 vs 0.16** · key **0.78 vs 1.18** · fill **0.10 vs 0.48** · rim **0.42 vs 0.78** · glow **0.08 vs 0.55** · underGlow **0.14 PURPLE vs 0.55 CYAN** · fog **0x030508@0.008 vs 0x020407@0.0040**.
+⚠️ The app's darker rig MAY be intentional (protects the thin type-colour bezel strips) — **VERIFY on device before auto-brightening.** ⚠️ The `.259` fog "port" targeted `MOCKUP-INSPECT3D-FINAL`, NOT this SPARSE mock — **`0.008→0.0040` is an OPEN reconcile, not a proven mislabel** (critic caught the over-claim; changing it could REGRESS the FINAL-mock match).
+
+## THE SPARSE-CLEAR CORE = GHOST-SLOT GRID (the app does NOT have it)
+For every empty U the mock draws a dim RECESSED DEVICE-WIDTH bay: width = chassisW, height = uH*0.88 (**the ~0.12 seam IS the perceived U-rhythm**), depth = RD*0.16 pushed to z=-RD*0.16 (rear shelf), color 0x0a121a opacity 0.22 depthWrite:false, **ABSENT from unitRegistry (uncounted/untappable)**. 8 bright + ~40 dim recessed bays = a rack that reads mostly-empty-but-**present**. The app answers empty-U DIFFERENTLY — `.260` perforated CHROME rails, an **APP INVENTION with ZERO mock ancestor** (the mock's rails are plain steel). ⭐ **DOCTRINE TRIPWIRE:** the ghost bay is doctrine-safe ONLY if all 4 honesty props hold simultaneously (recessed + shallow 16% + dim 0.22/depthWrite-off + uncounted). Drop any one → flush/opaque/full-depth → it becomes a blank FACE on an undeclared U = **§34 violation.** Port whole or not at all.
+
+## OTHER MECHANICS (inventory, source-verified)
+- **FAULT mode** (L1692) — most on-brand, but a **DEMO**: picks a RANDOM racked unit, **INVENTS** a fault (chassis 0x3a1515 + emissive 0xef4444, 40 smoke spheres, auto-opens card). The red **OVERWRITES type colour** (`userData._faultColor`). Value ONLY if wired to **real status** (field-verify / node-status), never random, and as an OVERLAY that preserves type colour. **Needs a data-source ruling.**
+- **PHANTOM mode** (L1633) — X-ray: occupied chassis → opacity 0.28 + 12 additive data-flow tubes (teal/purple). An occupied-gear reveal, **NOT** a sparse-clear competitor.
+- **Interactive U-MAP** (L1606) — drag-to-scan scrubber + **bidirectional 3D sync** + arrow stepping. The app has only a STATIC MINI strip → real functional gap.
+- **Camera presets + tap-to-focus** (pickView L2209 / focusSelectedUnit L1373) — front/side/iso/reset + center-the-tapped-unit. Small, useful gloved UX.
+
+## ⚠️ TRAP CONFIRMED — palette collision in the UI/LEGEND layer (NOT the chassis)
+Chassis are near-black (clean, no collision). BUT the mock's legend/U-Map colour map COLLIDES with the honesty arc: power **#f59e0b ≈ pdu gold #ffcb45** · compute **#00d4aa ≈ patch/gpu** · switch **#a855f7 ≈ switch violet #8a4bff** · tor **#3b82f6 ≈ server**. **Do NOT port the coloured U-Map/legend — keep the arc, drop the mock palette.** (Fault/phantom LED/light hues are safe as sub-pixel LEDs; a violation the moment promoted to a bezel/chassis.)
+
+## DROP (desktop chrome / invented data)
+Telemetry strip, health ring, ambient audio (Web-Audio synth), light-mode theme, keyboard shortcuts, sub-pixel micro-detail (0.018 screws, 32/24 individually-meshed ports). No place on an iPhone in the cold aisle.
+
+## DECIDED PLAN (verify-first; each a SEPARATE ship; 6-cap respected going forward)
+0. ⛔ **BATCH-VERIFY `.251`–`.260` ON DEVICE FIRST** (John — the gate; 9 deep, past the 6-cap; I cannot do it). It ALSO informs ship 1: does `.260`'s perforated rail already make `s1:001` read, or is the ghost grid needed? **Consolidated checklist handed to John this turn.**
+1. **GHOST-SLOT GRID** — the real sparse-clear win; design (replace rails / complement / both) KEYS OFF the device read; honesty-4 locked.
+2. **LIGHTING RECONCILE** (only if verify says too dark) — param spot-fix (fog/exposure/rig), **no geometry churn**.
+3. **FAULT / ATTENTION mode** — data-driven only, overlay preserves type colour. Needs the data-source ruling.
+4. **U-MAP scrubber** — if the static strip falls short. (Camera presets fold in cheap.)
+
+The prior-arc QUEUE (A provenance → C reconciliation+namespace → B ingestion/NBA/pill → honesty-parity → D Forge card → E assistant) is UNTOUCHED and still behind John's PASS.
