@@ -2319,3 +2319,30 @@ Gates: node --check 4/0; CSS 12 balanced; CRLF uniform; three-stamp .273→.274.
 **No open CODE-QUEUE tasks. No parked engineering items remain** (the back-trap was the last). Everything below needs a NEW owner ruling before any code:
 - **Roadmap residue (docs, not code):** SERVICE EXTEND single-tray · cross-rack link geometry · `MODEL_SPEC` + per-field provenance + spec sheet (**R5 PARKED - would fabricate**) · projected screen-space U-ruler · **`.reh-3d-seg` tap-target 22px vs the 44px gloved floor** (owner call, whole seg family or none) · rename the GB300 reference file (**PHANTOM / AUS-01 · COREWEAVE** on a **GB300** rack; AUS-01 is **Hopper**).
 - **CAMERA stays OPEN** (§47) even with the scene re-locked - view-rail follow-ons don't need a fresh camera ruling. Everything else in the scene is LOCKED: STOP AND ASK.
+
+---
+
+# S54 - `.274` DEVICE-VERIFIED · ⭐ THE ENTIRE ARC IS SETTLED — NOTHING IN FLIGHT (2026-07-17)
+
+## OWNER, IN CHAT: ".274 verified, all good"
+The phase-sheet back-trap fix passed on device. **Every ship in the arc `.268`→`.274` is now DEVICE-VERIFIED. There is NO unverified ship in flight. The working tree is clean, local == origin, live == `.274`.**
+
+## THE FULL ARC — ALL SHIPPED, ALL DEVICE-VERIFIED
+| ship | what | verified |
+|---|---|---|
+| `.268` | PHASE DOCK (CODE-QUEUE Task 1) | ✅ |
+| `.269` | `SET UP SITE` → `SET UP PROFILE` relabel | ✅ (folded into .270 pass) |
+| `.270` | Ship A — CABLES sourced from Master + `_rmConnHit` untangle (fabricated cable layer DEAD) | ✅ |
+| `.271` | Ship B — ortho FRONT/REAR view rail + EXPLODE | ✅ |
+| `.272` | WET FINISH (items 1+2+3; contact-sharp reflection falloff) | ✅ — **scene lock RE-ARMED on this pass** |
+| `.273` | U-MAP 1U RATCHET (CODE-QUEUE Task 2) | ✅ |
+| `.274` | phase-sheet back-trap fix (one `nav_back` registry entry) | ✅ |
+Plus Task 3 GESTURE LOCK = `.264`, verified in code + rode the `.271` device pass.
+
+## STANDING STATE FOR THE NEXT SESSION
+- ⛔ **RACK SCENE LOCK IS ARMED** (§47 / S52): **camera term OPEN**, everything else — materials · §A JOHN-LOCKED light rig · fog · tone mapping · tray geometry/internals · type colours · bezel strips · floor · reflection · boot — **LOCKED. No change without a NEW explicit owner ruling; if a task would touch it, STOP AND ASK.**
+- **NO open CODE-QUEUE tasks. NO parked engineering items.** The back-trap was the last.
+- **Everything below needs a NEW owner ruling before any code** (roadmap residue, docs-only until then): SERVICE EXTEND single-tray · cross-rack link geometry · `MODEL_SPEC` + per-field provenance + device spec sheet (**R5 PARKED — it would fabricate; do not revive without a data source**) · projected screen-space U-ruler · **`.reh-3d-seg` tap-target 22px vs the 44px gloved floor** (whole seg family or none) · rename `Downloads/REFERENCE-gb300-nvl72-visualizer.html` so its **PHANTOM / AUS-01 · COREWEAVE** branding on a **GB300** rack (AUS-01 is **Hopper**) can't be mistaken for a real screen.
+- ⚠️ **STANDING HAZARD unchanged:** two build lines write `main` — OODA (`curl` live) before ANY edit; verbatim strings are truth, stamps are contested.
+
+**Parked. Awaiting the next owner instruction — nothing outstanding on my side.**
