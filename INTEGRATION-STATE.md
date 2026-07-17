@@ -2050,3 +2050,32 @@ Owner: *"the deploy flow is what I call set up site."* **The S43 open question i
 2. `cmd_setSiteLabel` `:19478` - the `#rd-site` header slot prints `SET UP SITE` (gold `.warn`) while the profile is unconfirmed.
 
 **This is the `MASTER DOC -> SITE PROFILE` precedent again** (hard rule: *"Names say what the door opens. No aspirational or historical labels."*). It is a **naming smell, NOT a live defect**: severity is low (first-run onboarding only, body copy disambiguates, both vanish once configured). **Recommendation on the table: relabel both to `SET UP PROFILE`** (cosmetic, 2 strings, redesign-gated, own micro-ship) so the owner's field vocabulary and the app's labels stop colliding. **Owner has NOT ruled - do not ship it unasked.**
+
+---
+
+# S46 - SHIP v1.14.269 - `SET UP SITE` -> `SET UP PROFILE` (label-only micro-ship) (2026-07-16)
+
+Owner approved the relabel surfaced in `S45b`. **Label only - two strings. No logic, no routes, no new door.**
+
+## WHAT + WHY
+The app printed the literal string `SET UP SITE` for the **SITE PROFILE** onboarding, while the owner's field vocabulary uses "set up site" for the **DEPLOY FLOW** (`S45b` ruling). The label named a different door than the person using it means - the **`MASTER DOC -> SITE PROFILE` precedent**, hard rule *"Names say what the door opens."*
+- `cmd_nba` rung-A NBA label `:19435` -> `SET UP PROFILE` (act `cmd_route('profile')` **unchanged**)
+- `cmd_setSiteLabel` `#rd-site` header prompt `:19486` -> `SET UP PROFILE`
+- 3 stale comments naming the old label updated so they cannot rot; **2 deliberate "do NOT relabel this back" notes retained** - they are the only `SET UP SITE` strings left in the file, and they are load-bearing (they carry the owner-vocabulary reason).
+
+## ⚠️ SEQUENCING - THE FLIGHT RULE WAS WAIVED, ONCE, BY THE OWNER
+This **stacks on the still-unverified `.268`**, which "ONE unverified ship in flight" would forbid. The owner gave an **informed go** immediately after being told, in the preceding line, that `.268` was parked awaiting his verify. **Waived FOR THIS SHIP ONLY - the rule still stands; do not treat this as precedent.**
+⭐ **WET FINISH THEREFORE MOVES `.269` -> `.270`.** Its spec is **unchanged** (S44: items **1+2+3 only**; **item 4 stays DROPPED forever**).
+Cannot confound the `.268` verify: both strings render **only while `siteProfile_isConfirmed()` is false** (first-run) - a state the owner's configured device is not in - and neither is on the rack-detail/dock surface.
+
+## VERIFIED LIVE, BOTH HOUSES (served over http, real boot)
+- **Redesign:** NBA renders `SET UP PROFILE →` · header `#rd-site` reads `SET UP PROFILE` · **the door still works** - tapping it opens the populated `SITE PROFILE` sheet (`rd-profile-sheet`, title "SITE PROFILE", body content present).
+- **Legacy, CLEAN boot forcing nothing:** `#pg-cmd` never active (`display:none`, 0x0) · **`#cc-nbar` content is `""` - never populated** · **0 elements show the label** · `#mode-toggle` display:none. Control (`appLogoTap` 110x20) proves layout was real, **not a hidden-tab artifact**. -> **`?legacy=1` byte-identical.**
+- Gates: node --check 4/0 · CSS 12 blocks balanced · CRLF uniform · three-stamp `.268`->`.269`. **RACK LOCK untouched.**
+
+## ⭐ A WRONG CLAIM I WROTE, CAUGHT AND CORRECTED (keep - it re-maps the legacy-leak organ)
+An interim comment asserted legacy reaches `cmd_setSiteLabel` via `#mode-toggle -> showMode('command') -> cmd_render`. **It cannot.** `#mode-toggle` carries **inline `style="display:none"`** at `:12594` (*"Hidden until ?redesign=1; flag-gated so the field app is untouched"*) - it is hidden in **BOTH** houses, so **legacy has NO door to `showMode`/`cmd_render` at all**. The `body.rd #mode-toggle{display:none}` rule at `:9190` is only the rd-side belt (the bottom nav replaces it) and misreads as "visible in legacy" if taken alone.
+An earlier probe showed `#cc-nbar` rendering **163x33 in legacy** and looked like a rule-7 break - **it was my own forced `showMode('command')` manufacturing a state legacy cannot reach.** ⭐ **Two method traps re-confirmed: (1) `innerText` falls back to `textContent` in a hidden tab and reports display:none text as present - use `getBoundingClientRect`/`offsetParent` + a known-visible control instead; (2) never conclude from a state you forced - re-test with a clean boot that forces nothing.** Same family as [[feedback_verify_env_artifacts_before_fixing]].
+
+## QUEUE
+**`.268` DOCK + `.269` relabel both AWAITING OWNER VERIFY** (the relabel folds into the `.268` pass - nothing to see on a configured device) -> **`.270` WET FINISH** (items 1+2+3) -> verify -> **RACK LOCK RE-ARMS** -> **Task 2 U-map 1U ratchet**. Task 3 = already shipped `.264`.
