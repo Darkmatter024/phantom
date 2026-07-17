@@ -9131,21 +9131,22 @@ body.rd #ph-sheet.open {
 #pg-cmd .nba h2{font-size:23px;font-weight:700;margin:8px 0 6px;line-height:1.1}
 #pg-cmd .nba p{color:var(--slate);font-size:13px;line-height:1.4;margin:0 0 12px}
 #pg-cmd .nba .route{display:inline-flex;align-items:center;gap:8px;font-family:var(--raj);font-weight:700;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--cyan);border:1px solid rgba(92,242,255,0.35);border-radius:20px;padding:9px 16px;background:rgba(92,242,255,0.05)}
-/* Rule F (v1.14.117) — Ask card aligned to the Command surface vocabulary (corrected
-   mock phantom-ask-card-corrected-mock.html): inset to match the NBA card width (16px
-   sides, was full-bleed), 18px padding / 12px margin, violet accent border (not the
-   neutral .gx border / cyan glow), prism contained in a 56px violet-tinted box with a
-   36px mark (was a 64px uncontained 62px image), and typography scaled to the surface
-   (title 18px not 23px, 11px mono label, 13px desc). body.rd-only; legacy untouched. */
-body.rd .ask{--ax:var(--vio);display:flex;align-items:center;gap:14px;padding:18px;margin:0 16px 14px;width:auto;text-align:left;border-radius:16px}   /* Rule F (v1.14.128). v1.14.204 STRUCTURAL: LAYOUT-ONLY now. Material (border/background/box-shadow/filter) was silently LOSING the cascade to the later G-1 rule — every material edit here was a no-op. All material consolidated into the G-1 rule. Do NOT re-add material props here. */
-body.rd .ask .prism{flex:0 0 auto;width:56px;height:56px;display:grid;place-items:center;background:color-mix(in srgb,var(--vio) 12%,transparent);border:1px solid color-mix(in srgb,#a66bff 45%,transparent);border-radius:8px;box-shadow:inset 0 0 12px color-mix(in srgb,var(--vio) 25%,transparent)}
-body.rd .ask .prism img{width:36px;height:auto;animation:askBreathe 4.6s ease-in-out infinite}
-body.rd .ask .ey{color:var(--vio);font-family:var(--mono);font-size:11px;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:4px}
-body.rd .ask h3{font-weight:700;font-size:18px;margin:0;color:#fff;line-height:1.1}
-body.rd .ask p{margin:4px 0 0;color:var(--dim);font-size:13px;line-height:1.3}
-body.rd .ask .arw{margin-left:auto;color:var(--vio);font-size:20px;align-self:center}
-@keyframes askBreathe{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-1.5px) scale(1.025)}}
-@media (prefers-reduced-motion:reduce){body.rd .ask .prism img{animation:none}}
+/* v1.14.279 — Ask demoted from a full-width banner to ONE tile in a triplet (.askrow).
+   Replaces the old body.rd .ask card rules (Rule F + .prism + .ey/h3/p/.arw + askBreathe
+   keyframes + its reduced-motion override — all removed; .ask no longer exists in markup).
+   Row geometry mirrors .trow so the column reads as matched bands; the .278 media block
+   caps .askrow to 1080 and zeroes its L/R padding exactly like .trow (padding group). */
+#pg-cmd .askrow{display:flex;gap:10px;padding:0 16px 14px}
+#pg-cmd .askrow > *{flex:1;min-width:0}
+#pg-cmd .apill{display:flex;align-items:center;gap:12px;text-align:left;cursor:pointer;min-height:96px;padding:12px;border-radius:14px;color:inherit;font-family:inherit;border:1px solid color-mix(in srgb,var(--vio) 45%,transparent);background:linear-gradient(160deg,#0d0a18,#070809);box-shadow:inset 0 0 22px -6px color-mix(in srgb,var(--vio) 30%,transparent)}
+#pg-cmd .apill .av{flex:0 0 auto;width:56px;height:56px;display:grid;place-items:center;border-radius:8px;background:color-mix(in srgb,var(--vio) 12%,transparent);border:1px solid color-mix(in srgb,#a66bff 45%,transparent);box-shadow:inset 0 0 12px color-mix(in srgb,var(--vio) 25%,transparent)}
+#pg-cmd .apill .av img{display:block;height:62px;width:auto}
+#pg-cmd .apill .ey{font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--vio)}
+#pg-cmd .apill h3{margin:3px 0 0;font-size:15px;font-weight:600}
+/* reserved slots: deliberately empty, never a dead tap — non-interactive by design (§6) */
+#pg-cmd .rpill{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:5px;min-height:96px;padding:12px;border-radius:14px;cursor:default;user-select:none;border:1px dashed rgba(143,168,189,.22);background:rgba(10,14,20,.4)}
+#pg-cmd .rpill b{font-size:20px;font-weight:700;color:var(--slate-dim);opacity:.5;line-height:1}
+#pg-cmd .rpill span{font-family:var(--mono);font-size:9px;letter-spacing:.18em;color:var(--slate-dim);opacity:.65}
 /* v1.14.159 Shift Telemetry tiles (mock-telemetry-tiles) — replace the old launcher row. */
 #pg-cmd .trow{display:flex;gap:10px;padding:0 16px 14px}
 #pg-cmd .tile{flex:1;--tc:#33465a;display:flex;flex-direction:column;gap:6px;min-height:96px;aspect-ratio:auto;/* v1.14.207: reset the aspect-ratio:1/1.6 that leaks in from the generic .tile rule (8415) — this id-scoped rule overrides everything else but never reset AR, so on wide/desktop viewports the shift tiles ballooned to ~474px (296px wide × 1.6), pushing the DEPLOY/SCANNED/HANDOFF row far below the fold under the fixed bottom nav = unclickable deploy tile on laptop. On phone the tiles are narrow so it stayed hidden. */filter:saturate(1.4);border:1px solid color-mix(in srgb,var(--tc) var(--glow-border),transparent);border-radius:16px;background:linear-gradient(160deg,#0a0d13 0%,#070809 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.06),inset 0 0 30px -6px color-mix(in srgb,var(--tc) var(--glow-inner),transparent),0 0 var(--glow-outer) -2px color-mix(in srgb,var(--tc) var(--glow-a),transparent),0 12px 26px -14px rgba(0,0,0,.9);padding:13px 12px 12px;position:relative;overflow:hidden;color:var(--white)}
@@ -9756,7 +9757,7 @@ body.rd #rd-botnav{display:flex}
   #pg-cmd .lens,
   #pg-cmd .stats,
   #pg-cmd .nba,
-  body.rd .ask,
+  #pg-cmd .askrow,
   #pg-cmd .trow,
   #pg-cmd .sig-h,
   #pg-cmd .sigrow,
@@ -9770,7 +9771,8 @@ body.rd #rd-botnav{display:flex}
      the margin group's borders. Vertical padding preserved. */
   #pg-cmd .statusrow,
   #pg-cmd .stats,
-  #pg-cmd .trow {
+  #pg-cmd .trow,
+  #pg-cmd .askrow {
     padding-left: 0;
     padding-right: 0;
     gap: 16px;
@@ -9785,13 +9787,6 @@ body.rd #rd-botnav{display:flex}
     padding-left: 0;
     padding-right: 0;
   }
-
-  /* .ask is a <button> — width:auto shrinks to content, so max-width+margin
-     auto above would only CENTER a narrow button (~578px), not fill the
-     column. The .278 mockup used a <div> (fills). Force the button to span
-     the 1080 column so it matches the mockup + spec verification step 8.
-     Desktop-only; phone .ask (base margin:0 16px, shrink-to-fit) untouched. */
-  body.rd .ask { width: 100%; }
 }
 
 /* ─── 42U Scrub-Bar ─── */
@@ -11462,29 +11457,8 @@ body.rd .rm-rack-frame, body.rd .br-tile:not(.affected) {
      SKIN recipe verbatim, not an invention; focus state re-asserted cyan.
    6 OPS SIGNAL empty plate: UNTOUCHED — awaiting the owner's explicit ruling on the dashed
      ghost-blueprint empty-state language. */
-body.rd .ask {
-  /* v1.14.195 T3 (queue-1, CALL 0 batch): saturation tune-down — owner flagged the hot
-     saturate(1.40) twice; .155 precedent (John-approved) killed it on photoreal-art cards
-     because it crushes the art. The ask card is now photoreal-on-glass — same class.
-     v1.14.204: -webkit-appearance reset added — .ask is a raw <button>; without the reset
-     iOS WebKit refuses the border-box gradient ring and the whole G-1 material never paints.
-     This rule is the CASCADE WINNER over the layout-only rule (~L8844) — material lives HERE only. */
-  /* v1.14.204 BULLETPROOF MATERIAL: the border-box gradient ring trick (2px transparent
-     border + border-box background layer) does not paint on this raw <button> even with the
-     appearance reset — owner confirmed on device twice. Replaced with the pre-G-1 primitive
-     set (plain ring + padding-box glass + inset glow) which paints on every element type.
-     Consumes the --glow-border knob per the one-knob law. Do NOT reintroduce border-box layers here. */
-  -webkit-appearance: none;
-  appearance: none;
-  filter: none;
-  border: 1px solid color-mix(in srgb, var(--vio) var(--glow-border), transparent);
-  background:
-    radial-gradient(140% 160% at 50% -40%, rgba(140,172,206,.10) 0%, transparent 46%),
-    linear-gradient(180deg,#0b1019,#05080e 58%,#0a0f1a);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.06),
-    inset 0 0 30px -6px color-mix(in srgb,var(--vio) 12%,transparent),
-    inset 0 2px 4px rgba(0,0,0,.6);
-}
+/* v1.14.279: the GLASS-SKIN body.rd .ask material rule was removed here — .ask is gone
+   (demoted to the .askrow/.apill triplet, which carries its own violet-glass material). */
 body.rd #pg-cmd .tile {
   border: 2px solid transparent;
   background:
@@ -12019,7 +11993,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.278';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.279';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -12696,19 +12670,21 @@ if (typeof window !== 'undefined') {
         <p id="cc-nbap">&mdash;</p>
         <span class="route" id="cc-nbar" role="button" tabindex="0"></span>
       </div>
-      <button class="ask" onclick="openVaSheet('intent')" aria-label="Ask PHANTOM for assistance">
-        <span class="prism"><img class="ico-photoreal icon-glow" src="icons/phantom-ui-assistant-256.webp" alt="PHANTOM" width="62"></span>
-        <div>
-          <div class="ey">Ask PHANTOM</div>
-          <h3>Ask for assistance</h3>
-          <p>Stuck on a fault? It knows your site, hardware, and the fixes you've logged.</p>
-        </div>
-        <span class="arw">&rarr;</span>
-      </button>
       <div class="trow">
         <div class="tile" id="tt-deploy" role="button" tabindex="0" onclick="cmd_route('work','deploy')" aria-label="Deploy status — tap to open Deploy"><span class="ey"><span class="led"></span>Deploy</span><span class="val" id="tt-deploy-val">—</span><span class="sub" id="tt-deploy-sub"></span><div class="bar" id="tt-deploy-bar" style="display:none"><i id="tt-deploy-fill"></i></div></div>
         <div class="tile" id="tt-scan" role="button" tabindex="0" onclick="cmd_route('work','scan')" aria-label="Scan count — tap to open Scan"><span class="ey"><span class="led"></span>Scanned</span><span class="val" id="tt-scan-val">—</span><span class="sub" id="tt-scan-sub"></span></div>
         <div class="tile" id="tt-handoff" role="button" tabindex="0" onclick="cmd_route('work','handoff')" aria-label="Handoff status — tap to open Handoff"><span class="ey"><span class="led"></span>Handoff</span><span class="val" id="tt-handoff-val">—</span><span class="sub" id="tt-handoff-sub"></span></div>
+      </div>
+      <div class="askrow">
+        <button class="apill" onclick="openVaSheet('intent')" aria-label="Ask PHANTOM for assistance">
+          <span class="av"><img class="ico-photoreal icon-glow" src="icons/phantom-ui-assistant-256.webp" alt="" height="62"></span>
+          <div>
+            <div class="ey">ASK PHANTOM</div>
+            <h3>Ask for assistance</h3>
+          </div>
+        </button>
+        <div class="rpill" aria-hidden="true"><b>&mdash;</b><span>RESERVED</span></div>
+        <div class="rpill" aria-hidden="true"><b>&mdash;</b><span>RESERVED</span></div>
       </div>
       <div class="sig-h">OPS SIGNAL</div>
       <div id="cc-sig"></div>

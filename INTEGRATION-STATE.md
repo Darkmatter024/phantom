@@ -2421,6 +2421,8 @@ Owner ruling in chat: **"wire sops and blast too"** — closes Open Item 1 (§57
 
 # S59 - SHIP v1.14.278 = COMMAND COLUMN DESKTOP UNIFORM (CSS-only, desktop-only) (2026-07-17)
 
+> **⚠ AMENDED-IN-PART by §60 (v1.14.279):** the `.278` media block's cap list had `body.rd .ask`; `.279` renamed it to `#pg-cmd .askrow` and added `#pg-cmd .askrow` to the padding-reset group (the `.ask` button was demoted to the `.askrow` triplet). The folded-in `body.rd .ask{width:100%}` from this ship was **removed** in `.279` (orphaned). Everything else in §59 stands. **`.278` DEVICE-VERIFIED by owner 2026-07-17.**
+
 Per `HANDOFF-CMD-DESKTOP-UNIFORM-278` (files 66.zip: handoff + before/after mockup). Goal: **one column, one edge, top to bottom** on the Command page — all nine `#pg-cmd` rows on a centered 1080px column at desktop. **Phone untouched by design.**
 
 **Root cause the spec fixes:** the v1.14.164 rule at `~L8749` (`#pg-cmd .lens/.trow/.nba/.statusrow` + `body.rd .ask` → `max-width:1080;margin:auto`) was **defeated on centering by source order** — the base `#pg-cmd .lens/.nba{margin:0 16px 14px}` (`L9106/L9129`) and `body.rd .ask{margin:0 16px 14px}` (`L9140`) re-set `margin-left/right` and killed the `auto`. `max-width` survived; centering didn't. Four rows (`.stats/.sig-h/.sigrow/.sig-empty`) were never in the cap list at all → full-viewport sprawl.
@@ -2444,3 +2446,39 @@ Per `HANDOFF-CMD-DESKTOP-UNIFORM-278` (files 66.zip: handoff + before/after mock
 - [ ] Hard-refresh for the new HTML.
 
 ## OPEN ITEMS still standing (need a ruling): `#ff8a00` audits accent off-token (flag only) · `phantom-tool-crashcart-256.webp` has 0 refs (no table row).
+
+---
+
+# S60 - SHIP v1.14.279 = COMMAND ASK ROW (markup reorder + .askrow triplet + asset swap) (2026-07-17)
+
+Per `HANDOFF-CMD-ASKROW-279` (files 67.zip: handoff + `MOCKUP-ASK-PILL-REORDER.html` TILE state + new asset). **First phone-changing ship since the `.278`/`.277` device-verify** (both verified by owner 2026-07-17 before this shipped — the spec's own "do not stack, .278 must be closed first" gate was honored).
+
+**What changed:** Ask stops being a full-width banner and becomes ONE tile in a triplet. `.trow` (DEPLOY/SCANNED/HANDOFF) moved ABOVE; a new `.askrow` replaced the `.ask` button below it. **New Command column order: statusrow → lens → stats → nba → trow → askrow → OPS SIGNAL** (nine rows). `.askrow` is a **padding-group row** (`padding:0 16px 14px`, mirrors `.trow`) so the `.278` block's padding reset applies to it without special-casing.
+
+**Markup:** `.ask <button>` → `<div class="askrow">` holding `<button class="apill">` (handler `openVaSheet('intent')` + aria-label carried over VERBATIM; the `<p>` blurb and `.arw` chevron dropped per mock; `.prism` → `.av`, same 56px geometry) + two `<div class="rpill" aria-hidden="true">` reserved slots.
+
+**RESERVED-SLOT RULE (owner, permanent):** `.rpill` is **non-interactive by design** — dashed/dimmed/em-dash + `RESERVED`, `cursor:default`, `aria-hidden="true"`, **no** `onclick`/`role`/`tabindex`. A tappable pill that does nothing is a No-Silent-Failures violation. **Claiming a slot means REPLACING the `.rpill` element wholesale with a real control — never adding a handler to it.**
+
+**ART-SIZING RULE (permanent — this is a bug CLASS, not an incident, 2nd occurrence):** art sized by a single dimension attribute must match that attribute to its aspect. **Near-square art takes `width`; portrait art takes `height`.** The new bust is portrait (184×256), so the `<img>` carries `height="62"` (renders 45×62). With `width="62"` it would render 62×86 and spill the 56px plate.
+
+**Asset:** `icons/phantom-ui-assistant-256.webp` overwritten — new portrait robot bust (184×256 VP8X, 12,632 bytes; old was near-square 9,324). Same filename → `sw.js:77` precache unchanged; the version bump forces the re-fetch (the classic "new bytes at an old filename / stale SW lies" case — verified via the display path, not just deploy).
+
+**CSS:** removed the entire `body.rd .ask` set (Rule F layout + `.prism` + `.prism img` + `.ey`/`h3`/`p`/`.arw` + `askBreathe` keyframes + its reduced-motion override) AND the GLASS-SKIN `body.rd .ask` material rule — all orphaned once `.ask` is gone. Added single-line `#pg-cmd .askrow`/`.apill`/`.rpill` rules (file style). **Left the stale `body.rd .ask` in the v1.14.164 block (~L8749) alone** per spec §10 — inert, matches nothing now, a separate cleanup.
+
+**DEVIATIONS vs spec (both folded in, reported):** the spec was written against the `.278` *spec*, not my shipped `.278`, so it didn't know about (a) my folded-in `body.rd .ask{width:100%}` in the `.278` block — **removed here** (orphaned by `.ask`→`.askrow`; `.askrow` fills like `.trow`, no width hack needed), and (b) the `askBreathe` keyframes + reduced-motion override — also removed ("leave nothing orphaned"). `HANDOFF-ASSISTANT-ART-279.md` (a prior art-only spec that set `height="62"` on an `<img>` inside `.ask .prism`) is **superseded and dead** — its art swap folded in here; live never carried it (was still `width="62"` + old art).
+
+**VERIFIED LIVE (display path, headless Chrome real-layout, both devices):**
+- **Phone (400px):** DOM order `statusrow,lens,stats,nba,trow,askrow,sig-h` ✓; askrow = 3 equal tiles (apill 106×96, rpill 107×96 ×2); img decoded **naturalWidth=184 naturalHeight=256** (the NEW art), renders 45×62 via `height="62"`; both `.rpill` have `onclick/role/tabindex` all null + `aria-hidden=true` + `cursor:default` (non-interactive); apill is a real `<button>` with `openVaSheet('intent')`; no horizontal overflow.
+- **Desktop (1200px):** all nine rows `left:60 right:1140 width:1080` (`.278` not regressed); askrow tiles (60/424/790) align with trow tiles (60/425/791) — three matched bands.
+- Gates: node --check 4/0; sw.js OK; CSS braces 3912/3912 balanced (−4 from removals); CRLF preserved (0 bare LF); three-stamp `.278`→`.279`.
+
+## OWNER GATE (iPhone) — `.279` is the one unverified ship in flight
+- [ ] Command order: LENS → stats → NBA → DEPLOY/SCANNED/HANDOFF → **ASK ROW** → OPS SIGNAL.
+- [ ] Ask row = three tiles: Ask + two RESERVED. All equal width/height at 96px.
+- [ ] Ask tile icon is the **new robot bust** (black chrome, cyan eye rings) and **sits inside its plate** (the `height="62"` test). Still the old violet headphone/ghost = cache miss → hard-reload before judging.
+- [ ] Tap Ask → VA sheet opens on intent (same as `.278`).
+- [ ] Tap **both** RESERVED tiles → nothing happens, no visual press state.
+- [ ] Desktop ≥980: all rows flush on the 1080 column; askrow aligns with the trow triplet (three matched bands). Drag through 980 = clean handoff.
+- [ ] Hard-refresh for new HTML + art.
+
+## OPEN ITEMS still standing (need a ruling): what the two RESERVED slots become (owner hasn't named them) · `phantom-assistant-mark-256.webp` 0 refs · `#ff8a00` audits accent off-token · `phantom-tool-crashcart-256.webp` 0 refs · the stale `body.rd .ask` in the L8749 `.164` block (inert, separate cleanup).
