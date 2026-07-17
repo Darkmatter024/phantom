@@ -11956,7 +11956,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.271';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.272';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -32626,12 +32626,18 @@ function rackElevation_render3D(rack, mountEl) {
       // "washed" complaint. Setting sRGB below makes the tile WYSIWYG (unlit MeshBasic now), which
       // dropped the old numbers to near-invisible against the #04060a void. These are the same tile,
       // re-authored to land where 10,13,18 was always meant to: charcoal, clearly above the void.
-      g.fillStyle = 'rgb(' + Math.round(24 * j) + ',' + Math.round(29 * j) + ',' + Math.round(37 * j) + ')';
+      // v1.14.272 WET item 1 — WET IS DARKER (the cue everyone forgets). Base 24,29,37 -> 20,25,31
+      // (-15%). This is AUTHORED PAINT: deterministic, no light involved. ⛔ The floor is UNLIT BY
+      // RULING (MeshBasic, below) — it HAS no roughness/metalness/env. Any future "sheen/gloss/
+      // specular/shine" ask that reaches for roughness/metalness or the §A lights is a P0 REVERT:
+      // roughness 0.35 is precisely what drew the .266 bright pool, and going tighter would flare
+      // WORSE. If the floor reads wrong, THIS PAINT is the lever. Never the lights.
+      g.fillStyle = 'rgb(' + Math.round(20 * j) + ',' + Math.round(25 * j) + ',' + Math.round(31 * j) + ')';
       g.fillRect(tx * TILE, ty * TILE, TILE, TILE);
     }
     g.fillStyle = 'rgba(255,255,255,0.015)';                    // faint material noise
     for (var n = 0; n < 900; n++) g.fillRect((n * 137) % 512, (n * 311) % 512, 1, 1);
-    g.strokeStyle = '#090c11'; g.lineWidth = 2;                 // hairline grout, just under the tile (was #04060a = the void colour exactly -> invisible once sRGB landed)
+    g.strokeStyle = '#080a0e'; g.lineWidth = 2;                 // v1.14.272 WET item 1: grout scales with the tile (#090c11 -15%), staying JUST under it. Must never reach the void #04060a — that is what made it invisible before .267.
     for (var q = 0; q <= 512; q += TILE) { g.beginPath(); g.moveTo(q, 0); g.lineTo(q, 512); g.moveTo(0, q); g.lineTo(512, q); g.stroke(); }
   })(_fcv.getContext('2d'));
   var _floorTex = _tex(new THREE.CanvasTexture(_fcv));
@@ -32657,18 +32663,49 @@ function rackElevation_render3D(rack, mountEl) {
   // Verified in an isolation harness (same r128 + §A rig + env): reproduces the pool/mint/wedge on the
   // .266 recipe and clears all three on this one. receiveShadow dropped (was the P1 source; no-op here).
   var floorMesh = new THREE.Mesh(new THREE.PlaneGeometry(RH * 5, RH * 5),
-    new THREE.MeshBasicMaterial({ map: _floorTex, transparent: true, opacity: 0.80 }));   // opacity 0.85->0.80 (P3: more clone through the tile)
+    new THREE.MeshBasicMaterial({ map: _floorTex, transparent: true, opacity: 0.78 }));   // v1.14.272 WET item 2: 0.80->0.78, a touch more clone through the tile. (The ruling doc said "0.85->0.78" — 0.85 was the STALE .266 value; .267 already set 0.80.)
   floorMesh.rotation.x = -Math.PI / 2; floorMesh.position.y = floorY; floorMesh.renderOrder = 1; bayGrp.add(floorMesh);
 
   // 6) ghost reflection — mirrored rack clone (§F mobile-fungible)
+  // v1.14.272 WET item 3 — CONTACT-SHARP FALLOFF IS *THE* WET SIGNATURE. A dry floor reflects evenly;
+  // a wet one is bright where the object MEETS it and dissolves with distance. The clone is mirrored
+  // BELOW floorY, so "distance from contact" = depth below floorY, and far-from-contact is the rack's
+  // TOP. Lever = onBeforeCompile injecting a world-Y smoothstep into the alpha: no geometry change, no
+  // Reflector pass, same clone+tile architecture.
+  // ⚠️ FADE = RH, NOT the ruling's 1.5*RH — the arithmetic does not survive the geometry. The clone
+  // extends EXACTLY 1.00 rack-height below floorY (rack top reflects to floorY-16.37 with RH 16.32),
+  // so a 1.5*RH fade leaves alpha 0.257 at the far end and nothing is "gone" anywhere. RH reaches 0.000
+  // exactly at the rack top — which IS "gone within ~1.5 rack-heights", and is the safer direction
+  // against the bright-pool/mirror ceiling. Deviation reported.
+  // ⚠️ ONE shared onBeforeCompile REFERENCE for every clone material, deliberately: three's program
+  // cache keys on material.customProgramCacheKey(), which defaults to onBeforeCompile.toString() — a
+  // per-mesh closure would key uniquely and recompile a program PER TRAY. Shared ref => ~1 program per
+  // material type, which is what keeps the 55fps gate.
   if (BAY_REFLECT) {
     try {
+      var _wetFadeY = RH;                                  // world-Y distance below floorY over which the reflection dies
+      var _wetOnCompile = function (shader) {
+        if (shader.vertexShader.indexOf('#include <begin_vertex>') < 0 ||
+            shader.fragmentShader.indexOf('#include <dithering_fragment>') < 0) return;   // token missing → leave the shader untouched rather than emit a broken varying
+        shader.uniforms.uWetFloorY = { value: floorY };
+        shader.uniforms.uWetFade   = { value: _wetFadeY };
+        shader.vertexShader = 'varying float vWetY;\n' + shader.vertexShader.replace(
+          '#include <begin_vertex>',
+          '#include <begin_vertex>\n  vWetY = (modelMatrix * vec4(transformed, 1.0)).y;'   // modelMatrix carries the scale.y=-1 flip, so this is the REFLECTED world Y
+        );
+        shader.fragmentShader = 'uniform float uWetFloorY;\nuniform float uWetFade;\nvarying float vWetY;\n' + shader.fragmentShader.replace(
+          '#include <dithering_fragment>',
+          '#include <dithering_fragment>\n  gl_FragColor.a *= smoothstep(uWetFloorY - uWetFade, uWetFloorY, vWetY);'
+        );
+      };
       var refl = rackGrp.clone(true);
       refl.traverse(function (o) {
         if (o.isMesh && o.material) {
           o.material = o.material.clone();
-          o.material.transparent = true; o.material.opacity = 0.22; o.material.depthWrite = false;   // v1.14.267 P3: 0.16->0.22, the rack's lit trays stand in the polish (satin, never mirror)
+          o.material.transparent = true; o.material.opacity = 0.32; o.material.depthWrite = false;   // v1.14.272 WET item 2: 0.22->0.32, the rack stands harder in the polish (satin, NEVER a literal mirror — the tile grid must still read THROUGH it everywhere; if seams vanish at the contact zone, THIS is the number to back off)
           if (o.material.emissiveIntensity) o.material.emissiveIntensity *= 0.5;
+          o.material.onBeforeCompile = _wetOnCompile;      // shared reference — see the program-cache note above
+          o.material.needsUpdate = true;
         }
       });
       refl.scale.y = -1; refl.position.y = 2 * floorY; bayGrp.add(refl);
