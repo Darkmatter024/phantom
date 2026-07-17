@@ -2293,3 +2293,29 @@ Plus the night-pack arc, all owner-ruled and shipped: `.269` relabel · `.270` S
 - **Back-trap** (`nav_back` misses `#ph-sheet`, verified real in S-back-recon) — parked by owner; its old "`.271`-earliest" pencil is stale — **assign the next free stamp when he un-parks it**.
 - **Roadmap residue (docs, not code):** SERVICE EXTEND single-tray · cross-rack link geometry · `MODEL_SPEC` + per-field provenance + spec sheet (**R5 PARKED — would fabricate**) · projected screen-space U-ruler · **`.reh-3d-seg` tap-target 22px vs the 44px gloved floor** (owner call, whole family or none) · rename the GB300 reference file (its **PHANTOM / AUS-01 · COREWEAVE** branding on a **GB300** rack — AUS-01 is **Hopper** — must not be mistaken for a real screen).
 - **CAMERA stays OPEN** (§47) even with the scene re-locked — view-rail follow-ons (a second EXPLODE variant, projected ruler that reads the camera) do not need a fresh camera ruling.
+
+---
+
+# S53 - SHIP v1.14.274 = PHASE-SHEET BACK-TRAP FIX (2026-07-17)
+
+## OWNER, IN CHAT: ".273 verified, ship the back-trap fix"
+`.273` U-MAP RATCHET **PASSED ON DEVICE** → the CODE-QUEUE stayed complete. Owner then un-parked the back-trap (its old "`.271`-earliest" pencil was stale). **`.274` is now the one unverified ship in flight.**
+
+## SHIPPED - ONE REGISTRY ENTRY
+The `.268` phase dock opens `#ph-sheet` (class `open`) over the rack detail, but `nav_back()`'s sheet-awareness registry (Cut 13, ~`:17358`) - which exists to close the topmost open sheet and STOP before popping nav - never listed it. So ONE back press **over-travelled**: closed the sheet AND popped nav off the rack detail. **My own `.268` miss** (dock dismissal was wired into `showMode` but not `nav_back`; web-Claude first surfaced it in its back-trap handoff). Fix: `{ id:'ph-sheet', cls:'open', close: phdock_close }` added as the FIRST registry entry (z-150, deepest surface). `phdock_close` is the rule-7-safe closer; the registry only invokes it when the element carries the class → no-op when shut.
+
+## VERIFIED LIVE (realistic stack: deploy-detail → rack-detail → phase sheet)
+One back → sheet closed, **STILL on the rack detail**, overflow restored. Regressions all pass: a SECOND back navigates normally; back with NO sheet navigates in one press (not eaten); scrim-tap + X still close (direct `phdock_close`, untouched by the registry). **`?legacy=1` clean**: `#ph-sheet` can never get `.open` there (dock is `body.rd`-gated) → the entry can never match, pure no-op, legacy `nav_back` byte-identical. Rack scene untouched (re-armed lock holds - nav/DOM plumbing only).
+Gates: node --check 4/0; CSS 12 balanced; CRLF uniform; three-stamp .273→.274.
+
+## OWNER GATE (iPhone) - `.274` is the one unverified ship in flight
+- [ ] Open the phase dock sheet on a rack, press BACK once → sheet closes and you STAY on the rack detail (NOT kicked to the deploy list)
+- [ ] Press back again → navigates normally
+- [ ] On a rack with no sheet open, back navigates in one press
+- [ ] Drag-down / X / scrim-tap still dismiss
+- [ ] `?legacy=1` unchanged
+
+## QUEUE - after the `.274` verify
+**No open CODE-QUEUE tasks. No parked engineering items remain** (the back-trap was the last). Everything below needs a NEW owner ruling before any code:
+- **Roadmap residue (docs, not code):** SERVICE EXTEND single-tray · cross-rack link geometry · `MODEL_SPEC` + per-field provenance + spec sheet (**R5 PARKED - would fabricate**) · projected screen-space U-ruler · **`.reh-3d-seg` tap-target 22px vs the 44px gloved floor** (owner call, whole seg family or none) · rename the GB300 reference file (**PHANTOM / AUS-01 · COREWEAVE** on a **GB300** rack; AUS-01 is **Hopper**).
+- **CAMERA stays OPEN** (§47) even with the scene re-locked - view-rail follow-ons don't need a fresh camera ruling. Everything else in the scene is LOCKED: STOP AND ASK.
