@@ -10163,6 +10163,10 @@ body.rd .reh-3d-toggle { display: flex; gap: 4px; padding: 4px 0 8px; }
 body.rd .reh-3d-seg { font-family: var(--mono); font-size: var(--fs-caption, 10px); letter-spacing: 1px; padding: 4px 12px; border: 1px solid rgba(92,242,255,0.25); border-radius: 6px; background: rgba(8,12,18,0.6); color: var(--slate); cursor: pointer; }
 body.rd .reh-3d-seg.is-on { color: var(--cyan); border-color: var(--cyan); background: rgba(40,224,255,0.10); }
 body.rd .reh-3d-seg.reh-3d-cables { margin-left: 12px; }   /* v1.14.256 — CABLES is a filter, not a mode: gap it from the FLAT|3D pair */
+/* RULING R2 — the CABLES chip disables itself when the Master has no in-rack runs to draw, rather
+   than hiding (Cold Aisle: show the capability exists and why it is off). Additive: no other
+   .reh-3d-seg is ever disabled, so this rule cannot touch FLAT|3D. */
+body.rd .reh-3d-seg:disabled { opacity: 0.45; cursor: default; border-color: rgba(255,255,255,0.10); }
 body.rd .reh-flat-wrap { display: contents; }
 body.rd .reh-3d-mount { display: none; position: relative; height: 60vh; max-height: 60vh; border: 1px solid rgba(92,242,255,0.10); border-radius: 8px; overflow: hidden; background: #000000; }
 body.rd .rack-hybrid-canvas.is-3d .reh-flat-wrap { display: none; }
@@ -11946,7 +11950,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.269';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.270';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -32382,7 +32386,20 @@ function rackElevation_render3D(rack, mountEl) {
   var rearDoor = new THREE.Mesh(new THREE.PlaneGeometry(RW - 0.1, RH - 0.1), rearDoorMat);
   rearDoor.position.set(0, 0, -RD/2 - 0.02); rackGrp.add(rearDoor);
 
-  // ── CABLES (mock L758-787, VERBATIM) — hidden by default; a CABLES toggle in the 3D strip flips them ──
+  // ── CABLES — SOURCED FROM THE MASTER (RULING R2). Hidden by default; the 3D-strip toggle flips them ──
+  // The RENDERER below is the .256 mock port, unchanged. What changed is the DATA FEED.
+  // WHY: the two hardcoded loops this shipped with — createCable(40-cc, 31-cc, …) / (22-cc2, 13-cc2, …)
+  // — drew 22 tubes of INVENTED cable on EVERY rack. The U-pairs were literals inherited from the mock;
+  // nothing traced to slots[]. totalU defaults to 48, so every literal fell inside [1,48] and the
+  // "bound the mock's hardcoded rows to THIS rack" guard culled NOTHING: an empty rack and a full rack
+  // drew the identical runs. (The mock's cx also reached +10.0 on a rack spanning ±3.0 — five of its
+  // eight columns rendered outside the rack body entirely.) A cable map is a WORK INSTRUCTION, so this
+  // was the same class as fabricated telemetry, only more dangerous. Deleted.
+  // NOW: every tube is a real Master A/Z cable row whose BOTH endpoints resolve to slots in THIS rack.
+  // Cross-rack links are NOT drawn — a half-tube to nowhere is worse than an honest count — they
+  // surface as a count on the chip. No cable rows → the chip disables and says why.
+  // JOIN: PRE-FLIGHT's own normalizer (_rec_norm) against the same store _rmRenderConnections reads
+  // (master_findRack → cablesOut/cablesIn). No second resolver invented.
   var cableMeshes = [];
   var cablesVisible = false;
   function createCable(su, eu, ox, col, thick) {
@@ -32398,15 +32415,52 @@ function rackElevation_render3D(rack, mountEl) {
       new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: 0.2, metalness: 0.3, roughness: 0.5, transparent: true, opacity: 0.5, envMapIntensity: 0.25 }));
     tube.visible = false; rackGrp.add(tube); cableMeshes.push(tube);
   }
-  for (var cc = 0; cc < 8; cc++) {
-    var cx = -RW/3 + cc * (RW/3.5);
-    createCable(40 - cc, 31 - cc, cx, 0xa855f7, 0.008);
-    createCable(40 - cc, 30 - cc, cx + 0.06, 0x00d4aa, 0.006);
-  }
-  for (var cc2 = 0; cc2 < 6; cc2++) {
-    var cx2 = -RW/3 + cc2 * (RW/3.5);
-    createCable(22 - cc2, 13 - cc2, cx2, 0xa855f7, 0.008);
-  }
+  var _cabExternal = 0;      // Master cable rows for this rack with an endpoint OUTSIDE it
+  var _cabRows = 0;          // total Master cable rows touching this rack (in-rack + external)
+  (function () {
+    var mq = (rack && rack.rackId && String(rack.rackId).trim())
+          || (rack && rack.name && String(rack.name).trim())
+          || (rack && rack.id) || '';
+    // Same bridge the elevation RESOLVE path uses (:40649): exact cab-id match, never fuzzy.
+    var mh = (mq && typeof master_findRack === 'function') ? master_findRack(mq) : null;
+    if (!mh) return;                                   // no Master / no matching cab → honest empty state
+    var out = Array.isArray(mh.cablesOut) ? mh.cablesOut : [];
+    var inn = Array.isArray(mh.cablesIn)  ? mh.cablesIn  : [];
+    _cabRows = out.length + inn.length;
+    if (!_cabRows) return;
+
+    var norm = (typeof _rec_norm === 'function') ? _rec_norm
+             : function (s) { return String(s == null ? '' : s).toUpperCase().replace(/[^A-Z0-9]/g, ''); };
+    var byDns = {};
+    slots.forEach(function (d) {
+      if (!d) return;
+      var kn = norm(d.name), kd = norm(d.dns);
+      if (kn && !byDns[kn]) byDns[kn] = d;
+      if (kd && !byDns[kd]) byDns[kd] = d;
+    });
+    function uOf(d) { return (d.uStart + d.uEnd) / 2; }   // the same centre yFor() places the tray at
+
+    // ⚠️ In-rack runs come from cablesOut ONLY. When aRack === zRack the Master parser pushes the SAME
+    // cable object into this rack's cablesOut AND its cablesIn (:28475-76), so concatenating the two
+    // would draw every in-rack run TWICE.
+    var runs = [];
+    out.forEach(function (c) {
+      var a = byDns[norm(c && c.aDns)], z = byDns[norm(c && c.zDns)];
+      if (a && z) runs.push({ a: a, z: z }); else _cabExternal++;
+    });
+    inn.forEach(function (c) {
+      var a = byDns[norm(c && c.aDns)], z = byDns[norm(c && c.zDns)];
+      if (a && z) return;                                 // already drawn from cablesOut — don't double-count
+      _cabExternal++;
+    });
+
+    // Spread the runs across the rack FACE, inside the body (RW/2 = 3.0).
+    var span = RW - 1.0, n = runs.length;
+    runs.forEach(function (r, i) {
+      var ox = ((i + 0.5) / n) * span - span / 2;
+      createCable(uOf(r.a), uOf(r.z), ox, 0xa855f7, 0.008);
+    });
+  })();
 
   // CABLES toggle — injected into the 3D control strip (§1c). Owns cableMeshes directly, so no
   // window global; created only while 3D is live and removed in teardown() (exists only in 3D).
@@ -32419,13 +32473,33 @@ function rackElevation_render3D(rack, mountEl) {
       _cablesBtn.type = 'button';
       _cablesBtn.id = 'reh3dBtnCables';
       _cablesBtn.className = 'reh-3d-seg reh-3d-cables';
-      _cablesBtn.textContent = 'CABLES';
-      _cablesBtn.onclick = function () {
-        cablesVisible = !cablesVisible;
-        for (var ci = 0; ci < cableMeshes.length; ci++) cableMeshes[ci].visible = cablesVisible;
-        if (cablesVisible) _cablesBtn.classList.add('is-on'); else _cablesBtn.classList.remove('is-on');
-        if (typeof haptic === 'function') haptic([8]);
-      };
+      // Honest states (RULING R2). Visible-but-disabled, never hidden: the tech should see the
+      // capability exists AND why it is off. Most racks may have no cable rows at first — that is
+      // correct, not a bug. ⚠️ Labels stay SHORT: .reh-3d-toggle is a display:flex strip with no
+      // wrap and no overflow guard, so a long label here would push the viewport (Rule 1). The full
+      // sentence rides title/aria-label, which cost no width.
+      if (cableMeshes.length) {
+        _cablesBtn.textContent = 'CABLES' + (_cabExternal ? ' · ' + _cabExternal + ' EXT' : '');
+        _cablesBtn.title = cableMeshes.length + ' cable run(s) from the Master'
+                         + (_cabExternal ? '; ' + _cabExternal + ' external link(s) not drawn — see CONNECTIONS in the device sheet' : '');
+        _cablesBtn.onclick = function () {
+          cablesVisible = !cablesVisible;
+          for (var ci = 0; ci < cableMeshes.length; ci++) cableMeshes[ci].visible = cablesVisible;
+          if (cablesVisible) _cablesBtn.classList.add('is-on'); else _cablesBtn.classList.remove('is-on');
+          if (typeof haptic === 'function') haptic([8]);
+        };
+      } else if (_cabRows) {
+        // Rows exist but every endpoint pair leaves this rack — nothing to draw in-rack, and a
+        // half-tube to nowhere is worse than an honest count. External geometry is a future ship.
+        _cablesBtn.textContent = _cabExternal + ' EXT LINKS';
+        _cablesBtn.title = _cabExternal + ' external link(s) — both ends do not resolve inside this rack. See CONNECTIONS in the device sheet.';
+        _cablesBtn.disabled = true;
+      } else {
+        _cablesBtn.textContent = 'NO CABLE DATA';
+        _cablesBtn.title = 'No cable rows for this rack in the loaded Master.';
+        _cablesBtn.disabled = true;
+      }
+      _cablesBtn.setAttribute('aria-label', _cablesBtn.title);
       _strip.appendChild(_cablesBtn);
     }
   } catch (e) {}
@@ -32688,7 +32762,21 @@ function rackElevation_render3D(rack, mountEl) {
     if (hits.length) {
       var dev = hits[0].object.userData.dev;
       if (dev && typeof openRmDevice === 'function') {
-        try { window._rmConnHit = { id: rack.rackId || rack.id }; } catch (e) {}   // human cab designation, not the internal seed slug
+        // RULING R3 — this used to set a STUB, { id } only. Two consumers share this one global:
+        // PRINT ASSET LABEL (:41567) reads hit.id for cab context, and _rmRenderConnections (:41594)
+        // reads hit.cablesOut/cablesIn. The stub fed PRINT and STARVED CONNECTIONS — so the device
+        // sheet's CONNECTIONS panel silently vanished when opened from the Bay, while the same sheet
+        // opened from the Master path showed it. master_findRack returns BOTH, but we keep the rack's
+        // OWN human designation as .id (never the master's spelling) so PRINT stays byte-identical —
+        // only the cable arrays are added. No match → the original stub, so PRINT still works and
+        // CONNECTIONS omits itself honestly.
+        try {
+          var _mq = (rack.rackId && String(rack.rackId).trim()) || (rack.name && String(rack.name).trim()) || rack.id;
+          var _mh = (_mq && typeof master_findRack === 'function') ? master_findRack(_mq) : null;
+          window._rmConnHit = _mh
+            ? { id: rack.rackId || rack.id, hosts: _mh.hosts, cablesOut: _mh.cablesOut, cablesIn: _mh.cablesIn, source: _mh.source }
+            : { id: rack.rackId || rack.id };
+        } catch (e) {}
         if (typeof haptic === 'function') haptic([6]);
         openRmDevice(dev);
       }
