@@ -2205,3 +2205,49 @@ Appending `FRONT|ISO|TOP|REAR|EXPLODE` to `.reh-3d-toggle` = **SEVEN** buttons o
 
 ## QUEUE
 **`.271` SHIP B — AWAITING OWNER VERIFY (HARD STOP)** → **`.272` WET FINISH** (`S44` items 1+2+3 — **do not lose it again**) → verify → **SCENE lock re-arms; CAMERA stays OPEN per `S47`** → **Task 2 U-map 1U ratchet** (UI, never was scene) → **back-trap** (parked by owner; its old "`.271`-earliest" pencil now collides — **re-number when it thaws**). Roadmap residue (docs, not code): SERVICE EXTEND single-tray · cross-rack link geometry · `MODEL_SPEC` + per-field provenance + spec sheet (**R5 PARKED — it would fabricate**) · projected screen-space U-ruler · seg-family tap-target size · rename the GB300 reference file (its **PHANTOM / AUS-01 · COREWEAVE** branding on a **GB300** rack — AUS-01 is **Hopper** — must not be mistaken for a real screen).
+
+---
+
+# S51 - ⭐ `.271` **DEVICE-VERIFIED** · SHIP `v1.14.272` = **WET FINISH** (2026-07-17)
+
+## OWNER, IN CHAT: **".271 verified, ship wet"**
+`.271` SHIP B (ortho view rail + EXPLODE) **PASSED ON DEVICE**. **WET FINALLY SHIPPED** — after sliding `.269`→`.270`→`.271`→`.272` and being **silently dropped once** by the night pack. **`.272` is now the one unverified ship in flight.**
+
+## ⛔ THIS IS THE CHANGE THE SCENE LOCK WAS HELD OPEN FOR
+`S44` re-opened the rack lock **for THIS CHANGE ONLY** and it **RE-ARMS ON THE OWNER'S WET PASS**. **⭐ ON PASS: STATE THE RE-ARM IN THE NEXT SECTION. The camera term stays OPEN per `S47`; everything else in the scene closes again.**
+**Nothing rode along — proven in the diff, not asserted.** The complete `dct-ios.html` delta is: the stamp · tile paint · grout · floor opacity · clone opacity · the falloff shader. **Zero** lines touching `keyL`/`rimL`/any `*Light`; floor still `MeshBasicMaterial`; **zero** `roughness`/`metalness`/`envMap`/`castShadow`/`receiveShadow` in the floor or reflection block.
+
+## SHIPPED (items **1+2+3 ONLY**; ⛔ **item 4 DROPPED FOREVER** — see `S44`)
+1. **WET IS DARKER.** Tile base `24,29,37` → **`20,25,31`** (-15%); grout `#090c11` → **`#080a0e`**, scaled with it, still just under the tile and **never reaching the void `#04060a`** (that collision is what made grout invisible pre-`.267`).
+2. **PRESENCE UP.** Clone opacity `0.22` → **`0.32`**; tile plane `0.80` → **`0.78`**. ⚠️ The ruling said *"0.85→0.78"* — **`0.85` was the STALE `.266` value; `.267` already set `0.80`.** Corrected against live code.
+3. **CONTACT-SHARP FALLOFF = THE WET SIGNATURE.** `onBeforeCompile` injects a world-Y `smoothstep` into the clone's alpha — no geometry change, no Reflector, same clone+tile architecture.
+
+## ⭐ DEVIATION — **FADE = 1.0·RH, NOT the ruling's ~1.5 rack-heights. ARITHMETIC-BACKED; DO NOT "RESTORE" 1.5.**
+The clone is mirrored below `floorY` and extends **EXACTLY 1.00 rack-height** (real dims: `RH 16.32`, `floorY -8.21`, rack top reflects to `-24.58`, span `16.37`). So **a 1.5·RH fade leaves alpha `0.257` at the far end and nothing is "gone" ANYWHERE** — the geometry ends at 1.0 before the fade completes. **1.0·RH reaches `0.000` exactly at the rack top**, which *is* "gone within ~1.5 rack-heights", and is the **safer direction against the mirror/bright-pool ceiling**. The ruling's **intent ("gone")** and its **number (1.5)** could not both hold — intent won.
+
+## ⭐ ONE SHARED `onBeforeCompile` REFERENCE — DO NOT REFACTOR INTO A PER-MESH CLOSURE
+three's program cache keys on `material.customProgramCacheKey()`, which **defaults to `onBeforeCompile.toString()`**. A per-mesh closure keys uniquely → **recompiles a program PER TRAY** (20-40 trays) → a real 55fps risk. The shared reference gives **~1 program per material type**. The injection is also **token-guarded**: if `#include <begin_vertex>` or `#include <dithering_fragment>` is absent it leaves the shader untouched rather than emit a varying declared-but-never-written.
+
+## ⭐ THE ISOLATION HARNESS IS BACK — AND IT PROVED THE RISKIEST PART PRE-DEVICE
+The `.267` harness did **not** survive (scratchpad is ephemeral). **Rebuilt it** — and this is the reusable recipe: **same vendored r128 · real dims · the VERBATIM shipped `_wetOnCompile` · ONE synchronous `renderer.render()` (NO rAF — it never fires in a hidden automation tab) · white bg + black box · `readPixels` back · `preserveDrawingBuffer: true`.**
+**Result — alpha by height, IDENTICAL for `MeshBasic` and `MeshStandard`** (both shader families the clone contains):
+`contact 0.322` (= full clone opacity) > `¾ 0.271` > `mid 0.161` (exactly the smoothstep midpoint) > `¼ 0.051` > **`far end 0.000` (GONE)**. **Monotonic: true. Shader errors: none. Programs compiled: 2 — one per material type**, confirming the shared-reference strategy.
+⚠️ **Harness gotcha that cost a cycle:** `OrthographicCamera(left, right, top, bottom, …)`'s top/bottom are **CAMERA-LOCAL, not world Y**. Setting them to world coordinates put the subject outside the frustum → all-zero alpha with **no error**, which reads exactly like a broken shader. **Symmetric frustum + move the CAMERA to the subject's mid-Y.**
+⭐ **THIS IS THE PATTERN FOR ANY FUTURE reh3d LOOK/SHADER CHANGE: a shader compile and a pixel readback do NOT need rAF. Build the harness; it is cheap and it is the only pre-device proof available.**
+
+## ⚠️ VERIFICATION BOUNDARY
+**Proven:** the alpha MATH, the GLSL COMPILE (both material families), the program count, and that every invariant held (unlit floor, untouched §A rig).
+⛔ **NOT proven — the composited LOOK on glass.** The app's frame loop is rAF-driven and never runs in the automation tab. **The floor's appearance is the owner's eye, by his own standing rule.**
+`?legacy=1` byte-identical **by construction**: every change is inside `rackElevation_render3D`, which legacy never reaches (`_rehRd`-gated toggle, no `#reh3dCanvasHost`).
+
+## OWNER GATE (iPhone, gloves) — **THIS RE-RUNS THE P0, FULL 360**
+- [ ] Floor visibly **DARKER** than `.271` and **reads WET at a glance**
+- [ ] Rack stands **sharply in the polish AT CONTACT** and **dissolves with distance**
+- [ ] **Tile seams read THROUGH the reflection everywhere, incl. the contact zone** — *if they vanish there, the lever is clone opacity `0.32`, back it off*
+- [ ] **FULL 360: no flare, no bright pool at ANY orbit angle, no wedge, no mint** — the P0 re-passes
+- [ ] ⭐ **REAR VIEW TOO** — you judged from the rear last time; it must read wet from the back-panel side, not just the lit face
+- [ ] **55+fps for 2 min** (the shader now runs on every clone material)
+- [ ] ⭐ **ON PASS: THE RACK SCENE LOCK RE-ARMS** (camera stays OPEN per `S47`) — **record it**
+
+## QUEUE
+**`.272` WET — AWAITING OWNER VERIFY (HARD STOP)** → on pass **SCENE LOCK RE-ARMS** → **Task 2 U-map 1U ratchet** (UI, never was scene — the last open CODE-QUEUE task) → **back-trap** (parked by owner; its old "`.271`-earliest" pencil is now stale — **re-number when it thaws**). Roadmap residue (docs, not code): SERVICE EXTEND single-tray · cross-rack link geometry · `MODEL_SPEC` + per-field provenance + spec sheet (**R5 PARKED — it would fabricate**) · projected screen-space U-ruler · **`.reh-3d-seg` tap-target size (22px vs the 44px gloved floor — owner call, whole family or none)** · rename the GB300 reference file (**PHANTOM / AUS-01 · COREWEAVE** branding on a **GB300** rack — AUS-01 is **Hopper**).
