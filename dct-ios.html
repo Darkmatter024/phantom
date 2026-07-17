@@ -9735,6 +9735,65 @@ body.rd #rd-botnav{display:flex}
   }
 }
 
+/* ─────────────────────────────────────────────────────────────────────
+ * v1.14.278 — COMMAND COLUMN, DESKTOP ONLY.
+ * One column, one edge, top to bottom. DESKTOP ONLY — the phone is already
+ * uniform below 980 (margin:0 16px and padding:0 16px inset identically with
+ * no max-width in play) and must not change.
+ *
+ * Placed AFTER the #pg-cmd base rules (~L9101-L9170) on purpose. The
+ * v1.14.164 rule at ~L8749 is defeated by source order — the base
+ * `margin:0 16px 14px` shorthand re-sets margin-left/right and kills its
+ * auto-centering. Equal specificity, later source wins. Do NOT move this
+ * block earlier and do NOT use !important. Verified before ship: the later
+ * body.rd #pg-cmd material rules (ask/nba/sigrow/lens, the GLASS SKIN layer)
+ * set only border/background/box-shadow — no margin/max-width — so they do
+ * not defeat this even at their higher specificity.
+ * ───────────────────────────────────────────────────────────────────── */
+@media (min-width: 980px) {
+  /* all nine rows: same capped, centered column */
+  #pg-cmd .statusrow,
+  #pg-cmd .lens,
+  #pg-cmd .stats,
+  #pg-cmd .nba,
+  body.rd .ask,
+  #pg-cmd .trow,
+  #pg-cmd .sig-h,
+  #pg-cmd .sigrow,
+  #pg-cmd .sig-empty {
+    max-width: 1080px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* padding group: drop the 16px inset so children land on the same edge as
+     the margin group's borders. Vertical padding preserved. */
+  #pg-cmd .statusrow,
+  #pg-cmd .stats,
+  #pg-cmd .trow {
+    padding-left: 0;
+    padding-right: 0;
+    gap: 16px;
+  }
+
+  /* v1.14.278 DEVIATION (folded in, owner-approved): the spec classed .sig-h
+     as margin-based, but live .sig-h (~L9164) is padding-based
+     (padding:2px 16px 8px). Zero its L/R inset too so the OPS SIGNAL label
+     lands flush at the column edge like the mockup; its 10px flex gap is left
+     untouched (deliberately NOT folded into the gap:16px group above). */
+  #pg-cmd .sig-h {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  /* .ask is a <button> — width:auto shrinks to content, so max-width+margin
+     auto above would only CENTER a narrow button (~578px), not fill the
+     column. The .278 mockup used a <div> (fills). Force the button to span
+     the 1080 column so it matches the mockup + spec verification step 8.
+     Desktop-only; phone .ask (base margin:0 16px, shrink-to-fit) untouched. */
+  body.rd .ask { width: 100%; }
+}
+
 /* ─── 42U Scrub-Bar ─── */
 .scrubbar-host { position: relative; display: flex; gap: 14px; margin: 14px 0 16px; }
 .scrubbar-main { flex: 1; min-width: 0; }
@@ -11960,7 +12019,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.277';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.278';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,

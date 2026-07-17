@@ -2416,3 +2416,31 @@ Owner ruling in chat: **"wire sops and blast too"** — closes Open Item 1 (§57
 - [ ] WORK grid shows SOPS + BLAST RADIUS cards with art; both open on tap; 8 cards wrap cleanly at phone width; hard-refresh for the new HTML.
 
 ## OPEN ITEMS still standing (need a ruling): `#ff8a00` audits accent off-token (flag only) · `phantom-tool-crashcart-256.webp` has 0 refs (no table row). The whole tool-grid icon-wiring arc (`.275`→`.277`) is otherwise complete.
+
+---
+
+# S59 - SHIP v1.14.278 = COMMAND COLUMN DESKTOP UNIFORM (CSS-only, desktop-only) (2026-07-17)
+
+Per `HANDOFF-CMD-DESKTOP-UNIFORM-278` (files 66.zip: handoff + before/after mockup). Goal: **one column, one edge, top to bottom** on the Command page — all nine `#pg-cmd` rows on a centered 1080px column at desktop. **Phone untouched by design.**
+
+**Root cause the spec fixes:** the v1.14.164 rule at `~L8749` (`#pg-cmd .lens/.trow/.nba/.statusrow` + `body.rd .ask` → `max-width:1080;margin:auto`) was **defeated on centering by source order** — the base `#pg-cmd .lens/.nba{margin:0 16px 14px}` (`L9106/L9129`) and `body.rd .ask{margin:0 16px 14px}` (`L9140`) re-set `margin-left/right` and killed the `auto`. `max-width` survived; centering didn't. Four rows (`.stats/.sig-h/.sigrow/.sig-empty`) were never in the cap list at all → full-viewport sprawl.
+
+**The edit (one block, appended after the 1400px media block ~L9738, so equal-specificity selectors win on source order — NOT `!important`):** `@media (min-width:980px)` capping all nine rows to `max-width:1080px;margin:auto`, plus zeroing L/R padding on the padding group so children land on the margin group's border edge. Verified before ship that the later `body.rd #pg-cmd` GLASS-SKIN rules (`ask L11406 / nba L11443 / sigrow L11720 / lens L11740`) set only border/background/box-shadow — **no margin/max-width** — so they don't defeat the centering even at higher specificity.
+
+**TWO deviations from spec, folded in against live code (owner said "go" to sig-h; ask discovered during render-verify, fixed under the "fix draft-spec bugs against live code" rule):**
+1. **`.sig-h` is padding-based in live** (`padding:2px 16px 8px` @L9164), not margin-based as the spec's Fault-3 table + mockup assumed. Added `#pg-cmd .sig-h{padding-left:0;padding-right:0}` so the OPS SIGNAL label lands flush at the column edge (its 10px flex gap left untouched — deliberately NOT folded into the `gap:16px` padding group).
+2. **`.ask` is a `<button>`, not the mockup's `<div>`** → `width:auto` shrinks to content, so `margin:auto` only CENTERED a narrow (~578px) button; it did NOT span 1080 (spec verification step 8). Added `body.rd .ask{width:100%}` (desktop-only) so the button fills the column like the mockup. Phone `.ask` (base `margin:0 16px`, shrink-to-fit) untouched.
+
+**VERIFIED LIVE (display path, headless Chrome over http, real layout):** at **1200px** all nine rows report `left:60 / right:1140 / width:1080` — `distinctLefts:[60]`, `distinctRights:[1140]`: **one edge top to bottom.** `.ask` went 578→1080 (fill fix); `.sig-h` box flush at 60 (padding fix); `.sig-empty` renders in place of `.sigrow` (empty state; both capped). At **400px** every row `maxWidth:none` — the block is inert below 980, so **phone == `.277` (all `.278` rules gated `@media min-width:980px`)**. Gates: node --check 4/0; sw.js OK; CSS 12 blocks balanced (3916/3916); CRLF preserved (0 bare LF, +59 lines); three-stamp `.277`->`.278`.
+
+**On the spec's §6 "update the v1.14.164 entry":** no such entry exists in this doc (the `.164` rule predates INTEGRATION-STATE), so nothing to correct here — recording the finding fresh: **the `.164` rule's centering was inert from the day it landed** (max-width applied, margin-auto killed by source order); `.278` is what makes the centering real. Future note: the Command column is **nine** rows; a tenth must be added to the `.278` cap list or it sprawls full-viewport on desktop. The `#pg-cmd` base rules sit at `~L9101-L9170`, AFTER the `L8744` media block — any desktop `#pg-cmd` override must land after `~L9170` or source order silently defeats it.
+
+**Stacked on unverified `.277`** per owner "go" (batch-verify CALL 0: two low-risk CSS/markup ships, well under the 6-cap, neither HIGH-risk).
+
+## OWNER GATE (iPhone) — `.277` + `.278` both unverified (consolidated pass)
+- [ ] **`.277`** WORK grid shows SOPS + BLAST RADIUS cards with art; both open on tap; 8 cards wrap cleanly at phone width.
+- [ ] **`.278` PHONE (the gate):** Command page portrait + landscape **identical to `.277`** — row edges, gaps, pill wrap, Ask width, OPS SIGNAL, vertical rhythm all unchanged. Any visible phone difference = revert. (Landscape iPhone approaches but stays under 980 CSS px — confirm it holds the mobile layout.)
+- [ ] **`.278` DESKTOP** (external monitor): all nine rows share one left + one right edge top to bottom (RACKS/BLOCKERS/DEPLOYS flush with COMMAND LENS; OPS SIGNAL header + row on the column; Ask spans the full 1080; pill row + tile row no longer indented). Drag a window through 980 both ways — clean handoff, no jump.
+- [ ] Hard-refresh for the new HTML.
+
+## OPEN ITEMS still standing (need a ruling): `#ff8a00` audits accent off-token (flag only) · `phantom-tool-crashcart-256.webp` has 0 refs (no table row).
