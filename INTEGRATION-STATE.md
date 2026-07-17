@@ -2109,3 +2109,36 @@ The night pack silently dropped **WET FINISH** and **Task 2 (U-map 1U ratchet)**
 
 ## QUEUE AS IT NOW STANDS
 **`.268` DOCK — AWAITING OWNER DEVICE VERIFY (HARD STOP, the only blocker)** → **WET FINISH** (items 1+2+3, `S44` spec, next free stamp) → verify → **SCENE lock re-arms (camera stays OPEN per S47)** → **night pack: Ship A** (R2 cables + R3 id fix — pending the R2 scope word) / **Ship B** (R1 camera rail + R4 explode — R1 cleared, R4 pending) → **Task 2 U-map 1U ratchet** (UI, never was scene). Back-trap = **parked by the owner** (`.271`-earliest); leave `nav_back`'s sheet registry alone. Stamps are Code's to assign at the next free numbers — **do not reuse the night pack's `.269`/`.270`.**
+
+---
+
+# S48 - ⚠️ SHIP A **BUILT + VERIFIED BUT NOT SHIPPED** — UNCOMMITTED IN THE WORKING TREE (2026-07-17)
+
+⚠️ **IF YOU FIND `dct-ios.html` DIRTY WITH NO STAMP BUMP, THIS IS WHY. Do not "clean up" the tree — this is finished, verified work waiting on a gate.**
+**Stamps are deliberately UNTOUCHED (`.269`). Nothing is in flight.** Owner rulings are all in hand (`S47` + R2/R4 yes); the ONE remaining gate is the owner's `.268` device verify — the night pack's own R6 precondition (*"John clears the current verify stack (.268) on device first"*).
+
+## WHAT IS BUILT (RULING R2 + R3 = the pack's "SHIP A — DATA HONESTY")
+- **R2 — CABLES SOURCED.** The two hardcoded loops are **DELETED**. `createCable()` (the `.256` mock renderer) is **untouched**; only the data feed changed. Every tube is now a real Master A/Z cable row whose **both** endpoints resolve to slots in **this** rack. Cross-rack links are **not drawn** (surfaced as a count). Join = **PRE-FLIGHT's own `_rec_norm`** against the same store `_rmRenderConnections` reads (`master_findRack` → `cablesOut`/`cablesIn`) — **no second resolver invented**, per the ruling.
+  - ⭐ **THE TRAP THAT WOULD HAVE DOUBLED EVERY TUBE:** when `aRack === zRack` the Master parser pushes the **SAME cable object into this rack's `cablesOut` AND its `cablesIn`** (`:28475-76`). A naive `cablesOut.concat(cablesIn)` draws every in-rack run **twice**. Fix: iterate `cablesOut` for in-rack runs; the `cablesIn` pass **skips** any cable whose both ends resolve here. **Verified live: 2 tubes from a seed that had those 2 cables in BOTH arrays — not 4.**
+  - Spread is bounded **inside** the rack body (`span = RW - 1.0`). The mock's `cx` reached **+10.0** on a rack spanning **±3.0** — five of its eight columns rendered outside the rack entirely.
+- **R3 — `_rmConnHit` UNTANGLED.** The Bay tap set a **stub `{id}`** which starved `_rmRenderConnections` (it reads `hit.cablesOut/cablesIn`) → the CONNECTIONS panel silently vanished from the Bay while the Master path showed it. **Two consumers, one global:** PRINT ASSET LABEL (`:41567`) reads `hit.id`; CONNECTIONS reads the cable arrays. `master_findRack` returns **both** — but the fix keeps the rack's **OWN** human designation as `.id` (never the Master's spelling) so **PRINT is byte-identical**; only the cable arrays are added. No match → the original stub (PRINT still works, CONNECTIONS omits itself honestly).
+
+## HONEST STATES (all three verified live)
+| condition | chip | state |
+|---|---|---|
+| in-rack runs drawn | `CABLES · 1 EXT` (title: *"2 cable run(s) from the Master; 1 external link(s) not drawn — see CONNECTIONS…"*) | enabled |
+| rows exist, none drawable in-rack | `3 EXT LINKS` | **disabled, opacity 0.45** |
+| no cable rows / no Master match | `NO CABLE DATA` | **disabled** |
+
+⚠️ **Labels are deliberately SHORT.** `.reh-3d-toggle` is a `display:flex` strip with **no wrap and no overflow guard** — a long label there pushes the viewport (**Rule 1**). The full sentence rides `title`/`aria-label`, which cost zero width. **Do not "improve" these labels into prose.**
+
+## VERIFICATION (live, real app over http, Master-shaped seed)
+Gates: **node --check 4/0 · CSS 12 blocks balanced · CRLF uniform**. Chip: all 3 states ✅. Dedupe: **2 tubes not 4** ✅. R3: device sheet renders `CONNECTIONS · 2` — `Et1→gpu-node-01 : OSFP0 MMA1B00-C002` + `Et3→spine-01 : Et9 MFA1A00-C010`, and **`_rmConnHit.id` = `C12-R07`** (PRINT preserved) ✅. **Design coheres: the external link CABLES refuses to draw IS visible in CONNECTIONS — exactly where the chip's tooltip sends the tech.**
+**`?legacy=1` proven clean LIVE:** `rackElevation_render3D` called **0 times** · no FLAT|3D strip · no CABLES chip · no `#reh3dCanvasHost` · `_rmConnHit` **undefined** · host `#ops-content`. All new code lives inside `rackElevation_render3D`, reachable only via the `_rehRd`-gated toggle (`:33481`); the new CSS is `body.rd`-scoped.
+**NOT verified here (needs the device):** the raycast **tap itself** firing the R3 lines — the Bay's render loop and `reh3d_restore` are **rAF**-driven and rAF never fires in a hidden automation tab (see [[feedback_verify_env_artifacts_before_fixing]]). Everything downstream of the hit is proven. **It is item 4 of the owner's own Ship A checklist.**
+⚠️ Harness gotchas re-confirmed: `reh3d_restore(rack)` sits inside a **double rAF** (`:33512`) — without it `_reh3dRack` is null and the FIRST 3D tap renders **a rack of `undefined`** (the code comment at `:33513` says so explicitly). Stacking 3D re-renders **froze the renderer** (~10 live WebGL contexts) — reload between scenes.
+
+## WHAT REMAINS
+- **NOT BUILT: R1 (ortho + view rail) + R4 (EXPLODE) = "SHIP B — INSTRUMENT".** Gated behind Ship A's own verify.
+- **Stamp order is UNDECIDED and is the owner's:** he ruled *"wet after .268 verify"*; the pack put Ship A first. **Both are "after the .268 verify" — ask which of WET / Ship A takes the next free stamp. Do NOT reuse the night pack's `.269`/`.270`.**
+- Back-trap: **parked by the owner** (`.271`-earliest). Leave `nav_back`'s sheet registry alone.
