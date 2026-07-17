@@ -2362,3 +2362,19 @@ The zip's third icon re-arted `phantom-ui-assistant-256.webp` with the same mach
 
 ## QUEUE - unchanged; nothing in flight but this ship's device verify
 `.275` awaits owner device verify (asset-only; a hard-refresh/SW-update pass). Rack scene lock still ARMED (camera OPEN per §47); no open CODE-QUEUE tasks; roadmap residue unchanged (SERVICE EXTEND · cross-rack links · spec panel [R5 PARKED-fabricates] · projected U-ruler · `.reh-3d-seg` 22px vs 44px gloved floor). GB300 ref-file rename = DONE (S54-era, `Downloads/REFERENCE-MOCK-...NOT-A-PHANTOM-SCREEN.html`).
+
+---
+
+# S56 - OWNER RULING (NO CODE): .275 AUDITS/BURNDOWN ICONS = LEAVE DORMANT (2026-07-17)
+
+Owner reported "can't see the new icons" after `.275`. **Root cause was NOT caching** (live verified `.275`, served bytes = the new art). **The two re-arted webp icons render on NO visible surface:**
+- `DEPLOY_TOOLS.img` (`:26581/:26582`) is **dead data** — never emitted as an `<img>` anywhere; its consumers (`rd_openOpsTool` `:26625`, `deploy_detailTool` `:26648`) use only the text `name`.
+- The visible webp tool-card grid (`:12673`, `.rf-card`/`.rf-i-img`) = Master/BOM/Manifest/PortMap/RackMap — **excludes audits + burndown**.
+- audits/burndown are reached ONLY as deploy-detail **buttons** (`:30965/:30966`) that draw a ~13px inline **SVG glyph** (`_ico.zap`/`_ico.clipboard`) + text — never the webp. A 256px framed webp at 13px would be mush, so the SVG glyph is the correct treatment there; and they're deploy-scoped (Design Law 2), so they don't belong in the general grid.
+
+**RULING: "leave them dormant."** `.275` is NOT reverted — the art is icon-law-compliant and correctly precached, ready if a surface ever wants it. ⛔**DO NOT re-flag "can't see the audits/burndown icons" as a bug, and DO NOT wire them into a surface, without a NEW owner ruling.** The re-art had no visible home by design.
+
+⭐**MY SHIP-TIME MISS (own it):** at `.275` I verified the bytes shipped + served but ASSUMED audits/burndown were in the visible `.rf-card` webp grid like BOM/Manifest. They never were. **Verify an asset RENDERS on a surface the user looks at — not just that it deployed.** See [[feedback_asset_ships_not_renders]].
+
+## QUEUE - unchanged
+`.275` remains the last ship (no device-verify needed now — it changes nothing visible, by ruling). Scene lock ARMED (camera OPEN). No open CODE-QUEUE tasks; roadmap residue unchanged.
