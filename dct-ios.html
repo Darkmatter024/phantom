@@ -11946,7 +11946,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.268';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.269';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -19334,7 +19334,7 @@ function cmd_render() {
   var storageOk = true; try { localStorage.setItem('_cc_probe', '1'); localStorage.removeItem('_cc_probe'); } catch (_) { storageOk = false; }
   // v1.14.99 (roadmap Step 5): the Profile pill is the PERSISTENT New-UI path to the
   // site-profile editor. The legacy header overflow 'SITE PROFILE' item is hidden under
-  // body.rd, and the rung-A 'SET UP SITE' NBA disappears once configured — so without
+  // body.rd, and the rung-A 'SET UP PROFILE' NBA disappears once configured — so without
   // this, a set profile is unreachable/uneditable in redesign. firstRun_openProfile()
   // opens the master profile section; frame-safe (back returns to redesign via the
   // v1.14.97 nav_restore guard). 3rd pill slot carries an optional onclick.
@@ -19428,7 +19428,10 @@ function cmd_telemetry(activeDep, activePct, handoffDraft) {
   }
 }
 function cmd_nba(rung, st) {
-  if (rung === 'A' || !st.confirmed) return { h: 'Set up your site profile.', p: 'PHANTOM needs your facility, switches, and rack naming before it can help.', label: 'SET UP SITE', act: function() { cmd_route('profile'); } };
+  // v1.14.269: do NOT relabel this back to 'SET UP SITE' — in the owner's field vocabulary
+  // "set up site" means the DEPLOY FLOW (ruling 2026-07-16), and this door opens the site-profile
+  // editor. Same defect as MASTER DOC→SITE PROFILE; hard rule "names say what the door opens".
+  if (rung === 'A' || !st.confirmed) return { h: 'Set up your site profile.', p: 'PHANTOM needs your facility, switches, and rack naming before it can help.', label: 'SET UP PROFILE', act: function() { cmd_route('profile'); } };
   if (rung === 'B' && !st.masterLoaded) return { h: 'Load your Master to start the shift.', p: 'PHANTOM reads cabinets and host assignments from your Master file. Load it to begin scoping and scanning.', label: 'LOAD MASTER', act: function() { cmd_loadMaster(); } };
   if (st.blockerCount >= 1) return { h: 'Resolve ' + st.blockerCount + ' open blocker' + (st.blockerCount !== 1 ? 's' : '') + '.', p: 'A blocker bites the next shift first. Capture the proof note and route it into a handoff.', label: 'GO TO HANDOFF', act: function() { cmd_route('work', 'handoff'); } };
   if (st.handoffDraft) return { h: 'Finish your shift handoff.', p: 'A handoff draft is open. Complete the summary before your shift ends.', label: 'GO TO HANDOFF', act: function() { cmd_route('work', 'handoff'); } };
@@ -19467,7 +19470,11 @@ function cmd_clock() {
 }
 // ━━━ REDESIGN STEP 5 — frame helper ━━━
 // Header subtitle: COREWEAVE · {facility} (cyan) when confirmed, else COREWEAVE ·
-// SET UP SITE (gold/warn) per spec §6. Persistent chrome, updated on boot + entry.
+// SET UP PROFILE (gold/warn) per spec §6. Persistent chrome, updated on boot + entry.
+// v1.14.269: keep this wording in step with the rung-A NBA label, and see the note there for why
+// it must not say "SET UP SITE". ⚠️ This writes #rd-site, which lives in the SHARED header (the
+// known legacy-leak organ) — but #rd-sub is display:none unless body.rd (:9177/:9204), so the
+// string cannot render under ?legacy=1. Verified on a clean legacy boot: 0 elements show it.
 function cmd_setSiteLabel() {
   var el = document.getElementById('rd-site'); if (!el) return;
   var confirmed = (typeof siteProfile_isConfirmed === 'function') && siteProfile_isConfirmed();
@@ -19475,7 +19482,7 @@ function cmd_setSiteLabel() {
     el.textContent = (typeof phantom_siteLabel === 'function') ? phantom_siteLabel('SITE') : 'SITE';
     el.classList.remove('warn');
   } else {
-    el.textContent = 'SET UP SITE';
+    el.textContent = 'SET UP PROFILE';
     el.classList.add('warn');
   }
 }
@@ -22917,7 +22924,7 @@ function firstRun_renderChip() {
 
 function firstRun_openProfile() {
   // v1.14.104: in the New UI, open the Profile SHEET (reused editor) — never showPage('master')
-  // (that's the legacy bounce). Covers the Command 'Profile' pill + rung-A 'SET UP SITE' route.
+  // (that's the legacy bounce). Covers the Command 'Profile' pill + rung-A 'SET UP PROFILE' route.
   if (typeof redesign_isOn === 'function' && redesign_isOn() && typeof rd_openProfile === 'function') { rd_openProfile(); return; }
   showPage('master');
   setTimeout(function() { if (typeof master_showSection === 'function') master_showSection('profile'); }, 10);
