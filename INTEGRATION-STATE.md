@@ -2251,3 +2251,45 @@ The `.267` harness did **not** survive (scratchpad is ephemeral). **Rebuilt it**
 
 ## QUEUE
 **`.272` WET — AWAITING OWNER VERIFY (HARD STOP)** → on pass **SCENE LOCK RE-ARMS** → **Task 2 U-map 1U ratchet** (UI, never was scene — the last open CODE-QUEUE task) → **back-trap** (parked by owner; its old "`.271`-earliest" pencil is now stale — **re-number when it thaws**). Roadmap residue (docs, not code): SERVICE EXTEND single-tray · cross-rack link geometry · `MODEL_SPEC` + per-field provenance + spec sheet (**R5 PARKED — it would fabricate**) · projected screen-space U-ruler · **`.reh-3d-seg` tap-target size (22px vs the 44px gloved floor — owner call, whole family or none)** · rename the GB300 reference file (**PHANTOM / AUS-01 · COREWEAVE** branding on a **GB300** rack — AUS-01 is **Hopper**).
+
+---
+
+# S52 - ⭐ `.272` WET **DEVICE-VERIFIED · SCENE LOCK RE-ARMED** · SHIP `v1.14.273` = U-MAP 1U RATCHET (Task 2) — ⭐ **CODE-QUEUE COMPLETE** (2026-07-17)
+
+## OWNER, IN CHAT: **".272 verified, lock re-armed, ship task 2"**
+`.272` WET FINISH **PASSED ON DEVICE** — the floor reads wet, the P0 held at full 360. ⛔ **THE RACK SCENE LOCK IS RE-ARMED. Camera term stays OPEN (§47). Everything else — materials, the §A JOHN-LOCKED light rig, fog, tone mapping, tray geometry/internals, type colours, bezel strips, FLOOR, reflection, boot — is LOCKED again: no change without a NEW explicit owner ruling. If a future task would touch it, STOP AND ASK.**
+
+## SHIPPED `v1.14.273` — U-MAP 1U RATCHET (full detail in commit + `version.json`)
+Task 2 is the **U-map COLUMN (UI), never the scene** — the queue said so and the diff proves it (0 lines touch `rackElevation_render3D`/materials/lights/camera/floor). **The re-armed lock was not in play.**
+- New `_umapQuant(rawPct)` → `{u, pct}`: `u = totalU - floor(pct/100*totalU)` (which band the finger is in), `pct` = that band's **CENTRE**. Positional quantization only — a flick lands on a centre, never rate-limited. Wired into all three carriage-movers (minimap drag · canvas-scroll sync · first-paint). DRO + engaged band take the stepped `u`/`pct`, never the raw finger. Handle transition `0.1s ease-out` → `0.05s linear`; no settle animation (already on a centre by construction). Tap-to-jump unchanged.
+- ⚠️ **Specced against a MOCK again** (`fracToU`/`uToFrac`, "the /47 stays" — non-existent here, same as S43's `buildUMap`). Implemented the INTENT against the real `scrubbar_buildHtml` band geometry.
+
+## ⭐ TWO DEFECTS AVOIDED BY NUMERIC PROOF BEFORE SHIPPING (not by eye)
+1. **Detent = band CENTRE, not top edge.** `engageAt`'s band test is inclusive at BOTH ends, so a top-edge detent (on the boundary two bands share) lights **TWO bands on 26 of 48 U's**. Centre → exactly one, 48/48.
+2. **DRO reads the stepped `u` directly, not `round(totalU - pct/100*totalU)`.** That `round()` is knife-edge at a centre; float error tips it DOWN on **8 of 48** (U1→0, 4→3, 7→6, 10→9, 13→12, 16→15, 27→26, 30→29). Masked pre-quantization; once carriage rests on centres the old DRO would name the wrong U — worse than no ratchet. `uExact` fixes it.
+
+## VERIFICATION (live, real app over http, 47-slot rack, totalU 48)
+`_umapQuant` swept over **2001 finger positions** → all land on a band centre; 48 distinct detents; DRO matches all 48; exactly one band engages at each (numeric, inclusive test). **Live drag via the REAL `minimapDrag`**: 48 detents, DRO matches carriage every time, one band engaged, sequence steps clean U48→U2. First paint on a centre (U42, DRO agrees). Transition `0.05s linear`. **`?legacy=1` clean**: no `#umapDro` (rd-gated), `engageAt` early-returns (0 engaged bands), scrubbar present as always, visible DOM byte-identical.
+⚠️ Harness note: `rackHybrid_initSync` is inside a **double rAF** (`:33740`) that never fires in a hidden tab, so listeners aren't bound on load — called `initSync()` directly to test. Also a false-alarm cost a cycle: my `everyRestOnCentre` check used `<1e-6` where float needs `<1e-4`; the single deterministic check (`MATCH: true`, U33=32.2917%) proved the handle equals the quantizer exactly.
+⚠️ Deploy op note: the poll-loop `Bash` timed out at 2min and **killed the push mid-flight** (local commit existed, origin did NOT — `git rev-parse HEAD origin/main` showed two different hashes). Re-ran `git push` alone; landed `bd3572b..f91d6ed`. ⭐ **Keep the push and the deploy-poll in SEPARATE Bash calls — never let a long poll loop share a command with the push.**
+
+## ⭐ THE CODE-QUEUE IS COMPLETE
+All of `Downloads/CODE-QUEUE.md` is now shipped + (Tasks 1-2) or verified (Task 3):
+- **Task 1 PHASE DOCK** = `.268` ✅ device-verified
+- **Task 3 GESTURE LOCK** = already `.264`, verified in code + rode the `.271` device pass
+- **Task 2 U-MAP RATCHET** = `.273` — **awaiting owner device verify (the one unverified ship in flight)**
+Plus the night-pack arc, all owner-ruled and shipped: `.269` relabel · `.270` Ship A (cables sourced + `_rmConnHit`) · `.271` Ship B (ortho rail + EXPLODE) · `.272` WET.
+
+## OWNER GATE (iPhone, gloves) — `.273` is the one unverified ship in flight
+- [ ] Slow scrub the U-map: exactly 48 clicks top→bottom; carriage **never rests between U's**; DRO ticks one U per step
+- [ ] Fast flick **lands ON a centre**, never between (positional, not rate-limited)
+- [ ] The engaged glass band flips **ON the step**; exactly one lights at a time
+- [ ] Tap-to-jump still lands on a U; keyboard ±1 / unit-select unchanged
+- [ ] The rack **SCENE is pixel-identical to `.272`** — the re-armed lock held (this ship never touched it)
+- [ ] `?legacy=1` U-map behaves as before
+
+## QUEUE — after the `.273` verify
+**No open CODE-QUEUE tasks remain.** Standing/parked items, all needing a NEW owner ruling before code:
+- **Back-trap** (`nav_back` misses `#ph-sheet`, verified real in S-back-recon) — parked by owner; its old "`.271`-earliest" pencil is stale — **assign the next free stamp when he un-parks it**.
+- **Roadmap residue (docs, not code):** SERVICE EXTEND single-tray · cross-rack link geometry · `MODEL_SPEC` + per-field provenance + spec sheet (**R5 PARKED — would fabricate**) · projected screen-space U-ruler · **`.reh-3d-seg` tap-target 22px vs the 44px gloved floor** (owner call, whole family or none) · rename the GB300 reference file (its **PHANTOM / AUS-01 · COREWEAVE** branding on a **GB300** rack — AUS-01 is **Hopper** — must not be mistaken for a real screen).
+- **CAMERA stays OPEN** (§47) even with the scene re-locked — view-rail follow-ons (a second EXPLODE variant, projected ruler that reads the camera) do not need a fresh camera ruling.
