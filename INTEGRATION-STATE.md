@@ -2400,6 +2400,19 @@ Images actually DECODED (`complete=true`, `naturalWidth=256`, box 230x230 — no
 - [ ] hard-refresh / SW-update so the new HTML loads
 
 ## OPEN ITEMS (John's ruling needed — do not act unprompted)
-1. **SOPS + BLAST** are in the same dark state (table row, no card) — same 2-div fix if wanted.
+1. ~~**SOPS + BLAST** dark~~ ✅ **DONE in `.277`** (owner: "wire sops and blast too") — see §58.
 2. **`#ff8a00`** (audits accent) is outside the token set (`--cyan/--vio/--gold/--teal/--mag`) — flag only.
 3. **`phantom-tool-crashcart-256.webp`** has 0 refs (not even a table row) — separate, out of scope.
+
+---
+
+# S58 - SHIP v1.14.277 = WORK GRID CARDS pt2 (wire SOPS + BLAST RADIUS) (2026-07-17)
+
+Owner ruling in chat: **"wire sops and blast too"** — closes Open Item 1 (§57). Identical surgical pattern to `.276`: two `.rf-card` divs cloned from BOM, appended after AUDITS. No logic/assets/table/button changes. Both webps already existed + precached (SOPS = `phantom-tool-sops-256.webp`; **BLAST uses `phantom-tool-power-256.webp`** per its DEPLOY_TOOLS row — not a blast-named file). All grid-eligible tool rows now render their art (sops/power 1→2 refs). Accents verbatim (sops `#28e0ff`, blast `#ff453a`); meta title-cased to match siblings.
+
+**VERIFIED LIVE (display path):** both images DECODED (`complete=true`, `naturalWidth=256` read off the live `<img>`); both OPEN their tool on tap (`sops`/`blast`, no Unknown-tool toast — `OPS_TABS` keys `:19671/:19672`); grid now 8 tool cards, RULE1 no h-overflow; `?legacy=1` unaffected. Gates: node --check 4/0; CSS 12 balanced; CRLF uniform; three-stamp `.276`->`.277`.
+
+## OWNER GATE (iPhone) — `.277` is the one unverified ship in flight
+- [ ] WORK grid shows SOPS + BLAST RADIUS cards with art; both open on tap; 8 cards wrap cleanly at phone width; hard-refresh for the new HTML.
+
+## OPEN ITEMS still standing (need a ruling): `#ff8a00` audits accent off-token (flag only) · `phantom-tool-crashcart-256.webp` has 0 refs (no table row). The whole tool-grid icon-wiring arc (`.275`→`.277`) is otherwise complete.
