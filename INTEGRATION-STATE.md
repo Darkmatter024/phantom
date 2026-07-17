@@ -2142,3 +2142,31 @@ Gates: **node --check 4/0 · CSS 12 blocks balanced · CRLF uniform**. Chip: all
 - **NOT BUILT: R1 (ortho + view rail) + R4 (EXPLODE) = "SHIP B — INSTRUMENT".** Gated behind Ship A's own verify.
 - **Stamp order is UNDECIDED and is the owner's:** he ruled *"wet after .268 verify"*; the pack put Ship A first. **Both are "after the .268 verify" — ask which of WET / Ship A takes the next free stamp. Do NOT reuse the night pack's `.269`/`.270`.**
 - Back-trap: **parked by the owner** (`.271`-earliest). Leave `nav_back`'s sheet registry alone.
+
+---
+
+# S49 - ⭐ `.268` **DEVICE-VERIFIED** · SHIP `v1.14.270` = **SHIP A / DATA HONESTY** (2026-07-17)
+
+## ⭐ OWNER, IN CHAT: **".268 verified, ship a first"**
+**`.268` PHASE DOCK PASSED ON DEVICE.** The verify stack is clear (`.269` relabel folds into that pass — both its strings are first-run-only and invisible on a configured device). **The `S48` staged build is therefore SHIPPED as `.270`; the working tree is clean again.**
+**Owner ordered SHIP A BEFORE WET** — so **WET FINISH is now `.271`** (spec unchanged: `S44` items **1+2+3**; ⛔ **item 4 stays DROPPED forever**). `.270` is now **the one unverified ship in flight**.
+
+## SHIPPED `v1.14.270` — R2 + R3 (full detail in the commit + `version.json`; `S48` holds the build notes)
+- **R2 — the CABLES layer was inventing work instructions. Both hardcoded loops DELETED.** `createCable()` (the `.256` renderer) is **untouched**; only the data feed changed. Tubes now come from real Master A/Z rows with **both** ends resolving in **this** rack; cross-rack links are **counted, never drawn**; join reuses **PRE-FLIGHT's `_rec_norm`** + `master_findRack` — no second resolver.
+- **R3 — `_rmConnHit` untangled.** PRINT's `.id` preserved **byte-identical** (the rack's own designation, never the Master's spelling); only `cablesOut`/`cablesIn` added. No Master match → the original stub.
+- **Honest chip states:** `CABLES · N EXT` / `N EXT LINKS` (disabled) / `NO CABLE DATA` (disabled). Visible-but-disabled, never hidden.
+- **`?legacy=1` proven clean live** (`render3D` called **0 times**). **Rack scene: the deleted cables are the ONLY delta.** Camera untouched.
+
+## ⭐ THE STANDING LESSON FROM THIS SHIP — WIDER THAN CABLES
+`.256` **applied §3 zero-fabrication to the TRAYS and never pointed it at the CABLES in the same ship** (`INTEGRATION-STATE:1695` vs `:1697`, which treated the hardcoded rows as a *clipping* problem — "bound the mock's hardcoded rows to THIS rack" — not a *truthfulness* problem). The handoff **mandated** the fabrication (*"Every `createCable(...)` call the mock makes, with the same arguments"*). **The doctrine was in the room and was not aimed at the whole surface.** ⭐ **When a ship ports a mock VERBATIM, the honesty rule must be run over EVERY organ it drags in — not just the one under discussion.** A code comment acknowledging a mock's hardcoding is **not** a disclosure: the tech never sees it.
+
+## ⛔ HARD STOP — `.270` AWAITS THE OWNER'S DEVICE PASS. **SHIP B DOES NOT START** (night pack R6: *"Does not start until John verifies Ship A"*).
+**OWNER GATE (iPhone, gloves) — his own Ship A checklist:**
+- [ ] Rack **WITH** cable rows in Master → 3D → CABLES: tubes match the Master A/Z rows (**count them against the sheet**); **no tube on any U-pair not in Master**
+- [ ] Rack **WITHOUT** cable rows → chip **disabled**, `NO CABLE DATA`, **zero tubes**
+- [ ] Any rack: the old ghost pattern (dense runs ~U40→U31 / U22→U13) is **GONE**
+- [ ] ⭐ **Tap a tray in 3D → sheet shows CONNECTIONS** (same as the Master path); **PRINT ASSET LABEL correct from BOTH paths** — *this is the one link the harness could NOT prove: the Bay's render loop and `reh3d_restore` are rAF-driven and rAF never fires in a hidden automation tab. Everything downstream of the hit is verified.*
+- [ ] `?legacy=1` byte-identical
+
+## QUEUE
+**`.270` SHIP A — AWAITING OWNER VERIFY (HARD STOP)** → **`.271` WET FINISH** (`S44` items 1+2+3) → verify → **SCENE lock re-arms (camera stays OPEN per `S47`)** → **SHIP B / INSTRUMENT** = R1 (ortho + FRONT·ISO·TOP·REAR rail; camera cleared by `S47`) + R4 (EXPLODE; owner "r4 yes" — translation only, no tilt, sheet-open stows it) → **Task 2 U-map 1U ratchet**. Back-trap **parked by the owner** (`.271`-earliest — note the number now collides with WET; **re-number it when it thaws**). Roadmap residue (docs, not code): SERVICE EXTEND single-tray · cross-rack link geometry · `MODEL_SPEC` + per-field provenance + spec sheet (**R5 PARKED — it would fabricate**) · projected screen-space U-ruler · rename the GB300 reference file so its **PHANTOM / AUS-01 · COREWEAVE** branding on a **GB300** rack (AUS-01 is **Hopper**) can't be mistaken for a real screen.
