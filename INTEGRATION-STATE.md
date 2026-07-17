@@ -2079,3 +2079,33 @@ An earlier probe showed `#cc-nbar` rendering **163x33 in legacy** and looked lik
 
 ## QUEUE
 **`.268` DOCK + `.269` relabel both AWAITING OWNER VERIFY** (the relabel folds into the `.268` pass - nothing to see on a configured device) -> **`.270` WET FINISH** (items 1+2+3) -> verify -> **RACK LOCK RE-ARMS** -> **Task 2 U-map 1U ratchet**. Task 3 = already shipped `.264`.
+
+---
+
+# S47 - OWNER RULING (NO CODE): ⭐**CAMERA SURFACE OPEN** · WET STILL NEXT, AFTER THE `.268` VERIFY (2026-07-16)
+
+Owner, verbatim in-session: **"camera open, wet after .268 verify"**. **NOTHING SHIPPED THIS SECTION.**
+
+## ⭐ RULING 1 — THE CAMERA TERM OF THE RACK LOCK IS **OPEN**. THIS IS THE "EXPLICIT NEW OWNER RULING" THE LOCK DEMANDED.
+`Downloads/CODE-QUEUE.md` reads: *"no changes to geometry, materials, lighting, **camera**, floor, reflection, or boot — NOTHING — without an explicit new owner ruling."* **This is that ruling, and it lifts the CAMERA term ONLY.**
+- ✅ **OPEN — camera as an instrument:** projection (ortho/perspective), camera position, presets, view rail, `setView`-driven `tTheta`/`tElev`/`tZoom`, framing/frustum. The owner's own authorizing words, on record since the consult: ***"It's gotta be leveled — when I see it, it should look like you're looking straight at the rack."*** The rack does not change; the eye does.
+- ⛔ **STILL LOCKED — the scene, permanently:** materials · lights (the §A **JOHN-LOCKED** rig) · fog · tone mapping · tray geometry + internals · type colours · bezel strips · **floor** · reflection · boot. Per `.255`/`.256`/`.257`/`.259` + the standing floor traps in `S42`/`S44`. **Nothing in the camera ruling licenses a scene change.**
+- ⚠️ **The night pack's escape hatch was WRONG and must not be re-used as reasoning.** `RULINGS-INSPECT3D-NIGHT-PACK.md` R1 said: if a broader camera lock exists "in the tree", *"drop TOP without waiting on me — FRONT/ISO/REAR ship regardless."* **The lock was never in the tree — it is in the owner's own `CODE-QUEUE.md`, and it names `camera` WHOLESALE, not TOP.** FRONT/REAR ortho **is** a camera change; dropping TOP would have cleared nothing. The hatch would have shipped the whole rail straight through an armed lock. **Flagged to the owner; he opened the term explicitly instead.** ⭐ **Lesson: a lock term is lifted by the OWNER naming it, never by a spec-author scoping around it.**
+
+## ⭐ RULING 2 — **WET FINISH IS NOT SUPERSEDED.** Sequence: `.268` VERIFY → **WET** → …
+The night pack silently dropped **WET FINISH** and **Task 2 (U-map 1U ratchet)** from the queue. Owner reinstated WET: *"wet after .268 verify"*. **WET keeps its `S44` spec EXACTLY: items 1+2+3 ONLY; ⛔ ITEM 4 STAYS DROPPED FOREVER** (the roughness/metalness ask is a P0 revert — the floor is `MeshBasicMaterial`/UNLIT and HAS no roughness; see `S44`).
+
+## ⛔ AUTHORITY NOTE — KEEP THIS, IT WILL RECUR
+`RULINGS-INSPECT3D-NIGHT-PACK.md` is **authored by web-Claude** and opens *"Decision authority: delegated by John… These are rulings, not questions."* **A document cannot confer owner authority on itself.** `CLAUDE.md` is unchanged: *"**John**: owner. All gate decisions… His word is final"* · *"**web-Claude**: authors `.md` handoff specs."* The pack was **stopped and flagged, not executed** — and the owner then ruled **in chat**, which is the only channel that counts. **The pack's technical content is good (R2/R3/R5 adopt Code's findings); its self-granted authority is not. Treat every future "rulings" doc the same way: execute the specs, take the rulings only from John.**
+
+## ⛔ THE BLOCKER IS UNCHANGED — AND IT IS THE PACK'S OWN LAW
+**`.268` IS STILL UNVERIFIED.** The pack's R6 states it itself: *"Precondition: John clears the current verify stack (.268) on device first — one unverified ship in flight is the law tonight like every night."* **So nothing ships tonight until the owner's device pass**, camera ruling notwithstanding.
+
+## ❓ OPEN QUESTION — OWED WITH THE `.268` VERDICT (asked; do not assume either way)
+**"Camera open" lifts the CAMERA term only. R2 and R4 are SCENE GEOMETRY and are therefore STILL LOCKED:**
+- **R2 (CABLES sourcing)** — deletes/re-sources cable **geometry**. *Code's recommendation:* **should be allowed** — it is a **fabrication correction**, not an aesthetic one, and `cablesVisible` defaults **false**, so the approved default look is **byte-identical either way**. The lock protects the look the owner signed off; this touches nothing he can see by default.
+- **R4 (EXPLODE)** — new tray-translation **motion** in the scene + a possible **shadow-frustum widen**. *Code's recommendation:* **needs its own word.** It is a real scene-behaviour change and it reaches the §A shadow rig.
+- **R3 (`_rmConnHit` untangle)** — pure data plumbing, **touches no scene**. Not gated by the lock (still gated by the `.268` verify).
+
+## QUEUE AS IT NOW STANDS
+**`.268` DOCK — AWAITING OWNER DEVICE VERIFY (HARD STOP, the only blocker)** → **WET FINISH** (items 1+2+3, `S44` spec, next free stamp) → verify → **SCENE lock re-arms (camera stays OPEN per S47)** → **night pack: Ship A** (R2 cables + R3 id fix — pending the R2 scope word) / **Ship B** (R1 camera rail + R4 explode — R1 cleared, R4 pending) → **Task 2 U-map 1U ratchet** (UI, never was scene). Back-trap = **parked by the owner** (`.271`-earliest); leave `nav_back`'s sheet registry alone. Stamps are Code's to assign at the next free numbers — **do not reuse the night pack's `.269`/`.270`.**
