@@ -2346,3 +2346,19 @@ Plus Task 3 GESTURE LOCK = `.264`, verified in code + rode the `.271` device pas
 - ⚠️ **STANDING HAZARD unchanged:** two build lines write `main` — OODA (`curl` live) before ANY edit; verbatim strings are truth, stamps are contested.
 
 **Parked. Awaiting the next owner instruction — nothing outstanding on my side.**
+
+---
+
+# S55 - SHIP v1.14.275 = ICON RESTYLE (audits + burndown) (2026-07-17)
+
+Owner dropped `Downloads/files (65).zip` (3 re-arted icons + `proof.png`, no spec). After inspection + a reported concern, owner ruled: **"ship audits + burndown, keep the frameless bot."**
+
+## SHIPPED - ASSET-ONLY, SAME FILENAMES -> ZERO HTML MARKUP CHANGE
+`phantom-tool-audits-256.webp` + `phantom-tool-burndown-256.webp` re-arted to the clean machined cyan/violet frame, single subject, **NO baked-in text** (audits = clipboard+magnifier; burndown = glowing fibre bundle). The old art baked legible words in ("AUDIT / DOCUMENT / COMPLY"; "BAD FIBERS LIST / CLEAN SIGNAL, STRONG BUILD") = the **icon-law violation** (owner 2026-07-05: no large legible title words on icon art); the tool cards already render the label beside the icon (BURNDOWN/PROGRESS, AUDITS/SERIALS), so the words were redundant. Both VP8X 256x256, validated. HTML delta = the version constant ONLY.
+⭐**SW bump was mandatory:** both are in `PRECACHE_URLS`, so without a `CACHE_VERSION` bump devices keep the OLD art (the `.213` plate-swap gotcha). Three-stamp `.274`->`.275` forces the refetch. **Live byte-verified: served == shipped (15074b / 13872b).**
+
+## ⛔ ASSISTANT ICON NOT SHIPPED (owner ruling) - the re-arted assistant art in the zip is UNUSED
+The zip's third icon re-arted `phantom-ui-assistant-256.webp` with the same machined frame, but its consumer is the Ask-PHANTOM launcher (`:12641`) whose `.prism` span is **already a 56px violet framed tile** rendering the art at 36px with an alpha-shape glow (`:9141`/`:9142`/`:8782`) - a framed icon there = **frame-in-a-frame + a square halo**. The proof sheet hid this (icons shown big/standalone). Owner: **"keep the frameless bot"** - the current 198x191 frameless assistant art is untouched (live still 9324b). ⚠️ If a future assistant re-art is proposed, it must be **frameless/transparent-subject** for that 36px `.prism` slot, OR the `.prism` tile's own frame must be dropped.
+
+## QUEUE - unchanged; nothing in flight but this ship's device verify
+`.275` awaits owner device verify (asset-only; a hard-refresh/SW-update pass). Rack scene lock still ARMED (camera OPEN per §47); no open CODE-QUEUE tasks; roadmap residue unchanged (SERVICE EXTEND · cross-rack links · spec panel [R5 PARKED-fabricates] · projected U-ruler · `.reh-3d-seg` 22px vs 44px gloved floor). GB300 ref-file rename = DONE (S54-era, `Downloads/REFERENCE-MOCK-...NOT-A-PHANTOM-SCREEN.html`).
