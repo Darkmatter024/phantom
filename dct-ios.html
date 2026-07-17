@@ -11960,7 +11960,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.273';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.274';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -17356,6 +17356,13 @@ function nav_back() {
       PhantomScanner.close(); return;
     }
     var classSheets = [
+      // v1.14.274 — PHASE-SHEET BACK-TRAP FIX. The .268 phase dock opens #ph-sheet (class 'open') over
+      // the rack detail, but it was never registered here — so ONE back press over-travelled: it closed
+      // the sheet AND popped nav off the rack detail (reproduced live). This registry exists precisely
+      // to make back close the topmost sheet and STOP. First entry because #ph-sheet (z-150) sits over
+      // the deepest surface. phdock_close is the rule-7-safe closer (restores body.overflow only if it
+      // took the lock), so it is harmless if somehow reached with the sheet shut.
+      { id: 'ph-sheet',     cls: 'open',     close: function() { if (typeof phdock_close === 'function') phdock_close(); } },
       { id: 'vaSheet',      cls: 'visible', close: function() { if (typeof vaClose === 'function') vaClose(); } },
       { id: 'geSheet',      cls: 'visible', close: function() { if (typeof GE !== 'undefined' && GE.close) GE.close(); } },
       { id: 'rm-sheet',     cls: 'visible', close: function() { if (typeof closeRmSheet === 'function') closeRmSheet(); } },
