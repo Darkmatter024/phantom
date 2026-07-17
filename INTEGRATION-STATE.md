@@ -2365,16 +2365,41 @@ The zip's third icon re-arted `phantom-ui-assistant-256.webp` with the same mach
 
 ---
 
-# S56 - OWNER RULING (NO CODE): .275 AUDITS/BURNDOWN ICONS = LEAVE DORMANT (2026-07-17)
+# S56 - .275 AUDITS/BURNDOWN ICONS — ⛔ SUPERSEDED BY v1.14.276 (see §57): CARDS NOW WIRED, ART LIVE
+
+⛔ **The "leave dormant" ruling below is REVERSED. Owner changed his mind in chat 2026-07-17 ("wire them, i changed my mind"); `.276` wired both cards into the WORK tool grid and the art now renders. The `do-not-wire` marker is RETIRED — do NOT read it as standing law.** The FINDING below (4-of-8 tool rows had no card; the 2-ref/1-ref diagnostic; the ship-time-miss lesson) is retained because it stays useful.
 
 Owner reported "can't see the new icons" after `.275`. **Root cause was NOT caching** (live verified `.275`, served bytes = the new art). **The two re-arted webp icons render on NO visible surface:**
 - `DEPLOY_TOOLS.img` (`:26581/:26582`) is **dead data** — never emitted as an `<img>` anywhere; its consumers (`rd_openOpsTool` `:26625`, `deploy_detailTool` `:26648`) use only the text `name`.
 - The visible webp tool-card grid (`:12673`, `.rf-card`/`.rf-i-img`) = Master/BOM/Manifest/PortMap/RackMap — **excludes audits + burndown**.
 - audits/burndown are reached ONLY as deploy-detail **buttons** (`:30965/:30966`) that draw a ~13px inline **SVG glyph** (`_ico.zap`/`_ico.clipboard`) + text — never the webp. A 256px framed webp at 13px would be mush, so the SVG glyph is the correct treatment there; and they're deploy-scoped (Design Law 2), so they don't belong in the general grid.
 
-**RULING: "leave them dormant."** `.275` is NOT reverted — the art is icon-law-compliant and correctly precached, ready if a surface ever wants it. ⛔**DO NOT re-flag "can't see the audits/burndown icons" as a bug, and DO NOT wire them into a surface, without a NEW owner ruling.** The re-art had no visible home by design.
+**RULING (now REVERSED — see the banner at the top of this section):** originally "leave them dormant"; overturned by the owner one exchange later and actioned in `.276`.
 
 ⭐**MY SHIP-TIME MISS (own it):** at `.275` I verified the bytes shipped + served but ASSUMED audits/burndown were in the visible `.rf-card` webp grid like BOM/Manifest. They never were. **Verify an asset RENDERS on a surface the user looks at — not just that it deployed.** See [[feedback_asset_ships_not_renders]].
 
 ## QUEUE - unchanged
 `.275` remains the last ship (no device-verify needed now — it changes nothing visible, by ruling). Scene lock ARMED (camera OPEN). No open CODE-QUEUE tasks; roadmap residue unchanged.
+
+---
+
+# S57 - SHIP v1.14.276 = WORK GRID CARDS (wire BURNDOWN + AUDITS) (2026-07-17)
+
+Per `Downloads/HANDOFF-WORK-GRID-CARDS-276.md`. ⭐**Owner REVERSED the `.275` leave-dormant ruling IN CHAT: "wire them, i changed my mind."** (I confirmed first, because the handoff — web-Claude-authored — reversed his own one-exchange-old chat ruling; a spec can't override an owner ruling on its own, but the owner then made the call directly.)
+
+## SHIPPED - SURGICAL ADDITIVE (2 cards, no logic, no assets)
+Two `.rf-card` divs cloned from the BOM pattern, appended after RACK MAP in the WORK tool grid (`:12677`). Both webps already precached (`sw.js :92/:93`). The `.275` re-arted art (cached but rendering on NO surface — see §56) now has a visible home; both grep at **2 refs** (table row + card = art renders). Table rows and the deploy-detail SVG-glyph buttons UNCHANGED (13px glyph is correct there; 256px frame would be mush). sops+blast left dark (Open Item 1, needs a ruling); `#ff8a00` audits accent carried forward verbatim, off-token, flagged not changed (Open Item 2).
+
+## VERIFIED LIVE (display path, per the §56 / [[feedback_asset_ships_not_renders]] lesson)
+Images actually DECODED (`complete=true`, `naturalWidth=256`, box 230x230 — not broken refs): BURNDOWN = fibre bundle, AUDITS = clipboard+magnifier, machined frame, after PORT MAP/RACK MAP. Both OPEN their tool on tap (`currentOpsTab`=burndown/audits, host populated, **no Unknown-tool toast** — `OPS_TABS` has both keys `:19785/:19789` so `rd_openOpsTool` resolves). Grid 4->6: RULE1 no h-overflow; forced to 360px it wraps to a responsive 4-col grid, no overflow. **`?legacy=1` unaffected** (cards in DOM like BOM siblings; rd WORK grid not a legacy surface → offsetParent null). Gates: node --check 4/0; CSS 12 balanced; CRLF uniform; three-stamp `.275`->`.276`.
+
+## OWNER GATE (iPhone) - `.276` is the one unverified ship in flight
+- [ ] WORK tool grid shows BURNDOWN (fibre bundle) + AUDITS (clipboard+magnifier) with the machined-frame art
+- [ ] both open their tool on tap
+- [ ] the existing four cards did not shift/reflow badly at 6 cards — check the wrap at phone width
+- [ ] hard-refresh / SW-update so the new HTML loads
+
+## OPEN ITEMS (John's ruling needed — do not act unprompted)
+1. **SOPS + BLAST** are in the same dark state (table row, no card) — same 2-div fix if wanted.
+2. **`#ff8a00`** (audits accent) is outside the token set (`--cyan/--vio/--gold/--teal/--mag`) — flag only.
+3. **`phantom-tool-crashcart-256.webp`** has 0 refs (not even a table row) — separate, out of scope.
