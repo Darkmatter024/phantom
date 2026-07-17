@@ -26,10 +26,10 @@
 <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
-<meta property="og:image" content="https://darkmatter024.github.io/phantom/manifest-og.png">
+<meta property="og:image" content="https://darkmatter024.github.io/phantom/manifest-og-v2.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta name="twitter:image" content="https://darkmatter024.github.io/phantom/manifest-og.png">
+<meta name="twitter:image" content="https://darkmatter024.github.io/phantom/manifest-og-v2.png">
 <!-- P1.3 FIX: Google Fonts removed — offline-first cold-aisle requirement.
      Typography resolved entirely from iOS system fonts. No network request. -->
 <style>
@@ -9138,10 +9138,14 @@ body.rd #ph-sheet.open {
    caps .askrow to 1080 and zeroes its L/R padding exactly like .trow (padding group). */
 #pg-cmd .askrow{display:flex;gap:10px;padding:0 16px 14px}
 #pg-cmd .askrow > *{flex:1;min-width:0}
-#pg-cmd .apill{display:flex;align-items:center;gap:12px;text-align:left;cursor:pointer;min-height:96px;padding:12px;border-radius:14px;color:inherit;font-family:inherit;border:1px solid color-mix(in srgb,var(--vio) 45%,transparent);background:linear-gradient(160deg,#0d0a18,#070809);box-shadow:inset 0 0 22px -6px color-mix(in srgb,var(--vio) 30%,transparent)}
-#pg-cmd .apill .av{flex:0 0 auto;width:56px;height:56px;display:grid;place-items:center;border-radius:8px;background:color-mix(in srgb,var(--vio) 12%,transparent);border:1px solid color-mix(in srgb,#a66bff 45%,transparent);box-shadow:inset 0 0 12px color-mix(in srgb,var(--vio) 25%,transparent)}
-#pg-cmd .apill .av img{display:block;height:62px;width:auto}
-#pg-cmd .apill .ey{font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--vio)}
+#pg-cmd .apill{display:flex;align-items:center;gap:12px;text-align:left;cursor:pointer;min-height:96px;padding:12px;border-radius:14px;color:inherit;font-family:inherit;border:1px solid color-mix(in srgb,var(--violet) 45%,transparent);background:linear-gradient(160deg,#0d0a18,#070809);box-shadow:inset 0 0 22px -6px color-mix(in srgb,var(--violet) 30%,transparent)}
+/* v1.14.280 — plate removed. A 56×56 square was the wrong-shaped hole for 184×256
+   portrait art (bust overflowed 3px top/bottom, ~5.7px slack each side). .av is now a
+   bare SIZING BOX (no bg/border/radius/inset glow); the bust carries its own drop-shadow
+   glow that follows its alpha silhouette, same treatment as the LENS ghost hero. */
+#pg-cmd .apill .av{flex:0 0 auto;width:56px;height:72px;display:grid;place-items:center}
+#pg-cmd .apill .av img{display:block;height:72px;width:auto;filter:drop-shadow(0 0 10px color-mix(in srgb,var(--violet) 55%,transparent))}
+#pg-cmd .apill .ey{font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--violet)}
 #pg-cmd .apill h3{margin:3px 0 0;font-size:15px;font-weight:600}
 /* reserved slots: deliberately empty, never a dead tap — non-interactive by design (§6) */
 #pg-cmd .rpill{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:5px;min-height:96px;padding:12px;border-radius:14px;cursor:default;user-select:none;border:1px dashed rgba(143,168,189,.22);background:rgba(10,14,20,.4)}
@@ -11993,7 +11997,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.279';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.280';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,

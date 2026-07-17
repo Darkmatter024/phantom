@@ -2482,3 +2482,28 @@ Per `HANDOFF-CMD-ASKROW-279` (files 67.zip: handoff + `MOCKUP-ASK-PILL-REORDER.h
 - [ ] Hard-refresh for new HTML + art.
 
 ## OPEN ITEMS still standing (need a ruling): what the two RESERVED slots become (owner hasn't named them) · `phantom-assistant-mark-256.webp` 0 refs · `#ff8a00` audits accent off-token · `phantom-tool-crashcart-256.webp` 0 refs · the stale `body.rd .ask` in the L8749 `.164` block (inert, separate cleanup).
+
+---
+
+# S61 - SHIP v1.14.280 = ASK PLATE removal + violet-token fix + OG link-preview card (2026-07-17)
+
+Per `HANDOFF-ASK-PLATE-280` (files 69.zip: handoff + `manifest-og-v2.png`). Two independent jobs, one commit. **`.279` device-verified by owner 2026-07-17 before this shipped.**
+
+**PART 1 (takes the `.280` stamp) — remove the Ask plate + fix the violet token (CSS only).**
+The `.279` Ask tile put 184×256 portrait art in a 56×56 square `.av` plate → bust overflowed 3px top/bottom. Owner ruling: remove the plate. `#pg-cmd .apill .av` is now a **bare sizing box** (56×72, grid/place-items:center — no bg/border/radius/inset glow); `#pg-cmd .apill .av img` goes `height` 62→72 + a `drop-shadow` glow so violet reads around the bust's alpha silhouette (same treatment as the LENS ghost hero). Rendered ~52×72, inside the 56px box.
+
+**⚠ DEVIATION — the mock-token trap (found in render-verify, folded in, reported):** the `.279` AND `.280` specs both used `var(--vio)`, but **`--vio` is a MOCK/boot token — defined ONLY under `#boot` (:11209) and `#forge3d-sheet` (:8848), NOT in `#pg-cmd`.** The live app's violet is **`--violet` (#9b59ff)** on `:root`. So `color-mix(...var(--vio)...)` was invalid in the Command tree and silently dropped — meaning **the `.279` Ask tile's violet border + inset glow NEVER RENDERED** (John verified `.279` seeing a dark tile + a lavender-`#a66bff`-bordered plate box), and Part 1's new drop-shadow would have been a no-op too (glow-less bust = Part 1 fails its point). **Fix:** swapped `var(--vio)` → `var(--violet)` in the three ask-tile rules I own — `#pg-cmd .apill` (border + box-shadow), `#pg-cmd .apill .av img` (drop-shadow), `#pg-cmd .apill .ey` (label). This RESTORES the owner-approved mock look (the mock defined `--vio` on `:root`, so it always showed violet; live never did). Other `var(--vio)` consumers (rack-template bands `:6608`, forge crumbs/gradients, platform chips `:19165-67`) LEFT ALONE — pre-existing, out of this ship's scope.
+
+**⭐ MOCK-TOKEN RULE (permanent):** web-Claude specs/mocks use `--vio`/`--mag`; the live app uses `--violet` (#9b59ff) / `--magenta` (#ff006e). Verify token NAMES against `:root` before shipping any `color-mix`/`var()` — an undefined var silently invalidates the whole declaration (no error, just no paint). Same family as the mock-helper trap ([[project_repo_sync_v1133]]).
+
+**PART 2 (no stamp — rides Part 1's commit) — GitHub Pages link-preview card.** `manifest-og-v2.png` added at repo ROOT (1200×630 PNG, 322,879 bytes; photoreal composite of `cc-ghost.webp` + `cc-wordmark.png` on the `#020408` violet-glow field, replacing the flat `og.svg`-derived vector ghost). `og:image` (:29) + `twitter:image` (:32) repointed `manifest-og.png` → `manifest-og-v2.png`. **New filename IS the cache-bust** (unfurl caches are per-URL). `manifest-og.png` LEFT (existing Slack unfurls point at it); `og:image:width/height` (:30/:31) untouched; **NOT added to sw.js** (not an app asset, never served to a client). `og.svg` LEFT but now **STALE as the card source** — flag only; if the card is rebuilt it is a raster composite of `cc-ghost.webp`+`cc-wordmark.png`, NOT an SVG render. Social-card assets are versioned by **filename**, not the three-stamp; next revision is `-v3`.
+
+**VERIFIED LIVE (display path, headless real-layout):** apill border now `#9b59ff/0.45` + inset glow `/0.3`; bust `drop-shadow #9b59ff/0.55`; `.ey` label `#9b59ff`; `.av` bg/border gone (plate removed); img decoded natW=184; tiles still 3×96px. Gates: node --check 4/0; sw.js OK; CSS braces 3912/3912 balanced; CRLF 0 bare LF; three-stamp `.279`→`.280`.
+
+## OWNER GATE (iPhone) — `.280` is the one unverified ship in flight
+- [ ] **Part 1:** Ask tile shows the bust with **no purple box** around it; violet **glow follows the bust's shape** (now actually renders); the tile itself has a violet border + soft inner glow (this was MISSING in `.279` due to the `--vio` bug — new to your eye). Bust not clipped top/bottom/sides.
+- [ ] Tap Ask → VA sheet on intent; Ask / RESERVED / RESERVED still equal at 96px; desktop ≥980 askrow still on the 1080 column.
+- [ ] Hard-reload for the new HTML.
+- [ ] **Part 2 (not a device gate):** post the `dct-ios.html` link in a FRESH Slack message → confirm the new photoreal-ghost unfurl (Pages needs ~1 min; editing an old message won't re-unfurl).
+
+## OPEN ITEMS still standing (need a ruling): what the two RESERVED slots become · `phantom-assistant-mark-256.webp` 0 refs · `phantom-tool-crashcart-256.webp` 0 refs · `#ff8a00` audits accent off-token · the inert `.164` `.ask` rule at L8749 · `og.svg` stale (card source retired) · the broader `var(--vio)` usage outside `#boot`/`#forge3d-sheet` (rack bands, forge crumbs, platform chips) may be silently un-violet — pre-existing, not audited this ship.
