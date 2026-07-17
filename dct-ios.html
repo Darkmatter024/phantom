@@ -10153,7 +10153,11 @@ body.rd .rack-hybrid-minimap .scrubbar-slot[data-type="network"] { --kc: 59,130,
 /* Detent (RULING S2 / DETENT S2): engaged glass brightens (~0.32) + 2.5px cyan ring. */
 body.rd .rack-hybrid-minimap .scrubbar-slot.lt-engaged { background: rgba(var(--kc, 138,75,255), 0.32); box-shadow: inset 0 1px 0 rgba(255,255,255,0.30), inset 0 -1px 1px rgba(0,0,0,0.38), 0 0 0 2px rgba(40,224,255,0.75), 0 0 10px rgba(40,224,255,0.35); z-index: 3; }
 /* Frosted carriage - machined glass, cyan centre index; the sole navigator (DETENT S2). */
-body.rd .rack-hybrid-minimap .scrubbar-handle { display: block; left: -2px; right: -2px; height: 32px; background: linear-gradient(180deg, rgba(255,255,255,0.16), rgba(255,255,255,0.06)); -webkit-backdrop-filter: blur(6px) saturate(1.3); backdrop-filter: blur(6px) saturate(1.3); border: 1px solid rgba(255,255,255,0.35); border-radius: 5px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.40), inset 0 -1px 2px rgba(0,0,0,0.40), 0 2px 6px rgba(0,0,0,0.5); pointer-events: none; transform: translateY(-50%); transition: top 0.1s cubic-bezier(0.23,1,0.32,1); z-index: 5; }
+body.rd .rack-hybrid-minimap .scrubbar-handle { display: block; left: -2px; right: -2px; height: 32px; background: linear-gradient(180deg, rgba(255,255,255,0.16), rgba(255,255,255,0.06)); -webkit-backdrop-filter: blur(6px) saturate(1.3); backdrop-filter: blur(6px) saturate(1.3); border: 1px solid rgba(255,255,255,0.35); border-radius: 5px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.40), inset 0 -1px 2px rgba(0,0,0,0.40), 0 2px 6px rgba(0,0,0,0.5); pointer-events: none; transform: translateY(-50%); transition: top 0.05s linear; z-index: 5; }
+/* v1.14.273 (Task 2 ratchet): step transition was `top 0.1s cubic-bezier(0.23,1,0.32,1)` — 100ms is
+   double the queue's "<=50ms or none" bound, and an ease-OUT curve per detent reads as mush and lags
+   the finger on a fast flick now that motion is stepwise. 50ms linear is a mechanical click. There is
+   deliberately NO settle animation on release: the carriage is already on a centre by construction. */
 body.rd .rack-hybrid-minimap .scrubbar-handle::after { content: ''; position: absolute; left: 22%; right: 22%; top: 50%; height: 1px; background: rgba(40,224,255,0.65); box-shadow: 0 0 4px rgba(40,224,255,0.5); }
 
 /* v1.14.218 — 3D rack view: FLAT|3D toggle + lazy three.js mount (redesign-only,
@@ -11956,7 +11960,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.272';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.273';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -31785,7 +31789,25 @@ function rackHybrid_initSync(rack) {
   // U-MAP detent + DRO (v1.14.261). ENGAGED = the glass band whose U-span holds the carriage
   // centre (DETENT S3 - tracks the carriage/scroll, not selection). No-op when rd DRO/bands absent.
   var _umapDro = document.getElementById('umapDro');
-  function engageAt(centerPct) {
+
+  // ── v1.14.273 — 1U RATCHET (CODE-QUEUE Task 2). The carriage steps 1U at a time: totalU detents,
+  // finger continuous, carriage QUANTIZED. Positional quantization only — never rate-limiting — so a
+  // full-speed flick is unaffected and simply lands on a centre.
+  // ⚠️ The queue specced this against a MOCK (`fracToU`/`uToFrac`, "the /47 stays"). Those helpers do
+  // not exist in this app and its mapping is different, so this implements the INTENT against the real
+  // geometry: scrubbar_buildHtml draws U `u` as a band spanning pct [(totalU-u)/totalU, (totalU-u+1)/totalU].
+  // So "which U is the finger in" is a FLOOR over that band, and the detent is that band's CENTRE.
+  // ⚠️ THE DETENT IS THE BAND'S CENTRE, NOT ITS TOP EDGE — this is load-bearing, not cosmetic. A
+  // top-edge detent sits exactly on the boundary shared by two adjacent bands, and engageAt's test is
+  // inclusive at BOTH ends (>= t0 && <= t0+h0), so it would light TWO bands on 26 of 48 U's.
+  // The centre engages exactly one, 48/48. Verified numerically before shipping.
+  function _umapQuant(rawPct) {
+    var u = totalU - Math.floor((Math.max(0, Math.min(100, rawPct)) / 100) * totalU);
+    u = Math.max(1, Math.min(totalU, u));
+    return { u: u, pct: (((totalU - u) + 0.5) / totalU) * 100 };
+  }
+
+  function engageAt(centerPct, uExact) {
     if (typeof redesign_isOn === 'function' && !redesign_isOn()) return;   // rd-only instrument: under ?legacy=1 leave the DOM untouched (ship rule 7)
     var slotEls = bar.querySelectorAll('.scrubbar-slot');
     for (var i = 0; i < slotEls.length; i++) {
@@ -31794,7 +31816,11 @@ function rackHybrid_initSync(rack) {
       slotEls[i].classList.toggle('lt-engaged', centerPct >= t0 && centerPct <= t0 + h0);
     }
     if (_umapDro) {
-      var u = Math.round(totalU - (centerPct / 100) * totalU);
+      // v1.14.273: the DRO reads the STEP, never the raw finger (queue's words). ⚠️ It must NOT be
+      // re-derived from pct: round(totalU - pct/100*totalU) is knife-edge at a band centre and float
+      // error tips it DOWN on 7 of 48 U's (4->3, 7->6, 10->9, 13->12, 16->15, 27->26, 30->29) — the
+      // DRO would name the wrong U while the carriage sat on the right one. Passing u is the fix.
+      var u = (uExact != null) ? uExact : Math.round(totalU - (centerPct / 100) * totalU);
       _umapDro.textContent = 'U' + Math.max(1, Math.min(totalU, u));
     }
   }
@@ -31806,8 +31832,13 @@ function rackHybrid_initSync(rack) {
     // Also move the handle to track the center of the visible range
     if (handle) {
       var centerPct = ((canvas.scrollTop + canvas.clientHeight / 2) / totalCanvasHeight) * 100;
-      handle.style.top = Math.max(0, Math.min(100, centerPct)) + '%';
-      engageAt(Math.max(0, Math.min(100, centerPct)));
+      // v1.14.273: the carriage rests on a detent here too. This path is NOT optional — canvas.scrollTop
+      // is clamped to [0, totalCanvasHeight - clientHeight] and its scroll event fires AFTER minimapDrag
+      // has already released _rackHybrid_isSyncing, so this handler has the last word on the handle. Quantize
+      // it or it silently un-quantizes every drag.
+      var _q = _umapQuant(centerPct);
+      handle.style.top = _q.pct + '%';
+      engageAt(_q.pct, _q.u);
     }
     _rackHybrid_isSyncing = false;
   }, { passive: true });
@@ -31821,12 +31852,16 @@ function rackHybrid_initSync(rack) {
     var y = t.clientY - rect.top;
     var pct = Math.max(0, Math.min(1, y / rect.height));
     _rackHybrid_isSyncing = true;
-    // Center Canvas viewport on the dragged position
-    var targetScroll = (pct * totalCanvasHeight) - (canvas.clientHeight / 2);
+    // v1.14.273 — THE RATCHET. The finger stays continuous (`pct`); the carriage snaps to the U band
+    // the finger is in. Per frame, positional only — no rate limit, so flicks are unaffected. Tap-to-jump
+    // is unchanged: this same handler serves touchstart, and a tap now simply lands on a centre.
+    var q = _umapQuant(pct * 100);
+    // Center Canvas viewport on the DETENT, not the raw finger
+    var targetScroll = ((q.pct / 100) * totalCanvasHeight) - (canvas.clientHeight / 2);
     canvas.scrollTop = Math.max(0, Math.min(totalCanvasHeight - canvas.clientHeight, targetScroll));
     updateViewport();
-    if (handle) handle.style.top = (pct * 100) + '%';
-    engageAt(pct * 100);
+    if (handle) handle.style.top = q.pct + '%';
+    engageAt(q.pct, q.u);
     _rackHybrid_isSyncing = false;
   };
   bar.addEventListener('touchstart', minimapDrag, { passive: false });
@@ -31837,7 +31872,9 @@ function rackHybrid_initSync(rack) {
   setTimeout(function() {
     updateViewport();
     var c = ((canvas.scrollTop + canvas.clientHeight / 2) / totalCanvasHeight) * 100;
-    engageAt(Math.max(0, Math.min(100, c)));
+    var _q0 = _umapQuant(c);                       // v1.14.273: first paint lands on a detent too
+    if (handle) handle.style.top = _q0.pct + '%';
+    engageAt(_q0.pct, _q0.u);
   }, 0);
 }
 
