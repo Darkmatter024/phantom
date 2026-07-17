@@ -10167,6 +10167,12 @@ body.rd .reh-3d-seg.reh-3d-cables { margin-left: 12px; }   /* v1.14.256 — CABL
    than hiding (Cold Aisle: show the capability exists and why it is off). Additive: no other
    .reh-3d-seg is ever disabled, so this rule cannot touch FLAT|3D. */
 body.rd .reh-3d-seg:disabled { opacity: 0.45; cursor: default; border-color: rgba(255,255,255,0.10); }
+/* v1.14.271 (R1/R4) — VIEW RAIL + EXPLODE get their OWN row. Appending them to .reh-3d-toggle would
+   put 7 buttons on one no-wrap flex row and push the viewport on a 390px phone (Rule 1). flex-wrap is
+   the belt in case a future button lands here; the row is ~210px today. Shown only in 3D — the rail is
+   injected by rackElevation_render3D and removed in teardown(), so it cannot exist on FLAT. */
+body.rd .reh-3d-rail { display: flex; flex-wrap: wrap; gap: 4px; padding: 0 0 8px; }
+body.rd .reh-3d-rail .reh-3d-explode { margin-left: 12px; }   /* EXPLODE is a state, not a view: gap it from the 4 presets */
 body.rd .reh-flat-wrap { display: contents; }
 body.rd .reh-3d-mount { display: none; position: relative; height: 60vh; max-height: 60vh; border: 1px solid rgba(92,242,255,0.10); border-radius: 8px; overflow: hidden; background: #000000; }
 body.rd .rack-hybrid-canvas.is-3d .reh-flat-wrap { display: none; }
@@ -11950,7 +11956,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.270';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.271';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -31980,7 +31986,30 @@ function rackElevation_render3D(rack, mountEl) {
 
   var scene = new THREE.Scene();                                  // no solid bg — the env cubemap + backdrop carry depth
   scene.fog = new THREE.FogExp2(0x030508, 0.008);                 // v1.14.259 — mock's fog (FINAL L327), never ported in .255; its absence is why .258 read washed out vs the mock's deep-black
-  var camera = new THREE.PerspectiveCamera(FOV, w / h, 0.3, 500);
+  // ── v1.14.271 (RULING R1) — TWO CAMERAS, held for the life of the scene, switched BY REFERENCE.
+  // Never construct one per switch. The owner's ruling: "the rack is scenery; the camera is an
+  // instrument" — the SCENE stays locked (materials/lights/fog/tone-mapping/tray geometry/type
+  // colours/floor), only the eye moves. His authorizing words: "It's gotta be leveled — like you're
+  // looking straight at the rack."
+  //   ISO  = camP, the JOHN-LOCKED .255 perspective at FOV 28. Default AND landing view. Nothing
+  //          about ISO moves — do not retune FOV, fitDist, or its theta/elev.
+  //   FRONT/REAR = camO, orthographic, because a PERSPECTIVE camera physically cannot draw a true
+  //          elevation: the top cap fans open above the eye line and the bottom trays below it. That
+  //          splay is the projection, not the rack. Ortho makes every U equal height.
+  // Frustum derives from the rack itself — the rack is centred on y=0 (yBase = -RH/2) so a symmetric
+  // frustum frames it exactly; ORTHO_MARGIN lets the caps breathe.
+  // ⚠️ `zoom` is this build's DISTANCE multiplier (D = fitDist * zoom), so ortho takes its RECIPROCAL:
+  // bigger zoom = further away = smaller subject. Same 0.55–1.7 clamp, untouched.
+  var ORTHO_MARGIN = 1.08;
+  var camP = new THREE.PerspectiveCamera(FOV, w / h, 0.3, 500);
+  var camO = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.3, 500);
+  function orthoFit(aspect) {
+    var halfH = (RH / 2) * ORTHO_MARGIN, halfW = halfH * aspect;
+    camO.top = halfH; camO.bottom = -halfH; camO.left = -halfW; camO.right = halfW;
+    camO.updateProjectionMatrix();
+  }
+  orthoFit(w / h);
+  var camera = camP;                                  // boot on the locked ISO look
   var renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));   // §F mobile cap
   renderer.setSize(w, h);
@@ -32181,6 +32210,10 @@ function rackElevation_render3D(rack, mountEl) {
   // ── TRAYS from live Master slots (§3) — chassis = TYPE colour; interior detail keyed to kind ──
   function yFor(u) { return yBase + (u - 0.5) * uH; }
   var trayMeshes = [];                                       // raycast targets (chassis) — .255 tap contract, §4
+  // v1.14.271 (R4): must be declared HERE, above slots.forEach — `var` hoists the binding but not the
+  // assignment, so declaring it down with the orbit state would make this push hit `undefined` at runtime
+  // (node --check cannot see that).
+  var trayGroups = [];
   var _mtx = new THREE.Matrix4();
   slots.forEach(function (dev) {
     if (dev == null || dev.uStart == null || dev.uEnd == null) return;
@@ -32207,6 +32240,7 @@ function rackElevation_render3D(rack, mountEl) {
     var grp = new THREE.Group();
     grp.position.set(0, yc, 0);
     rackGrp.add(grp);
+    trayGroups.push(grp);            // v1.14.271 (R4): EXPLODE lerps grp.position.z to userData.tExplodeZ
 
     // chassis — DARK gunmetal per KIND (v1.14.257, mock palette). TYPE colour is DEMOTED to the
     // bezel strip below; it no longer paints the whole box (the .256 "coloured slabs" defect).
@@ -32466,6 +32500,11 @@ function rackElevation_render3D(rack, mountEl) {
   // window global; created only while 3D is live and removed in teardown() (exists only in 3D).
   // Matches the FLAT|3D segmented styling (.reh-3d-seg). Cold Aisle Filter: one tap, big target.
   var _cablesBtn = null;
+  // v1.14.271: these are ASSIGNED in the rail block a few lines below, which runs HERE — so they must
+  // be declared HERE too. Declaring them down with the orbit state (as the first draft did) re-ran
+  // `var x = null` AFTER the assignment and wiped the references: setView's is-on toggle silently
+  // no-opped and teardown got null, stranding the rail in the DOM forever. Same trap as trayGroups.
+  var _railEl = null, _railBtns = null, _explodeBtn = null;
   try {
     var _strip = document.querySelector('.reh-3d-toggle');
     if (_strip && !_strip.querySelector('#reh3dBtnCables')) {
@@ -32502,6 +32541,52 @@ function rackElevation_render3D(rack, mountEl) {
       _cablesBtn.setAttribute('aria-label', _cablesBtn.title);
       _strip.appendChild(_cablesBtn);
     }
+
+    // ── VIEW RAIL + EXPLODE (v1.14.271, R1 + R4) — its OWN row, deliberately. ⚠️ Appending these to
+    // .reh-3d-toggle would put SEVEN buttons on one no-wrap flex row (FLAT|3D|CABLES|FRONT|ISO|TOP|
+    // REAR ≈ 390px+) and push the viewport on a 390px phone — Rule 1, and the exact defect the GB300
+    // reference file ships. A second row is ~210px and fits with room to spare.
+    // Created only while 3D is live and removed in teardown(), same contract as the CABLES chip.
+    if (_strip && _strip.parentNode && !document.getElementById('reh3dRail')) {
+      _railEl = document.createElement('div');
+      _railEl.id = 'reh3dRail';
+      _railEl.className = 'reh-3d-rail';
+      _railBtns = {};
+      [['front', 'FRONT', 'Front elevation — cold aisle (orthographic, true elevation)'],
+       ['iso',   'ISO',   'Isometric — the default view'],
+       ['top',   'TOP',   'Overhead three-quarter'],
+       ['rear',  'REAR',  'Rear elevation — hot aisle and cabling (orthographic)']
+      ].forEach(function (v) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'reh-3d-seg' + (v[0] === 'iso' ? ' is-on' : '');   // boot state = ISO
+        b.textContent = v[1];
+        b.title = v[2];
+        b.setAttribute('aria-label', v[2]);
+        b.onclick = function () { setView(v[0]); };
+        _railBtns[v[0]] = b;
+        _railEl.appendChild(b);
+      });
+      _explodeBtn = document.createElement('button');
+      _explodeBtn.type = 'button';
+      _explodeBtn.className = 'reh-3d-seg reh-3d-explode';
+      _explodeBtn.textContent = 'EXPLODE';
+      _explodeBtn.title = 'Service mode — extend every tray to read its internals';
+      _explodeBtn.setAttribute('aria-label', _explodeBtn.title);
+      _explodeBtn.onclick = function () {
+        setExplode(!exploded);
+        if (typeof haptic === 'function') haptic([8]);
+        // "Service mode" is the WORK word; EXPLODE is the graphics word. The rack is in a state, the
+        // app is not in a rendering mode.
+        if (typeof phantomToast === 'function') phantomToast(exploded ? 'Service mode — trays extended' : 'Service mode — trays stowed', 'info');
+      };
+      _railEl.appendChild(_explodeBtn);
+      _strip.parentNode.insertBefore(_railEl, _strip.nextSibling);
+    }
+    // Sheet rule (R4, deterministic): opening ANY sheet over the Bay stows the explode — one state
+    // machine, no ambiguity. Closing the sheet does NOT re-explode. Exposed as a hook because the
+    // phase sheet lives in another module; cleared in teardown so it can never outlive the scene.
+    window._reh3dStow = function () { if (exploded) setExplode(false); };
   } catch (e) {}
   scene.add(rackGrp);
 
@@ -32739,6 +32824,56 @@ function rackElevation_render3D(rack, mountEl) {
   // ── camera spherical orbit around rack CENTER — always lookAt(0,0,0) so it never skews/balloons ──
   var theta = 0.5, elev = 0.18, zoom = 1, tTheta = 0.5, tElev = 0.18;
   var axis = 0;   // v1.14.264 gesture-lock: 0 undecided, 1 orbit (horizontal), -1 released to page scroll (vertical)
+
+  // ── VIEW RAIL (v1.14.271, RULING R1) — FRONT · ISO · TOP · REAR ──────────────────────────────
+  // FRONT = cold aisle. REAR = hot aisle and cabling. That is how a DCT already thinks about a rack.
+  // ⚠️ .264 STANDS, UNTOUCHED: vertical DRAG still never writes tElev (see onMove). setView() is the
+  // ONLY elevation writer, and a preset button has no scroll collision — which is what .264 was about.
+  // The later, broader CODE-QUEUE rack lock DID name `camera`; the owner lifted that term explicitly
+  // ("camera open", 2026-07-16 / §47). That ruling is what authorises this rail.
+  var VIEWS = {
+    front: { theta: 0,           elev: 0,    ortho: true  },
+    iso:   { theta: 0.5,         elev: 0.18, ortho: false },   // the .255 LOCKED default — never retune
+    top:   { theta: 0.5,         elev: 1.6,  ortho: false },   // ~58° high-3/4: reads the top AND the face
+    rear:  { theta: Math.PI,     elev: 0,    ortho: true  }
+  };
+  // A preset is a deliberate framing, so the idle auto-spin must not drift off it — a FRONT that
+  // slowly rotates is no longer an elevation. ISO takes NO lock so it keeps today's behaviour exactly
+  // (incl. the idle spin), per "nothing about ISO moves". Any real orbit drag releases the lock.
+  var _viewLock = null;
+  function setView(name) {
+    var v = VIEWS[name]; if (!v) return;
+    // Shortest angular path — without this, FRONT↔REAR spins the long way round.
+    var d = v.theta - tTheta;
+    while (d >  Math.PI) d -= Math.PI * 2;
+    while (d < -Math.PI) d += Math.PI * 2;
+    tTheta += d;
+    tElev = v.elev;
+    zoom = 1;                       // DEVIATION: the spec assumed a tZoom target; this build has none
+                                    // (zoom is immediate, not lerped), so a preset snaps to a known framing.
+    camera = v.ortho ? camO : camP;
+    _viewLock = (name === 'iso') ? null : name;
+    if (_railBtns) for (var k in _railBtns) { if (_railBtns[k]) _railBtns[k].classList.toggle('is-on', k === name); }
+    if (typeof haptic === 'function') haptic([8]);
+  }
+  // ── EXPLODE (v1.14.271, RULING R4) ───────────────────────────────────────────────────────────
+  // The highest value-per-line in the pack: the Bay trays ALREADY carry real internals (OSFP cages,
+  // instanced drive bays w/ per-bay LEDs, port grids, PSU fans, BF3 DPU) that today are hidden behind
+  // the rack face. This adds no geometry and no data — it is a door to detail we already ship.
+  // ⚠️ TARGETS ONLY — never write .position.z directly; the frame loop lerps to userData.tExplodeZ.
+  // ⚠️ Rail BUTTON, never a gesture: tap stays read-only (Cold Aisle — you tap to READ; the thing must
+  // not move under you). The 11px tap-vs-drag threshold is untouched.
+  // ⚠️ Translation ONLY this ship — no tilt (it risks self-shadow surprises under the locked §A rig).
+  var exploded = false;   // _explodeBtn is declared up with _cablesBtn — see the note there
+  function setExplode(on) {
+    exploded = !!on;
+    for (var gi = 0; gi < trayGroups.length; gi++) {
+      // The (i % 3 - 1) stagger IS the whole visual: a uniform explode puts every tray face at one Z
+      // and reads as a solid slab you cannot count. The sawtooth gives each tray its own visible edge.
+      trayGroups[gi].userData.tExplodeZ = exploded ? (RD * 0.36 + ((gi % 3) - 1) * 0.3) : 0;
+    }
+    if (_explodeBtn) _explodeBtn.classList.toggle('is-on', exploded);
+  }
   var dragging = false, px = 0, py = 0, downX = 0, downY = 0, moved = false, idle = 0, stopped = false, pinch0 = 0;
   var reduce = false; try { reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
   var raycaster = new THREE.Raycaster(), ndc = new THREE.Vector2();
@@ -32748,6 +32883,7 @@ function rackElevation_render3D(rack, mountEl) {
     if (Math.abs(x - downX) > 11 || Math.abs(y - downY) > 11) moved = true;   // ~11px: gloved tap vs orbit
     if (!dragging) return;
     tTheta -= (x - px) * 0.006;
+    _viewLock = null;   // v1.14.271: a real orbit releases the preset — the tech has taken the camera back
     /* v1.14.264: elevation LOCKED (RULING) - vertical drag no longer writes tElev; elev stays 0.18 */          // clamped tilt — can't tip into a bad angle
     px = x; py = y; idle = 0;
   }
@@ -32762,6 +32898,7 @@ function rackElevation_render3D(rack, mountEl) {
     if (hits.length) {
       var dev = hits[0].object.userData.dev;
       if (dev && typeof openRmDevice === 'function') {
+        setExplode(false);   // R4 sheet rule — the device sheet is a sheet; stow. Direct call: we are inside the scene's own closure, no hook needed.
         // RULING R3 — this used to set a STUB, { id } only. Two consumers share this one global:
         // PRINT ASSET LABEL (:41567) reads hit.id for cab context, and _rmRenderConnections (:41594)
         // reads hit.cablesOut/cablesIn. The stub fed PRINT and STARVED CONNECTIONS — so the device
@@ -32846,7 +32983,8 @@ function rackElevation_render3D(rack, mountEl) {
   }
 
   var ro = null;
-  function doResize() { var nw = mountEl.clientWidth, nh = mountEl.clientHeight; if (!nw || !nh) return; renderer.setSize(nw, nh); camera.aspect = nw / nh; camera.updateProjectionMatrix(); }
+  // v1.14.271: resize BOTH cameras — the inactive one must be correct the instant it is switched in.
+  function doResize() { var nw = mountEl.clientWidth, nh = mountEl.clientHeight; if (!nw || !nh) return; renderer.setSize(nw, nh); camP.aspect = nw / nh; camP.updateProjectionMatrix(); orthoFit(nw / nh); }
   try { ro = new ResizeObserver(doResize); ro.observe(mountEl); } catch (e) {}
 
   var rafId = null;
@@ -32855,9 +32993,22 @@ function rackElevation_render3D(rack, mountEl) {
     if (!canvas.isConnected) { teardown(); return; }   // panel removed from DOM (nav away / re-render) → self-dispose
     rafId = requestAnimationFrame(loop);
     idle++;
-    if (!dragging && !reduce && idle > 90) tTheta += 0.0016;   // slow idle auto-spin
+    // v1.14.271: !_viewLock — the idle spin must not drift a preset off its framing (a FRONT that
+    // slowly rotates is no longer an elevation). ISO sets no lock, so its behaviour is unchanged.
+    if (!dragging && !reduce && !_viewLock && idle > 90) tTheta += 0.0016;   // slow idle auto-spin
     theta += (tTheta - theta) * 0.10; elev += (tElev - elev) * 0.10;
+    // v1.14.271 (R4): EXPLODE — targets only, lerped here in the ONE existing frame loop.
+    for (var ti = 0; ti < trayGroups.length; ti++) {
+      var _tg = trayGroups[ti], _tz = _tg.userData.tExplodeZ || 0;
+      if (_tg.position.z !== _tz) _tg.position.z += (_tz - _tg.position.z) * 0.07;
+    }
     var D = fitDist * zoom;
+    // v1.14.271: ortho ignores distance for scale, so the app's `zoom` maps to frustum scale via its
+    // reciprocal. Position still uses D so near/far and the shadow rig see the same world as before.
+    if (camera === camO) {
+      var _oz = 1 / (zoom || 1);
+      if (camO.zoom !== _oz) { camO.zoom = _oz; camO.updateProjectionMatrix(); }
+    }
     camera.position.set(Math.sin(theta) * D, elev * D, Math.cos(theta) * D);
     camera.lookAt(0, 0, 0);
     if (typeof bayTick === 'function') bayTick(performance.now());   // v1.14.255 -- bay motion, one loop
@@ -32899,6 +33050,11 @@ function rackElevation_render3D(rack, mountEl) {
     if (canvas.parentNode) canvas.parentNode.removeChild(canvas);
     trayMeshes = [];
     try { if (_cablesBtn && _cablesBtn.parentNode) _cablesBtn.parentNode.removeChild(_cablesBtn); } catch (e) {}   // v1.14.256 -- CABLES btn exists only in 3D
+    // v1.14.271: the rail + the stow hook exist only in 3D — the hook MUST NOT outlive the scene it
+    // closes over, or a later sheet-open would call setExplode() on a disposed context.
+    try { if (_railEl && _railEl.parentNode) _railEl.parentNode.removeChild(_railEl); } catch (e) {}
+    _railEl = null; _railBtns = null; _explodeBtn = null; trayGroups = [];
+    try { if (window._reh3dStow) window._reh3dStow = null; } catch (e) {}
     mountEl._rm3dDispose = null;
     if (_reh3dActive && _reh3dActive.mount === mountEl) _reh3dActive = null;
   }
@@ -33252,6 +33408,10 @@ function phdock_open(type) {
     return;
   }
   if (type) _phdock.lastType = type;          // reopen returns to the last-viewed phase
+  // v1.14.271 (R4 sheet rule): the phase sheet covers the 3D Bay on this same screen — opening any
+  // sheet stows the explode. One state machine, no ambiguity. The hook exists only while a 3D scene
+  // is live (rackElevation_render3D sets it, teardown nulls it), so this is inert on FLAT and legacy.
+  try { if (typeof window._reh3dStow === 'function') window._reh3dStow(); } catch (e) {}
   _phdock.open = true;
   sheet.classList.add('open');
   // Body-scroll lock (the #ta-sheet precedent). The sheet's own scroller carries
