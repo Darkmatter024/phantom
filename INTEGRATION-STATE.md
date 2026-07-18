@@ -2507,3 +2507,32 @@ The `.279` Ask tile put 184×256 portrait art in a 56×56 square `.av` plate →
 - [ ] **Part 2 (not a device gate):** post the `dct-ios.html` link in a FRESH Slack message → confirm the new photoreal-ghost unfurl (Pages needs ~1 min; editing an old message won't re-unfurl).
 
 ## OPEN ITEMS still standing (need a ruling): what the two RESERVED slots become · `phantom-assistant-mark-256.webp` 0 refs · `phantom-tool-crashcart-256.webp` 0 refs · `#ff8a00` audits accent off-token · the inert `.164` `.ask` rule at L8749 · `og.svg` stale (card source retired) · the broader `var(--vio)` usage outside `#boot`/`#forge3d-sheet` (rack bands, forge crumbs, platform chips) may be silently un-violet — pre-existing, not audited this ship.
+
+---
+
+# S62 - SHIP v1.14.281 = ASK TILE PHONE LAYOUT FIX + ASSISTANT ART V2 (2026-07-17)
+
+Per `HANDOFF-ASK-PHONE-FIX-281` (files 71.zip: handoff + mockup + v2 asset + patch). **`.280` device-verified by owner 2026-07-17.** **Supersedes the DEAD `HANDOFF-ASSISTANT-V2-281` (files 70.zip)** — that spec blamed a stale-cache and prescribed a rename-only fix; the cache theory was wrong (I flagged it before shipping — Pages was serving the correct new bust; my headless checks showed the art had already updated).
+
+**The real bug — a `.279` phone-LAYOUT fault, not cache.** `.apill` was authored as a flex **row** (icon beside label). At 390px the askrow tile is 112.7px wide → 88.7px content; a 56px icon + 12px gap left **~20.7px** for "Ask for assistance" → the label overflowed onto the icon. It overflows on every iPhone (15.7px @375, 20.7 @390, 34 @430) and fits on every desktop (246.7px @1080). Misread as "stale art" across four ships because **the `.279` mock was only ever rendered at 1080**, where the row fits. The art had updated correctly the whole time.
+
+**⭐ STANDING RULE (recorded): Command-page specs get mocked at 390 FIRST, 1080 second.** The Cold Aisle Filter says the phone is the target; mocking only at the convenient width is how a design fault ships four times.
+
+**The fix — phone-first inversion.** Base `#pg-cmd .apill` is now a **column** (flex-direction:column, centered, gap:6px); `.av` width 56→100%/height 72→56; `.av img` height 72→56; `.ey` (ASK PHANTOM eyebrow) `display:none`; `h3` 15→12.5px + line-height:1.25 so the label wraps to 2 lines. The **row layout is restored inside the existing `@media(min-width:980px)` block** (flex-direction:row, `.av` 56×72, img 72, `.ey` display:block, h3 15px) — placed AFTER the base rules so equal specificity wins on source order (same trap as the `.164`/`.278` rules; no `!important`). `--violet` PRESERVED throughout (my `.280` token fix — the patch was based on my actual `.280` and `git apply --check` passed clean, but I built it via my own edits for CRLF control).
+
+**ART:** `icons/phantom-ui-assistant-v2-256.webp` added (181×256, 15,832 bytes; black chrome bust on a hexagonal plinth, cyan eye rings, lit **AI** badge) under a **new filename**; Ask `src` (:12680) + `sw.js:77` precache entry repointed (replaced, not added). **RULE: raster assets version by FILENAME, not the three-stamp** (same as `manifest-og-v2.png`); next is `-v3`. `phantom-ui-assistant-256.webp` is **orphaned but retained** (0 refs, dropped from precache, deliberately not deleted so a stale cache gets bytes not a 404).
+
+**VERIFIED LIVE (headless real-layout, 390 + 1080):**
+- **390px:** `.apill` flex-direction=column; label sits BELOW the icon (`label_below_icon:true`) — **no overlap**; `.ey` display:none; h3 "Ask for assistance" wraps to 2 lines; new art decoded natW=181; 3 tiles equal width (103) AND equal height (119 — flex-stretch makes the RESERVED tiles match the wrapped Ask tile, so no ragged heights).
+- **1200px:** `.apill` flex-direction=row; eyebrow "ASK PHANTOM" visible; h3 15px; askrow on the 1080 column (tiles 60/425/791) exactly matching the trow triplet. Identical to `.280`.
+- Gates: node --check 4/0; sw.js OK; CSS braces 3917/3917 balanced (+5 pairs from the ≥980 override); CRLF 0 bare LF; three-stamp `.280`→`.281`. version-bump traps avoided: the `.280` plate-removed CSS comment left as history; real `.281` notes written; `prevVersion`→`.280`.
+
+**Note on the brace-gate discrepancy:** the spec claims a −1 baseline (3553/3554 by its counter). MY gate reads the file as **balanced** (3917/3917, 12 `<style>` blocks) — different tooling; my gate is balanced, so no −1 to carry. Recorded so a future session isn't confused by the spec's number.
+
+## OWNER GATE (iPhone) — `.281` is the one unverified ship in flight
+- [ ] Command page: Ask tile icon **above** the label, both centered; **NO overlap**; no `ASK PHANTOM` eyebrow (hidden by design); "Ask for assistance" wraps 2 lines, not clipped.
+- [ ] Icon is the **new bust** — hexagonal plinth, cyan eye rings, lit **AI** badge; no purple plate. (Hard-reload; new filename so no cache excuse.)
+- [ ] Ask / RESERVED / RESERVED equal width (Ask may be equal height too via stretch); tap Ask → VA sheet on intent; tap both RESERVED → nothing.
+- [ ] Desktop ≥980: row layout back (icon beside label, eyebrow visible, 15px); askrow on the 1080 column aligned with trow. Drag through 980 = clean flip.
+
+## OPEN ITEMS still standing (need a ruling): the two RESERVED slots (unnamed) · `phantom-assistant-mark-256.webp` 0 refs · `phantom-tool-crashcart-256.webp` 0 refs · `#ff8a00` audits accent off-token · inert `.164` `.ask` rule at L8749 · **the OG card swap (`manifest-og-v2.png`) shipped in `.280` — owner still owes the Slack-unfurl check** · deleting the orphaned old assistant asset (later, deliberate) · broader `var(--vio)` usage outside `#boot`/`#forge` (may be silently un-violet) · the spec's −1 brace-baseline claim (my gate reads balanced).
