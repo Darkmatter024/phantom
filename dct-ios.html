@@ -9123,6 +9123,21 @@ body.rd #ph-sheet.open {
 #pg-cmd .lens .clock .l{font-family:var(--mono);font-size:11px;letter-spacing:3px;color:var(--slate)}
 #pg-cmd .shiftpill{display:inline-flex;align-items:center;gap:7px;margin-top:12px;padding:6px 12px;border-radius:16px;border:1px solid rgba(57,224,155,0.30);background:rgba(57,224,155,0.06);font-family:var(--mono);font-size:12px;letter-spacing:1.5px;color:#39e09b}   /* B2 (v1.14.127): in-flow below the description, left-aligned — was absolute top:74px/right:18px floating over the title */
 #pg-cmd .shiftpill .dot{width:7px;height:7px;border-radius:50%;background:#39e09b;box-shadow:0 0 6px #39e09b}
+/* Ship 3a — Active Shift hero: shiftpill state channels (R5) + SET SHIFT END sheet. cyan=active countdown, gold=ended/attention (green retired here). */
+#pg-cmd .shiftpill{cursor:pointer}
+#pg-cmd .shiftpill.se-set{border-color:rgba(92,242,255,.30);background:rgba(92,242,255,.06);color:var(--cyan)}
+#pg-cmd .shiftpill.se-set .dot{background:var(--cyan);box-shadow:0 0 6px var(--cyan)}
+#pg-cmd .shiftpill.se-ended{border-color:rgba(255,203,69,.42);background:rgba(255,203,69,.08);color:var(--gold)}
+#pg-cmd .shiftpill.se-ended .dot{background:var(--gold);box-shadow:0 0 6px var(--gold)}
+#pg-cmd .shiftpill.se-unset{border-color:rgba(255,203,69,.30);background:rgba(255,203,69,.05);color:var(--gold)}
+#pg-cmd .shiftpill.se-unset .dot{background:var(--gold);box-shadow:0 0 6px var(--gold)}
+#shiftend-sheet .se-presets{display:flex;flex-direction:column;gap:10px;margin:8px 20px 4px}
+#shiftend-sheet .se-preset{display:flex;align-items:center;justify-content:space-between;width:100%;min-height:var(--tap-xl,56px);padding:0 18px;border-radius:10px;border:1px solid rgba(92,242,255,.22);background:rgba(92,242,255,.05);color:var(--cyan);font-family:var(--mono);font-size:15px;letter-spacing:1px;cursor:pointer;-webkit-appearance:none}
+#shiftend-sheet .se-preset .se-sub{color:var(--slate);font-size:12px;letter-spacing:.5px}
+#shiftend-sheet .se-custom-row{display:flex;align-items:center;gap:12px;margin:12px 20px 4px}
+#shiftend-sheet .se-custom-row label{font-family:var(--mono);font-size:12px;letter-spacing:1px;color:var(--slate)}
+#shiftend-sheet input.se-custom{flex:1;min-height:var(--tap-xl,56px);padding:0 14px;border-radius:10px;border:1px solid rgba(92,242,255,.22);background:rgba(10,14,20,.6);color:var(--cyan);font-family:var(--mono);font-size:16px;-webkit-appearance:none}
+#shiftend-sheet .se-clear{display:block;width:calc(100% - 40px);margin:14px 20px 12px;min-height:var(--tap-xl,56px);background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);border-radius:8px;color:var(--slate);font-family:var(--mono);font-size:13px;letter-spacing:1px;cursor:pointer;-webkit-appearance:none}
 #pg-cmd .ghosthero{position:absolute;right:8px;bottom:-6px;width:150px;height:auto;pointer-events:none;transition:filter .4s,opacity .4s}
 #pg-cmd .ghosthero.dim{filter:grayscale(.9) brightness(.42);opacity:.4}
 #pg-cmd .ghosthero.mid{filter:saturate(.75) brightness(.85);opacity:.9}
@@ -12026,7 +12041,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.283';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.284';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -15270,6 +15285,26 @@ if (typeof window !== 'undefined') {
       </div>
       <button id="ls-send" class="ls-send" type="button" onclick="logSheet_send()">SEND</button>
       <button id="ls-route" class="ls-route" type="button" onclick="logSheet_routeWork()" style="display:none">Go to Work to start a build &rarr;</button>
+    </div>
+  </div>
+
+  <div id="shiftend-sheet" class="va-sheet" onclick="if(event.target===this)shift_closeSheet()">
+    <div class="va-sheet-inner">
+      <div class="va-handle"></div>
+      <div class="va-sheet-header">
+        <div class="va-sheet-title">SET SHIFT END</div>
+        <button class="va-close-btn" type="button" onclick="shift_closeSheet()" aria-label="Close">&times;</button>
+      </div>
+      <div class="se-presets">
+        <button type="button" class="se-preset" onclick="shift_setPreset('6am')"><span>6:00 AM</span><span class="se-sub">next</span></button>
+        <button type="button" class="se-preset" onclick="shift_setPreset('6pm')"><span>6:00 PM</span><span class="se-sub">next</span></button>
+        <button type="button" class="se-preset" onclick="shift_setPreset('12h')"><span>+12 hours</span><span class="se-sub">from now</span></button>
+      </div>
+      <div class="se-custom-row">
+        <label for="se-custom-input">CUSTOM</label>
+        <input id="se-custom-input" class="se-custom" type="time" aria-label="Custom shift end time" onchange="shift_setCustom(this.value)">
+      </div>
+      <button type="button" class="se-clear" onclick="shift_clear()">Clear shift end &middot; back to wall clock</button>
     </div>
   </div>
 
@@ -19525,14 +19560,7 @@ function cmd_render() {
   else { lh = escHtml(site) + '<br>Ready State'; lp = 'One-glance build, scan &amp; blocker awareness for this shift.'; ghostCls = ''; }
   E('cc-lh').innerHTML = lh; E('cc-lp').innerHTML = lp;
   var gh = E('cc-ghost'); if (gh) gh.className = 'ghosthero ' + ghostCls;
-  var sp = E('cc-shiftpill');
-  if (sp) {
-    if (activeDep && activeDep.created) {
-      var mins = Math.max(0, Math.round((Date.now() - activeDep.created) / 60000));
-      sp.innerHTML = '<span class="dot"></span>ON SHIFT &middot; ' + Math.floor(mins / 60) + 'h ' + (mins % 60) + 'm';
-      sp.style.display = '';
-    } else { sp.style.display = 'none'; }
-  }
+  if (typeof shift_renderHero === 'function') shift_renderHero();
 
   // ── earned-count stats (zero until earned; — when unconfigured) ──
   var stats = (rung === 'A')
@@ -19644,6 +19672,101 @@ function cmd_route(mode, target) {
 function cmd_clock() {
   var d = new Date(), h = d.getHours(), ap = h >= 12 ? 'PM' : 'AM'; h = h % 12; if (h === 0) h = 12;
   var e = document.getElementById('cc-clock'); if (e) e.textContent = h + ':' + ('0' + d.getMinutes()).slice(-2) + ' ' + ap;
+  if (typeof shift_renderHero === 'function') shift_renderHero();
+}
+// ━━━ SHIP 3a — Active Shift hero: tech-entered shift end (R1) ━━━
+// One tech/day-scoped localStorage key. Honest fallback: unset -> wall clock stays +
+// SET SHIFT END affordance; countdown ONLY once set; SHIFT ENDED at zero; never invent
+// a remaining time. A value 2h past its end is treated stale (re-prompt), which also lets
+// a night shift count down across midnight without being flagged stale.
+var SHIFT_END_KEY = 'phantom_shift_end';
+var SHIFT_ENDED_GRACE_MS = 2 * 60 * 60 * 1000;
+function shift_end_read() {
+  try {
+    var raw = localStorage.getItem(SHIFT_END_KEY);
+    if (!raw) return null;
+    var o = JSON.parse(raw);
+    if (!o || typeof o.end !== 'number') return null;
+    return o;
+  } catch (_) { return null; }
+}
+function shift_end_write(endMs) {
+  try { localStorage.setItem(SHIFT_END_KEY, JSON.stringify({ end: endMs, setAt: Date.now() })); } catch (_) {}
+}
+function shift_end_clear() { try { localStorage.removeItem(SHIFT_END_KEY); } catch (_) {} }
+function shift_state() {
+  var o = shift_end_read();
+  if (!o) return { kind: 'unset' };
+  var now = Date.now();
+  if (now < o.end) return { kind: 'countdown', ms: o.end - now, end: o.end };
+  if (now < o.end + SHIFT_ENDED_GRACE_MS) return { kind: 'ended', end: o.end };
+  return { kind: 'unset' };
+}
+function shift_fmtRemaining(ms) {
+  var mins = Math.max(0, Math.round(ms / 60000));
+  if (mins < 60) return mins + ' MIN LEFT';
+  return Math.floor(mins / 60) + ' HR ' + (mins % 60) + ' MIN LEFT';
+}
+function shift_renderHero() {
+  var sp = document.getElementById('cc-shiftpill');
+  if (!sp) return;
+  var st = shift_state();
+  var cls, txt;
+  if (st.kind === 'countdown') { cls = 'se-set'; txt = shift_fmtRemaining(st.ms); }
+  else if (st.kind === 'ended') { cls = 'se-ended'; txt = 'SHIFT ENDED'; }
+  else { cls = 'se-unset'; txt = 'SET SHIFT END'; }
+  var sig = cls + '|' + txt;
+  if (sp.dataset.seSig === sig) { sp.style.display = ''; return; }
+  sp.dataset.seSig = sig;
+  sp.className = 'shiftpill ' + cls;
+  sp.setAttribute('role', 'button');
+  sp.tabIndex = 0;
+  sp.onclick = shift_openSheet;
+  sp.innerHTML = '<span class="dot"></span>' + txt;
+  sp.style.display = '';
+}
+function shift_openSheet() {
+  var sheet = document.getElementById('shiftend-sheet');
+  if (!sheet) { if (typeof phantomToast === 'function') phantomToast('Shift-end sheet unavailable', 'error'); return; }
+  sheet.classList.add('visible');
+  try { initSheetDismiss('shiftend-sheet', '.va-sheet-inner', shift_closeSheet); } catch (e) {}
+}
+function shift_closeSheet() {
+  var sheet = document.getElementById('shiftend-sheet');
+  if (sheet) sheet.classList.remove('visible');
+}
+function shift_nextOccurrence(hour) {
+  var d = new Date(); d.setHours(hour, 0, 0, 0);
+  if (d.getTime() <= Date.now()) d.setDate(d.getDate() + 1);
+  return d.getTime();
+}
+function shift_setPreset(kind) {
+  var end;
+  if (kind === '6am') end = shift_nextOccurrence(6);
+  else if (kind === '6pm') end = shift_nextOccurrence(18);
+  else if (kind === '12h') end = Date.now() + 12 * 60 * 60 * 1000;
+  else return;
+  shift_end_write(end);
+  if (typeof haptic === 'function') haptic([6]);
+  shift_renderHero();
+  shift_closeSheet();
+}
+function shift_setCustom(val) {
+  if (!val || val.indexOf(':') === -1) return;
+  var parts = val.split(':'), hh = parseInt(parts[0], 10), mm = parseInt(parts[1], 10);
+  if (isNaN(hh) || isNaN(mm)) return;
+  var d = new Date(); d.setHours(hh, mm, 0, 0);
+  if (d.getTime() <= Date.now()) d.setDate(d.getDate() + 1);
+  shift_end_write(d.getTime());
+  if (typeof haptic === 'function') haptic([6]);
+  shift_renderHero();
+  shift_closeSheet();
+}
+function shift_clear() {
+  shift_end_clear();
+  if (typeof haptic === 'function') haptic([6]);
+  shift_renderHero();
+  shift_closeSheet();
 }
 // ━━━ REDESIGN STEP 5 — frame helper ━━━
 // Header subtitle: COREWEAVE · {facility} (cyan) when confirmed, else COREWEAVE ·
