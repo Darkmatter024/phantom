@@ -12026,7 +12026,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.282';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.283';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -12688,6 +12688,12 @@ if (typeof window !== 'undefined') {
       <!-- REDESIGN STEP 4 — Command Center. Zones from cc-final mockup; populated
            by cmd_render() from honest app state (no demo data, no fake telemetry). -->
       <div class="statusrow" id="cc-statusrow"></div>
+      <div class="nba">
+        <div class="nlabel">NEXT BEST ACTION</div>
+        <h2 id="cc-nbah">&mdash;</h2>
+        <p id="cc-nbap">&mdash;</p>
+        <span class="route" id="cc-nbar" role="button" tabindex="0"></span>
+      </div>
       <div class="lens">
         <div class="clock"><div class="t" id="cc-clock">--:--</div><div class="l">LOCAL</div></div>
         <div class="llabel">COMMAND LENS</div>
@@ -12697,12 +12703,6 @@ if (typeof window !== 'undefined') {
         <img class="ghosthero" id="cc-ghost" src="cc-ghost.webp" alt="" aria-hidden="true">
       </div>
       <div class="stats" id="cc-stats"></div>
-      <div class="nba">
-        <div class="nlabel">NEXT BEST ACTION</div>
-        <h2 id="cc-nbah">&mdash;</h2>
-        <p id="cc-nbap">&mdash;</p>
-        <span class="route" id="cc-nbar" role="button" tabindex="0"></span>
-      </div>
       <div class="trow">
         <div class="tile" id="tt-deploy" role="button" tabindex="0" onclick="cmd_route('work','deploy')" aria-label="Deploy status — tap to open Deploy"><span class="ey"><span class="led"></span>Deploy</span><span class="val" id="tt-deploy-val">—</span><span class="sub" id="tt-deploy-sub"></span><div class="bar" id="tt-deploy-bar" style="display:none"><i id="tt-deploy-fill"></i></div></div>
         <div class="tile" id="tt-scan" role="button" tabindex="0" onclick="cmd_route('work','scan')" aria-label="Scan count — tap to open Scan"><span class="ey"><span class="led"></span>Scanned</span><span class="val" id="tt-scan-val">—</span><span class="sub" id="tt-scan-sub"></span></div>
