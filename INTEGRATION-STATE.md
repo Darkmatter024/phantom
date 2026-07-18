@@ -2529,7 +2529,7 @@ Per `HANDOFF-ASK-PHONE-FIX-281` (files 71.zip: handoff + mockup + v2 asset + pat
 
 **Note on the brace-gate discrepancy:** the spec claims a −1 baseline (3553/3554 by its counter). MY gate reads the file as **balanced** (3917/3917, 12 `<style>` blocks) — different tooling; my gate is balanced, so no −1 to carry. Recorded so a future session isn't confused by the spec's number.
 
-## OWNER GATE (iPhone) — `.281` is the one unverified ship in flight
+## OWNER GATE (iPhone) — ✅ `.281` DEVICE-VERIFIED by owner ("all good") 2026-07-17
 - [ ] Command page: Ask tile icon **above** the label, both centered; **NO overlap**; no `ASK PHANTOM` eyebrow (hidden by design); "Ask for assistance" wraps 2 lines, not clipped.
 - [ ] Icon is the **new bust** — hexagonal plinth, cyan eye rings, lit **AI** badge; no purple plate. (Hard-reload; new filename so no cache excuse.)
 - [ ] Ask / RESERVED / RESERVED equal width (Ask may be equal height too via stretch); tap Ask → VA sheet on intent; tap both RESERVED → nothing.
