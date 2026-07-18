@@ -9157,6 +9157,10 @@ body.rd #ph-sheet.open {
 #pg-cmd .nba h2{font-size:23px;font-weight:700;margin:8px 0 6px;line-height:1.1}
 #pg-cmd .nba p{color:var(--slate);font-size:13px;line-height:1.4;margin:0 0 12px}
 #pg-cmd .nba .route{display:inline-flex;align-items:center;gap:8px;font-family:var(--raj);font-weight:700;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--cyan);border:1px solid rgba(92,242,255,0.35);border-radius:20px;padding:9px 16px;background:rgba(92,242,255,0.05)}
+/* Ship 3b — Active Shift hero verbs (SCAN / LOG / BLOCKER): 60px gloved targets, uniform cyan (BLOCKER fault-channel accent + hero mag strip ride Ship 4b). */
+#pg-cmd .hverbs{display:flex;gap:10px;margin-top:14px}
+#pg-cmd .hverb{flex:1;display:flex;align-items:center;justify-content:center;min-height:60px;border-radius:12px;border:1px solid rgba(92,242,255,.24);background:rgba(92,242,255,.05);color:var(--cyan);font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:1.5px;cursor:pointer;-webkit-appearance:none}
+#pg-cmd .hverb:active{background:rgba(92,242,255,.12)}
 /* v1.14.279 — Ask demoted from a full-width banner to ONE tile in a triplet (.askrow).
    Replaces the old body.rd .ask card rules (Rule F + .prism + .ey/h3/p/.arw + askBreathe
    keyframes + its reduced-motion override — all removed; .ask no longer exists in markup).
@@ -12041,7 +12045,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.284';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.285';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -12715,6 +12719,11 @@ if (typeof window !== 'undefined') {
         <h1 id="cc-lh">&mdash;</h1>
         <p id="cc-lp">&mdash;</p>
         <div class="shiftpill" id="cc-shiftpill" style="display:none"><span class="dot"></span>ON SHIFT</div>
+        <div class="hverbs">
+          <button class="hverb" type="button" onclick="cmd_route('work','scan')" aria-label="Scan a rack">SCAN</button>
+          <button class="hverb" type="button" onclick="openLogSheet()" aria-label="Log a field note">LOG</button>
+          <button class="hverb" type="button" onclick="blocker_quick(deploy_getActiveId())" aria-label="Capture a blocker on the active deployment">BLOCKER</button>
+        </div>
         <img class="ghosthero" id="cc-ghost" src="cc-ghost.webp" alt="" aria-hidden="true">
       </div>
       <div class="stats" id="cc-stats"></div>
@@ -12729,13 +12738,6 @@ if (typeof window !== 'undefined') {
           <div>
             <div class="ey">ASK PHANTOM</div>
             <h3>Ask for assistance</h3>
-          </div>
-        </button>
-        <button class="apill ls-pill" onclick="openLogSheet()" aria-label="Log a field note to the active deployment">
-          <span class="av"><span class="ls-ico" aria-hidden="true">&#9998;</span></span>
-          <div>
-            <div class="ey">LOG</div>
-            <h3>Field note</h3>
           </div>
         </button>
         <div class="rpill" aria-hidden="true"><b>&mdash;</b><span>RESERVED</span></div>
@@ -20318,14 +20320,29 @@ function today_systemStatePane() {
 
 var _blockerModal = { deployId: null, rackId: null, phaseId: null, step: 'pick-deploy' };
 
-function blocker_quick() {
+function blocker_quick(deployIdHint) {
   // Reset state on every open
   _blockerModal = { deployId: null, rackId: null, phaseId: null, step: 'pick-deploy' };
 
   var ctx = null;
   try { ctx = (typeof activeContext_get === 'function') ? activeContext_get() : null; } catch (e) {}
 
-  if (ctx && ctx.deployment) {
+  // Ship 3b: the Command hero BLOCKER verb passes deploy_getActiveId() so capture
+  // pre-scopes to the SAME deployment the hero/LOG act on. The hint wins for deployment
+  // scope; the deep active-context rack shortcut is kept only when it is the same deployment.
+  var hintDep = null;
+  if (deployIdHint && typeof deploy_getById === 'function') { try { hintDep = deploy_getById(deployIdHint); } catch (e) {} }
+
+  if (hintDep) {
+    _blockerModal.deployId = hintDep.id;
+    if (ctx && ctx.deployment && ctx.deployment.id === hintDep.id && ctx.rack) {
+      _blockerModal.rackId  = ctx.rack.id;
+      _blockerModal.phaseId = _blocker_pickDefaultPhase(hintDep.id, ctx.rack.id);
+      _blockerModal.step    = 'note';
+    } else {
+      _blockerModal.step    = 'pick-rack';
+    }
+  } else if (ctx && ctx.deployment) {
     _blockerModal.deployId = ctx.deployment.id;
     if (ctx.rack) {
       _blockerModal.rackId  = ctx.rack.id;
