@@ -4622,6 +4622,19 @@ select {
 }
 #omni-bar.omni-inactive .omni-tag { color: var(--slate); border-color: rgba(255,255,255,0.08); background: rgba(255,255,255,0.02); }
 #omni-bar input:disabled { cursor: not-allowed; }
+/* v1.14.282: LOG composer moved from the persistent #omni-bar to #log-sheet (askrow LOG pill). Bar retired under redesign; legacy (?legacy=1) keeps it byte-identical. */
+body.rd #omni-bar{display:none!important}
+#log-sheet .ls-dest{margin:12px 20px 4px;font-family:var(--mono);font-size:var(--fs-micro);letter-spacing:1.5px;color:var(--cyan)}
+#log-sheet .ls-dest.ls-dest-none{color:var(--gold)}
+#log-sheet .ls-text{display:block;width:calc(100% - 40px);margin:8px 20px;min-height:120px;background:rgba(0,0,0,0.4);border:1px solid rgba(92,242,255,0.15);border-radius:8px;color:var(--white);font-family:var(--raj);font-size:var(--fs-body);padding:12px;outline:none;resize:none;box-sizing:border-box}
+#log-sheet .ls-text:focus{border-color:rgba(92,242,255,0.4)}
+#log-sheet .ls-ctl{display:flex;gap:8px;margin:0 20px 10px}
+#log-sheet .ls-stub{flex:1;min-height:var(--tap-xl,56px);background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:8px;color:var(--slate);font-family:var(--mono);font-size:var(--fs-micro);letter-spacing:1px;opacity:0.5;cursor:not-allowed;-webkit-appearance:none}
+#log-sheet .ls-send{display:block;width:calc(100% - 40px);margin:0 20px 12px;min-height:var(--tap-xl,56px);background:var(--cyan);border:none;border-radius:8px;color:#000;font-family:var(--mono);font-size:var(--fs-body);letter-spacing:1.5px;font-weight:700;cursor:pointer;-webkit-appearance:none}
+#log-sheet .ls-send:disabled{opacity:0.4;cursor:not-allowed}
+#log-sheet .ls-route{display:block;width:calc(100% - 40px);margin:0 20px 16px;min-height:var(--tap-xl,56px);background:rgba(92,242,255,0.06);border:1px solid rgba(92,242,255,0.25);border-radius:8px;color:var(--cyan);font-family:var(--mono);font-size:var(--fs-micro);letter-spacing:1px;cursor:pointer;-webkit-appearance:none}
+#pg-cmd .apill.ls-pill .av{display:grid;place-items:center;background:none}
+#pg-cmd .apill.ls-pill .ls-ico{font-family:var(--raj);font-size:26px;line-height:1;color:var(--cyan)}
 /* Hide during boot splash — #boot covers viewport with higher z-index, but hide cleanly */
 body.phantom-booting #omni-bar { display: none; }
 body.rd #omni-bar { background: linear-gradient(180deg, rgba(4,7,11,0.93), rgba(8,14,22,0.99)); } /* v1.14.204: opaque plate — card text was ghosting through the nav band */
@@ -9028,9 +9041,7 @@ body.rd.ops-detail.ph-dock-on #ph-dock {
   border-top: 1px solid rgba(92,242,255,0.12);
   backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
 }
-body.rd.ops-detail.ph-dock-on:has(#omni-bar:not(.omni-inactive)) #ph-dock {
-  bottom: calc(var(--tabnav-h) + var(--omni-h, 57px));
-}
+/* v1.14.282: #omni-bar retired under redesign, so the phase dock sits directly above the nav (base #ph-dock bottom:var(--tabnav-h)); the +--omni-h :has() offset is removed. --omni-h measurement in phdock_render is now inert (returns 0 while hidden) and left as-is. */
 #ph-dock .phd-count {
   flex: 0 0 auto; display: flex; flex-direction: column; justify-content: center;
   padding: 0 8px 0 2px; border-right: 1px solid rgba(120,150,200,0.14); margin-right: 3px;
@@ -9173,7 +9184,7 @@ body.rd #ph-sheet.open {
 #pg-cmd .sigrow .st small{display:block;color:var(--slate);font-size:11px;margin-top:2px}
 #pg-cmd .sigrow .sgo{font-family:var(--raj);font-weight:700;font-size:11px;letter-spacing:1px;color:var(--cyan);border:1px solid rgba(92,242,255,0.3);border-radius:16px;padding:7px 13px;white-space:nowrap}
 #pg-cmd .sig-empty{margin:0 16px;color:var(--slate-dim);font-size:13px;text-align:center;padding:18px;border:1px dashed rgba(92,242,255,0.15);border-radius:12px}
-#pg-cmd{padding-bottom:calc(var(--tabnav-h) + 76px)}   /* B3 (v1.14.119): clear BOTH the fixed omni-bar (sits at bottom:--tabnav-h, ~57px tall) AND #rd-botnav so the OPS SIGNAL section scrolls fully into view. Old 96px+safe (=108) was < the 141px omni+nav stack -> bottom content clipped. #pg-cmd is redesign-only (showMode 'cmd'); legacy never renders it. */
+#pg-cmd{padding-bottom:calc(var(--tabnav-h) + 20px)}   /* v1.14.282: omni-bar retired under rd, so this only clears #rd-botnav (var(--tabnav-h)) + 20px breathing. Was +76px when it also had to clear the ~57px fixed omni-bar stacked above the nav (B3 v1.14.119). #pg-cmd is redesign-only (showMode 'cmd'); legacy never renders it. */
 /* ━━━ REDESIGN STEP 5 — frame (chrome wordmark + COREWEAVE·{site} subtitle + bottom
    nav + search icon). Hidden until body.rd; under body.rd the legacy chrome hides and
    the frame shows, so ?redesign=0 is byte-for-byte untouched. Selectors scoped to ids/
@@ -12015,7 +12026,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.281';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.282';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -12705,7 +12716,13 @@ if (typeof window !== 'undefined') {
             <h3>Ask for assistance</h3>
           </div>
         </button>
-        <div class="rpill" aria-hidden="true"><b>&mdash;</b><span>RESERVED</span></div>
+        <button class="apill ls-pill" onclick="openLogSheet()" aria-label="Log a field note to the active deployment">
+          <span class="av"><span class="ls-ico" aria-hidden="true">&#9998;</span></span>
+          <div>
+            <div class="ey">LOG</div>
+            <h3>Field note</h3>
+          </div>
+        </button>
         <div class="rpill" aria-hidden="true"><b>&mdash;</b><span>RESERVED</span></div>
       </div>
       <div class="sig-h">OPS SIGNAL</div>
@@ -15236,6 +15253,26 @@ if (typeof window !== 'undefined') {
     <button id="omni-send" class="omni-send" type="button" aria-label="Submit field note">SEND</button>
   </div>
 
+  <!-- v1.14.282 LOG SHEET - deployment-scoped field-note composer (askrow LOG pill opens it; replaces #omni-bar under redesign) -->
+  <div id="log-sheet" class="va-sheet" onclick="if(event.target===this)closeLogSheet()">
+    <div class="va-sheet-inner">
+      <div class="va-handle"></div>
+      <div class="va-sheet-header">
+        <div class="va-sheet-title">LOG ENTRY</div>
+        <button class="va-close-btn" type="button" onclick="closeLogSheet()" aria-label="Close">&times;</button>
+      </div>
+      <div id="ls-dest" class="ls-dest ls-dest-none">NO ACTIVE DEPLOYMENT</div>
+      <textarea id="ls-text" class="ls-text" maxlength="500" rows="5" placeholder="What happened? (max 500 chars)" aria-label="Field note"></textarea>
+      <div class="ls-ctl">
+        <button type="button" class="ls-stub" disabled aria-disabled="true">Attach</button>
+        <button type="button" class="ls-stub" disabled aria-disabled="true">Scan</button>
+        <button type="button" class="ls-stub" disabled aria-disabled="true">Voice</button>
+      </div>
+      <button id="ls-send" class="ls-send" type="button" onclick="logSheet_send()">SEND</button>
+      <button id="ls-route" class="ls-route" type="button" onclick="logSheet_routeWork()" style="display:none">Go to Work to start a build &rarr;</button>
+    </div>
+  </div>
+
   <!-- ━━━ VOICE ASSISTANT ━━━ -->
 
   <!-- Response sheet -->
@@ -17140,6 +17177,64 @@ function omni_submit() {
   } catch (e) {
     phantomToast('Log failed', 'error');
   }
+}
+
+// v1.14.282 LOG SHEET - deployment-scoped field-note composer that replaces the #omni-bar under redesign.
+// SEND routes through deploy_logAudit(id,'OMNI_NOTE','deployment',id,text) - byte-identical to omni_submit,
+// so entries land in the same FIELD NOTE feed. No new storage path, no new audit vocabulary.
+function logSheet_resolveDest() {
+  var id = (typeof deploy_getActiveId === 'function') ? deploy_getActiveId() : null;
+  var dep = (id && typeof deploy_getById === 'function') ? deploy_getById(id) : null;
+  return { id: id, name: dep ? (dep.name || id) : null };
+}
+function openLogSheet() {
+  var sheet = document.getElementById('log-sheet');
+  if (!sheet) { if (typeof phantomToast === 'function') phantomToast('LOG sheet unavailable', 'error'); return; }
+  var dest = logSheet_resolveDest();
+  var destEl = document.getElementById('ls-dest');
+  var sendEl = document.getElementById('ls-send');
+  var taEl = document.getElementById('ls-text');
+  var routeEl = document.getElementById('ls-route');
+  if (dest.id) {
+    if (destEl) { destEl.textContent = 'Logging to ' + dest.name; destEl.classList.remove('ls-dest-none'); }
+    if (sendEl) sendEl.disabled = false;
+    if (taEl) taEl.disabled = false;
+    if (routeEl) routeEl.style.display = 'none';
+  } else {
+    if (destEl) { destEl.textContent = 'NO ACTIVE DEPLOYMENT'; destEl.classList.add('ls-dest-none'); }
+    if (sendEl) sendEl.disabled = true;
+    if (taEl) taEl.disabled = true;
+    if (routeEl) routeEl.style.display = '';
+  }
+  if (taEl) taEl.value = '';
+  sheet.classList.add('visible');
+  try { initSheetDismiss('log-sheet', '.va-sheet-inner', closeLogSheet); } catch (e) {}
+  if (taEl && dest.id) setTimeout(function () { try { taEl.focus(); } catch (e) {} }, 60);
+}
+function closeLogSheet() {
+  var sheet = document.getElementById('log-sheet');
+  if (sheet) sheet.classList.remove('visible');
+}
+function logSheet_send() {
+  var dest = logSheet_resolveDest();
+  if (!dest.id) { if (typeof phantomToast === 'function') phantomToast('No active deployment - start a build first', 'warn'); return; }
+  var taEl = document.getElementById('ls-text');
+  var text = taEl ? (taEl.value || '').trim() : '';
+  if (!text) { if (typeof phantomToast === 'function') phantomToast('Nothing to log', 'warn'); return; }
+  if (text.length > 500) text = text.substring(0, 500);
+  try {
+    deploy_logAudit(dest.id, 'OMNI_NOTE', 'deployment', dest.id, text);
+    if (typeof haptic === 'function') haptic([6]);
+    if (typeof phantomToast === 'function') phantomToast('Logged - ' + dest.name, 'ok');
+    closeLogSheet();
+  } catch (e) {
+    if (typeof phantom_logErr === 'function') phantom_logErr('logSheet_send', e);
+    if (typeof phantomToast === 'function') phantomToast('Log failed', 'error');
+  }
+}
+function logSheet_routeWork() {
+  closeLogSheet();
+  if (typeof cmd_route === 'function') cmd_route('work', 'deploy');
 }
 
 function omni_init() {
