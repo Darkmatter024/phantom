@@ -12034,7 +12034,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.297';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.298';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -18028,6 +18028,8 @@ function forge3d_close() {
   if (mount && mount._forge3dDispose) {
     try { mount._forge3dDispose(); } catch (e) { phantom_logErr('forge3d_close:dispose', e); }
   }
+  // N-09: return to a clean live FLAT rack detail (forge3d_open disposed any live 3D context).
+  if (typeof reh3d_setMode === 'function') { try { reh3d_setMode('flat'); } catch (e) { phantom_logErr('forge3d_close:flatReset', e); } }
 }
 
 function forge3d_fail(mount) {
@@ -34017,6 +34019,7 @@ function deploy_showRackDetail(deployId, rackId) {
         html += '<div class="reh-3d-toggle">' +
                   '<button type="button" id="reh3dBtnFlat" class="reh-3d-seg is-on" onclick="reh3d_setMode(\'flat\')">FLAT</button>' +
                   '<button type="button" id="reh3dBtn3d" class="reh-3d-seg" onclick="reh3d_setMode(\'3d\')">3D</button>' +
+                  '<button type="button" id="reh3dBtnAisle" class="reh-3d-seg" onclick="forge3d_open()" aria-label="Open the 3D aisle">AISLE</button>' +
                 '</div>';
       }
       html += '<div class="rack-hybrid">';
