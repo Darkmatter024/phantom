@@ -8739,8 +8739,8 @@ body.rd #pg-work:not(.wk-grid) .work-sub.stab-active { animation: rf-fade .22s e
 .rf-grid-wrap { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
 /* v1.14.106 — unified card recipe (John dialed on-device): pure-dark surface, crisp accent
    border, subtle inset glow, boosted saturation. No white-top fill, no ::after radial, no brackets. */
-.rf-card { position:relative; filter:saturate(1.40); border-radius:16px; min-height:124px; padding:18px 12px 16px; border:1px solid color-mix(in srgb, var(--rfac) 36%, transparent); background:linear-gradient(160deg, #0a0d13 0%, #070809 100%); box-shadow:0 8px 20px -14px rgba(0,0,0,.85), inset 0 0 26px -4px color-mix(in srgb, var(--rfac) 14%, transparent); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; cursor:pointer; transition:transform .14s ease, border-color .2s, box-shadow .2s; overflow:hidden; -webkit-tap-highlight-color:transparent; }
-.rf-card:active { transform:scale(.97); box-shadow:0 8px 20px -14px rgba(0,0,0,.85), inset 0 0 30px -2px color-mix(in srgb, var(--rfac) 26%, transparent); }
+.rf-card { position:relative; filter:saturate(1.40); border-radius:16px; min-height:124px; padding:18px 12px 16px; border:1px solid color-mix(in srgb, var(--rfac) 36%, transparent); background:linear-gradient(160deg,#0a0c10,#040506 62%,#070a0d); box-shadow:inset 0 1px 0 rgba(205,235,245,.09),0 8px 20px -14px rgba(0,0,0,.85), inset 0 0 26px -4px color-mix(in srgb, var(--rfac) 14%, transparent); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; cursor:pointer; transition:transform .14s ease, border-color .2s, box-shadow .2s; overflow:hidden; -webkit-tap-highlight-color:transparent; }
+.rf-card:active { transform:scale(.97); box-shadow:inset 0 1px 0 rgba(205,235,245,.09),0 8px 20px -14px rgba(0,0,0,.85), inset 0 0 30px -2px color-mix(in srgb, var(--rfac) 26%, transparent); }
 /* v1.14.157 — responsive card grids + centered nav. Phone (<640) unchanged (2-col). */
 @media (min-width: 640px) {
   body.rd #work-grid, body.rd #ref-grid { max-width: 760px; margin-inline: auto; }
@@ -8759,14 +8759,14 @@ body.rd .rf-cnr { display: none; }   /* unified recipe has no corner brackets */
 /* v1.14.110 — deploy dashboard glass (New-UI only). Inline styles stay for legacy;
    these override the 4 surface props under body.rd so the dashboard cards match the
    glass recipe. Calm (no saturate) for data density. Accent banners keep their left spine. */
-body.rd .gx{background:linear-gradient(160deg,#0a0d13,#070809)!important;border:1px solid rgba(255,255,255,.07)!important;border-radius:14px!important;box-shadow:0 8px 20px -14px rgba(0,0,0,.85),inset 0 0 26px -4px color-mix(in srgb,var(--cyan) 10%,transparent)!important;}
-body.rd .gx-green{border-color:color-mix(in srgb,var(--green) 36%,transparent)!important;box-shadow:0 8px 20px -14px rgba(0,0,0,.85),inset 0 0 26px -4px color-mix(in srgb,var(--green) 14%,transparent)!important;}
-body.rd .gx-gold{border-color:color-mix(in srgb,var(--gold) 36%,transparent)!important;box-shadow:0 8px 20px -14px rgba(0,0,0,.85),inset 0 0 26px -4px color-mix(in srgb,var(--gold) 14%,transparent)!important;}
+body.rd .gx{background:linear-gradient(160deg,#0a0c10,#040506 62%,#070a0d)!important;border:1px solid rgba(255,255,255,.07)!important;border-radius:14px!important;box-shadow:inset 0 1px 0 rgba(205,235,245,.09),0 8px 20px -14px rgba(0,0,0,.85),inset 0 0 26px -4px color-mix(in srgb,var(--cyan) 10%,transparent)!important;}
+body.rd .gx-green{border-color:color-mix(in srgb,var(--green) 36%,transparent)!important;box-shadow:inset 0 1px 0 rgba(205,235,245,.09),0 8px 20px -14px rgba(0,0,0,.85),inset 0 0 26px -4px color-mix(in srgb,var(--green) 14%,transparent)!important;}
+body.rd .gx-gold{border-color:color-mix(in srgb,var(--gold) 36%,transparent)!important;box-shadow:inset 0 1px 0 rgba(205,235,245,.09),0 8px 20px -14px rgba(0,0,0,.85),inset 0 0 26px -4px color-mix(in srgb,var(--gold) 14%,transparent)!important;}
 /* v1.14.111 PASS 2 — gx-bg: glass background+shadow only (no border override) for cards that
    carry their own/dynamic border. Plus rack list/search overrides (class-based, New-UI only). */
-body.rd .gx-bg{background:linear-gradient(160deg,#0a0d13,#070809)!important;box-shadow:0 8px 20px -14px rgba(0,0,0,.85),inset 0 0 26px -4px color-mix(in srgb,var(--cyan) 10%,transparent)!important;}
-body.rd .rl-row{background:linear-gradient(160deg,#0a0d13,#070809)!important;}
-body.rd .rl-search-input{background:linear-gradient(160deg,#0a0d13,#070809)!important;border-color:color-mix(in srgb,var(--cyan) 24%,transparent)!important;}
+body.rd .gx-bg{background:linear-gradient(160deg,#0a0c10,#040506 62%,#070a0d)!important;box-shadow:inset 0 1px 0 rgba(205,235,245,.09),0 8px 20px -14px rgba(0,0,0,.85),inset 0 0 26px -4px color-mix(in srgb,var(--cyan) 10%,transparent)!important;}
+body.rd .rl-row{background:linear-gradient(160deg,#0a0c10,#040506 62%,#070a0d)!important;}
+body.rd .rl-search-input{background:linear-gradient(160deg,#0a0c10,#040506 62%,#070a0d)!important;border-color:color-mix(in srgb,var(--cyan) 24%,transparent)!important;}
 .rf-cnr { position:absolute; width:14px; height:14px; border:2px solid var(--rfac); opacity:.85; }
 .rf-cnr.tl { top:9px; left:9px; border-right:0; border-bottom:0; border-top-left-radius:5px; }
 .rf-cnr.tr { top:9px; right:9px; border-left:0; border-bottom:0; border-top-right-radius:5px; }
@@ -8791,7 +8791,7 @@ body.rd .deploy-tools-grid .rf-card .rf-cic { width:96px; height:96px; display:g
 .rf-card .rf-cmeta { font-family:var(--mono); font-weight:600; font-size:11px; letter-spacing:.03em; color:var(--slate); text-align:center; line-height:1.2; }
 /* ━━━ v1.14.155 — REF/WORK/TOOLS SQUARE cards POLISH (John-approved on-device: kills the inherited saturate(1.40) that muddied the neon art, flows title/meta so long metas don't collide, burn to full punch).
    TUNES the .155... (was .154) square treatment — same square 1:1 / icon 90% top-right / BLEED 0 layout, four property groups changed: (1) card filter:none — drops the base .rf-card saturate(1.40) which crushed the saturated blues dark; (2) title+meta now FLOW in the card's flex column bottom-left (position:relative, not pinned absolutes) over a full-width bottom scrim → 2-line metas (OPTICS "Fiber · Form factors · MPO", DEPLOY "Build · seed · rack detail") stack under the title instead of overlapping it; (3) icon opacity 0.52→1.0 (full punch, matches the mock — active differentiates by glow now, not opacity); (4) scrim → to-top bottom band for reliable bottom-left legibility. Card padding 0→"0 0 14px 15px" gives the text its inset while the top:0/right:0 icon still reaches the corner (top/right padding stay 0). Base .rf-card untouched; all body.rd redesign-grid-scoped → ?legacy=1 byte-identical. CSS-ONLY, no asset/markup change → SW precache LIST unchanged, CACHE_VERSION bump busts the HTML. */
-body.rd #ref-grid .rf-card, body.rd #work-grid .rf-card, body.rd .deploy-tools-grid .rf-card { aspect-ratio:1/1; min-height:0; padding:0 0 14px 15px; filter:none; gap:2px; justify-content:flex-end; align-items:flex-start; text-align:left; background:radial-gradient(circle at 82% 16%, color-mix(in srgb, var(--rfac) 20%, transparent), transparent 50%), linear-gradient(160deg, #0b0e15 0%, #070809 100%); box-shadow:inset 0 1px 0 rgba(255,255,255,.06), inset 0 0 30px -6px color-mix(in srgb, var(--rfac) var(--glow-inner), transparent), 0 0 var(--glow-outer) -2px color-mix(in srgb, var(--rfac) var(--glow-a), transparent), 0 12px 26px -14px rgba(0,0,0,.9); }
+body.rd #ref-grid .rf-card, body.rd #work-grid .rf-card, body.rd .deploy-tools-grid .rf-card { aspect-ratio:1/1; min-height:0; padding:0 0 14px 15px; filter:none; gap:2px; justify-content:flex-end; align-items:flex-start; text-align:left; background:radial-gradient(circle at 82% 16%, color-mix(in srgb, var(--rfac) 20%, transparent), transparent 50%), linear-gradient(160deg,#0a0c10,#040506 62%,#070a0d); box-shadow:inset 0 1px 0 rgba(255,255,255,.06), inset 0 0 30px -6px color-mix(in srgb, var(--rfac) var(--glow-inner), transparent), 0 0 var(--glow-outer) -2px color-mix(in srgb, var(--rfac) var(--glow-a), transparent), 0 12px 26px -14px rgba(0,0,0,.9); }
 body.rd #ref-grid .rf-card::before, body.rd #work-grid .rf-card::before, body.rd .deploy-tools-grid .rf-card::before { content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none; z-index:3; background:linear-gradient(115deg, transparent 42%, rgba(255,255,255,.10) 50%, transparent 58%); transform:translateX(-120%); animation:rfCardSweep 6s ease-in-out infinite; }
 body.rd #ref-grid .rf-card:nth-child(2n)::before, body.rd #work-grid .rf-card:nth-child(2n)::before, body.rd .deploy-tools-grid .rf-card:nth-child(2n)::before { animation-delay:1.1s; }
 body.rd #ref-grid .rf-card:nth-child(3n)::before, body.rd .deploy-tools-grid .rf-card:nth-child(3n)::before { animation-delay:2.2s; }
@@ -9107,7 +9107,7 @@ body.rd #ph-sheet.open {
 #pg-cmd .spill .dot{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 6px var(--ok)}
 #pg-cmd .spill.bad .dot{background:var(--gold);box-shadow:0 0 6px var(--gold)}
 #pg-cmd .spill.bad{color:var(--gold)}
-#pg-cmd .lens{margin:0 16px 14px;filter:saturate(1.40);border:1px solid color-mix(in srgb,var(--cyan) 36%,transparent);border-radius:16px;background:linear-gradient(160deg,#0a0d13 0%,#070809 100%);box-shadow:0 8px 20px -14px rgba(0,0,0,.85),inset 0 0 26px -4px color-mix(in srgb,var(--cyan) 14%,transparent);padding:18px 16px;position:relative;overflow:hidden;min-height:230px}
+#pg-cmd .lens{margin:0 16px 14px;filter:saturate(1.40);border:1px solid color-mix(in srgb,var(--cyan) 36%,transparent);border-radius:16px;background:linear-gradient(160deg,#0a0c10,#040506 62%,#070a0d);box-shadow:inset 0 1px 0 rgba(205,235,245,.09),0 8px 20px -14px rgba(0,0,0,.85),inset 0 0 26px -4px color-mix(in srgb,var(--cyan) 14%,transparent);padding:18px 16px;position:relative;overflow:hidden;min-height:230px}
 #pg-cmd .lens .llabel{font-family:var(--mono);font-size:12px;letter-spacing:3px;color:var(--cyan)}
 #pg-cmd .lens h1{font-size:30px;font-weight:700;line-height:1.05;margin:10px 0 8px;max-width:62%}
 #pg-cmd .lens p{color:var(--slate);font-size:14px;line-height:1.4;max-width:60%;margin:0}
@@ -9135,7 +9135,7 @@ body.rd #ph-sheet.open {
 #pg-cmd .ghosthero.dim{filter:grayscale(.9) brightness(.42);opacity:.4}
 #pg-cmd .ghosthero.mid{filter:saturate(.75) brightness(.85);opacity:.9}
 #pg-cmd .stats{display:flex;gap:10px;padding:0 16px 14px}
-#pg-cmd .stat{flex:1;filter:saturate(1.40);border:1px solid color-mix(in srgb,var(--cyan) 36%,transparent);border-radius:16px;background:linear-gradient(160deg,#0a0d13 0%,#070809 100%);box-shadow:0 8px 20px -14px rgba(0,0,0,.85),inset 0 0 26px -4px color-mix(in srgb,var(--cyan) 14%,transparent);padding:14px 8px;text-align:center}
+#pg-cmd .stat{flex:1;filter:saturate(1.40);border:1px solid color-mix(in srgb,var(--cyan) 36%,transparent);border-radius:16px;background:linear-gradient(160deg,#0a0c10,#040506 62%,#070a0d);box-shadow:inset 0 1px 0 rgba(205,235,245,.09),0 8px 20px -14px rgba(0,0,0,.85),inset 0 0 26px -4px color-mix(in srgb,var(--cyan) 14%,transparent);padding:14px 8px;text-align:center}
 #pg-cmd .stat .n{font-family:var(--mono);font-size:30px;font-weight:700;letter-spacing:1px}
 #pg-cmd .stat .k{font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--slate);margin-top:4px}
 #pg-cmd .stat.racks .n{color:#27e0c4}
@@ -9145,7 +9145,7 @@ body.rd #ph-sheet.open {
 /* v1.14.225 — Command Lens tap-through affordance (cards only get .cc-tap under redesign via cmd_render; legacy never renders them → byte-identical) */
 #pg-cmd .stat.cc-tap{cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .12s ease,filter .12s ease}
 #pg-cmd .stat.cc-tap:active{transform:scale(.97);filter:saturate(1.40) brightness(1.18)}
-#pg-cmd .nba{margin:0 16px 14px;filter:saturate(1.40);border:1px solid color-mix(in srgb,var(--violet) 42%,transparent);border-radius:16px;background:linear-gradient(160deg,#0a0d13 0%,#070809 100%);box-shadow:0 8px 20px -14px rgba(0,0,0,.85),inset 0 0 26px -4px color-mix(in srgb,var(--violet) 20%,transparent);padding:16px;position:relative}
+#pg-cmd .nba{margin:0 16px 14px;filter:saturate(1.40);border:1px solid color-mix(in srgb,var(--violet) 42%,transparent);border-radius:16px;background:linear-gradient(160deg,#0a0c10,#040506 62%,#070a0d);box-shadow:inset 0 1px 0 rgba(205,235,245,.09),0 8px 20px -14px rgba(0,0,0,.85),inset 0 0 26px -4px color-mix(in srgb,var(--violet) 20%,transparent);padding:16px;position:relative}
 #pg-cmd .nba .nlabel{font-family:var(--mono);font-size:12px;letter-spacing:3px;color:#b98bff}
 #pg-cmd .nba h2{font-size:23px;font-weight:700;margin:8px 0 6px;line-height:1.1}
 #pg-cmd .nba p{color:var(--slate);font-size:13px;line-height:1.4;margin:0 0 12px}
@@ -9164,7 +9164,7 @@ body.rd #ph-sheet.open {
 #pg-cmd .cc-magstrip:active{background:rgba(255,43,214,0.12)}
 /* v1.14.159 Shift Telemetry tiles (mock-telemetry-tiles) — replace the old launcher row. */
 #pg-cmd .trow{display:flex;gap:10px;padding:0 16px 14px}
-#pg-cmd .tile{flex:1;--tc:#33465a;display:flex;flex-direction:column;gap:6px;min-height:96px;aspect-ratio:auto;/* v1.14.207: reset the aspect-ratio:1/1.6 that leaks in from the generic .tile rule (8415) — this id-scoped rule overrides everything else but never reset AR, so on wide/desktop viewports the shift tiles ballooned to ~474px (296px wide × 1.6), pushing the DEPLOY/SCANNED/HANDOFF row far below the fold under the fixed bottom nav = unclickable deploy tile on laptop. On phone the tiles are narrow so it stayed hidden. */filter:saturate(1.4);border:1px solid color-mix(in srgb,var(--tc) var(--glow-border),transparent);border-radius:16px;background:linear-gradient(160deg,#0a0d13 0%,#070809 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.06),inset 0 0 30px -6px color-mix(in srgb,var(--tc) var(--glow-inner),transparent),0 0 var(--glow-outer) -2px color-mix(in srgb,var(--tc) var(--glow-a),transparent),0 12px 26px -14px rgba(0,0,0,.9);padding:13px 12px 12px;position:relative;overflow:hidden;color:var(--white)}
+#pg-cmd .tile{flex:1;--tc:#33465a;display:flex;flex-direction:column;gap:6px;min-height:96px;aspect-ratio:auto;/* v1.14.207: reset the aspect-ratio:1/1.6 that leaks in from the generic .tile rule (8415) — this id-scoped rule overrides everything else but never reset AR, so on wide/desktop viewports the shift tiles ballooned to ~474px (296px wide × 1.6), pushing the DEPLOY/SCANNED/HANDOFF row far below the fold under the fixed bottom nav = unclickable deploy tile on laptop. On phone the tiles are narrow so it stayed hidden. */filter:saturate(1.4);border:1px solid color-mix(in srgb,var(--tc) var(--glow-border),transparent);border-radius:16px;background:linear-gradient(160deg,#0a0c10,#040506 62%,#070a0d);box-shadow:inset 0 1px 0 rgba(255,255,255,.06),inset 0 0 30px -6px color-mix(in srgb,var(--tc) var(--glow-inner),transparent),0 0 var(--glow-outer) -2px color-mix(in srgb,var(--tc) var(--glow-a),transparent),0 12px 26px -14px rgba(0,0,0,.9);padding:13px 12px 12px;position:relative;overflow:hidden;color:var(--white)}
 #pg-cmd .tile.hot{--tc:var(--cyan)}
 #pg-cmd .tile.hot-teal{--tc:var(--teal)}
 #pg-cmd .tile.hot-gold{--tc:var(--gold)}
@@ -12049,7 +12049,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.301';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.302';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
