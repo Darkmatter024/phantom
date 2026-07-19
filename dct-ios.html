@@ -8721,6 +8721,19 @@ body.rd #pg-ref > .subtab-strip { display: none; }            /* category pill-r
 body.rd #pg-ref.rf-grid #ref-grid { display: block; }
 body.rd #pg-ref.rf-grid .ref-sub { display: none !important; } /* hide drill-in panels while the grid shows */
 body.rd #pg-ref:not(.rf-grid) #ref-back { display: flex; }
+/* ── N-10 (v1.14.303): Crash Cart search-first — sticky live tile-filter over the 7 cards + no-result
+   recovery. rd-only, idle-dark (no glow; #srch untouched). The bar lives inside #ref-grid so it shows on
+   the landing ONLY (grid is display:none on drill-in); z-index:5 < nav 40 and NO transform → FIX-2-safe. ── */
+body.rd #ref-grid .rf-search-bar { position: sticky; top: 0; z-index: 5; background: #0a0c10; padding: 12px 16px 10px; }
+body.rd #ref-grid .rf-search-input { width: 100%; box-sizing: border-box; height: 40px; padding: 0 12px; border-radius: 10px; border: 1px solid rgba(120,150,175,.22); background: #06080b; color: var(--white, #e8eef4); font: 13px var(--mono, ui-monospace, monospace); letter-spacing: .3px; -webkit-appearance: none; appearance: none; }
+body.rd #ref-grid .rf-search-input:focus { outline: none; border-color: color-mix(in srgb, var(--cyan) 40%, transparent); }
+body.rd #ref-grid .rf-search-input::placeholder { color: rgba(140,165,185,.55); }
+body.rd #ref-grid .rf-card.rf-hidden { display: none !important; }
+body.rd #ref-grid .rf-noresult { padding: 22px 16px 8px; text-align: center; }
+body.rd #ref-grid .rf-noresult[hidden] { display: none; }
+body.rd #ref-grid .rf-nr-msg { font: 12px var(--mono, ui-monospace, monospace); letter-spacing: 1px; color: rgba(140,165,185,.7); margin-bottom: 12px; text-transform: uppercase; }
+body.rd #ref-grid .rf-nr-clear { font: 12px var(--mono, ui-monospace, monospace); letter-spacing: .5px; color: var(--cyan); background: transparent; border: 1px solid color-mix(in srgb, var(--cyan) 35%, transparent); border-radius: 8px; padding: 8px 16px; -webkit-tap-highlight-color: transparent; }
+body.rd #ref-grid .rf-nr-clear:active { background: color-mix(in srgb, var(--cyan) 14%, transparent); }
 /* v1.14.105 — Work card-grid landing (mirrors Ref; reuses the .rf-card visual classes). */
 body.rd #pg-work > .subtab-strip { display: none; }            /* Deploy/Scan/Handoff/Issues tab strip → replaced by the card grid */
 body.rd #pg-work.wk-grid #work-grid { display: block; }
@@ -12049,7 +12062,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.302';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.303';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -12804,6 +12817,9 @@ if (typeof window !== 'undefined') {
         <span class="rf-back-title" id="ref-back-title">Crash Cart</span>
       </div>
       <div id="ref-grid">
+        <div class="rf-search-bar">
+          <input id="ref-cardfilter" type="search" class="rf-search-input" placeholder="Filter tools…" oninput="ref_filterCards(this.value)" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" aria-label="Filter Crash Cart tools">
+        </div>
         <div class="rf-glabel"><span class="dot"></span>CRASH CART<span class="ln"></span></div>
         <div class="rf-grid-wrap">
           <div class="rf-card" style="--rfac:#28e0ff" role="button" tabindex="0" onclick="showRefTab('rf-optics')" aria-label="Optics reference"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-ref-optics-256.webp" alt="" loading="eager"></div><div class="rf-cname">OPTICS</div><div class="rf-cmeta">Fiber · Form factors · MPO</div></div>
@@ -12813,6 +12829,10 @@ if (typeof window !== 'undefined') {
           <div class="rf-card" style="--rfac:#ffcb45" role="button" tabindex="0" onclick="showRefTab('rf-know')" aria-label="Know — SOPs and how-tos"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-ref-know-256.webp" alt="" loading="eager"></div><div class="rf-cname">KNOW</div><div class="rf-cmeta">SOPs · How-tos</div></div>
           <div class="rf-card" style="--rfac:#ff2bd6" role="button" tabindex="0" onclick="ref_openCompass()" aria-label="Compass — cage nut and RU map"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-ref-compass-256.webp" alt="" loading="eager"></div><div class="rf-cname">COMPASS</div><div class="rf-cmeta">Cage nut · RU map</div></div>
           <div class="rf-card" style="--rfac:#9b59ff" role="button" tabindex="0" onclick="geOpen()" aria-label="Ghost Echo — fix log and pattern replay"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-ref-ghostecho-256.webp" alt="" loading="eager"></div><div class="rf-cname">GHOST ECHO</div><div class="rf-cmeta">Fix log · Replay</div></div>
+        </div>
+        <div class="rf-noresult" hidden>
+          <div class="rf-nr-msg">No tool matches</div>
+          <button type="button" class="rf-nr-clear" onclick="var i=document.getElementById('ref-cardfilter');if(i)i.value='';ref_filterCards('');">Clear filter</button>
         </div>
       </div>
       <div class="subtab-strip">
@@ -17839,6 +17859,7 @@ function showMode(mode) {
   // v1.14.102: entering Ref via the bottom nav lands on the card-grid landing.
   // showRefTab() (deep-links / card taps) removes rf-grid to drill into a panel.
   if (mode === 'ref') { var _pr = document.getElementById('pg-ref'); if (_pr) _pr.classList.add('rf-grid'); }
+  if (mode === 'ref') { var _cf = document.getElementById('ref-cardfilter'); if (_cf) _cf.value = ''; if (typeof ref_filterCards === 'function') ref_filterCards(''); }
   // v1.14.105: entering Work via the bottom nav lands on the card-grid landing.
   // showWorkTab() (card taps / Command launcher deep-links) removes wk-grid to drill in.
   if (mode === 'work') { var _pw = document.getElementById('pg-work'); if (_pw) _pw.classList.add('wk-grid'); }
@@ -17891,9 +17912,34 @@ function showRefTab(targetId) {
 // card deep-links its real home (Hardware 'Cage Nut' = #pw-compass, folded in by
 // redesign_homeCompass) — one surface, two entry points, no duplicate.
 function ref_setBackTitle(t) { var e = document.getElementById('ref-back-title'); if (e) e.textContent = t || 'Crash Cart'; }
+// N-10 (v1.14.303): Crash Cart search-first — live substring filter over the 7 static cards
+// (rf-cname + rf-cmeta + aria-label; all REAL text, no fabricated tags). Toggles .rf-hidden per card and
+// the .rf-noresult panel on a 0-match. No-Silent-Failures: warn + toast if the grid nodes are gone.
+function ref_filterCards(q) {
+  var cards = document.querySelectorAll('#ref-grid .rf-grid-wrap .rf-card');
+  var nr = document.querySelector('#ref-grid .rf-noresult');
+  if (!cards.length) {
+    console.warn('[PHANTOM] ref_filterCards: no Crash Cart cards found');
+    if (typeof phantomToast === 'function') phantomToast('Tool filter unavailable', 'warn');
+    return;
+  }
+  var qq = (q || '').toLowerCase().trim();
+  var shown = 0;
+  for (var i = 0; i < cards.length; i++) {
+    var c = cards[i];
+    var nm = c.querySelector('.rf-cname'), mt = c.querySelector('.rf-cmeta');
+    var hay = (((nm && nm.textContent) || '') + ' ' + ((mt && mt.textContent) || '') + ' ' + (c.getAttribute('aria-label') || '')).toLowerCase();
+    var hit = !qq || hay.indexOf(qq) > -1;
+    c.classList.toggle('rf-hidden', !hit);
+    if (hit) shown++;
+  }
+  if (nr) nr.hidden = (shown === 0);
+}
 function ref_showGrid() {
   var pr = document.getElementById('pg-ref'); if (pr) pr.classList.add('rf-grid');
   var s = document.getElementById('srch'); if (s) s.value = '';
+  var cf = document.getElementById('ref-cardfilter'); if (cf) cf.value = '';
+  if (typeof ref_filterCards === 'function') ref_filterCards('');
   if (typeof hideSearch === 'function') { try { hideSearch(); } catch (_) {} }
 }
 function ref_openCompass() {
