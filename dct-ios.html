@@ -10071,6 +10071,21 @@ body.rd .rack-canvas-block[data-type="crac"] { border-left-color: var(--green); 
    padding for all fitted blocks and force 1U rows to a single short line. .reh-fitted is set on
    the grid under rd only -> legacy untouched. */
 body.rd .reh-fitted .rack-canvas-block { padding: 3px 8px; }
+/* ── N-06 Stage 1 (v1.14.300): flat rail-compass — tap a unit to light its rail span band + cage-nut
+   hole ticks (rd only, state-driven selection; glass-band language). Positions track var(--u-h). ── */
+body.rd .rack-canvas-block { cursor: pointer; }
+body.rd .rail-sel-overlay { position: absolute; inset: 0; pointer-events: none; z-index: 4; }
+body.rd .rail-sel-band { position: absolute; width: 4px; border-radius: 3px;
+  background: linear-gradient(180deg, rgba(40,224,255,0.06), rgba(40,224,255,0.22), rgba(40,224,255,0.06));
+  border: 1px solid rgba(40,224,255,0.5); box-shadow: 0 0 10px -2px rgba(40,224,255,0.55); }
+body.rd .rail-sel-band-l { left: 28px; }
+body.rd .rail-sel-band-r { right: 1px; }
+body.rd .rail-sel-hole { position: absolute; width: 4px; height: 4px; border-radius: 50%;
+  background: rgba(143,166,186,0.55); transform: translateY(-50%); }
+body.rd .rail-sel-hole-l { left: 28px; }
+body.rd .rail-sel-hole-r { right: 1px; }
+body.rd .rail-sel-hole.is-cage { background: var(--cyan); box-shadow: 0 0 6px var(--cyan); }
+body.rd .rack-canvas-block.is-rail-sel { outline: 1px solid rgba(40,224,255,0.6); outline-offset: -1px; }
 /* v1.14.231 — 1U cluster cleanup: the .230 border-top/bottom:0 (to save height) left only the
    left accent + right border under a 3px radius, so the corners rendered as broken bracket
    fragments and adjacent dark trays merged (read as "clumped at U42"). Restore a full hairline
@@ -12034,7 +12049,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.299';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.300';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -33500,8 +33515,56 @@ function rackElevation_buildHtml(rack) {
     html += '</div>';
   });
 
+  if (_fit) html += '<div class="rail-sel-overlay" id="railSelOverlay" data-totalu="' + totalU + '"></div>';
   html += '</div></div>';
   return html;
+}
+
+// ── N-06 Stage 1 (v1.14.300): flat rail-compass. Tap a unit -> light its rail span band + cage-nut
+// hole ticks, positioned by the shared eia_holesForSpan() (one source of truth with Compass + 3D).
+// Selection keyed on the unit's U-span (never idx). rd-only: #railSelOverlay exists only under _fit. ──
+var _railFlatSel = null;
+
+function railSel_renderFlat() {
+  var ov = document.getElementById('railSelOverlay');
+  if (!ov) return;
+  if (!_railFlatSel) { ov.innerHTML = ''; return; }
+  var s = _railFlatSel, totalU = s.totalU, uS = s.uStart, uE = s.uEnd;
+  var bandTop = 'calc(var(--u-h) * ' + (totalU - uE) + ')';
+  var bandH = 'calc(var(--u-h) * ' + (uE - uS + 1) + ' - 2px)';
+  var h = '<div class="rail-sel-band rail-sel-band-l" style="top:' + bandTop + ';height:' + bandH + '"></div>'
+        + '<div class="rail-sel-band rail-sel-band-r" style="top:' + bandTop + ';height:' + bandH + '"></div>';
+  eia_holesForSpan(uS, uE - uS + 1).forEach(function(hole) {
+    var y = 'calc(var(--u-h) * ' + (totalU - hole.u) + ' + var(--u-h) * ' + hole.frac + ')';
+    var cls = 'rail-sel-hole' + (hole.cage ? ' is-cage' : '');
+    h += '<div class="' + cls + ' rail-sel-hole-l" style="top:' + y + '"></div>'
+       + '<div class="' + cls + ' rail-sel-hole-r" style="top:' + y + '"></div>';
+  });
+  ov.innerHTML = h;
+}
+
+function railSel_bindFlat() {
+  var canvas = document.getElementById('rackCanvas');
+  if (!canvas || canvas._railBound) return;
+  canvas._railBound = true;
+  canvas.addEventListener('click', function(e) {
+    var block = (e.target && e.target.closest) ? e.target.closest('.rack-canvas-block') : null;
+    if (!block) return;
+    var uS = parseInt(block.getAttribute('data-ustart'), 10);
+    var uE = parseInt(block.getAttribute('data-uend'), 10);
+    var ov = document.getElementById('railSelOverlay');
+    var totalU = ov ? parseInt(ov.getAttribute('data-totalu'), 10) : NaN;
+    if (isNaN(uS) || isNaN(uE) || isNaN(totalU)) {
+      console.warn('[PHANTOM] rail-compass: unit missing U-span/totalU', block);
+      if (typeof phantomToast === 'function') phantomToast('Cannot map this unit to rail holes', 'warn');
+      return;
+    }
+    _railFlatSel = { uStart: uS, uEnd: uE, totalU: totalU };
+    var prev = canvas.querySelector('.rack-canvas-block.is-rail-sel');
+    if (prev) prev.classList.remove('is-rail-sel');
+    block.classList.add('is-rail-sel');
+    railSel_renderFlat();
+  });
 }
 
 // v1.14.228: redesign-only — scale the FLAT elevation so the whole rack fits one
@@ -34039,6 +34102,7 @@ function deploy_showRackDetail(deployId, rackId) {
       requestAnimationFrame(function() { requestAnimationFrame(function() {
         rackHybrid_initSync(rack);
         rackFlat_applyFit(rack.totalU || 42);
+      railSel_bindFlat();
         // v1.14.236 — reh3d_restore() unwired with the toggle above. A stale
         // sessionStorage phantom_rackview_3d='1' from a pre-.236 session must not be
         // able to resurrect the retired 3D view into a mount that no longer exists.
