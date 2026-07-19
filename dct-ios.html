@@ -9156,6 +9156,14 @@ body.rd #ph-sheet.open {
 #pg-cmd .hverbs{display:flex;gap:10px;margin-top:14px}
 #pg-cmd .hverb{flex:1;display:flex;align-items:center;justify-content:center;min-height:60px;border-radius:12px;border:1px solid rgba(92,242,255,.24);background:rgba(92,242,255,.05);color:var(--cyan);font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:1.5px;cursor:pointer;-webkit-appearance:none}
 #pg-cmd .hverb:active{background:rgba(92,242,255,.12)}
+/* v1.14.294 (Ship 4 call #4): BLOCKER hero verb gets a persistent flat MAG identity tint (#ff2bd6
+   = fault channel, matches .290) - SCAN/LOG stay cyan; identity accent, NOT a glow (respects the
+   .292 one-emitter rule). Plus the hero fault strip .cc-magstrip: state-driven, rendered by
+   cmd_render ONLY when the aggregate blockerCount>0 (owner-confirmed copy + always-on accent). */
+#pg-cmd .hverb-blk{border-color:rgba(255,43,214,0.35);background:rgba(255,43,214,0.06);color:#ff2bd6}
+#pg-cmd .hverb-blk:active{background:rgba(255,43,214,0.12)}
+#pg-cmd .cc-magstrip{display:flex;align-items:center;gap:8px;margin-top:12px;padding:9px 13px;border-radius:12px;border:1px solid rgba(255,43,214,0.45);background:rgba(255,43,214,0.06);color:#ff2bd6;font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:1.5px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+#pg-cmd .cc-magstrip:active{background:rgba(255,43,214,0.12)}
 /* v1.14.279 — Ask demoted from a full-width banner to ONE tile in a triplet (.askrow).
    Replaces the old body.rd .ask card rules (Rule F + .prism + .ey/h3/p/.arw + askBreathe
    keyframes + its reduced-motion override — all removed; .ask no longer exists in markup).
@@ -12071,7 +12079,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.293';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.294';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -12745,10 +12753,11 @@ if (typeof window !== 'undefined') {
         <h1 id="cc-lh">&mdash;</h1>
         <p id="cc-lp">&mdash;</p>
         <div class="shiftpill" id="cc-shiftpill" style="display:none"><span class="dot"></span>ON SHIFT</div>
+        <div class="cc-magstrip" id="cc-magstrip" role="button" tabindex="0" style="display:none" onclick="cmd_route('work','issues')" aria-label="Deployment blockers - tap to review"></div>
         <div class="hverbs">
           <button class="hverb" type="button" onclick="cmd_route('work','scan')" aria-label="Scan a rack">SCAN</button>
           <button class="hverb" type="button" onclick="openLogSheet()" aria-label="Log a field note">LOG</button>
-          <button class="hverb" type="button" onclick="blocker_quick(deploy_getActiveId())" aria-label="Capture a blocker on the active deployment">BLOCKER</button>
+          <button class="hverb hverb-blk" type="button" onclick="blocker_quick(deploy_getActiveId())" aria-label="Capture a blocker on the active deployment">BLOCKER</button>
         </div>
         <img class="ghosthero" id="cc-ghost" src="cc-ghost.webp" alt="" aria-hidden="true">
       </div>
@@ -19580,6 +19589,18 @@ function cmd_render() {
   E('cc-lh').innerHTML = lh; E('cc-lp').innerHTML = lp;
   var gh = E('cc-ghost'); if (gh) gh.className = 'ghosthero ' + ghostCls;
   if (typeof shift_renderHero === 'function') shift_renderHero();
+  // -- hero fault strip (Ship 4 call #4): state-driven, shows ONLY when the aggregate
+  //    blockerCount>0; owner-confirmed copy + always-on mag BLOCKER-verb identity. --
+  var _mag = E('cc-magstrip');
+  if (_mag) {
+    if (blockerCount > 0) {
+      _mag.innerHTML = '&#9888;&#65038; ' + blockerCount + ' BLOCKER' + (blockerCount === 1 ? '' : 'S') + ' &middot; TAP TO REVIEW';
+      _mag.style.display = 'flex';
+    } else {
+      _mag.style.display = 'none';
+      _mag.innerHTML = '';
+    }
+  }
 
   // ── earned-count stats (zero until earned; — when unconfigured) ──
   var stats = (rung === 'A')
