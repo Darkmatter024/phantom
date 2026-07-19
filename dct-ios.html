@@ -12040,7 +12040,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.289';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.290';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -20397,7 +20397,7 @@ function blocker_render() {
     }, 10);
   }
 
-  var sheet = '<div id="blocker-sheet" style="width:100%;max-width:520px;background:linear-gradient(180deg, var(--bg2,#141f2e) 0%, var(--bg0,#04070b) 100%);border-top:2px solid rgba(255,69,58,0.6);border-radius:18px 18px 0 0;padding:18px 18px calc(18px + env(safe-area-inset-bottom)) 18px;max-height:88vh;overflow-y:auto;box-shadow:0 -10px 40px rgba(255,69,58,0.18),0 -2px 0 rgba(255,69,58,0.3)">';
+  var sheet = '<div id="blocker-sheet" style="width:100%;max-width:520px;background:linear-gradient(180deg, var(--bg2,#141f2e) 0%, var(--bg0,#04070b) 100%);border-top:2px solid rgba(255,43,214,0.6);border-radius:18px 18px 0 0;padding:18px 18px calc(18px + env(safe-area-inset-bottom)) 18px;max-height:88vh;overflow-y:auto;box-shadow:0 -10px 40px rgba(255,43,214,0.18),0 -2px 0 rgba(255,43,214,0.3)">';
   sheet += _blocker_renderHeader();
 
   if      (_blockerModal.step === 'empty')       sheet += _blocker_renderEmpty();
@@ -20433,10 +20433,10 @@ function _blocker_renderHeader() {
   } else {
     html += '<div style="width:44px"></div>';
   }
-  html += '<div style="flex:1;text-align:center;font-family:var(--orb);font-size:11px;letter-spacing:3px;color:#ff453a">⛔ ' + stepLabel + '</div>';
+  html += '<div style="flex:1;text-align:center;font-family:var(--orb);font-size:11px;letter-spacing:3px;color:#ff2bd6">⛔ ' + stepLabel + '</div>';
   html += '<button onclick="blocker_close()" style="background:none;border:none;color:var(--slate,#8a99ad);font-family:var(--mono);font-size:18px;padding:6px 10px;cursor:pointer;min-height:var(--tap-s);min-width:44px">✕</button>';
   html += '</div>';
-  html += '<div style="height:1px;background:linear-gradient(90deg,transparent,rgba(255,69,58,0.4),transparent);margin-bottom:14px"></div>';
+  html += '<div style="height:1px;background:linear-gradient(90deg,transparent,rgba(255,43,214,0.4),transparent);margin-bottom:14px"></div>';
   return html;
 }
 
@@ -20444,7 +20444,7 @@ function _blocker_renderEmpty() {
   return '<div style="padding:30px 20px;text-align:center">' +
          '<div style="font-family:var(--raj);font-size:15px;color:var(--white);margin-bottom:10px">No active deployments</div>' +
          '<div style="font-family:var(--mono);font-size:12px;color:var(--slate,#8a99ad);margin-bottom:24px">Create a deployment from the Master to begin tracking blockers.</div>' +
-         '<button onclick="blocker_close();mscope_open()" style="background:linear-gradient(180deg,rgba(48,209,88,0.18),rgba(48,209,88,0.06));border:1px solid rgba(48,209,88,0.45);color:var(--white);font-family:var(--mono);font-size:12px;letter-spacing:2px;padding:14px 24px;border-radius:10px;min-height:var(--tap-m);cursor:pointer">NEW FROM MASTER →</button>' +
+         '<button onclick="blocker_close();mscope_open()" style="background:linear-gradient(180deg,rgba(40,224,255,0.18),rgba(40,224,255,0.06));border:1px solid rgba(40,224,255,0.45);color:var(--white);font-family:var(--mono);font-size:12px;letter-spacing:2px;padding:14px 24px;border-radius:10px;min-height:var(--tap-m);cursor:pointer">NEW FROM MASTER →</button>' +
          '</div>';
 }
 
@@ -20491,9 +20491,9 @@ function _blocker_renderRackPicker() {
   racks.forEach(function(r) {
     var label   = escHtml(r.rackId || r.name || 'rack');
     var blocked = r.status === 'blocked';
-    var border  = blocked ? 'rgba(255,69,58,0.45)' : 'rgba(92,242,255,0.18)';
-    var bg      = blocked ? 'rgba(255,69,58,0.06)'  : 'rgba(92,242,255,0.04)';
-    var badge   = blocked ? '<span style="color:#ff453a;font-family:var(--mono);font-size:10px;letter-spacing:1.5px">BLOCKED</span>' : '';
+    var border  = blocked ? 'rgba(255,43,214,0.45)' : 'rgba(92,242,255,0.18)';
+    var bg      = blocked ? 'rgba(255,43,214,0.06)'  : 'rgba(92,242,255,0.04)';
+    var badge   = blocked ? '<span style="color:#ff2bd6;font-family:var(--mono);font-size:10px;letter-spacing:1.5px">BLOCKED</span>' : '';
     html += '<button onclick="blocker_pickRack(\'' + r.id + '\')" style="display:block;width:100%;text-align:left;background:' + bg + ';border:1px solid ' + border + ';border-radius:10px;padding:14px 16px;margin-bottom:8px;min-height:var(--tap-xl);cursor:pointer;color:var(--white)">' +
               '<div style="display:flex;align-items:center;justify-content:space-between">' +
                 '<div style="font-family:var(--raj);font-size:15px;font-weight:600">' + label + '</div>' +
@@ -20526,19 +20526,19 @@ function _blocker_renderNoteEntry() {
   var alreadyBlocked = phase && phase.status === 'blocked';
 
   var html = '<div style="font-family:var(--mono);font-size:11px;letter-spacing:1.5px;color:var(--slate,#8a99ad);margin-bottom:4px">' + escHtml(depName) + ' › ' + escHtml(rackLabel) + '</div>';
-  html += '<div style="font-family:var(--mono);font-size:11px;color:var(--cyan,#5cf2ff);margin-bottom:12px">PHASE · ' + escHtml(phaseLabel) + (alreadyBlocked ? '  ·  <span style="color:#ff453a">already blocked</span>' : '') + '</div>';
+  html += '<div style="font-family:var(--mono);font-size:11px;color:var(--cyan,#5cf2ff);margin-bottom:12px">PHASE · ' + escHtml(phaseLabel) + (alreadyBlocked ? '  ·  <span style="color:#ff2bd6">already blocked</span>' : '') + '</div>';
 
   if (!phaseId) {
-    html += '<div style="padding:20px;text-align:center;font-family:var(--mono);font-size:12px;color:#ff453a">No phases on this rack. Cannot attach blocker.</div>';
+    html += '<div style="padding:20px;text-align:center;font-family:var(--mono);font-size:12px;color:#ff2bd6">No phases on this rack. Cannot attach blocker.</div>';
     html += '<button onclick="blocker_close()" style="display:block;width:100%;background:transparent;border:1px solid rgba(138,153,173,0.3);color:var(--slate,#8a99ad);font-family:var(--mono);font-size:13px;letter-spacing:2px;padding:14px;border-radius:10px;margin-top:14px;min-height:var(--tap-m);cursor:pointer">CLOSE</button>';
     return html;
   }
 
-  html += '<textarea id="blocker-note-input" placeholder="What is blocking this rack? (e.g. missing optics, port mapping mismatch, awaiting cage door)" style="width:100%;box-sizing:border-box;min-height:140px;background:rgba(0,0,0,0.35);border:1px solid rgba(255,69,58,0.3);border-radius:10px;color:var(--white);font-family:var(--mono);font-size:13px;line-height:1.5;padding:12px;outline:none;resize:vertical;margin-bottom:14px">' + escHtml(existingNote) + '</textarea>';
+  html += '<textarea id="blocker-note-input" placeholder="What is blocking this rack? (e.g. missing optics, port mapping mismatch, awaiting cage door)" style="width:100%;box-sizing:border-box;min-height:140px;background:rgba(0,0,0,0.35);border:1px solid rgba(255,43,214,0.3);border-radius:10px;color:var(--white);font-family:var(--mono);font-size:13px;line-height:1.5;padding:12px;outline:none;resize:vertical;margin-bottom:14px">' + escHtml(existingNote) + '</textarea>';
 
   html += '<div style="display:flex;gap:8px">';
   html += '<button onclick="blocker_close()" style="flex:1;background:transparent;border:1px solid rgba(138,153,173,0.3);color:var(--slate,#8a99ad);font-family:var(--mono);font-size:13px;letter-spacing:2px;padding:14px;border-radius:10px;min-height:var(--tap-l);cursor:pointer">CANCEL</button>';
-  html += '<button onclick="blocker_saveFromForm()" style="flex:2;background:linear-gradient(180deg,rgba(255,69,58,0.25),rgba(255,69,58,0.1));border:1px solid rgba(255,69,58,0.55);color:var(--white);font-family:var(--mono);font-size:13px;letter-spacing:2px;padding:14px;border-radius:10px;min-height:var(--tap-l);cursor:pointer">SAVE BLOCKER</button>';
+  html += '<button onclick="blocker_saveFromForm()" style="flex:2;background:linear-gradient(180deg,rgba(255,43,214,0.25),rgba(255,43,214,0.1));border:1px solid rgba(255,43,214,0.55);color:var(--white);font-family:var(--mono);font-size:13px;letter-spacing:2px;padding:14px;border-radius:10px;min-height:var(--tap-l);cursor:pointer">SAVE BLOCKER</button>';
   html += '</div>';
 
   return html;
