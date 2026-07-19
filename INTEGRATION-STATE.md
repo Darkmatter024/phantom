@@ -2536,3 +2536,24 @@ Per `HANDOFF-ASK-PHONE-FIX-281` (files 71.zip: handoff + mockup + v2 asset + pat
 - [ ] Desktop ≥980: row layout back (icon beside label, eyebrow visible, 15px); askrow on the 1080 column aligned with trow. Drag through 980 = clean flip.
 
 ## OPEN ITEMS still standing (need a ruling): the two RESERVED slots (unnamed) · `phantom-assistant-mark-256.webp` 0 refs · `phantom-tool-crashcart-256.webp` 0 refs · `#ff8a00` audits accent off-token · inert `.164` `.ask` rule at L8749 · **the OG card swap (`manifest-og-v2.png`) shipped in `.280` — owner still owes the Slack-unfurl check** · deleting the orphaned old assistant asset (later, deliberate) · broader `var(--vio)` usage outside `#boot`/`#forge` (may be silently un-violet) · the spec's −1 brace-baseline claim (my gate reads balanced).
+
+---
+
+# S63 - FIX v1.14.286 = B-02 GHOST OCCLUSION (BLOCKER hero verb) (2026-07-18)
+
+Bugfix shipped AHEAD of FIX-2 and Ship 4 (John chat go, "recon it, B-02 first" → "go"). Ships **.282-.285** (Command-Center 1→3b: LOG sheet + omni-bar retire · NBA paint order · shift-end hero 3a · hero verbs SCAN/LOG/BLOCKER 3b) are logged in `Downloads/PHANTOM-RUNNING-LIST.md` + their kickoff docs + version.json history — this doc resumes at the B-02 fix.
+
+**The bug (device-observed DFW-05; recon-confirmed live).** `#pg-cmd .ghosthero` (the `cc-ghost` mascot img, last child of `.lens`) was `position:absolute;right:8px;bottom:-6px;width:150px;pointer-events:none`. Absolutely positioned + placed AFTER the static `.hverbs` in DOM → it paints ABOVE the verb buttons; anchored bottom-right it covered the rightmost verb = **BLOCKER**. Measured live: ghost overlapped the BLOCKER button by 142×60px (full height, right ~42% at 1080; at 390 the 150px ghost covers the whole ~112px verb + spills onto LOG). **KEY FINDING: `pointer-events:none` was ALREADY set → BLOCKER stayed TAPPABLE. This was a VISUAL occlusion (can't-see = can't-aim, Cold Aisle Filter fail), NOT a dead button.** (Separately confirmed by the Ship-4 FAB recon: there is NO floating FAB in the code — the ghost is decorative mascot art, a different element.)
+
+**Fix (single selector, hero-cosmetic).** `#pg-cmd .ghosthero` (L9141): width 150→104px (constrain), bottom −6px→84px (lift the base above the ~60px verb row), right 8→6px, add **`z-index:-1`** (ambient art BEHIND all hero content — `.lens` is a stacking context via its `filter:saturate(1.4)`, so the ghost paints above the card background + below the content; any text-graze reads correctly and it can never sit over a control). Approved direction was "constrain width + push to far-right dead space + drop below the verb row in z-order"; note a bare z-flip alone would NOT have sufficed — `.hverb` bg is ~5% opaque, so a ghost geometrically behind the verbs would bleed through the button face; the fix removes the geometric overlap, not just the z-order. No JS, no data, no state — the rung dim/mid class logic (~L19564) untouched.
+
+**VERIFIED LIVE (headless real-layout, desktop 1080):** ghost no longer intersects the verb row, headline, or subtext (`overlaps:false` on all three); verb-row vertical clearance is width-independent (~6px). Could NOT force the browser viewport below 1280 (`resize_window` was a no-op) → the 390 ghost-vs-subtext spacing is on the owner's device check. Gates: three-stamp `.285`→`.286` (dct-ios.html L12048 · sw.js L37 · version.json); CSS braces 11750/11750 balanced; CRLF preserved on dct-ios.html + sw.js (version.json normalized LF→CRLF by git, harmless — JSON, not served-critical). Pushed **823718c**; Pages serving `.286` confirmed.
+
+## OWNER GATE (iPhone) — `.286` B-02 is the one unverified ship in flight
+- [ ] Hard-refresh / clear the SW cache first (a plain reload serves cached `.285`; the badge reads **v1.14.286** when on new code).
+- [ ] Command → Active Shift hero: **SCAN / LOG / BLOCKER all VISIBLE in one row; BLOCKER not covered** by the ghost.
+- [ ] Tap **BLOCKER** → capture opens (was already tappable behind the art; now visible too).
+- [ ] Ghost reads as **ambient background art, clear of every control**; eyeball the ghost-vs-subtext spacing @390.
+- [ ] `?legacy=1` byte-identical (`#pg-cmd` never renders under legacy).
+
+## AFTER B-02 verify: queue is FIX-2 (still owes the aisle answer — tool-open vs plain-grid-after-scroll; does scrolling to the TOP revive the nav → yes=H2, tool-open-and-dead=H1) → Ship 4 (final Command-Center; seven-anchor recon COMPLETE, full glow worksheet in `SHIP4-HANDOFF-BACK.md`).
