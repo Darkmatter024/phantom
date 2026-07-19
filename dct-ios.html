@@ -67,7 +67,7 @@
   --edge:       rgba(92,242,255,0.18);
   --glass:      rgba(255,255,255,0.06);
 
-  --violet:      #9b59ff;
+  --violet:      #9b59ff; --ok: #3DDC84;   /* --ok = N-07 mint: pass/ok/healthy status ONLY (v1.14.291) */
   --violet-glow: rgba(155,89,255,0.22);
 
   /* ── surface & border tokens ── */
@@ -9106,7 +9106,7 @@ body.rd #ph-sheet.open {
    Green kept at the mockup's #39e09b (app --green is a different shade). ━━━ */
 #pg-cmd .statusrow{display:flex;gap:8px;padding:6px 16px 12px;flex-wrap:wrap}
 #pg-cmd .spill{display:flex;align-items:center;gap:7px;border:1px solid color-mix(in srgb,var(--cyan) var(--glow-border),transparent);border-radius:18px;padding:7px 13px;font-size:12px;color:var(--slate);box-shadow:inset 0 1px 0 rgba(255,255,255,.06),inset 0 0 30px -6px color-mix(in srgb,var(--cyan) var(--glow-inner),transparent),0 0 var(--glow-outer) -2px color-mix(in srgb,var(--cyan) var(--glow-a),transparent),0 12px 26px -14px rgba(0,0,0,.9)}
-#pg-cmd .spill .dot{width:7px;height:7px;border-radius:50%;background:#39e09b;box-shadow:0 0 6px #39e09b}
+#pg-cmd .spill .dot{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 6px var(--ok)}
 #pg-cmd .spill.bad .dot{background:var(--gold);box-shadow:0 0 6px var(--gold)}
 #pg-cmd .spill.bad{color:var(--gold)}
 #pg-cmd .lens{margin:0 16px 14px;filter:saturate(1.40);border:1px solid color-mix(in srgb,var(--cyan) 36%,transparent);border-radius:16px;background:linear-gradient(160deg,#0a0d13 0%,#070809 100%);box-shadow:0 8px 20px -14px rgba(0,0,0,.85),inset 0 0 26px -4px color-mix(in srgb,var(--cyan) 14%,transparent);padding:18px 16px;position:relative;overflow:hidden;min-height:230px}
@@ -9116,8 +9116,8 @@ body.rd #ph-sheet.open {
 #pg-cmd .lens .clock{position:absolute;top:16px;right:18px;text-align:right}
 #pg-cmd .lens .clock .t{font-family:var(--mono);font-size:30px;font-weight:700;letter-spacing:1px}
 #pg-cmd .lens .clock .l{font-family:var(--mono);font-size:11px;letter-spacing:3px;color:var(--slate)}
-#pg-cmd .shiftpill{display:inline-flex;align-items:center;gap:7px;margin-top:12px;padding:6px 12px;border-radius:16px;border:1px solid rgba(57,224,155,0.30);background:rgba(57,224,155,0.06);font-family:var(--mono);font-size:12px;letter-spacing:1.5px;color:#39e09b}   /* B2 (v1.14.127): in-flow below the description, left-aligned — was absolute top:74px/right:18px floating over the title */
-#pg-cmd .shiftpill .dot{width:7px;height:7px;border-radius:50%;background:#39e09b;box-shadow:0 0 6px #39e09b}
+#pg-cmd .shiftpill{display:inline-flex;align-items:center;gap:7px;margin-top:12px;padding:6px 12px;border-radius:16px;border:1px solid rgba(61,220,132,0.30);background:rgba(61,220,132,0.06);font-family:var(--mono);font-size:12px;letter-spacing:1.5px;color:var(--ok)}   /* B2 (v1.14.127): in-flow below the description, left-aligned — was absolute top:74px/right:18px floating over the title */
+#pg-cmd .shiftpill .dot{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 6px var(--ok)}
 /* Ship 3a — Active Shift hero: shiftpill state channels (R5) + SET SHIFT END sheet. cyan=active countdown, gold=ended/attention (green retired here). */
 #pg-cmd .shiftpill{cursor:pointer}
 #pg-cmd .shiftpill.se-set{border-color:rgba(92,242,255,.30);background:rgba(92,242,255,.06);color:var(--cyan)}
@@ -12040,7 +12040,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.290';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.291';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
