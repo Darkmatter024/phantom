@@ -12049,7 +12049,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.300';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.301';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -32564,6 +32564,8 @@ function rackElevation_render3D(rack, mountEl) {
   // assignment, so declaring it down with the orbit state would make this push hit `undefined` at runtime
   // (node --check cannot see that).
   var trayGroups = [];
+  var _rail3dSelGrp = null;   // N-06 Stage 2 (v1.14.301): 3D rail-compass selection emitters group; assigned ONCE at the hlBand site below, declared HERE per the same declare-above-first-use rule the R4 note above states for trayGroups
+  var _rail3dSel = null;      // { uS, uE } of the tapped unit, else null
   var _mtx = new THREE.Matrix4();
   slots.forEach(function (dev) {
     if (dev == null || dev.uStart == null || dev.uEnd == null) return;
@@ -32953,6 +32955,49 @@ function rackElevation_render3D(rack, mountEl) {
   hlBand.add(hlEdge);
   hlBand.visible = false; rackGrp.add(hlBand);
 
+  // ── N-06 Stage 2 (v1.14.301): additive 3D RAIL-COMPASS selection emitters — a cyan span band on both
+  //    FRONT rails + bright cage-nut hole DOTS at the tapped unit, positioned by the shared eia_holesForSpan()
+  //    (one source of truth with the Compass + the flat U-map). Scene-lock cleared by owner for these ADDITIVE
+  //    emitters ONLY (hlBand pattern: MeshBasic + AdditiveBlending). Parented under rackGrp so the teardown
+  //    traverse + forceContextLoss free them. _rail3dSelGrp is declared null at the trayGroups anchor above and
+  //    assigned ONCE here (no re-var -> declare-above-first-use safe). ──
+  _rail3dSelGrp = new THREE.Group();
+  var _r3RailX = RW/2 - 0.13, _r3zFront = RD/2 - 0.24 + 0.05;   // front rails only (fi:4, +Z face); proud of the perforated face like the .260 U-ticks
+  var _r3BandMat = new THREE.MeshBasicMaterial({ color: 0x28e0ff, transparent: true, opacity: 0.22, blending: THREE.AdditiveBlending, depthWrite: false });
+  var _r3BandGeo = new THREE.BoxGeometry(0.18, uH, 0.03);       // 1U tall; scale.y stretches it over the span
+  var _r3BandL = new THREE.Mesh(_r3BandGeo, _r3BandMat); _r3BandL.position.set(-_r3RailX, 0, _r3zFront);
+  var _r3BandR = new THREE.Mesh(_r3BandGeo, _r3BandMat); _r3BandR.position.set( _r3RailX, 0, _r3zFront);
+  var _r3DotMat = new THREE.MeshBasicMaterial({ color: 0x28e0ff, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false });
+  var _r3Dots = new THREE.InstancedMesh(new THREE.CircleGeometry(0.024, 12), _r3DotMat, (totalU || 42) * 3 * 2);
+  _r3Dots.count = 0; _r3Dots.frustumCulled = false;
+  _rail3dSelGrp.add(_r3BandL, _r3BandR, _r3Dots);
+  _rail3dSelGrp.visible = false;
+  _rail3dSelGrp.userData = { bands: [_r3BandL, _r3BandR], dots: _r3Dots, bandMat: _r3BandMat, dotMat: _r3DotMat, railXs: [-_r3RailX, _r3RailX], zFront: _r3zFront };
+  rackGrp.add(_rail3dSelGrp);
+  // Tap -> light the tapped unit's span band + cage-nut dots. eia_holesForSpan is the shared source of truth.
+  // No-Silent-Failures: warn + toast on a missing U-span or a missing hole model, never a silent return.
+  function _rail3dSetSel(uStart, uEnd) {
+    if (!_rail3dSelGrp) return;
+    if (uStart == null || uEnd == null) { console.warn('[PHANTOM] rail3d: device missing U-span', uStart, uEnd); if (typeof phantomToast === 'function') phantomToast('Cannot map this unit to rail holes', 'warn'); return; }
+    if (typeof eia_holesForSpan !== 'function') { console.warn('[PHANTOM] rail3d: eia_holesForSpan missing'); if (typeof phantomToast === 'function') phantomToast('Rail-hole model unavailable', 'warn'); return; }
+    var uS = uStart, uE = uEnd; if (uE < uS) { var _t = uS; uS = uE; uE = _t; }
+    if (uE > totalU) uE = totalU;
+    var ud = _rail3dSelGrp.userData, span = (uE - uS + 1), yc = yFor((uS + uE) / 2), mtx = new THREE.Matrix4();
+    ud.bands.forEach(function (b) { b.scale.y = span; b.position.y = yc; });
+    var hs = eia_holesForSpan(uS, span), dots = ud.dots, i = 0, hi, ri;
+    for (hi = 0; hi < hs.length; hi++) {
+      if (!hs[hi].cage) continue;   // cage-nut holes are the mount points — the actionable signal (context holes stay flat-only)
+      var wy = yFor(hs[hi].u) + (0.5 - hs[hi].frac) * uH;
+      for (ri = 0; ri < ud.railXs.length; ri++) {
+        mtx.makeTranslation(ud.railXs[ri], wy, ud.zFront + 0.01);
+        dots.setMatrixAt(i, mtx); i++;
+      }
+    }
+    dots.count = i; dots.instanceMatrix.needsUpdate = true;
+    _rail3dSel = { uS: uS, uE: uE };
+    _rail3dSelGrp.visible = true;
+  }
+
   // ── §D THE INSPECTION BAY — all elements additive, dimmer than the rack (bayGrp for clean dispose) ──
   var VOID_SCENE = true;   // v1.14.262 CLEAR-PORT S3 void: hide bay clutter, keep reflective floor + reflection
   var bayGrp = new THREE.Group();
@@ -33195,6 +33240,10 @@ function rackElevation_render3D(rack, mountEl) {
     var bt = nowMs * 0.0016;                               // §C breathing
     hlBand.material.opacity = 0.30 + 0.10 * Math.sin(bt);
     hlEdge.material.opacity = 0.80 + 0.18 * Math.sin(bt);
+    if (_rail3dSelGrp && _rail3dSelGrp.visible) {   // N-06 Stage 2: breathe the selection emitters on the shared bt (no-ops when hidden)
+      _rail3dSelGrp.userData.bandMat.opacity = 0.18 + 0.10 * Math.sin(bt);
+      _rail3dSelGrp.userData.dotMat.opacity = 0.62 + 0.30 * Math.sin(bt);
+    }
     var swt = nowMs * 0.00012;                             // §D9 ~50s orbit
     sweepL.position.set(Math.sin(swt) * RH * 0.7, floorY + RH * (0.55 + 0.2 * Math.sin(swt * 0.7)), Math.cos(swt) * RH * 0.7);
     glowL.intensity = 0.08 + 0.04 * Math.sin(nowMs * 0.0006);
@@ -33259,6 +33308,7 @@ function rackElevation_render3D(rack, mountEl) {
       // and reads as a solid slab you cannot count. The sawtooth gives each tray its own visible edge.
       trayGroups[gi].userData.tExplodeZ = exploded ? (RD * 0.36 + ((gi % 3) - 1) * 0.3) : 0;
     }
+    if (!exploded && _rail3dSelGrp) { _rail3dSelGrp.visible = false; _rail3dSel = null; }   // N-06 Stage 2: rack collapse clears the rail selection
     if (_explodeBtn) _explodeBtn.classList.toggle('is-on', exploded);
   }
   var dragging = false, px = 0, py = 0, downX = 0, downY = 0, moved = false, idle = 0, stopped = false, pinch0 = 0;
@@ -33302,9 +33352,10 @@ function rackElevation_render3D(rack, mountEl) {
             : { id: rack.rackId || rack.id };
         } catch (e) {}
         if (typeof haptic === 'function') haptic([6]);
+        _rail3dSetSel(dev.uStart, dev.uEnd);   // N-06 Stage 2: light the rail compass for the tapped unit (after the setExplode(false) above, so it survives the stow)
         openRmDevice(dev);
       }
-    }
+    } else { if (_rail3dSelGrp) { _rail3dSelGrp.visible = false; } _rail3dSel = null; }   // N-06 Stage 2: miss-tap (empty space) clears the selection
   }
   function tDist(ts) { var dx = ts[0].clientX - ts[1].clientX, dy = ts[0].clientY - ts[1].clientY; return Math.sqrt(dx * dx + dy * dy); }
 
