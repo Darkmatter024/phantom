@@ -11520,6 +11520,20 @@ body.rd #pg-cmd .tile {
     0 12px 26px -14px rgba(0,0,0,.9),
     inset 0 2px 4px rgba(0,0,0,.6);
 }
+/* v1.14.292 one-emitter (Ship 4 call #2): idle shift tiles go dark — only .hot/.hot-teal/.hot-gold
+   emit (live-state signal). Neutral slate ring + colored inset/outer bloom stripped; hot tiles keep
+   the --tc glow rule above verbatim. */
+body.rd #pg-cmd .tile:not(.hot):not(.hot-teal):not(.hot-gold) {
+  background:
+    radial-gradient(140% 160% at 50% -40%, rgba(140,172,206,.10) 0%, transparent 46%) padding-box,
+    linear-gradient(180deg,#0b1019,#05080e 58%,#0a0f1a) padding-box,
+    linear-gradient(175deg, rgba(255,255,255,.22) 0%, rgba(200,220,240,.07) 16%,
+      rgba(28,38,52,.9) 45%, rgba(7,11,17,1) 76%,
+      rgba(90,112,138,.28) 100%) border-box;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06),
+    0 12px 26px -14px rgba(0,0,0,.9),
+    inset 0 2px 4px rgba(0,0,0,.6);
+}
 body.rd #pg-cmd .nba {
   border: 2px solid transparent;
   background:
@@ -11529,9 +11543,12 @@ body.rd #pg-cmd .nba {
       rgba(28,38,52,.9) 45%, rgba(7,11,17,1) 76%,
       color-mix(in srgb, var(--violet) 45%, transparent) 100%) border-box;
   box-shadow: 0 8px 20px -14px rgba(0,0,0,.85),
-    inset 0 0 26px -4px color-mix(in srgb,var(--violet) 20%,transparent),
     inset 0 2px 4px rgba(0,0,0,.6);
 }
+/* v1.14.292 one-emitter (Ship 4 call #2): Ask tile housing de-bloomed to match .nba — violet 45%
+   ring identity kept (base rule), inset violet bloom removed. Structure (retire ASK -> SCAN-ID,
+   reserved slots) + the .av icon violet halo are Ship-4 call #3 / owner decisions, left intact. */
+body.rd #pg-cmd .apill { box-shadow: inset 0 2px 4px rgba(0,0,0,.6); }
 /* v1.14.198: #wk-deploy .pt-btn-ghost rule superseded by the fleet-wide pt-btn conversion
    in the G-1d block (end of the glass system). */
 /* v1.14.196: .rack-viewer-input rules moved into the M-1 .mach recipe block (CALL 3). */
@@ -11817,7 +11834,7 @@ body.rd .qa-btn, body.rd .hdr-ghost-btn:not(.alert) {
     linear-gradient(175deg, rgba(255,255,255,.22) 0%, rgba(200,220,240,.07) 16%,
       rgba(28,38,52,.9) 45%, rgba(7,11,17,1) 76%, rgba(90,112,138,.28) 100%) border-box;
 }
-body.rd #pg-cmd .lens, body.rd #pg-cmd .stat {
+body.rd #pg-cmd .lens {
   border: 2px solid transparent;
   background:
     radial-gradient(140% 160% at 50% -40%, rgba(140,172,206,.10) 0%, transparent 46%) padding-box,
@@ -11830,6 +11847,21 @@ body.rd #pg-cmd .lens, body.rd #pg-cmd .stat {
     inset 0 0 26px -4px color-mix(in srgb,var(--cyan) 14%,transparent),
     inset 0 2px 4px rgba(0,0,0,.6);
 }
+/* v1.14.292 one-emitter (Ship 4 call #2): hero .lens is the SOLE lit card on Command; .stat
+   split off here to idle-dark — neutral slate ring, cyan inset glow removed. The stat NUMBER
+   (.block .n red / .dep .n cyan / .racks .n teal) stays the signal, not the card housing. */
+body.rd #pg-cmd .stat {
+  border: 2px solid transparent;
+  background:
+    radial-gradient(140% 160% at 50% -40%, rgba(140,172,206,.10) 0%, transparent 46%) padding-box,
+    linear-gradient(180deg,#0b1019,#05080e 58%,#0a0f1a) padding-box,
+    linear-gradient(175deg, rgba(255,255,255,.22) 0%, rgba(200,220,240,.07) 16%,
+      rgba(28,38,52,.9) 45%, rgba(7,11,17,1) 76%,
+      rgba(90,112,138,.28) 100%) border-box;
+  box-shadow:
+    0 8px 20px -14px rgba(0,0,0,.85),
+    inset 0 2px 4px rgba(0,0,0,.6);
+}
 body.rd #pg-cmd .spill {
   border: 2px solid transparent;
   background:
@@ -11837,12 +11869,11 @@ body.rd #pg-cmd .spill {
     linear-gradient(180deg,#0b1019,#05080e 55%,#0a0f1a) padding-box,
     linear-gradient(175deg, rgba(255,255,255,.22) 0%, rgba(200,220,240,.07) 16%,
       rgba(28,38,52,.9) 45%, rgba(7,11,17,1) 76%,
-      color-mix(in srgb, var(--cyan) 35%, transparent) 100%) border-box;
+      rgba(90,112,138,.28) 100%) border-box;
   box-shadow:
     inset 0 1px 0 rgba(255,255,255,.06),
-    inset 0 0 30px -6px color-mix(in srgb,var(--cyan) 12%,transparent),
     inset 0 2px 4px rgba(0,0,0,.55);
-  /* v1.14.204 T3: outer bloom + bottom drop shadow deleted (asymmetric bloom read as row tilt), inner glow fixed 12%. */
+  /* v1.14.292 one-emitter (call #2): cyan inset housing-glow removed + ring -> neutral slate; .dot keeps state (mint OK/gold bad). v1.14.204 T3: outer bloom already deleted. */
 }
 /* pt-btn system — ghost/secondary machined; primary = the A-2 cask language */
 body.rd .pt-btn-ghost, body.rd .pt-btn-secondary {
@@ -12040,7 +12071,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.291';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.292';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
