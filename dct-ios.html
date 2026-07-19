@@ -9138,7 +9138,7 @@ body.rd #ph-sheet.open {
 #shiftend-sheet .se-custom-row label{font-family:var(--mono);font-size:12px;letter-spacing:1px;color:var(--slate)}
 #shiftend-sheet input.se-custom{flex:1;min-height:var(--tap-xl,56px);padding:0 14px;border-radius:10px;border:1px solid rgba(92,242,255,.22);background:rgba(10,14,20,.6);color:var(--cyan);font-family:var(--mono);font-size:16px;-webkit-appearance:none}
 #shiftend-sheet .se-clear{display:block;width:calc(100% - 40px);margin:14px 20px 12px;min-height:var(--tap-xl,56px);background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);border-radius:8px;color:var(--slate);font-family:var(--mono);font-size:13px;letter-spacing:1px;cursor:pointer;-webkit-appearance:none}
-#pg-cmd .ghosthero{position:absolute;right:6px;bottom:84px;width:104px;height:auto;pointer-events:none;z-index:-1;transition:filter .4s,opacity .4s}   /* v1.14.286 B-02: was right:8px;bottom:-6px;width:150px painting over the BLOCKER verb — constrained + lifted above the verb row + z-index:-1 = ambient art behind hero content, never over a control */
+#pg-cmd .ghosthero{position:absolute;right:18px;bottom:100px;width:104px;height:auto;pointer-events:none;z-index:-1;transition:filter .4s,opacity .4s}   /* v1.14.286 B-02: was right:8px;bottom:-6px;width:150px painting over the BLOCKER verb — constrained + lifted above the verb row + z-index:-1 = ambient art behind hero content, never over a control */
 #pg-cmd .ghosthero.dim{filter:grayscale(.9) brightness(.42);opacity:.4}
 #pg-cmd .ghosthero.mid{filter:saturate(.75) brightness(.85);opacity:.9}
 #pg-cmd .stats{display:flex;gap:10px;padding:0 16px 14px}
@@ -12045,7 +12045,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.287';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.288';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
