@@ -4628,8 +4628,6 @@ body.rd #omni-bar{display:none!important}
 #log-sheet .ls-send{display:block;width:calc(100% - 40px);margin:0 20px 12px;min-height:var(--tap-xl,56px);background:var(--cyan);border:none;border-radius:8px;color:#000;font-family:var(--mono);font-size:var(--fs-body);letter-spacing:1.5px;font-weight:700;cursor:pointer;-webkit-appearance:none}
 #log-sheet .ls-send:disabled{opacity:0.4;cursor:not-allowed}
 #log-sheet .ls-route{display:block;width:calc(100% - 40px);margin:0 20px 16px;min-height:var(--tap-xl,56px);background:rgba(92,242,255,0.06);border:1px solid rgba(92,242,255,0.25);border-radius:8px;color:var(--cyan);font-family:var(--mono);font-size:var(--fs-micro);letter-spacing:1px;cursor:pointer;-webkit-appearance:none}
-#pg-cmd .apill.ls-pill .av{display:grid;place-items:center;background:none}
-#pg-cmd .apill.ls-pill .ls-ico{font-family:var(--raj);font-size:26px;line-height:1;color:var(--cyan)}
 /* Hide during boot splash — #boot covers viewport with higher z-index, but hide cleanly */
 body.phantom-booting #omni-bar { display: none; }
 body.rd #omni-bar { background: linear-gradient(180deg, rgba(4,7,11,0.93), rgba(8,14,22,0.99)); } /* v1.14.204: opaque plate — card text was ghosting through the nav band */
@@ -9164,26 +9162,6 @@ body.rd #ph-sheet.open {
 #pg-cmd .hverb-blk:active{background:rgba(255,43,214,0.12)}
 #pg-cmd .cc-magstrip{display:flex;align-items:center;gap:8px;margin-top:12px;padding:9px 13px;border-radius:12px;border:1px solid rgba(255,43,214,0.45);background:rgba(255,43,214,0.06);color:#ff2bd6;font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:1.5px;cursor:pointer;-webkit-tap-highlight-color:transparent}
 #pg-cmd .cc-magstrip:active{background:rgba(255,43,214,0.12)}
-/* v1.14.279 — Ask demoted from a full-width banner to ONE tile in a triplet (.askrow).
-   Replaces the old body.rd .ask card rules (Rule F + .prism + .ey/h3/p/.arw + askBreathe
-   keyframes + its reduced-motion override — all removed; .ask no longer exists in markup).
-   Row geometry mirrors .trow so the column reads as matched bands; the .278 media block
-   caps .askrow to 1080 and zeroes its L/R padding exactly like .trow (padding group). */
-#pg-cmd .askrow{display:flex;gap:10px;padding:0 16px 14px}
-#pg-cmd .askrow > *{flex:1;min-width:0}
-#pg-cmd .apill{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;cursor:pointer;min-height:96px;padding:12px;border-radius:14px;color:inherit;font-family:inherit;border:1px solid color-mix(in srgb,var(--violet) 45%,transparent);background:linear-gradient(160deg,#0d0a18,#070809);box-shadow:inset 0 0 22px -6px color-mix(in srgb,var(--violet) 30%,transparent)}
-/* v1.14.280 — plate removed. A 56×56 square was the wrong-shaped hole for 184×256
-   portrait art (bust overflowed 3px top/bottom, ~5.7px slack each side). .av is now a
-   bare SIZING BOX (no bg/border/radius/inset glow); the bust carries its own drop-shadow
-   glow that follows its alpha silhouette, same treatment as the LENS ghost hero. */
-#pg-cmd .apill .av{flex:0 0 auto;width:100%;height:56px;display:grid;place-items:center}
-#pg-cmd .apill .av img{display:block;height:56px;width:auto;filter:drop-shadow(0 0 10px color-mix(in srgb,var(--violet) 55%,transparent))}
-#pg-cmd .apill .ey{display:none;font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--violet)}
-#pg-cmd .apill h3{margin:0;font-size:12.5px;font-weight:600;line-height:1.25}
-/* reserved slots: deliberately empty, never a dead tap — non-interactive by design (§6) */
-#pg-cmd .rpill{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:5px;min-height:96px;padding:12px;border-radius:14px;cursor:default;user-select:none;border:1px dashed rgba(143,168,189,.22);background:rgba(10,14,20,.4)}
-#pg-cmd .rpill b{font-size:20px;font-weight:700;color:var(--slate-dim);opacity:.5;line-height:1}
-#pg-cmd .rpill span{font-family:var(--mono);font-size:9px;letter-spacing:.18em;color:var(--slate-dim);opacity:.65}
 /* v1.14.159 Shift Telemetry tiles (mock-telemetry-tiles) — replace the old launcher row. */
 #pg-cmd .trow{display:flex;gap:10px;padding:0 16px 14px}
 #pg-cmd .tile{flex:1;--tc:#33465a;display:flex;flex-direction:column;gap:6px;min-height:96px;aspect-ratio:auto;/* v1.14.207: reset the aspect-ratio:1/1.6 that leaks in from the generic .tile rule (8415) — this id-scoped rule overrides everything else but never reset AR, so on wide/desktop viewports the shift tiles ballooned to ~474px (296px wide × 1.6), pushing the DEPLOY/SCANNED/HANDOFF row far below the fold under the fixed bottom nav = unclickable deploy tile on laptop. On phone the tiles are narrow so it stayed hidden. */filter:saturate(1.4);border:1px solid color-mix(in srgb,var(--tc) var(--glow-border),transparent);border-radius:16px;background:linear-gradient(160deg,#0a0d13 0%,#070809 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.06),inset 0 0 30px -6px color-mix(in srgb,var(--tc) var(--glow-inner),transparent),0 0 var(--glow-outer) -2px color-mix(in srgb,var(--tc) var(--glow-a),transparent),0 12px 26px -14px rgba(0,0,0,.9);padding:13px 12px 12px;position:relative;overflow:hidden;color:var(--white)}
@@ -9794,7 +9772,6 @@ body.rd #rd-botnav{display:flex}
   #pg-cmd .lens,
   #pg-cmd .stats,
   #pg-cmd .nba,
-  #pg-cmd .askrow,
   #pg-cmd .trow,
   #pg-cmd .sig-h,
   #pg-cmd .sigrow,
@@ -9808,30 +9785,12 @@ body.rd #rd-botnav{display:flex}
      the margin group's borders. Vertical padding preserved. */
   #pg-cmd .statusrow,
   #pg-cmd .stats,
-  #pg-cmd .trow,
-  #pg-cmd .askrow {
+  #pg-cmd .trow {
     padding-left: 0;
     padding-right: 0;
     gap: 16px;
   }
 
-  /* v1.14.281 — ASK TILE: row layout is DESKTOP ONLY. Base (phone) stacks icon
-     over label. At 390px the askrow tile is 112.7px wide -> 88.7px content; a 56px
-     icon + 12px gap beside the label left 20.7px for "Ask for assistance", which
-     overflowed onto the icon (the .279 design fault, misread as stale art four
-     times — the mock was only ever checked at 1080, where the tile is 338.7px and
-     the row fits). At >=980 the row layout is restored here so .280 renders exactly. */
-  #pg-cmd .apill {
-    flex-direction: row;
-    align-items: center;
-    justify-content: flex-start;
-    gap: 12px;
-    text-align: left;
-  }
-  #pg-cmd .apill .av { width: 56px; height: 72px; }
-  #pg-cmd .apill .av img { height: 72px; }
-  #pg-cmd .apill .ey { display: block; }
-  #pg-cmd .apill h3 { margin: 3px 0 0; font-size: 15px; line-height: normal; }
 
   /* v1.14.278 DEVIATION (folded in, owner-approved): the spec classed .sig-h
      as margin-based, but live .sig-h (~L9164) is padding-based
@@ -11553,10 +11512,6 @@ body.rd #pg-cmd .nba {
   box-shadow: 0 8px 20px -14px rgba(0,0,0,.85),
     inset 0 2px 4px rgba(0,0,0,.6);
 }
-/* v1.14.292 one-emitter (Ship 4 call #2): Ask tile housing de-bloomed to match .nba — violet 45%
-   ring identity kept (base rule), inset violet bloom removed. Structure (retire ASK -> SCAN-ID,
-   reserved slots) + the .av icon violet halo are Ship-4 call #3 / owner decisions, left intact. */
-body.rd #pg-cmd .apill { box-shadow: inset 0 2px 4px rgba(0,0,0,.6); }
 /* v1.14.198: #wk-deploy .pt-btn-ghost rule superseded by the fleet-wide pt-btn conversion
    in the G-1d block (end of the glass system). */
 /* v1.14.196: .rack-viewer-input rules moved into the M-1 .mach recipe block (CALL 3). */
@@ -12079,7 +12034,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.294';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.295';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -12767,7 +12722,7 @@ if (typeof window !== 'undefined') {
         <div class="tile" id="tt-scan" role="button" tabindex="0" onclick="cmd_route('work','scan')" aria-label="Scan count — tap to open Scan"><span class="ey"><span class="led"></span>Scanned</span><span class="val" id="tt-scan-val">—</span><span class="sub" id="tt-scan-sub"></span></div>
         <div class="tile" id="tt-handoff" role="button" tabindex="0" onclick="cmd_route('work','handoff')" aria-label="Handoff status — tap to open Handoff"><span class="ey"><span class="led"></span>Handoff</span><span class="val" id="tt-handoff-val">—</span><span class="sub" id="tt-handoff-sub"></span></div>
       </div>
-      <!-- v1.14.293 (Ship 4 call #3): askrow RETIRED (Ask tile + reserved slot removed) per owner ruling. SCAN-ID dropped - it would duplicate the hero SCAN verb (both open ScanDispatch, which already auto-captures asset/serial). "Ask PHANTOM" stays reachable via the qa-voice button + command palette. Dead .askrow/.apill(+children)/.rpill CSS (base ~L9164-9178, desktop media ~L9804-9826, body.rd .apill override, .apill.ls-pill) tombstoned for the CLEAN window. -->
+      <!-- v1.14.293 (Ship 4 call #3): askrow RETIRED (Ask tile + reserved slot removed) per owner ruling. SCAN-ID dropped - it would duplicate the hero SCAN verb (both open ScanDispatch, which already auto-captures asset/serial). "Ask PHANTOM" stays reachable via the qa-voice button + command palette. Dead .askrow/.apill/.rpill CSS removed in the v1.14.295 CLEAN pass. -->
       <div class="sig-h">OPS SIGNAL</div>
       <div id="cc-sig"></div>
     </div>
