@@ -8752,7 +8752,7 @@ body.rd #pg-work:not(.wk-grid) .work-sub.stab-active { animation: rf-fade .22s e
 .rf-grid-wrap { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
 /* v1.14.106 — unified card recipe (John dialed on-device): pure-dark surface, crisp accent
    border, subtle inset glow, boosted saturation. No white-top fill, no ::after radial, no brackets. */
-.rf-card { position:relative; filter:saturate(1.40); border-radius:16px; min-height:124px; padding:18px 12px 16px; border:1px solid color-mix(in srgb, var(--rfac) 36%, transparent); background:linear-gradient(160deg,#0a0c10,#040506 62%,#070a0d); box-shadow:inset 0 1px 0 rgba(205,235,245,.09),0 8px 20px -14px rgba(0,0,0,.85), inset 0 0 26px -4px color-mix(in srgb, var(--rfac) 14%, transparent); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; cursor:pointer; transition:transform .14s ease, border-color .2s, box-shadow .2s; overflow:hidden; -webkit-tap-highlight-color:transparent; }
+.rf-card { position:relative; filter:saturate(1.40); border-radius:16px; min-height:124px; padding:18px 12px 16px; border:1px solid color-mix(in srgb, var(--rfac) 36%, transparent); background:linear-gradient(160deg,#0a0c10,#040506 62%,#070a0d); box-shadow:inset 0 1px 0 rgba(205,235,245,.09),0 8px 20px -14px rgba(0,0,0,.85); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; cursor:pointer; transition:transform .14s ease, border-color .2s, box-shadow .2s; overflow:hidden; -webkit-tap-highlight-color:transparent; }
 .rf-card:active { transform:scale(.97); box-shadow:inset 0 1px 0 rgba(205,235,245,.09),0 8px 20px -14px rgba(0,0,0,.85), inset 0 0 30px -2px color-mix(in srgb, var(--rfac) 26%, transparent); }
 /* v1.14.157 — responsive card grids + centered nav. Phone (<640) unchanged (2-col). */
 @media (min-width: 640px) {
@@ -9116,11 +9116,11 @@ body.rd #ph-sheet.open {
    .route/.clock/.spill) can't collide with app classes or leak to other pages.
    Green kept at the mockup's #39e09b (app --green is a different shade). ━━━ */
 #pg-cmd .statusrow{display:flex;gap:8px;padding:6px 16px 12px;flex-wrap:wrap}
-#pg-cmd .spill{display:flex;align-items:center;gap:7px;border:1px solid color-mix(in srgb,var(--cyan) var(--glow-border),transparent);border-radius:18px;padding:7px 13px;font-size:12px;color:var(--slate);box-shadow:inset 0 1px 0 rgba(255,255,255,.06),inset 0 0 30px -6px color-mix(in srgb,var(--cyan) var(--glow-inner),transparent),0 0 var(--glow-outer) -2px color-mix(in srgb,var(--cyan) var(--glow-a),transparent),0 12px 26px -14px rgba(0,0,0,.9)}
+#pg-cmd .spill{display:flex;align-items:center;gap:7px;border:1px solid color-mix(in srgb,var(--cyan) var(--glow-border),transparent);border-radius:18px;padding:7px 13px;font-size:12px;color:var(--slate);box-shadow:inset 0 1px 0 rgba(205,235,245,.06),0 12px 26px -14px rgba(0,0,0,.9)}
 #pg-cmd .spill .dot{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 6px var(--ok)}
 #pg-cmd .spill.bad .dot{background:var(--gold);box-shadow:0 0 6px var(--gold)}
 #pg-cmd .spill.bad{color:var(--gold)}
-#pg-cmd .lens{margin:0 16px 14px;filter:saturate(1.40);border:1px solid color-mix(in srgb,var(--cyan) 36%,transparent);border-radius:16px;background:linear-gradient(160deg,#0a0c10,#040506 62%,#070a0d);box-shadow:inset 0 1px 0 rgba(205,235,245,.09),0 8px 20px -14px rgba(0,0,0,.85),inset 0 0 26px -4px color-mix(in srgb,var(--cyan) 14%,transparent);padding:18px 16px;position:relative;overflow:hidden;min-height:230px}
+#pg-cmd .lens{margin:0 16px 14px;filter:saturate(1.40);border:1px solid color-mix(in srgb,var(--cyan) 15%,transparent);border-radius:16px;background:linear-gradient(160deg,#0a0c10,#040506 62%,#070a0d);box-shadow:inset 0 1px 0 rgba(205,235,245,.09),0 8px 20px -14px rgba(0,0,0,.85);padding:18px 16px;position:relative;overflow:hidden;min-height:230px}
 #pg-cmd .lens .llabel{font-family:var(--mono);font-size:12px;letter-spacing:3px;color:var(--cyan)}
 #pg-cmd .lens h1{font-size:30px;font-weight:700;line-height:1.05;margin:10px 0 8px;max-width:62%}
 #pg-cmd .lens p{color:var(--slate);font-size:14px;line-height:1.4;max-width:60%;margin:0}
@@ -9148,7 +9148,7 @@ body.rd #ph-sheet.open {
 #pg-cmd .ghosthero.dim{filter:grayscale(.9) brightness(.42);opacity:.4}
 #pg-cmd .ghosthero.mid{filter:saturate(.75) brightness(.85);opacity:.9}
 #pg-cmd .stats{display:flex;gap:10px;padding:0 16px 14px}
-#pg-cmd .stat{flex:1;filter:saturate(1.40);border:1px solid color-mix(in srgb,var(--cyan) 36%,transparent);border-radius:16px;background:linear-gradient(160deg,#0a0c10,#040506 62%,#070a0d);box-shadow:inset 0 1px 0 rgba(205,235,245,.09),0 8px 20px -14px rgba(0,0,0,.85),inset 0 0 26px -4px color-mix(in srgb,var(--cyan) 14%,transparent);padding:14px 8px;text-align:center}
+#pg-cmd .stat{flex:1;filter:saturate(1.40);border:1px solid color-mix(in srgb,var(--cyan) 15%,transparent);border-radius:16px;background:linear-gradient(160deg,#0a0c10,#040506 62%,#070a0d);box-shadow:inset 0 1px 0 rgba(205,235,245,.09),0 8px 20px -14px rgba(0,0,0,.85);padding:14px 8px;text-align:center}
 #pg-cmd .stat .n{font-family:var(--mono);font-size:30px;font-weight:700;letter-spacing:1px}
 #pg-cmd .stat .k{font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--slate);margin-top:4px}
 #pg-cmd .stat.racks .n{color:#27e0c4}
@@ -9158,7 +9158,7 @@ body.rd #ph-sheet.open {
 /* v1.14.225 — Command Lens tap-through affordance (cards only get .cc-tap under redesign via cmd_render; legacy never renders them → byte-identical) */
 #pg-cmd .stat.cc-tap{cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .12s ease,filter .12s ease}
 #pg-cmd .stat.cc-tap:active{transform:scale(.97);filter:saturate(1.40) brightness(1.18)}
-#pg-cmd .nba{margin:0 16px 14px;filter:saturate(1.40);border:1px solid color-mix(in srgb,var(--violet) 42%,transparent);border-radius:16px;background:linear-gradient(160deg,#0a0c10,#040506 62%,#070a0d);box-shadow:inset 0 1px 0 rgba(205,235,245,.09),0 8px 20px -14px rgba(0,0,0,.85),inset 0 0 26px -4px color-mix(in srgb,var(--violet) 20%,transparent);padding:16px;position:relative}
+#pg-cmd .nba{margin:0 16px 14px;filter:saturate(1.40);border:1px solid color-mix(in srgb,var(--violet) 16%,transparent);border-radius:16px;background:linear-gradient(160deg,#0a0c10,#040506 62%,#070a0d);box-shadow:inset 0 1px 0 rgba(205,235,245,.09),0 8px 20px -14px rgba(0,0,0,.85);padding:16px;position:relative}
 #pg-cmd .nba .nlabel{font-family:var(--mono);font-size:12px;letter-spacing:3px;color:#b98bff}
 #pg-cmd .nba h2{font-size:23px;font-weight:700;margin:8px 0 6px;line-height:1.1}
 #pg-cmd .nba p{color:var(--slate);font-size:13px;line-height:1.4;margin:0 0 12px}
@@ -9181,6 +9181,7 @@ body.rd #ph-sheet.open {
 #pg-cmd .tile.hot{--tc:var(--cyan)}
 #pg-cmd .tile.hot-teal{--tc:var(--teal)}
 #pg-cmd .tile.hot-gold{--tc:var(--gold)}
+#pg-cmd .tile:not(.hot):not(.hot-teal):not(.hot-gold){box-shadow:inset 0 1px 0 rgba(205,235,245,.07),0 12px 26px -14px rgba(0,0,0,.9)}   /* v1.14.304 black-at-rest: resting telemetry tiles carry NO glow; only .hot/.hot-teal/.hot-gold (accent --tc) emit — glow only when it means something */
 #pg-cmd .tile .ey{font-family:var(--mono);font-size:9.5px;letter-spacing:2px;color:var(--slate);text-transform:uppercase;display:flex;align-items:center;gap:6px}
 #pg-cmd .tile .ey .led{width:5px;height:5px;border-radius:50%;background:var(--slate-dim);flex:0 0 auto}
 #pg-cmd .tile.hot .ey .led,#pg-cmd .tile.hot-teal .ey .led,#pg-cmd .tile.hot-gold .ey .led{background:var(--tc);box-shadow:0 0 6px var(--tc)}
@@ -11835,7 +11836,6 @@ body.rd #pg-cmd .lens {
       color-mix(in srgb, var(--cyan) 40%, transparent) 100%) border-box;
   box-shadow:
     0 8px 20px -14px rgba(0,0,0,.85),
-    inset 0 0 26px -4px color-mix(in srgb,var(--cyan) 14%,transparent),
     inset 0 2px 4px rgba(0,0,0,.6);
 }
 /* v1.14.292 one-emitter (Ship 4 call #2): hero .lens is the SOLE lit card on Command; .stat
@@ -12062,7 +12062,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.303';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.304';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
