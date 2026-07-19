@@ -2549,7 +2549,7 @@ Bugfix shipped AHEAD of FIX-2 and Ship 4 (John chat go, "recon it, B-02 first" �
 
 **VERIFIED LIVE (headless real-layout, desktop 1080):** ghost no longer intersects the verb row, headline, or subtext (`overlaps:false` on all three); verb-row vertical clearance is width-independent (~6px). Could NOT force the browser viewport below 1280 (`resize_window` was a no-op) → the 390 ghost-vs-subtext spacing is on the owner's device check. Gates: three-stamp `.285`→`.286` (dct-ios.html L12048 · sw.js L37 · version.json); CSS braces 11750/11750 balanced; CRLF preserved on dct-ios.html + sw.js (version.json normalized LF→CRLF by git, harmless — JSON, not served-critical). Pushed **823718c**; Pages serving `.286` confirmed.
 
-## OWNER GATE (iPhone) — `.286` B-02 is the one unverified ship in flight
+## OWNER GATE (iPhone) — ✅ `.286` B-02 DEVICE-VERIFIED by owner ("iphone is good") 2026-07-18. Ship CLEARED, nothing in flight.
 - [ ] Hard-refresh / clear the SW cache first (a plain reload serves cached `.285`; the badge reads **v1.14.286** when on new code).
 - [ ] Command → Active Shift hero: **SCAN / LOG / BLOCKER all VISIBLE in one row; BLOCKER not covered** by the ghost.
 - [ ] Tap **BLOCKER** → capture opens (was already tappable behind the art; now visible too).
