@@ -12034,7 +12034,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.298';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.299';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -48806,6 +48806,25 @@ var COMPASS_RAIL_PATTERNS = {
   ]
 };
 
+// ── N-06 Stage 0 (v1.14.299): the ONE shared U-span -> hole-positions source of truth ──
+// Symbolic (not inches): Compass / flat U-map / 3D each apply their own transform but agree on
+// WHICH holes exist and WHERE within a U. frac = fraction from the TOP of a U (matches CSS top:).
+// EIA_HOLE_FRAC keeps the compass 18/50/82 look canonical so the quality bar never shifts.
+var EIA_HOLE_FRAC = { top: 0.18, mid: 0.50, bot: 0.82 };
+function eia_holesForSpan(startU, spanU) {
+  var pat = COMPASS_RAIL_PATTERNS[spanU];
+  var cage = {};
+  if (pat) { for (var k = 0; k < pat.length; k++) cage[(startU + pat[k].uOffset) + '-' + pat[k].pos] = true; }
+  else { cage[startU + '-bot'] = true; cage[(startU + spanU - 1) + '-top'] = true; }
+  var out = [];
+  for (var u = startU; u <= startU + spanU - 1; u++) {
+    ['top', 'mid', 'bot'].forEach(function(pos) {
+      out.push({ u: u, pos: pos, frac: EIA_HOLE_FRAC[pos], key: u + '-' + pos, cage: !!cage[u + '-' + pos] });
+    });
+  }
+  return out;
+}
+
 // In-memory state. Synced to/from localStorage.
 var compassState = { startU: 14, chassisH: 4 };
 
@@ -48911,10 +48930,7 @@ function compass_render() {
 
   // Set of lit hole keys: e.g. "14-bot"
   var litSet = {};
-  for (var j = 0; j < pattern.length; j++) {
-    var u = startU + pattern[j].uOffset;
-    litSet[u + '-' + pattern[j].pos] = true;
-  }
+  eia_holesForSpan(startU, chassisH).forEach(function(h) { if (h.cage) litSet[h.key] = true; });
 
   var leftHtml  = '<div class="cn-rail-label">L · RAIL</div>';
   var rightHtml = '<div class="cn-rail-label">R · RAIL</div>';
