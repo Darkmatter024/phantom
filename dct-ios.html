@@ -12034,7 +12034,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.295';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.296';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -13042,7 +13042,7 @@ if (typeof window !== 'undefined') {
             <tr><td>100GbE</td><td>10 / 40 / 80km</td><td>LR4 / ER4 / ZR4</td></tr>
             <tr><td>400GbE</td><td>2 / 10km</td><td>DR4 / FR4 / LR4</td></tr>
             <tr><td>400GbE</td><td>80km+</td><td>ZR / ZR+ (coherent DWDM)</td></tr></table>
-            <div class="abar"><span class="ico ico-md ico-alert-red"></span> NEVER mix APC (green, 8° angle) + UPC (beige, flat) — ~60dB insertion loss. Link will not work.</div>
+            <div class="abar"><span class="ico ico-md ico-alert-red"></span> NEVER mix APC (green, 8° angle) + UPC (beige, flat) — the angled ferrule won't seat, so return loss collapses and the link fails.</div>
           </div>
         </div>
         <div class="card" onclick="toggleCard(this)">
@@ -13069,7 +13069,7 @@ if (typeof window !== 'undefined') {
             <table class="dt">
               <tr><th>Mistake</th><th>Symptom</th><th>Fix</th></tr>
               <tr><td>Flipped duplex (Tx→Tx)</td><td>No RX light, DOM shows –40dBm</td><td>Flip one end of duplex pair</td></tr>
-              <tr><td>APC into UPC port</td><td>High insertion loss, ~60dB</td><td>Match polish type — check ferrule color</td></tr>
+              <tr><td>APC into UPC port</td><td>Return loss destroyed; won&rsquo;t seat</td><td>Match polish type — check ferrule color</td></tr>
               <tr><td>Dirty end-face</td><td>Marginal Rx, FEC errors rising</td><td>Dry clean → inspect → wet/dry if needed</td></tr>
               <tr><td>Pull tab stuck</td><td>Can't extract — latch not releasing</td><td>Use LC tool or depress latch fully before pulling</td></tr>
               <tr><td>Bend radius violation</td><td>Intermittent signal, no obvious cause</td><td>Inspect routing — min bend radius 15× cable OD</td></tr>
@@ -13490,7 +13490,7 @@ if (typeof window !== 'undefined') {
               <tr><td>Polarity</td><td>Blue = UPC, Green = APC</td><td>Blue = UPC, Green = APC</td></tr>
             </table>
             <div class="sh">APC vs UPC on SC</div>
-            <div class="wbar"><span class="ico ico-md ico-warning"></span> NEVER connect SC-APC (green, 8° angled) to SC-UPC (blue, flat). The angled ferrule will not seat correctly and will cause ~60dB insertion loss. The link will not work and you risk scratching both ferrules.</div>
+            <div class="wbar"><span class="ico ico-md ico-warning"></span> NEVER connect SC-APC (green, 8° angled) to SC-UPC (blue, flat). The angled ferrule will not seat correctly, destroying return loss. The link will not work and you risk scratching both ferrules.</div>
             <div class="sh">Cleaning SC Connectors</div>
             <p>SC ferrules are 2.5mm — use 2.5mm cleaning tools, not 1.25mm LC tools. IEC 61300-3-35 zones apply identically. Zone A (core area) must be contamination-free.</p>
             <div class="sh">SC to LC Adapter</div>
@@ -16040,7 +16040,7 @@ const INDEX = [
   {cat:'FIBER',title:'OM4 Multimode reach table',snip:'10G/25G/40G/100G/400G max distances, magenta jacket',page:'fiber',ref:'rf-optics'},
   {cat:'FIBER',title:'OM5 Wideband Multimode SWDM',snip:'LC duplex at 100G+, lime green jacket, 150m',page:'fiber',ref:'rf-optics'},
   {cat:'FIBER',title:'OS2 Single-Mode SMF LR ER ZR',snip:'APC vs UPC warning — never mix. Yellow jacket.',page:'fiber',ref:'rf-optics'},
-  {cat:'FIBER',title:'APC vs UPC connectors',snip:'Never mix APC and UPC on same SMF link — 60dB loss',page:'fiber',ref:'rf-optics'},
+  {cat:'FIBER',title:'APC vs UPC connectors',snip:'Never mix APC and UPC on same SMF link — wrecks return loss',page:'fiber',ref:'rf-optics'},
   {cat:'FIBER',title:'QSFP-DD OSFP QSFP28 form factors',snip:'400G/800G form factors, lane counts, backward compat',page:'fiber',ref:'rf-optics'},
   {cat:'FIBER',title:'MPO polarity A B C methods',snip:'Method A straight, B flipped, C pair-flipped',page:'fiber',ref:'rf-optics'},
   {cat:'FIBER',title:'NDR InfiniBand NVLink 5.0 GB300',snip:'QSFP112/OSFP for NDR 400Gb/s, NVLink 5.0 in-chassis',page:'fiber',ref:'rf-optics'},
