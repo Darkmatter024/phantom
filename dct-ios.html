@@ -9193,7 +9193,7 @@ body.rd #ph-sheet.open {
 #rd-sub{display:none;font-family:var(--mono);font-size:11px;letter-spacing:3px;color:var(--slate);margin-top:7px}
 #rd-sub .site{color:var(--cyan)}
 #rd-sub .site.warn{color:var(--gold)}
-#rd-botnav{display:none;overflow:hidden;position:fixed;left:0;right:0;bottom:0;z-index:40;background:linear-gradient(180deg,rgba(10,16,24,0.96),rgba(4,7,11,0.99));border-top:1px solid rgba(92,242,255,0.14);gap:6px;padding:8px 10px calc(10px + var(--safe-bottom));transform:translateZ(0)}   /* v1.14.287 FIX-2 (B-01/H2): own GPU layer so the fixed nav stays ABOVE the iOS -webkit-overflow-scrolling:touch #pg-ref scroller (it was painting under scrolled content = dead nav from Crash Cart; top-of-scroll revived it) */
+#rd-botnav{display:none;overflow:hidden;position:fixed;left:0;right:0;bottom:0;z-index:40;background:linear-gradient(180deg,rgba(10,16,24,1),rgba(4,7,11,1));border-top:1px solid rgba(92,242,255,0.14);gap:6px;padding:8px 10px calc(10px + var(--safe-bottom));transform:translateZ(0)}   /* v1.14.287 FIX-2 (B-01/H2): own GPU layer so the fixed nav stays ABOVE the iOS -webkit-overflow-scrolling:touch #pg-ref scroller (it was painting under scrolled content = dead nav from Crash Cart; top-of-scroll revived it) */
 /* v1.14.159 C1 Reactor Rail — pure-type nav, sliding core underline (no images). */
 #bn-core{position:absolute;top:0;height:3px;width:33.333%;left:0;transition:left .38s cubic-bezier(.3,.8,.3,1);background:linear-gradient(90deg,transparent 8%,var(--cyan) 50%,transparent 92%);box-shadow:0 0 16px var(--cyan),0 2px 24px rgba(40,224,255,.35);pointer-events:none}
 #bn-core::after{content:'';position:absolute;inset:-1px 30%;background:#eaffff;filter:blur(3px);opacity:.8}
@@ -12034,7 +12034,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.296';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.297';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -12682,7 +12682,7 @@ if (typeof window !== 'undefined') {
   <div id="mode-toggle" class="subtab-strip" style="display:none;position:relative;z-index:60;margin-bottom:10px">
     <div class="stab active" id="mode-command" onclick="showMode('command')">Command</div>
     <div class="stab" id="mode-work" onclick="showMode('work')">Work</div>
-    <div class="stab" id="mode-ref" onclick="showMode('ref')">Ref</div>
+    <div class="stab" id="mode-ref" onclick="showMode('ref')">Crash Cart</div>
   </div>
 
   <!-- Pages -->
