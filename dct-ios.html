@@ -12062,7 +12062,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.304';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.305';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -17933,7 +17933,7 @@ function ref_filterCards(q) {
     c.classList.toggle('rf-hidden', !hit);
     if (hit) shown++;
   }
-  if (nr) nr.hidden = (shown === 0);
+  if (nr) nr.hidden = (shown !== 0);
 }
 function ref_showGrid() {
   var pr = document.getElementById('pg-ref'); if (pr) pr.classList.add('rf-grid');
