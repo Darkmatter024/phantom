@@ -12071,7 +12071,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.292';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.293';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -12758,16 +12758,7 @@ if (typeof window !== 'undefined') {
         <div class="tile" id="tt-scan" role="button" tabindex="0" onclick="cmd_route('work','scan')" aria-label="Scan count — tap to open Scan"><span class="ey"><span class="led"></span>Scanned</span><span class="val" id="tt-scan-val">—</span><span class="sub" id="tt-scan-sub"></span></div>
         <div class="tile" id="tt-handoff" role="button" tabindex="0" onclick="cmd_route('work','handoff')" aria-label="Handoff status — tap to open Handoff"><span class="ey"><span class="led"></span>Handoff</span><span class="val" id="tt-handoff-val">—</span><span class="sub" id="tt-handoff-sub"></span></div>
       </div>
-      <div class="askrow">
-        <button class="apill" onclick="openVaSheet('intent')" aria-label="Ask PHANTOM for assistance">
-          <span class="av"><img class="ico-photoreal icon-glow" src="icons/phantom-ui-assistant-v2-256.webp" alt="" height="62"></span>
-          <div>
-            <div class="ey">ASK PHANTOM</div>
-            <h3>Ask for assistance</h3>
-          </div>
-        </button>
-        <div class="rpill" aria-hidden="true"><b>&mdash;</b><span>RESERVED</span></div>
-      </div>
+      <!-- v1.14.293 (Ship 4 call #3): askrow RETIRED (Ask tile + reserved slot removed) per owner ruling. SCAN-ID dropped - it would duplicate the hero SCAN verb (both open ScanDispatch, which already auto-captures asset/serial). "Ask PHANTOM" stays reachable via the qa-voice button + command palette. Dead .askrow/.apill(+children)/.rpill CSS (base ~L9164-9178, desktop media ~L9804-9826, body.rd .apill override, .apill.ls-pill) tombstoned for the CLEAN window. -->
       <div class="sig-h">OPS SIGNAL</div>
       <div id="cc-sig"></div>
     </div>
