@@ -9256,18 +9256,16 @@ body.rd #ph-sheet.open {
 
 /* ── v1.14.315 — HOLD-TO-EXIT (freeze & wake). Redesign-only (body.rd); ?legacy byte-identical.
    #bn-rail wraps the reactor rail + 3 botitems so #bn-core keeps its thirds-of-the-wrapper % math
-   (rail JS untouched) while #rd-exit is a SET-APART gold hold-target beside them (no rail participation,
-   never a landable tab). #rd-exit + charge = handoff verbatim; curtain + wake-ring authored (no prototype). */
+   (rail JS untouched) while #rd-exit sits set-apart beside them (never a landable tab). v1.14.316: #rd-exit MATCHES
+   the nav items — reuses the nav's .blabel/.btick (dim slate Orbitron, no gold pill), lighting gold only
+   as it arms. Curtain + wake-ring authored (no prototype). */
 body.rd #bn-rail{position:relative;flex:1;display:flex}
-body.rd #rd-exit{position:relative;min-width:88px;min-height:56px;margin-left:6px;
-  border:1px solid rgba(244,196,48,.34);border-radius:14px;background:rgba(244,196,48,.05);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
-  overflow:hidden;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;cursor:pointer}
-body.rd #rd-exit .rd-exit-lbl{font-family:var(--mono);font-weight:700;letter-spacing:.18em;font-size:12px;color:var(--gold);z-index:2}
-body.rd #rd-exit .rd-exit-sub{font-family:var(--mono);font-size:8.5px;letter-spacing:.14em;color:rgba(244,196,48,.6);z-index:2}
-body.rd #rd-exit .rd-exit-charge{position:absolute;inset:0;background:rgba(244,196,48,.22);transform:scaleX(0);transform-origin:left;z-index:1}
+body.rd #rd-exit{position:relative;min-width:64px;min-height:56px;margin-left:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:10px 4px;border:none;background:none;border-radius:0;overflow:hidden;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;cursor:pointer}
+/* At rest the .blabel/.btick inside #rd-exit inherit the exact nav-item look (#rd-botnav .blabel/.btick) — dim slate Orbitron, matching COMMAND/WORK/CRASH CART. The HOLD action shows only on touch: label + tick light GOLD (gold = exit/attention, distinct from the cyan tab-active) and a bottom charge bar fills over .85s. */
+body.rd #rd-exit.arming .blabel{color:var(--gold);letter-spacing:4.2px;text-shadow:0 0 14px rgba(244,196,48,.55)}
+body.rd #rd-exit.arming .btick{width:26px;background:var(--gold);box-shadow:0 0 8px var(--gold)}
+body.rd #rd-exit .rd-exit-charge{position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--gold);transform:scaleX(0);transform-origin:left;z-index:1;box-shadow:0 0 8px rgba(244,196,48,.6)}
 body.rd #rd-exit.arming .rd-exit-charge{transition:transform .85s linear;transform:scaleX(1)}
-body.rd #rd-exit.arming{box-shadow:0 0 22px rgba(244,196,48,.4),inset 0 0 20px rgba(244,196,48,.12)}
 /* Freeze curtain — full-screen black sleep overlay + hold-to-wake charge ring (authored). */
 #rd-freeze-curtain{position:fixed;inset:0;z-index:100000;display:none;flex-direction:column;align-items:center;justify-content:center;gap:26px;background:radial-gradient(circle at 50% 42%,#05070b,#000 72%);-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
 #rd-freeze-curtain.up{display:flex}
@@ -12130,7 +12128,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.315';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.316';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -15317,8 +15315,8 @@ if (typeof window !== 'undefined') {
       <div class="botitem" id="bn-ref" role="button" tabindex="0" onclick="showMode('ref')" aria-label="Crash Cart"><span class="blabel">Crash Cart</span><span class="btick"></span></div>
     </div>
     <div id="rd-exit" role="button" aria-label="Hold to exit and freeze the app" tabindex="0">
-      <div class="rd-exit-charge"></div>
-      <div class="rd-exit-lbl">EXIT</div><div class="rd-exit-sub">HOLD</div>
+      <span class="rd-exit-charge"></span>
+      <span class="blabel">Exit</span><span class="btick"></span>
     </div>
   </div>
   <!-- v1.14.315 Hold-to-Exit freeze curtain (redesign-only; hidden until rd_freeze raises .up) -->
