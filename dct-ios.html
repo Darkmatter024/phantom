@@ -8818,6 +8818,43 @@ body.rd #ref-grid .rf-card .rf-cmeta, body.rd #work-grid .rf-card .rf-cmeta, bod
 body.rd #ref-grid .rf-card:active, body.rd #work-grid .rf-card:active, body.rd .deploy-tools-grid .rf-card:active { border-color:color-mix(in srgb, var(--rfac) 85%, white 8%); box-shadow:inset 0 1px 0 rgba(255,255,255,.08), inset 0 0 40px -6px color-mix(in srgb, var(--rfac) 30%, transparent), 0 0 20px -1px color-mix(in srgb, var(--rfac) 55%, transparent), 0 0 46px -6px color-mix(in srgb, var(--rfac) 30%, transparent), 0 18px 40px -16px rgba(0,0,0,.9); }
 body.rd #ref-grid .rf-card:active .rf-i-img, body.rd #work-grid .rf-card:active .rf-i-img, body.rd .deploy-tools-grid .rf-card:active .rf-i-img { opacity:1; filter:saturate(1.1) drop-shadow(0 0 12px color-mix(in srgb, var(--rfac) 85%, transparent)) drop-shadow(0 4px 12px rgba(0,0,0,.5)); }
 @keyframes rfCardSweep { 0%,68%{ transform:translateX(-120%); } 100%{ transform:translateX(120%); } }
+/* ── N-11 (v1.14.312) — Work Active-Workspace: job/resume hero + idle-dark library.
+   Redesign-only (body.rd / #pg-work); ?legacy=1 byte-identical (#work-grid is display:none in legacy,
+   and every selector below is body.rd-scoped). The hero mirrors the NOW ACTIVE BUILD card's material so
+   "active build" reads the same in both houses. */
+body.rd #wk-job-host { display:block; margin:0 2px 14px; }
+body.rd #wk-job-host:empty { display:none; }
+.wk-job { position:relative; overflow:hidden; border-radius:var(--hud-r12); }
+.wk-job-live {
+  padding:14px 16px 12px 18px; cursor:pointer;
+  border:1px solid rgba(92,242,255,0.35);
+  background:
+    radial-gradient(circle at 15% 0%, rgba(92,242,255,0.12), transparent 42%),
+    linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px) 0 0/24px 24px,
+    linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px) 0 0/24px 24px,
+    linear-gradient(135deg, rgba(92,242,255,0.10), rgba(92,242,255,0.02));
+  -webkit-tap-highlight-color:transparent;
+}
+.wk-job-live:active { border-color:rgba(92,242,255,0.60); }
+.wk-job-rail { position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--cyan); box-shadow:0 0 12px var(--cyan-glow); }
+.wk-job-top { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+.wk-job-eyebrow { font-family:var(--orb); font-size:var(--fs-micro); letter-spacing:3px; color:var(--cyan); }
+.wk-job-ln { flex:1; height:1px; background:rgba(92,242,255,0.18); }
+.wk-job-cta { font-family:var(--mono); font-size:var(--fs-micro); color:var(--slate); letter-spacing:1.5px; }
+.wk-job-name { font-family:var(--raj); font-weight:700; font-size:16px; color:var(--white); margin-bottom:4px; }
+.wk-job-rack { font-family:var(--mono); font-size:var(--fs-caption); color:var(--cyan); letter-spacing:1px; margin-bottom:6px; }
+.wk-job-meta { font-family:var(--mono); font-size:var(--fs-caption); color:var(--slate); letter-spacing:1px; }
+.wk-job-blk { color:#ff2bd6; }
+/* Quiet honest empty strip — no cyan, no compete; the full library sits right below. */
+.wk-job-empty { padding:11px 16px; border:1px solid rgba(120,140,165,0.14); background:rgba(120,140,165,0.04); }
+.wk-job-empty .wk-job-eyebrow { color:var(--slate); font-family:var(--mono); letter-spacing:2px; }
+.wk-job-emptyline { font-family:var(--raj); font-size:var(--fs-caption); color:var(--slate); margin-top:4px; }
+/* Idle-dark the 12 FIELD WORK library cards ONLY when a job hero is present, so the hero is the sole
+   lit surface. No job -> no .wk-hasjob -> library renders full-bright (device-verified look untouched).
+   Lights back to full on press/focus so the gloved tap still gets its punch. */
+body.rd #pg-work.wk-hasjob #work-grid .rf-grid-wrap .rf-card { opacity:.56; filter:saturate(.72); transition:opacity .18s ease, filter .18s ease; }
+body.rd #pg-work.wk-hasjob #work-grid .rf-grid-wrap .rf-card:active,
+body.rd #pg-work.wk-hasjob #work-grid .rf-grid-wrap .rf-card:focus-within { opacity:1; filter:none; }
 @media (prefers-reduced-motion:reduce) { body.rd #ref-grid .rf-card::before, body.rd #work-grid .rf-card::before, body.rd .deploy-tools-grid .rf-card::before { animation:none; opacity:.10; transform:translateX(-30%); } }
 #ref-back { align-items:center; gap:12px; margin:4px 0 12px; }
 .rf-back-btn { position:relative; width:56px; height:56px; border:0; background:none; display:grid; place-items:center; cursor:pointer; flex:0 0 auto; color:var(--slate-readable,#8ea3c4); -webkit-tap-highlight-color:transparent; }   /* Rule A (v1.14.124): 56px hit target kept for gloves. v1.14.212 (adopt web-Claude .204 opt-4 small-soft-square, fleet-wide): visible chrome shrunk to a 34px chip via ::before so BACK stops out-weighing header actions; icon slate, lights cyan on press. */
@@ -12063,7 +12100,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.311';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.312';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -12768,6 +12805,7 @@ if (typeof window !== 'undefined') {
         <span class="rf-back-title" id="work-back-title">Workspace</span>
       </div>
       <div id="work-grid">
+        <div id="wk-job-host" aria-live="polite"></div>
         <div class="rf-glabel"><span class="dot"></span>FIELD WORK<span class="ln"></span></div>
         <div class="rf-grid-wrap">
           <div class="rf-card" style="--rfac:#28e0ff" role="button" tabindex="0" onclick="deploy_quick()" aria-label="Deploy"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-action-deploy-upload-256.webp" alt="" loading="eager"></div><div class="rf-cname">DEPLOY</div><div class="rf-cmeta">Build · seed · rack</div></div>
@@ -17863,7 +17901,7 @@ function showMode(mode) {
   if (mode === 'ref') { var _cf = document.getElementById('ref-cardfilter'); if (_cf) _cf.value = ''; if (typeof ref_filterCards === 'function') ref_filterCards(''); }
   // v1.14.105: entering Work via the bottom nav lands on the card-grid landing.
   // showWorkTab() (card taps / Command launcher deep-links) removes wk-grid to drill in.
-  if (mode === 'work') { var _pw = document.getElementById('pg-work'); if (_pw) _pw.classList.add('wk-grid'); }
+  if (mode === 'work') { var _pw = document.getElementById('pg-work'); if (_pw) _pw.classList.add('wk-grid'); if (typeof wk_renderJob === 'function') wk_renderJob(); }
   if (mode !== 'ref') {
     var _s = document.getElementById('srch');
     if (_s) _s.value = '';
@@ -19239,7 +19277,91 @@ function showWorkTab(target) {
 }
 // v1.14.105 — Work card-grid helpers (mirror the Ref grid). wk_showGrid() returns to the landing.
 function wk_setBackTitle(t) { var e = document.getElementById('work-back-title'); if (e) e.textContent = t || 'Workspace'; }
-function wk_showGrid() { var pr = document.getElementById('pg-work'); if (pr) pr.classList.add('wk-grid'); }
+function wk_showGrid() { var pr = document.getElementById('pg-work'); if (pr) pr.classList.add('wk-grid'); if (typeof wk_renderJob === 'function') wk_renderJob(); }
+// ── N-11 (v1.14.312) — Work's ONE emitter: a stateful job/resume hero above the FIELD WORK library.
+// Resolved from the SAME shared sources as the NOW ACTIVE BUILD hero (nowtab_resolveDep +
+// deploy_computeDeployRollup + activeContext_get) so the two can never contradict. Zero fabrication:
+// rack line only when activeContext's rack belongs to THIS deployment; null deployment -> a quiet honest
+// empty strip and the 12 library cards stay full-bright. When a job exists, #pg-work gets .wk-hasjob,
+// which idle-darks the library (CSS) so the hero is the sole lit surface. DEFERRED to later N-*: recents
+// (no tool-MRU exists), 3-bucket categorization, phase stepper (N-12).
+function wk_renderJob() {
+  // Redesign-only: never mutate the legacy DOM (?legacy=1 stays byte-identical).
+  if (typeof redesign_isOn === 'function' && !redesign_isOn()) return;
+  var host = document.getElementById('wk-job-host');
+  if (!host) return;
+  var pw = document.getElementById('pg-work');
+
+  var dep = (typeof nowtab_resolveDep === 'function') ? nowtab_resolveDep() : null;
+
+  // Empty state — no active/paused deployment. Quiet + honest; library stays full-bright (NO .wk-hasjob).
+  // Scoping keeps its ONE door (Command guided path / the Deploy card right below) — no parallel CTA here.
+  if (!dep) {
+    if (pw) pw.classList.remove('wk-hasjob');
+    host.innerHTML =
+      '<div class="wk-job wk-job-empty">' +
+        '<div class="wk-job-eyebrow">NO ACTIVE BUILD</div>' +
+        '<div class="wk-job-emptyline">Scope a job — your resume card appears here.</div>' +
+      '</div>';
+    return;
+  }
+
+  // Active build — mirror the device-verified NOW ACTIVE BUILD hero exactly (same rollup, same guards).
+  var rollup = null;
+  try { rollup = deploy_computeDeployRollup(dep.id); } catch (e) { if (typeof phantom_logErr === 'function') phantom_logErr('wk_renderJob:rollup', e); }
+
+  var totalRacks = 0, racksComplete = 0, racksInProg = 0, racksBlocked = 0, pct = 0, phaseName = '';
+  if (rollup) {
+    totalRacks    = rollup.racks ? rollup.racks.length : 0;
+    racksComplete = rollup.racksComplete || 0;
+    racksInProg   = rollup.racksInProg || 0;
+    racksBlocked  = rollup.racksBlocked || 0;
+    pct           = rollup.pctOverall || 0;
+    var _le = rollup.leadingEdge;
+    if (_le) phaseName = (typeof DEPLOY_PHASE_LABELS_FULL !== 'undefined' && DEPLOY_PHASE_LABELS_FULL[_le]) || _le;
+  }
+
+  // Rack-level resume ONLY when activeContext's rack belongs to THIS deployment (same guard as the NOW
+  // hero). A freshly-scoped build (0%, no in-context rack) points at its FIRST rack so the next tap STARTS
+  // the build. Otherwise resume the deployment's own detail screen (deploy_showDetail — the proven NOW-hero
+  // fallback; deploy_showCommandCenter takes a container, not a deployment, so it is NOT the resume door).
+  var _ac = (typeof activeContext_get === 'function') ? activeContext_get() : null;
+  var jobRack = (_ac && _ac.rack && _ac.deployment && _ac.deployment.id === dep.id) ? _ac.rack : null;
+  var jobStart = false;
+  if (!jobRack && pct === 0 && totalRacks > 0) {
+    try { var _fr = deploy_loadRacks(dep.id); if (_fr && _fr.length) { jobRack = _fr[0]; jobStart = true; } } catch (_) {}
+  }
+  var jobRackLabel = jobRack ? (jobRack.rackId || jobRack.name || jobRack.id || '?') : '';
+  var jobAction = jobRack
+    ? "deploy_showRackDetail('" + dep.id + "','" + jobRack.id + "')"
+    : "deploy_showDetail('" + dep.id + "')";
+
+  var siteLabel = dep.siteId ? dep.siteId : (typeof phantom_siteLabel === 'function' ? phantom_siteLabel('SITE') : 'SITE');
+
+  // role=button + tabindex=0 + onclick mirrors the 12 sibling .rf-card cards' exact a11y contract
+  // (they carry no onkeydown; a nested-quote inline handler would only add escaping risk here).
+  var h = '';
+  h += '<div class="wk-job wk-job-live" role="button" tabindex="0" onclick="' + jobAction + '"' +
+       ' aria-label="Resume active build ' + escHtml(dep.name || 'deployment') + '">';
+  h += '<span class="wk-job-rail"></span>';
+  h += '<div class="wk-job-top">';
+  h += '<span class="wk-job-eyebrow">▼ ACTIVE BUILD</span>';
+  h += '<span class="wk-job-ln"></span>';
+  h += '<span class="wk-job-cta">' + (jobStart ? 'START BUILD →' : 'TAP TO RESUME →') + '</span>';
+  h += '</div>';
+  h += '<div class="wk-job-name">' + escHtml(dep.name || 'Unnamed') + '</div>';
+  if (jobRack) {
+    h += '<div class="wk-job-rack">' + (jobStart ? 'START RACK ' : 'RACK ') + escHtml(jobRackLabel) + (jobRack.platform ? ' · ' + escHtml(jobRack.platform) : '') + '</div>';
+  }
+  h += '<div class="wk-job-meta">' + escHtml(siteLabel) + ' · ' + totalRacks + ' racks · ' + racksComplete + ' done · ' + racksInProg + ' active' +
+       (racksBlocked > 0 ? ' · <span class="wk-job-blk">' + racksBlocked + ' blocked</span>' : '') +
+       ' · ' + pct + '%' + (phaseName ? ' · ' + escHtml(phaseName) : '') + '</div>';
+  h += '</div>';
+
+  host.innerHTML = h;
+  if (pw) pw.classList.add('wk-hasjob');
+}
+window.wk_renderJob = wk_renderJob;
 // redesign_homeKnow(): re-parent the live Runbook/ops-knowledge node (#pw-rb) out
 // of pg-power into Reference→Know (#rf-know). Re-parenting (not copying) keeps all
 // markup, handlers, and the pwr-sub responsive grid intact — §1 re-home-don't-
