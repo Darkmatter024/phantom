@@ -59,6 +59,7 @@
   /* primitive brand colors */
   --cyan:  #5cf2ff;
   --gold:  #ffd60a;
+  --teal:  #1fffd0;  /* v1.14.311: channel 'complete'; was UNDEFINED on :root (lived only in #boot/#forge3d-sheet) so var(--teal) in #pg-cmd .tile.hot-teal + the SHARED card was invalid -> glass housing collapsed once a scan ran. Design-Law-5 value. */
   --red:   #ff453a;  /* unified: matches --hud-red */
 
   --cyan2:      #00bcd4;
@@ -9157,7 +9158,7 @@ body.rd #ph-sheet.open {
 #pg-cmd .stat.zero .n{color:var(--slate-dim)}
 /* v1.14.225 — Command Lens tap-through affordance (cards only get .cc-tap under redesign via cmd_render; legacy never renders them → byte-identical) */
 #pg-cmd .stat.cc-tap{cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .12s ease,filter .12s ease}
-#pg-cmd .stat.cc-tap:active{transform:scale(.97);filter:none brightness(1.18)}
+#pg-cmd .stat.cc-tap:active{transform:scale(.97);filter:brightness(1.18)}
 #pg-cmd .nba{margin:0 16px 14px;filter:none;border:1px solid color-mix(in srgb,var(--violet) 16%,transparent);border-radius:16px;background:linear-gradient(158deg,#050506 0%,#010102 46%,#000000 76%,#030304 100%);box-shadow:inset 0 1px 0 rgba(210,234,244,.14),0 8px 20px -14px rgba(0,0,0,.85);padding:16px;position:relative}
 #pg-cmd .nba .nlabel{font-family:var(--mono);font-size:12px;letter-spacing:3px;color:#b98bff}
 #pg-cmd .nba h2{font-size:23px;font-weight:700;margin:8px 0 6px;line-height:1.1}
@@ -12062,7 +12063,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.310';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.311';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
