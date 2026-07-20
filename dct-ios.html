@@ -9262,6 +9262,7 @@ body.rd #ph-sheet.open {
 body.rd #bn-rail{position:relative;flex:1;display:flex}
 body.rd #rd-exit{position:relative;min-width:64px;min-height:56px;margin-left:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:10px 4px;border:none;background:none;border-radius:0;overflow:hidden;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;cursor:pointer}
 /* At rest the .blabel/.btick inside #rd-exit inherit the exact nav-item look (#rd-botnav .blabel/.btick) — dim slate Orbitron, matching COMMAND/WORK/CRASH CART. The HOLD action shows only on touch: label + tick light GOLD (gold = exit/attention, distinct from the cyan tab-active) and a bottom charge bar fills over .85s. */
+body.rd #rd-exit .blabel{color:#ff5a4d;text-shadow:0 0 7px rgba(255,69,58,.85),0 0 16px rgba(255,69,58,.5)}   /* v1.14.317 — red glow on the EXIT letters (owner request). NOTE: red is off the ratified rd palette (the house danger channel is magenta #ff2bd6); kept as an explicit owner exception for the exit control. The .arming gold override still wins on hold. */
 body.rd #rd-exit.arming .blabel{color:var(--gold);letter-spacing:4.2px;text-shadow:0 0 14px rgba(244,196,48,.55)}
 body.rd #rd-exit.arming .btick{width:26px;background:var(--gold);box-shadow:0 0 8px var(--gold)}
 body.rd #rd-exit .rd-exit-charge{position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--gold);transform:scaleX(0);transform-origin:left;z-index:1;box-shadow:0 0 8px rgba(244,196,48,.6)}
@@ -12128,7 +12129,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.316';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.317';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
