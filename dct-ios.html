@@ -9855,6 +9855,31 @@ body.rd #rd-botnav{display:flex}
   }
 }
 
+/* ── v1.14.313 — PHONE<->LAPTOP PARITY: one phone-width (390px) column on every viewport
+   (Instagram-on-desktop). Redesign-only (body.rd); ?legacy=1 byte-identical. Two parts:
+   (1) BASE cap: main.main (the position:relative host of the absolute .page layers) capped + centered
+       to a 390px column. INERT on a real phone (a 390 viewport capped to 390 = no-op); only narrows
+       wider viewports. 390 = the app design/verify width ("mock the phone first — 390 before 1080").
+   (2) NEUTRALIZER @media(min-width:640): re-asserts the PHONE grid + gutters so the 6 desktop
+       breakpoints ABOVE (card grids 2->3->4 col, .page desktop padding at 768/1024/1400, the .278
+       Command-column gutter-zero at 980) cannot restructure inside the 390 column. Placed AFTER every
+       desktop breakpoint so equal-specificity source order wins — NO !important, NO edits to those
+       blocks (fully additive / revert = delete this block). Fixes the Command ghost as a side effect:
+       at phone width #cc-ghost lands in the hero right gutter instead of being covered by the wide hero.
+   NOTE: fixed overlays (#rd-*-sheet, #forge3d-sheet) and the .app-header stay full-width by design here
+   — only the content column + bottom nav are capped (the parity + ghost target). */
+body.rd main.main { width: 100%; max-width: 390px; margin-left: auto; margin-right: auto; }   /* width:100% gives the flex item a definite cross-size so max-width caps it to 390 — without it, auto margins disable the default stretch and its absolute-only children collapse it to width 0 */
+@media (min-width: 640px) {
+  body.rd #rd-botnav { max-width: 390px; margin-inline: auto; }
+  body.rd .rf-grid-wrap { grid-template-columns: 1fr 1fr; gap: 14px; }
+  body.rd #work-grid, body.rd #ref-grid { max-width: 390px; }
+  body.rd .page { padding-left: calc(var(--safe-left) + 14px); padding-right: calc(var(--safe-right) + 14px); }
+  body.rd #pg-cmd .statusrow { padding-left: 16px; padding-right: 16px; gap: 8px; }
+  body.rd #pg-cmd .stats { padding-left: 16px; padding-right: 16px; gap: 10px; }
+  body.rd #pg-cmd .trow { padding-left: 16px; padding-right: 16px; gap: 10px; }
+  body.rd #pg-cmd .sig-h { padding-left: 16px; padding-right: 16px; }
+}
+
 /* ─── 42U Scrub-Bar ─── */
 .scrubbar-host { position: relative; display: flex; gap: 14px; margin: 14px 0 16px; }
 .scrubbar-main { flex: 1; min-width: 0; }
@@ -12100,7 +12125,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.312';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.313';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
