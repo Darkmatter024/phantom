@@ -9253,6 +9253,33 @@ body.rd #ph-sheet.open {
 #rd-botnav .botitem.active .blabel{color:#f2fbff;letter-spacing:4.2px;text-shadow:0 0 14px rgba(40,224,255,.55)}
 #rd-botnav .botitem.active .btick{width:26px;background:var(--cyan);box-shadow:0 0 8px var(--cyan)}
 @media (prefers-reduced-motion:reduce){#bn-core{transition:none}}
+
+/* ── v1.14.315 — HOLD-TO-EXIT (freeze & wake). Redesign-only (body.rd); ?legacy byte-identical.
+   #bn-rail wraps the reactor rail + 3 botitems so #bn-core keeps its thirds-of-the-wrapper % math
+   (rail JS untouched) while #rd-exit is a SET-APART gold hold-target beside them (no rail participation,
+   never a landable tab). #rd-exit + charge = handoff verbatim; curtain + wake-ring authored (no prototype). */
+body.rd #bn-rail{position:relative;flex:1;display:flex}
+body.rd #rd-exit{position:relative;min-width:88px;min-height:56px;margin-left:6px;
+  border:1px solid rgba(244,196,48,.34);border-radius:14px;background:rgba(244,196,48,.05);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  overflow:hidden;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;cursor:pointer}
+body.rd #rd-exit .rd-exit-lbl{font-family:var(--mono);font-weight:700;letter-spacing:.18em;font-size:12px;color:var(--gold);z-index:2}
+body.rd #rd-exit .rd-exit-sub{font-family:var(--mono);font-size:8.5px;letter-spacing:.14em;color:rgba(244,196,48,.6);z-index:2}
+body.rd #rd-exit .rd-exit-charge{position:absolute;inset:0;background:rgba(244,196,48,.22);transform:scaleX(0);transform-origin:left;z-index:1}
+body.rd #rd-exit.arming .rd-exit-charge{transition:transform .85s linear;transform:scaleX(1)}
+body.rd #rd-exit.arming{box-shadow:0 0 22px rgba(244,196,48,.4),inset 0 0 20px rgba(244,196,48,.12)}
+/* Freeze curtain — full-screen black sleep overlay + hold-to-wake charge ring (authored). */
+#rd-freeze-curtain{position:fixed;inset:0;z-index:100000;display:none;flex-direction:column;align-items:center;justify-content:center;gap:26px;background:radial-gradient(circle at 50% 42%,#05070b,#000 72%);-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+#rd-freeze-curtain.up{display:flex}
+#rd-freeze-curtain .rd-frozen{font-family:var(--orb,monospace);font-size:13px;letter-spacing:.42em;color:rgba(150,175,200,.55);text-transform:uppercase}
+#rd-freeze-curtain .rd-saved{font-family:var(--mono),monospace;font-size:11px;letter-spacing:.14em;color:rgba(61,220,132,.72)}
+#rd-wake{position:relative;width:150px;height:150px;display:grid;place-items:center;cursor:pointer}
+#rd-wake svg{position:absolute;inset:0;width:150px;height:150px;transform:rotate(-90deg)}
+#rd-wake circle{fill:none;cx:75;cy:75}
+#rd-wake .rd-wtrack{stroke:rgba(244,196,48,.20);stroke-width:3}
+#rd-wake .rd-wring{stroke:var(--gold);stroke-width:3;stroke-linecap:round;stroke-dasharray:452;stroke-dashoffset:452}
+#rd-wake.arming .rd-wring{transition:stroke-dashoffset .85s linear;stroke-dashoffset:0}
+#rd-wake .rd-wlbl{font-family:var(--mono);font-weight:700;font-size:12px;letter-spacing:.16em;color:var(--gold);text-align:center;line-height:1.3;z-index:2}
 body.rd .app-logo,body.rd .app-loc,body.rd #mode-toggle,body.rd .tab-nav{display:none}
 /* Rule A (v1.14.122) — one back control per surface. The legacy header chevron (#nav-back-btn,
    nav_back/history.back) is hidden in the New UI: the redesign provides its own context-back on
@@ -12103,7 +12130,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.314';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.315';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -15283,10 +15310,25 @@ if (typeof window !== 'undefined') {
   <!-- ━━━ REDESIGN BOTTOM NAV (Command · Work · Crash Cart) — shown only under body.rd;
        replaces the top mode-toggle as the redesign primary nav. ━━━ -->
   <div class="botnav" id="rd-botnav">
-    <span id="bn-core" aria-hidden="true"></span>
-    <div class="botitem active" id="bn-command" role="button" tabindex="0" onclick="showMode('command')" aria-label="Command"><span class="blabel">Command</span><span class="btick"></span></div>
-    <div class="botitem" id="bn-work" role="button" tabindex="0" onclick="showMode('work')" aria-label="Work"><span class="blabel">Work</span><span class="btick"></span></div>
-    <div class="botitem" id="bn-ref" role="button" tabindex="0" onclick="showMode('ref')" aria-label="Crash Cart"><span class="blabel">Crash Cart</span><span class="btick"></span></div>
+    <div id="bn-rail">
+      <span id="bn-core" aria-hidden="true"></span>
+      <div class="botitem active" id="bn-command" role="button" tabindex="0" onclick="showMode('command')" aria-label="Command"><span class="blabel">Command</span><span class="btick"></span></div>
+      <div class="botitem" id="bn-work" role="button" tabindex="0" onclick="showMode('work')" aria-label="Work"><span class="blabel">Work</span><span class="btick"></span></div>
+      <div class="botitem" id="bn-ref" role="button" tabindex="0" onclick="showMode('ref')" aria-label="Crash Cart"><span class="blabel">Crash Cart</span><span class="btick"></span></div>
+    </div>
+    <div id="rd-exit" role="button" aria-label="Hold to exit and freeze the app" tabindex="0">
+      <div class="rd-exit-charge"></div>
+      <div class="rd-exit-lbl">EXIT</div><div class="rd-exit-sub">HOLD</div>
+    </div>
+  </div>
+  <!-- v1.14.315 Hold-to-Exit freeze curtain (redesign-only; hidden until rd_freeze raises .up) -->
+  <div id="rd-freeze-curtain" aria-hidden="true">
+    <div class="rd-frozen">PHANTOM · FROZEN</div>
+    <div id="rd-wake" role="button" aria-label="Hold to wake" tabindex="0">
+      <svg viewBox="0 0 150 150"><circle class="rd-wtrack" cx="75" cy="75" r="72"/><circle class="rd-wring" cx="75" cy="75" r="72"/></svg>
+      <div class="rd-wlbl">HOLD<br>TO WAKE</div>
+    </div>
+    <div class="rd-saved">shift state saved · nothing lost</div>
   </div>
 
   <nav class="tab-nav">
@@ -17852,6 +17894,62 @@ function _session_startFresh() {
   } else {
     setTimeout(restore, 700);
   }
+})();
+
+// ── v1.14.315 — HOLD-TO-EXIT (freeze & wake). Redesign-only. A PWA cannot force-quit iOS, so
+// "exit" = freeze to a black sleep curtain + guaranteed state save (reversible), never a real close.
+// Hold EXIT ~850ms -> freeze (data already persists continuously; we stamp only the VIEW to return to).
+// Hold the WAKE ring -> restore. Early release = cancel (nothing happens).
+const RD_HOLD_MS = 850;
+function rd_holdGesture(el, armClass, onDone){
+  if(!el) return;
+  var timer=null, armed=false;
+  function start(e){ if(e && e.cancelable) e.preventDefault(); armed=true; el.classList.add(armClass);
+    if(typeof haptic==='function') haptic(4);
+    timer=setTimeout(function(){ if(armed){ armed=false; el.classList.remove(armClass);
+      if(typeof haptic==='function') haptic([6,30,6]); onDone(); } }, RD_HOLD_MS); }
+  function cancel(){ armed=false; el.classList.remove(armClass); if(timer) clearTimeout(timer); }
+  el.addEventListener('touchstart', start, {passive:false});
+  el.addEventListener('mousedown', start);
+  ['touchend','touchcancel','mouseup','mouseleave'].forEach(function(ev){ el.addEventListener(ev, cancel); });
+}
+function rd_freeze(){
+  try{
+    // (1) commit anything in flight: blur the active editor so an open input buffer (e.g. a handoff
+    //     draft) is flushed to storage before sleep. The app persists per-domain continuously, so
+    //     the real data is already on disk — this is belt-and-suspenders for a focused field.
+    try{ var _a=document.activeElement; if(_a && typeof _a.blur==='function') _a.blur(); }catch(_){ }
+    // (2) stamp the freeze marker: the redesign VIEW to return to (data itself already persisted).
+    var mark={ mode:(typeof _rdMode!=='undefined'? _rdMode : 'command'), ts:Date.now() };
+    (typeof safeStore==='function'? safeStore : function(k,v){ localStorage.setItem(k,v); })('phantom_freeze_v1', JSON.stringify(mark));
+  }catch(_){ }
+  var c=document.getElementById('rd-freeze-curtain'); if(c) c.classList.add('up');
+  var x=document.getElementById('rd-exit'); if(x) x.classList.remove('arming');
+}
+function rd_wake(){
+  var c=document.getElementById('rd-freeze-curtain'); if(c) c.classList.remove('up');
+  var w=document.getElementById('rd-wake'); if(w) w.classList.remove('arming');
+  try{ localStorage.removeItem('phantom_freeze_v1'); }catch(_){ }
+}
+function rd_initExit(){
+  try{ if(typeof redesign_isOn==='function' && !redesign_isOn()) return; }catch(_){ return; }   // redesign-only wiring
+  var ex=document.getElementById('rd-exit'), wk=document.getElementById('rd-wake');
+  if(ex && !ex._rdWired){ rd_holdGesture(ex, 'arming', rd_freeze); ex._rdWired=true; }
+  if(wk && !wk._rdWired){ rd_holdGesture(wk, 'arming', rd_wake); wk._rdWired=true; }
+}
+if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', rd_initExit, {once:true}); } else { rd_initExit(); }
+// Freeze boot-restore (redesign-only; _session_bootRestore early-returns under redesign so it never
+// restores the redesign view). If a freeze marker survived a Safari kill, land back on the saved page.
+(function rd_freezeBootRestore(){
+  function go(){
+    try{ if(typeof redesign_isOn!=='function' || !redesign_isOn()) return; }catch(_){ return; }
+    var raw=null; try{ raw=localStorage.getItem('phantom_freeze_v1'); }catch(_){ }
+    if(!raw) return;
+    var mark=null; try{ mark=JSON.parse(raw); }catch(_){ }
+    try{ localStorage.removeItem('phantom_freeze_v1'); }catch(_){ }
+    if(mark && mark.mode && typeof showMode==='function'){ try{ showMode(mark.mode); }catch(_){ } }
+  }
+  if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', function(){ setTimeout(go, 720); }, {once:true}); } else { setTimeout(go, 720); }
 })();
 
 // ── DEFENSIVE NAV WRAPPER (v1.6.13) ──
