@@ -34,7 +34,7 @@
 // a clean v1.13.3 — dropping the prior -N cache-iteration suffix — so this real
 // version bump busts every client's cache and the three stamps (app const /
 // version.json / this key) line up again. Patch bumps continue from here.
-const CACHE_VERSION = 'phantom-v1.14.322';
+const CACHE_VERSION = 'phantom-v1.14.323';
 
 // Assets to precache on install. Keep this minimal — single-file PWA means
 // most of PHANTOM is in dct-ios.html itself.
@@ -60,6 +60,11 @@ const PRECACHE_URLS = [
   'icons/phantom-nav-command-96.webp',
   'icons/phantom-nav-work-96.webp',
   'icons/phantom-nav-ref-96.webp',
+  // v1.14.323: glass WebP nav icons (pnav look) — Home/Build/Tools/Exit bottom nav
+  'icons/phantom-nav-home-256.webp',
+  'icons/phantom-nav-build-256.webp',
+  'icons/phantom-nav-tools-256.webp',
+  'icons/phantom-nav-exit-256.webp',
   'icons/phantom-action-deploy-upload-256.webp',
   'icons/phantom-action-scan-radar-256.webp',
   'icons/phantom-action-handoff-link-256.webp',
