@@ -12140,7 +12140,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.323';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.324';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -12810,7 +12810,7 @@ if (typeof window !== 'undefined') {
       </div>
       <div class="lens">
         <div class="clock"><div class="t" id="cc-clock">--:--</div><div class="l">LOCAL</div></div>
-        <div class="llabel">COMMAND LENS</div>
+        <div class="llabel">HOME LENS</div>
         <h1 id="cc-lh">&mdash;</h1>
         <p id="cc-lp">&mdash;</p>
         <div class="shiftpill" id="cc-shiftpill" style="display:none"><span class="dot"></span>ON SHIFT</div>
@@ -12841,12 +12841,12 @@ if (typeof window !== 'undefined') {
       <!-- REDESIGN v1.14.105 — Work card-grid landing (mirrors Ref). 4 corner-bracket cards over
            the existing wk-* surfaces; cards route via showWorkTab. Back header shows in drill-in only. -->
       <div id="work-back">
-        <button class="rf-back-btn" onclick="wk_showGrid()" aria-label="Back to Workspace grid"><svg viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-        <span class="rf-back-title" id="work-back-title">Workspace</span>
+        <button class="rf-back-btn" onclick="wk_showGrid()" aria-label="Back to Build grid"><svg viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <span class="rf-back-title" id="work-back-title">Build</span>
       </div>
       <div id="work-grid">
         <div id="wk-job-host" aria-live="polite"></div>
-        <div class="rf-glabel"><span class="dot"></span>FIELD WORK<span class="ln"></span></div>
+        <div class="rf-glabel"><span class="dot"></span>BUILD<span class="ln"></span></div>
         <div class="rf-grid-wrap">
           <div class="rf-card" style="--rfac:#28e0ff" role="button" tabindex="0" onclick="deploy_quick()" aria-label="Deploy"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-action-deploy-upload-256.webp" alt="" loading="eager"></div><div class="rf-cname">DEPLOY</div><div class="rf-cmeta">Build · seed · rack</div></div>
           <div class="rf-card" style="--rfac:#28e0ff" role="button" tabindex="0" onclick="rd_openMasterFile()" aria-label="Master file — cabinet search, host map and elevation"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-tool-masterdoc-256.webp" alt="" loading="eager"></div><div class="rf-cname">MASTER FILE</div><div class="rf-cmeta">Cabinet · Host map · Elevation</div></div>
@@ -12892,14 +12892,14 @@ if (typeof window !== 'undefined') {
       <!-- REDESIGN v1.14.102 — Ref card-grid landing (new nav layer; cards reuse showRefTab,
            Compass deep-links the Hardware Cage-Nut subtab). Back header shows in drill-in only. -->
       <div id="ref-back">
-        <button class="rf-back-btn" onclick="ref_showGrid()" aria-label="Back to Crash Cart grid"><svg viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-        <span class="rf-back-title" id="ref-back-title">Crash Cart</span>
+        <button class="rf-back-btn" onclick="ref_showGrid()" aria-label="Back to Tools grid"><svg viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <span class="rf-back-title" id="ref-back-title">Tools</span>
       </div>
       <div id="ref-grid">
         <div class="rf-search-bar">
-          <input id="ref-cardfilter" type="search" class="rf-search-input" placeholder="Filter tools…" oninput="ref_filterCards(this.value)" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" aria-label="Filter Crash Cart tools">
+          <input id="ref-cardfilter" type="search" class="rf-search-input" placeholder="Filter tools…" oninput="ref_filterCards(this.value)" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" aria-label="Filter Tools">
         </div>
-        <div class="rf-glabel"><span class="dot"></span>CRASH CART<span class="ln"></span></div>
+        <div class="rf-glabel"><span class="dot"></span>TOOLS<span class="ln"></span></div>
         <div class="rf-grid-wrap">
           <div class="rf-card" style="--rfac:#28e0ff" role="button" tabindex="0" onclick="showRefTab('rf-optics')" aria-label="Optics reference"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-ref-optics-256.webp" alt="" loading="eager"></div><div class="rf-cname">OPTICS</div><div class="rf-cmeta">Fiber · Form factors · MPO</div></div>
           <div class="rf-card" style="--rfac:#4b9bff" role="button" tabindex="0" onclick="rd_openPlatforms()" aria-label="Platforms — GPU platforms, cooling and power"><span class="rf-cnr tl"></span><span class="rf-cnr tr"></span><span class="rf-cnr bl"></span><span class="rf-cnr br"></span><div class="rf-cic"><img class="rf-i-img" src="icons/phantom-ref-hardware-256.webp" alt="" loading="eager"></div><div class="rf-cname">PLATFORMS</div><div class="rf-cmeta">GPU · Cooling · Power</div></div>
@@ -18066,12 +18066,12 @@ function showRefTab(targetId) {
   var pr = document.getElementById('pg-ref'); if (pr) pr.classList.remove('rf-grid');   // v1.14.102: deep-link / card tap → drill into the panel (out of the grid)
   var btn = document.querySelector('#pg-ref .subtab-strip .stab[data-rf="' + targetId + '"]');
   if (btn) showStab(btn, 'ref-sub', targetId);
-  ref_setBackTitle(REF_CAT_NAMES[targetId] || 'Crash Cart');
+  ref_setBackTitle(REF_CAT_NAMES[targetId] || 'Tools');
 }
 // v1.14.102 — Ref card-grid helpers. ref_showGrid() returns to the landing; the Compass
 // card deep-links its real home (Hardware 'Cage Nut' = #pw-compass, folded in by
 // redesign_homeCompass) — one surface, two entry points, no duplicate.
-function ref_setBackTitle(t) { var e = document.getElementById('ref-back-title'); if (e) e.textContent = t || 'Crash Cart'; }
+function ref_setBackTitle(t) { var e = document.getElementById('ref-back-title'); if (e) e.textContent = t || 'Tools'; }
 // N-10 (v1.14.303): Crash Cart search-first — live substring filter over the 7 static cards
 // (rf-cname + rf-cmeta + aria-label; all REAL text, no fabricated tags). Toggles .rf-hidden per card and
 // the .rf-noresult panel on a 0-match. No-Silent-Failures: warn + toast if the grid nodes are gone.
@@ -19394,10 +19394,10 @@ function showWorkTab(target) {
   // deploy_showCommandCenter renders into deploy_opsHost() and does not call showWorkTab (no
   // recursion). Callers wanting a specific deploy/rack detail render it AFTER this (detail wins).
   if (target === 'deploy' && typeof deploy_showCommandCenter === 'function') { try { deploy_showCommandCenter(deploy_opsHost()); } catch (e) { phantom_logErr('showWorkTab:deploy', e); try { if (typeof redesign_isOn === 'function' && redesign_isOn()) { var _dh = deploy_opsHost(); if (_dh) _dh.innerHTML = '<div style="padding:24px 18px;text-align:center;font-family:var(--mono)"><div style="color:#ff3b3b;font-size:13px;letter-spacing:.08em;margin-bottom:6px">DEPLOY FAILED TO RENDER</div><div style="color:var(--slate);font-size:12px;line-height:1.6;margin-bottom:16px">Error logged &mdash; see SYS &rarr; ERRORS.</div><button class="hdr-menu-item" style="justify-content:center;color:var(--cyan);margin:0 auto" onclick="try{deploy_showCommandCenter(deploy_opsHost())}catch(err){phantom_logErr(\'retry:deploy\',err)}">RETRY</button></div>'; } } catch (_) {} } }
-  wk_setBackTitle(WK_CAT_NAMES[target] || 'Workspace');
+  wk_setBackTitle(WK_CAT_NAMES[target] || 'Build');
 }
 // v1.14.105 — Work card-grid helpers (mirror the Ref grid). wk_showGrid() returns to the landing.
-function wk_setBackTitle(t) { var e = document.getElementById('work-back-title'); if (e) e.textContent = t || 'Workspace'; }
+function wk_setBackTitle(t) { var e = document.getElementById('work-back-title'); if (e) e.textContent = t || 'Build'; }
 function wk_showGrid() { var pr = document.getElementById('pg-work'); if (pr) pr.classList.add('wk-grid'); if (typeof wk_renderJob === 'function') wk_renderJob(); }
 // ── N-11 (v1.14.312) — Work's ONE emitter: a stateful job/resume hero above the FIELD WORK library.
 // Resolved from the SAME shared sources as the NOW ACTIVE BUILD hero (nowtab_resolveDep +
