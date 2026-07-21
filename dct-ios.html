@@ -11367,6 +11367,21 @@ body.rd #master-section-bar [data-section="profile"] { display:none; }
   }
 }
 #boot .pe-taphint{ display:inline-block; font-family:'Chakra Petch','Helvetica Neue',Arial,sans-serif; font-size:11px; letter-spacing:.42em; color:#aab6e8; text-transform:uppercase; opacity:.7; animation:peTapPulse 2.8s ease-in-out infinite; }
+/* ===== PHANTOM ghost boot (mascot + GPU-code eyes + chrome lockup) ===== */
+#boot .pe-void{ position:fixed; inset:0; z-index:1; pointer-events:none; }
+#boot .pe-aura{ position:fixed; left:50%; top:23%; transform:translate(-50%,-50%); width:74vw; height:74vw; max-width:540px; max-height:540px; z-index:2; pointer-events:none; background:radial-gradient(circle at 40% 46%,rgba(70,200,255,.30),rgba(70,200,255,0) 60%),radial-gradient(circle at 63% 50%,rgba(150,90,255,.28),rgba(150,90,255,0) 62%); filter:blur(22px); animation:peBreathe 5.6s ease-in-out infinite; }
+@keyframes peBreathe{ 0%,100%{opacity:.72;} 50%{opacity:1;} }
+#boot .pe-stage{ position:fixed; top:4%; left:50%; transform:translateX(-50%); width:min(82vw,42vh); aspect-ratio:1086/1448; z-index:3; animation:peBob 5.4s ease-in-out infinite; }
+@keyframes peBob{ 0%,100%{transform:translateX(-50%) translateY(0);} 50%{transform:translateX(-50%) translateY(-2.3%);} }
+#boot .pe-ghost{ position:absolute; inset:0; width:100%; height:100%; object-fit:contain; }
+#boot .pe-eyes{ position:absolute; inset:0; width:100%; height:100%; animation:peEyeOn 1.4s ease-out both; }
+@keyframes peEyeOn{ 0%{opacity:0;} 12%{opacity:.6;} 18%{opacity:.12;} 30%{opacity:.85;} 42%{opacity:.3;} 56%{opacity:1;} 100%{opacity:1;} }
+#boot .pe-lockup{ position:fixed; left:50%; top:60.5%; transform:translateX(-50%); width:min(88vw,500px); height:auto; z-index:10; pointer-events:none; filter:drop-shadow(0 0 30px rgba(90,150,255,.18)); animation:peLockOn 1.6s ease-out both; }
+@keyframes peLockOn{ 0%{opacity:0;} 40%{opacity:0;} 100%{opacity:1;} }
+#boot.pe-dive .pe-stage{ animation:peGhostDive 520ms cubic-bezier(.5,0,.85,.3) forwards; }
+#boot.pe-dive .pe-lockup, #boot.pe-dive .pe-aura, #boot.pe-dive .pe-void{ animation:peDiveFade 360ms ease-out forwards; }
+@keyframes peGhostDive{ to{ transform:translateX(-50%) scale(1.16); opacity:0; } }
+@media (prefers-reduced-motion:reduce){ #boot .pe-stage,#boot .pe-aura{ animation:none; } #boot .pe-eyes,#boot .pe-lockup{ animation:none; opacity:1; } #boot.pe-dive .pe-stage,#boot.pe-dive .pe-lockup,#boot.pe-dive .pe-aura,#boot.pe-dive .pe-void{ animation:none; } }
 @keyframes peTapPulse{ 0%,100%{opacity:.4;} 50%{opacity:.85;} }
 /* DESIGN_RULES §7 (a11y quality floor): visible keyboard focus the spec omitted — subtle, on-brand cyan, native to the plate; brightens the hint so the cue itself reads as focused */
 #boot .pe-tapcatch:focus-visible{ outline:1px solid rgba(40,224,255,0.5); outline-offset:-3px; }
@@ -12157,7 +12172,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.326';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.327';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -12505,10 +12520,13 @@ if (typeof window !== 'undefined') {
 
 <!-- ━━━ BOOT ━━━ -->
 <div id="boot">
-<picture class="pe-platepic">
-  <source media="(min-aspect-ratio: 1/1)" srcset="plate-wide.webp">
-  <img class="pe-plate" alt="" src="plate.webp">
-</picture>
+<canvas id="pe-void" class="pe-void" aria-hidden="true"></canvas>
+<div class="pe-aura" aria-hidden="true"></div>
+<div class="pe-stage" aria-hidden="true">
+  <img class="pe-ghost" alt="" src="phantom-ghost.webp">
+  <canvas id="pe-eyes" class="pe-eyes"></canvas>
+</div>
+<img class="pe-lockup" alt="PHANTOM — Field Intelligence System — Rack · Stack · Verify" src="phantom-lockup.png">
 
 <button class="pe-tapcatch" id="pe-tapcatch" type="button" aria-label="Tap anywhere to enter PHANTOM"></button>
 <div class="pe-uz pe-enterhint" aria-hidden="true"><span class="pe-taphint" id="pe-taphint">TAP TO ENTER</span></div>
@@ -12555,6 +12573,47 @@ if (typeof window !== 'undefined') {
 
   // whole-frame tap. The catcher is a <button>, so Enter/Space activate it for free.
   tap.addEventListener('click', fire);
+})();
+
+/* ━━━ PHANTOM ghost-boot effects — void motes + GPU-code sensor eyes ━━━
+   Eyes are drawn on #pe-eyes (fills .pe-stage, which shares the ghost's aspect), so the two
+   circuit eyes map to fixed art fractions: L (0.370,0.385) cyan, R (0.605,0.385) violet.
+   Each eye streams PTX/hex upward, newest line bright at the read bar, core pulsing. */
+(function(){
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // ---- data motes in the void ----
+  var vc = document.getElementById('pe-void');
+  if (vc && vc.getContext && !reduce) {
+    var vx = vc.getContext('2d'), VW, VH, vdpr = Math.min(2.5, window.devicePixelRatio||1), P = [];
+    function vsize(){ VW=innerWidth; VH=innerHeight; vc.width=VW*vdpr; vc.height=VH*vdpr; vx.setTransform(vdpr,0,0,vdpr,0,0); }
+    vsize(); addEventListener('resize', vsize);
+    for (var i=0;i<34;i++){ P.push({x:Math.random()*VW,y:Math.random()*VH,r:Math.random()*1.4+.3,s:Math.random()*.25+.05,c:Math.random()<.5?[90,210,255]:[165,110,255],a:Math.random()*.4+.1,ph:Math.random()*6}); }
+    (function vf(){ vx.clearRect(0,0,VW,VH); var t=Date.now()/1000; for (var i=0;i<P.length;i++){ var p=P[i]; p.y-=p.s; if(p.y<-4){p.y=VH+4;p.x=Math.random()*VW;} var x=p.x+Math.sin(t*.5+p.ph)*6; var aa=p.a*(.6+.4*Math.sin(t+p.ph)); vx.beginPath(); vx.arc(x,p.y,p.r,0,7); vx.fillStyle='rgba('+p.c+','+aa.toFixed(3)+')'; vx.fill(); } requestAnimationFrame(vf); })();
+  }
+  // ---- GPU-code sensor eyes ----
+  var ec = document.getElementById('pe-eyes');
+  if (ec && ec.getContext) {
+    var ex = ec.getContext('2d'), edpr = Math.min(2.5, window.devicePixelRatio||1), cw, ch;
+    var EYES = [{cx:0.370,cy:0.385,r:0.079,col:'120,225,255',ph:0.0},{cx:0.605,cy:0.385,r:0.079,col:'185,130,255',ph:1.7}];
+    var TOK = ['ld.global.f32','st.global','mad.f32','mov.b32','wgmma.mma','cp.async','bar.sync','fma.rn.f16','mul.f16','ld.shared','tensor.load','setp.lt','shfl.sync','SM90a','H100','fp8','bf16'];
+    function hx(n){ var s=''; for(var i=0;i<n;i++) s+='0123456789abcdef'[(Math.random()*16)|0]; return s; }
+    function codeline(){ var r=Math.random(); if(r<0.42) return '0x'+hx(6)+'  '+hx(2)+' '+hx(2)+' '+hx(2)+' '+hx(2); if(r<0.72) return TOK[(Math.random()*TOK.length)|0]+' %r'+((Math.random()*32)|0)+',0x'+hx(4); if(r<0.88) return hx(4)+' '+hx(4)+' '+hx(4)+' '+hx(4); return TOK[(Math.random()*TOK.length)|0]+' [0x'+hx(5)+']'; }
+    function esize(){ var r=ec.getBoundingClientRect(); cw=r.width; ch=r.height; ec.width=cw*edpr; ec.height=ch*edpr; ex.setTransform(edpr,0,0,edpr,0,0); }
+    esize(); addEventListener('resize', esize);
+    function eye(e,now){ var cx=e.cx*cw, cy=e.cy*ch, R=e.r*cw, col=e.col; var fontPx=Math.max(3.2,R*0.205), rowH=fontPx*1.2;
+      if(!e.buf){ e.buf=[]; e.off=0; e.rows=Math.ceil((2*R)/rowH)+3; for(var q=0;q<e.rows;q++) e.buf.push(codeline()); e.last=now; }
+      var dt=Math.min(60,now-e.last); e.last=now; e.off+=dt*(rowH/110); while(e.off>=rowH){ e.off-=rowH; e.buf.unshift(codeline()); e.buf.pop(); }
+      var pulse=0.5+0.5*Math.sin(now/600+e.ph);
+      ex.save(); ex.beginPath(); ex.arc(cx,cy,R,0,7); ex.clip();
+      var g=ex.createRadialGradient(cx,cy,0,cx,cy,R); g.addColorStop(0,'rgba('+col+','+(0.10+0.12*pulse).toFixed(3)+')'); g.addColorStop(0.55,'rgba('+col+',0.04)'); g.addColorStop(1,'rgba('+col+',0)'); ex.fillStyle=g; ex.fillRect(cx-R,cy-R,2*R,2*R);
+      ex.fillStyle='rgba('+col+',0.10)'; ex.fillRect(cx-R,cy+R-e.off-fontPx*0.9,2*R,fontPx*1.25);
+      ex.font='700 '+fontPx.toFixed(1)+"px 'SFMono-Regular',Menlo,Consolas,monospace"; ex.textAlign='left'; ex.textBaseline='alphabetic'; var baseX=cx-R*0.86;
+      for(var i=0;i<e.buf.length;i++){ var y=(cy+R)-e.off-i*rowH; if(y<cy-R-rowH||y>cy+R+rowH) continue; var nn=1-i/e.buf.length; var aa=0.82*nn*nn+0.07; if(i===0){ ex.fillStyle='rgba(232,251,255,0.95)'; } else { ex.fillStyle='rgba('+col+','+aa.toFixed(3)+')'; } ex.fillText(e.buf[i],baseX,y); }
+      ex.restore();
+      ex.strokeStyle='rgba('+col+','+(0.20+0.26*pulse).toFixed(3)+')'; ex.lineWidth=2; ex.beginPath(); ex.arc(cx,cy,R,0,7); ex.stroke(); }
+    if (reduce) { var now=Date.now(); for (var i=0;i<EYES.length;i++) eye(EYES[i], now); }   // one static frame
+    else { (function ef(){ ex.clearRect(0,0,cw,ch); var now=Date.now(); for(var i=0;i<EYES.length;i++) eye(EYES[i],now); requestAnimationFrame(ef); })(); }
+  }
 })();
 
 
