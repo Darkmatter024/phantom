@@ -9243,23 +9243,32 @@ body.rd #ph-sheet.open {
 #rd-sub{display:none;font-family:var(--mono);font-size:11px;letter-spacing:3px;color:var(--slate);margin-top:7px}
 #rd-sub .site{color:var(--cyan)}
 #rd-sub .site.warn{color:var(--gold)}
-#rd-botnav{display:none;overflow:hidden;position:fixed;left:0;right:0;bottom:0;z-index:40;background:linear-gradient(180deg,rgba(10,16,24,1),rgba(4,7,11,1));border-top:1px solid rgba(92,242,255,0.14);gap:6px;padding:8px 10px calc(10px + var(--safe-bottom));transform:translateZ(0)}   /* v1.14.287 FIX-2 (B-01/H2): own GPU layer so the fixed nav stays ABOVE the iOS -webkit-overflow-scrolling:touch #pg-ref scroller (it was painting under scrolled content = dead nav from Crash Cart; top-of-scroll revived it) */
-/* v1.14.159 C1 Reactor Rail — pure-type nav, sliding core underline (no images). */
-#bn-core{position:absolute;top:0;height:3px;width:33.333%;left:0;transition:left .38s cubic-bezier(.3,.8,.3,1);background:linear-gradient(90deg,transparent 8%,var(--cyan) 50%,transparent 92%);box-shadow:0 0 16px var(--cyan),0 2px 24px rgba(40,224,255,.35);pointer-events:none}
-#bn-core::after{content:'';position:absolute;inset:-1px 30%;background:#eaffff;filter:blur(3px);opacity:.8}
-#rd-botnav .botitem{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:56px;padding:10px 4px;border:none;background:none;border-radius:0}
-#rd-botnav .blabel{font-family:var(--orb);font-weight:600;font-size:11px;letter-spacing:2px;color:#3d4f61;text-transform:uppercase;white-space:nowrap;transition:color .3s,text-shadow .3s,letter-spacing .3s}
-#rd-botnav .btick{width:14px;height:1.5px;background:#3d4f61;transition:background .3s,box-shadow .3s,width .3s}
-#rd-botnav .botitem.active .blabel{color:#f2fbff;letter-spacing:4.2px;text-shadow:0 0 14px rgba(40,224,255,.55)}
-#rd-botnav .botitem.active .btick{width:26px;background:var(--cyan);box-shadow:0 0 8px var(--cyan)}
-@media (prefers-reduced-motion:reduce){#bn-core{transition:none}}
+/* ===== v1.14.321 Option C nav — icon-forward CSS grid (can't wrap). Replaces the .159 reactor-rail flex nav.
+   FIXES vs the handoff draft: kept display:none default (legacy stays hidden — grid gated to body.rd below so
+   ?legacy is byte-identical), kept position:fixed + z-index:40 + the .287 FIX-2 GPU layer (translateZ) so the
+   nav stays pinned ABOVE the iOS #pg-ref scroller, and EXIT color is #ff5a4d directly (the live --red is #ff453a). */
+#rd-botnav{display:none;position:fixed;left:0;right:0;bottom:0;z-index:40;overflow:hidden;grid-template-columns:repeat(4,1fr);align-items:stretch;border-top:1px solid rgba(92,242,255,.14);background:linear-gradient(180deg,rgba(9,13,18,.98),rgba(3,5,8,1));padding:0 6px calc(var(--safe-bottom));max-width:760px;margin-inline:auto;transform:translateZ(0)}
+#bn-rail{display:contents}                 /* its 3 tabs become direct grid cells */
+#bn-core{display:none}                      /* old sliding reactor rail retired */
+#rd-botnav .botitem,#rd-botnav #rd-exit{position:relative;min-height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:8px 4px;border:none;background:none;border-radius:0;margin:0;min-width:0;cursor:pointer;color:#4a5c66;transition:color .3s}
+#rd-botnav .bicon{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:filter .3s}
+#rd-botnav .blabel{font-family:var(--orb);font-weight:600;font-size:9.5px;letter-spacing:1.6px;text-transform:uppercase;color:currentColor;white-space:nowrap;opacity:0;max-height:0;overflow:hidden;transition:opacity .25s,max-height .25s}
+#rd-botnav .btick{display:none}
+#rd-botnav .botitem.active{color:var(--ink)}
+#rd-botnav .botitem.active .bicon{filter:drop-shadow(0 0 6px var(--cyan))}
+#rd-botnav .botitem.active .blabel{opacity:1;max-height:14px}
+#rd-botnav #rd-exit{color:#ff5a4d}
+#rd-botnav #rd-exit .blabel{opacity:1;max-height:14px;color:#ff5a4d;text-shadow:0 0 7px rgba(255,69,58,.6)}
+#rd-botnav #rd-exit .bicon{filter:drop-shadow(0 0 5px rgba(255,84,104,.5))}
+#rd-botnav #rd-exit.arming .blabel{color:var(--gold);text-shadow:0 0 12px rgba(244,196,48,.6)}
+#rd-botnav #rd-exit.arming .bicon{filter:drop-shadow(0 0 8px var(--gold))}
 
 /* ── v1.14.315 — HOLD-TO-EXIT (freeze & wake). Redesign-only (body.rd); ?legacy byte-identical.
    #bn-rail wraps the reactor rail + 3 botitems so #bn-core keeps its thirds-of-the-wrapper % math
    (rail JS untouched) while #rd-exit sits set-apart beside them (never a landable tab). v1.14.316: #rd-exit MATCHES
    the nav items — reuses the nav's .blabel/.btick (dim slate Orbitron, no gold pill), lighting gold only
    as it arms. Curtain + wake-ring authored (no prototype). */
-body.rd #bn-rail{position:relative;flex:1;display:flex}
+/* v1.14.321: body.rd #bn-rail flex rule removed — Option C uses #bn-rail{display:contents}, so its 3 tabs are direct grid cells of #rd-botnav. Leaving this rule would out-specify display:contents and collapse the 4-cell grid to 2. */
 body.rd #rd-exit{position:relative;min-width:56px;min-height:56px;margin-left:6px;margin-right:48px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:10px 4px;border:none;background:none;border-radius:0;overflow:hidden;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;cursor:pointer}
 /* At rest the .blabel/.btick inside #rd-exit inherit the exact nav-item look (#rd-botnav .blabel/.btick) — dim slate Orbitron, matching COMMAND/WORK/CRASH CART. The HOLD action shows only on touch: label + tick light GOLD (gold = exit/attention, distinct from the cyan tab-active) and a bottom charge bar fills over .85s. */
 body.rd #rd-exit .blabel{color:#ff5a4d;text-shadow:0 0 7px rgba(255,69,58,.85),0 0 16px rgba(255,69,58,.5)}   /* v1.14.317 — red glow on the EXIT letters (owner request). NOTE: red is off the ratified rd palette (the house danger channel is magenta #ff2bd6); kept as an explicit owner exception for the exit control. The .arming gold override still wins on hold. */
@@ -9325,7 +9334,7 @@ body.rd .hdr-agg-pill[data-state="checking"] .hdr-agg-sweep { display: none; }
 /* ACTIONS rows relocated into SYS panel — redesign only, mirrors #hdr-agg-profile-row gating */
 .hdr-agg-act { display: none; }
 body.rd .hdr-agg-act { display: flex; }
-body.rd #rd-botnav{display:flex}
+body.rd #rd-botnav{display:grid}
 
 /* ━━━ BOM PROGRESS (Cut 4a) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 .bom-stab-strip {
@@ -12129,7 +12138,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.320';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.321';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -15311,12 +15320,22 @@ if (typeof window !== 'undefined') {
   <div class="botnav" id="rd-botnav">
     <div id="bn-rail">
       <span id="bn-core" aria-hidden="true"></span>
-      <div class="botitem active" id="bn-command" role="button" tabindex="0" onclick="showMode('command')" aria-label="Command"><span class="blabel">Command</span><span class="btick"></span></div>
-      <div class="botitem" id="bn-work" role="button" tabindex="0" onclick="showMode('work')" aria-label="Work"><span class="blabel">Work</span><span class="btick"></span></div>
-      <div class="botitem" id="bn-ref" role="button" tabindex="0" onclick="showMode('ref')" aria-label="Crash Cart"><span class="blabel">Crash Cart</span><span class="btick"></span></div>
+      <div class="botitem active" id="bn-command" role="button" tabindex="0" onclick="showMode('command')" aria-label="Command">
+        <svg class="bicon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13h6V4H4v9zm0 7h6v-5H4v5zm10 0h6V11h-6v9zm0-16v5h6V4h-6z"/></svg>
+        <span class="blabel">Command</span><span class="btick"></span>
+      </div>
+      <div class="botitem" id="bn-work" role="button" tabindex="0" onclick="showMode('work')" aria-label="Work">
+        <svg class="bicon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+        <span class="blabel">Work</span><span class="btick"></span>
+      </div>
+      <div class="botitem" id="bn-ref" role="button" tabindex="0" onclick="showMode('ref')" aria-label="Crash Cart">
+        <svg class="bicon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18"/></svg>
+        <span class="blabel">Cart</span><span class="btick"></span>
+      </div>
     </div>
     <div id="rd-exit" role="button" aria-label="Hold to exit and freeze the app" tabindex="0">
       <span class="rd-exit-charge"></span>
+      <svg class="bicon" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 17l5-5-5-5M21 12H9M9 4H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4"/></svg>
       <span class="blabel">Exit</span><span class="btick"></span>
     </div>
   </div>
