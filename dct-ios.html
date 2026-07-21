@@ -9061,6 +9061,23 @@ body.rd #ver-stamp { display: inline-flex; align-items: center; align-self: cent
 .rd-sheet-close { width: 40px; height: 40px; border-radius: 11px; border: 1px solid rgba(120,150,200,0.18); background: rgba(16,22,34,0.55); color: var(--white); font-size: 17px; cursor: pointer; flex: 0 0 auto; -webkit-tap-highlight-color: transparent; }
 .rd-sheet-body { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 16px 18px 28px; }
 
+/* ━━━ v1.14.325 — PLATFORMS feature-hero art (PHANTOM_FEATURE_ART_HANDOFF.md).
+   Namespaced .pfeat; mounted static at the top of the redesign Site Profile sheet
+   (#rd-profile-sheet is body.rd + .open gated => redesign-only, ?legacy byte-identical).
+   File-referenced (icons/), NOT inline base64 — owner ruling 2026-07-21. */
+.pfeat{
+  display:flex; justify-content:center; align-items:center;
+  padding:18px 16px 8px;
+}
+.pfeat__art{
+  width:100%; max-width:320px; height:auto; display:block;
+  filter:drop-shadow(0 18px 34px rgba(0,0,0,.55));
+}
+/* optional: dim slightly so foreground UI/text stays dominant */
+.pfeat--muted .pfeat__art{ opacity:.92; }
+@media (max-width:380px){ .pfeat__art{ max-width:264px; } }
+@media (prefers-reduced-motion:reduce){ .pfeat__art{ filter:none; } }
+
 /* ━━━ v1.14.268 — PHASE DOCK (CODE-QUEUE Task 1). Bottom-stack option shipped:
    DOCK ABOVE THE LOG BAR (all tightened) — owner ruling S44b.
    The five phase cards leave the rack-detail scroll and re-home into #ph-sheet VERBATIM —
@@ -12140,7 +12157,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.324';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.325';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -12670,6 +12687,10 @@ if (typeof window !== 'undefined') {
     <div class="rd-sheet-hdr">
       <div class="rd-sheet-titles"><div class="t">SITE PROFILE</div><div class="s">SYSTEM &middot; SITE CONFIGURATION</div></div>
       <button class="rd-sheet-close" onclick="rd_closeProfile()" aria-label="Close site profile">&#10005;</button>
+    </div>
+    <!-- v1.14.325 — PLATFORMS feature-hero art (file-referenced webp; redesign-only via the sheet gate). Decorative: alt="" -->
+    <div class="pfeat">
+      <img class="pfeat__art" alt="" width="720" height="720" loading="lazy" src="icons/phantom-feat-platforms-720.webp">
     </div>
     <div class="rd-sheet-body" id="rd-profile-body"></div>
   </div>
