@@ -12181,7 +12181,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.332';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.333';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -32969,7 +32969,7 @@ function rackElevation_render3D(rack, mountEl) {
       rackGrp.add(tick);
     });
   }
-  var backMat = new THREE.MeshStandardMaterial({ color: 0x070d14, metalness: 0.3, roughness: 0.9, emissive: 0x050a12, emissiveIntensity: 0.12, transparent: true, opacity: 0.85, side: THREE.DoubleSide, envMapIntensity: 0.25 });
+  var backMat = new THREE.MeshStandardMaterial({ color: 0x070d14, metalness: 0.3, roughness: 0.9, emissive: 0x050a12, emissiveIntensity: 0.12, transparent: false, side: THREE.DoubleSide, envMapIntensity: 0.25 });   // v1.14.333 (HANDOFF-REH3D-GEOMETRY 2c, DEVIATED): the bleed-through was a transparent-queue depth-sort artifact — transparent:false ALONE fixes it (opaque queue = correct depth test, trays occlude the wall). KEPT DoubleSide: the handoff's side:FrontSide would cull this unrotated +Z-facing plane from the rear, vanishing the back wall for the back ~1/3 of every orbit (worst in the REAR preset). rd-review catch.
   var back = new THREE.Mesh(new THREE.PlaneGeometry(RW - 0.06, RH - 0.06), backMat); back.position.set(0, 0, -RD/2 + 0.04); back.receiveShadow = true; rackGrp.add(back);
   // ── v1.14.256 — PORT THE RACK (HANDOFF-INSPECT3D-RACK-PORT.md). The .255 rack was a bare
   //    box + sphere per unit + two rear "hint cylinders"; John's device read it as coloured
@@ -33073,7 +33073,7 @@ function rackElevation_render3D(rack, mountEl) {
     // chassis — DARK gunmetal per KIND (v1.14.257, mock palette). TYPE colour is DEMOTED to the
     // bezel strip below; it no longer paints the whole box (the .256 "coloured slabs" defect).
     // Raycast target + userData.dev unchanged (.255 tap contract).
-    var chMat = new THREE.MeshStandardMaterial({ color: KIND_C[kind] || 0x121a24, emissive: KIND_C[kind] || 0x121a24, emissiveIntensity: 0.06, metalness: 0.55, roughness: 0.4, transparent: true, opacity: 0.92, envMapIntensity: 0.25 });
+    var chMat = new THREE.MeshStandardMaterial({ color: KIND_C[kind] || 0x121a24, emissive: KIND_C[kind] || 0x121a24, emissiveIntensity: 0.06, metalness: 0.55, roughness: 0.4, transparent: false, envMapIntensity: 0.25 });   // v1.14.333 (HANDOFF-REH3D-GEOMETRY 2a) — was transparent:true/opacity:0.92; that 8% transparency put all ~42 chassis in Three's transparent queue → per-frame centroid re-sort → trays pop in front of each other during orbit. Opaque = stable sort, no pop. Type-colour (color/emissive) untouched (.256 lock).
     var chassis = new THREE.Mesh(new THREE.BoxGeometry(cw, hT, cd), chMat);
     chassis.castShadow = true; chassis.receiveShadow = true;
     chassis.userData.dev = dev;
