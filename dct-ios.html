@@ -9230,7 +9230,7 @@ body.rd #ph-sheet.open {
 #pg-cmd .cc-vital.v-next .vn{color:var(--cyan)}
 #pg-cmd .cc-vital.v-next:active{filter:brightness(1.2)}
 #pg-cmd .cc-ingest-zone{display:none}
-#pg-cmd[data-master="0"] .cc-rackline,#pg-cmd[data-master="0"] .cc-rackhero,#pg-cmd[data-master="0"] .cc-rackvitals,#pg-cmd[data-master="0"] .nba,#pg-cmd[data-master="0"] .lens,#pg-cmd[data-master="0"] .stats,#pg-cmd[data-master="0"] .trow,#pg-cmd[data-master="0"] .sig-h,#pg-cmd[data-master="0"] #cc-sig,#pg-cmd[data-master="0"] .cmd-grid,#pg-cmd[data-master="0"] .cc-asst,#pg-cmd[data-master="0"] .cc-qtools,#pg-cmd[data-master="0"] .cc-z0 .statusrow,#pg-cmd[data-master="0"] .cc-agechip{display:none!important}
+#pg-cmd[data-master="0"] .cc-rackline,#pg-cmd[data-master="0"] .cc-rackhero,#pg-cmd[data-master="0"] .cc-rackvitals,#pg-cmd[data-master="0"] .nba,#pg-cmd[data-master="0"] .lens,#pg-cmd[data-master="0"] .stats,#pg-cmd[data-master="0"] .trow,#pg-cmd[data-master="0"] .sig-h,#pg-cmd[data-master="0"] #cc-sig,#pg-cmd[data-master="0"] .cmd-grid,#pg-cmd[data-master="0"] .cc-asst,#pg-cmd[data-master="0"] .cc-qtools,#pg-cmd[data-master="0"] .cc-z0 .statusrow,#pg-cmd[data-master="0"] .cc-agechip,#pg-cmd[data-master="0"] #cc-sugg,#pg-cmd[data-master="0"] #cc-chat,#pg-cmd[data-master="0"] #cc-aistat,#pg-cmd[data-master="0"] #cc-foot{display:none!important}
 #pg-cmd[data-master="0"] .cc-ingest-zone{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;width:100%;box-sizing:border-box;min-height:min(64vh,520px);padding:32px 20px;border:1.5px dashed rgba(92,242,255,.35);border-radius:18px;background:radial-gradient(120% 90% at 50% 30%,rgba(40,224,255,.08),rgba(4,6,10,0) 60%),#04060a;cursor:pointer;-webkit-tap-highlight-color:transparent;text-align:center}
 #pg-cmd[data-master="0"] .cc-ingest-zone:active{background:radial-gradient(120% 90% at 50% 30%,rgba(40,224,255,.14),rgba(4,6,10,0) 60%),#060a12}
 #pg-cmd .cc-ingest-zone .ciz-mark{font-size:42px;line-height:1}
@@ -9259,25 +9259,75 @@ body.rd #ph-sheet.open {
 #pg-cmd .cc-hchip.ok{color:#cfe9f0}
 #pg-cmd .cc-hchip.ok .cc-hdot{background:var(--ok);box-shadow:0 0 5px var(--ok)}   /* v1.14.336: pass/healthy = mint --ok, not the .335 teal (clears the rd-review carry-forward) */
 #pg-cmd .cc-hchip-tap{min-height:44px;cursor:pointer;-webkit-appearance:none;-webkit-tap-highlight-color:transparent}
-/* phone (<1024px): assistant-first reflow via flex order. Desktop (>=1024px) is UNCHANGED this ship — the FINAL-LOOK 3-region lands in .337. */
+/* ━━━ v1.14.337 FINAL-LOOK DESKTOP — new rail/center elements. BASE display:none so the phone (<1024px)
+   is byte-identical to .336; the >=1024px block below reveals them. Card skin = REAL :root tokens. ━━━ */
+#pg-cmd #cc-sugg,#pg-cmd #cc-chat,#pg-cmd #cc-aistat,#pg-cmd #cc-foot{display:none}
+#pg-cmd .cc-sugg{border:1px solid var(--cyan-border-lo);border-radius:14px;background:var(--surf-1);box-shadow:var(--surf-inset),0 8px 20px -14px rgba(0,0,0,.85);padding:14px 16px 12px}
+#pg-cmd .cc-sugg-label{font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--slate);text-transform:uppercase;margin-bottom:10px}
+#pg-cmd .cc-sugg-act{display:flex;align-items:center;justify-content:space-between;width:100%;box-sizing:border-box;min-height:44px;margin-top:8px;padding:10px 12px;border:1px solid var(--cyan-border-lo);border-radius:10px;background:rgba(92,242,255,.04);color:#cfe9f0;font-family:var(--raj);font-weight:600;font-size:13.5px;letter-spacing:.5px;text-align:left;cursor:pointer;-webkit-appearance:none;-webkit-tap-highlight-color:transparent}
+#pg-cmd .cc-sugg-act:first-of-type{margin-top:0}
+#pg-cmd .cc-sugg-act:active{background:rgba(92,242,255,.10)}
+#pg-cmd .cc-sugg-ar{color:var(--cyan);font-family:var(--mono);margin-left:10px}
+/* v1.14.337: CHAT = cyan-outline SECONDARY (the assistant's in-app identity is cyan — the ghost glow — and
+   the visual-system reserves violet strictly for the NBA/GO primary; two violet boxes in one rail = one colour
+   two meanings, rd-review Rule 12). */
+#pg-cmd .cc-chat{align-items:center;justify-content:center;gap:9px;width:100%;box-sizing:border-box;min-height:52px;border:1px solid var(--cyan-border-lo);border-radius:12px;background:rgba(92,242,255,0.05);color:var(--cyan);font-family:var(--raj);font-weight:700;font-size:13.5px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;-webkit-appearance:none;-webkit-tap-highlight-color:transparent}
+#pg-cmd .cc-chat:active{background:rgba(92,242,255,0.12)}
+#pg-cmd .cc-chat-ic{color:var(--cyan);font-size:12px}
+#pg-cmd .cc-chat-ar{font-size:10px;opacity:.8}
+#pg-cmd .cc-aistat{align-items:center;gap:8px;font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--slate);text-transform:uppercase;padding:2px}
+#pg-cmd .cc-aistat-dot{width:6px;height:6px;border-radius:50%;background:var(--ok);box-shadow:0 0 6px var(--ok);flex:0 0 auto}
+#pg-cmd .cc-foot{align-items:center;justify-content:space-between;gap:12px;margin-top:6px;padding:12px 14px;border-top:1px solid rgba(92,242,255,.10);font-family:var(--mono);font-size:10px;letter-spacing:1.5px;color:var(--slate);text-transform:uppercase}
+#pg-cmd .cc-foot-seg{display:inline-flex;align-items:center;gap:8px}
+#pg-cmd .cc-foot-dot{width:6px;height:6px;border-radius:50%;background:var(--ok);box-shadow:0 0 6px var(--ok)}
+#pg-cmd .cc-foot-brand{font-family:var(--orb);letter-spacing:3px;color:var(--slate)}
+/* phone (<1024px): assistant-first reflow via flex order. v1.14.337: #cc-rail/#cc-center DISSOLVE
+   (display:contents) so their children participate directly in #pg-cmd's flex — the .336 order values are
+   UNCHANGED, so the phone renders byte-identical to .336. The >=1024px 3-region is below. */
 @media (max-width:1023px){
   #pg-cmd{display:flex;flex-direction:column}
-  #pg-cmd > .cc-z0{order:1}
-  #pg-cmd > #cc-asst{order:2}
-  #pg-cmd > .nba{order:3}
-  #pg-cmd > .stats{order:4}
-  #pg-cmd > .cc-rackline{order:5}
-  #pg-cmd > .cc-rackhero{order:6}
-  #pg-cmd > .cc-rackvitals{order:7}
-  #pg-cmd > #cc-qtools{order:8}
-  #pg-cmd > .cmd-grid{order:9}
-  #pg-cmd > #cc-ingest-zone{order:2}
-  #pg-cmd > .lens,#pg-cmd > .trow,#pg-cmd > .sig-h,#pg-cmd > #cc-sig{display:none}
+  #pg-cmd #cc-rail,#pg-cmd #cc-center{display:contents}
+  #pg-cmd .cc-z0{order:1}
+  #pg-cmd #cc-asst{order:2}
+  #pg-cmd .nba{order:3}
+  #pg-cmd .stats{order:4}
+  #pg-cmd .cc-rackline{order:5}
+  #pg-cmd .cc-rackhero{order:6}
+  #pg-cmd .cc-rackvitals{order:7}
+  #pg-cmd #cc-qtools{order:8}
+  #pg-cmd .cmd-grid{order:9}
+  #pg-cmd #cc-ingest-zone{order:2}
+  #pg-cmd .lens,#pg-cmd .trow,#pg-cmd .sig-h,#pg-cmd #cc-sig{display:none}
 }
-/* v1.14.336 rd-review fix: .336 is the PHONE ship. The assistant + quick-tools cards are NOT part of the old
-   .278 desktop column (the 3-region desktop lands in .337), and without this they'd render full-bleed mid-column
-   at >=1024px = broken desktop. Hide them on desktop so it stays the pre-.336 Command look until .337. */
-@media (min-width:1024px){#pg-cmd .cc-asst,#pg-cmd .cc-qtools{display:none}}
+/* ═══ v1.14.337 FINAL-LOOK DESKTOP 3-region (>=1024px): left assistant RAIL | center column. #pg-cmd-scoped
+   → ?legacy byte-identical. SUPERSEDES the .278 centered column (its @media min-width:980px is narrowed to a
+   980–1023 tablet band below — owner ruling: reconcile, not stack). #cc-rail/#cc-center are real boxes only here. ═══ */
+@media (min-width:1024px){
+  #pg-cmd{display:grid;grid-template-columns:340px minmax(0,760px);justify-content:center;align-content:start;column-gap:28px;row-gap:0;padding:26px 40px calc(var(--tabnav-h) + 40px)}
+  #pg-cmd .cc-z0{grid-column:1 / -1;display:flex;align-items:center;gap:14px;margin:0 0 18px;padding:0}
+  #pg-cmd .cc-z0 .statusrow{max-width:none;margin:0}
+  #pg-cmd #cc-rail{grid-column:1;display:flex;flex-direction:column;gap:16px;align-self:start}
+  #pg-cmd #cc-center{grid-column:2;display:flex;flex-direction:column;gap:16px;min-width:0}
+  #pg-cmd #cc-rail > *,#pg-cmd #cc-center > *{margin:0;max-width:none}
+  /* the assistant + quick-tools cards ARE the rail now — undo the .336 desktop-hide */
+  #pg-cmd .cc-asst{display:block}
+  #pg-cmd #cc-qtools{display:block}
+  /* reveal the desktop-only rail/center pieces (base display:none above) */
+  #pg-cmd #cc-sugg{display:block}
+  #pg-cmd #cc-chat{display:flex}
+  #pg-cmd #cc-aistat{display:flex}
+  #pg-cmd #cc-foot{display:flex}
+  /* superseded on desktop: the phone headline block (the assistant card replaces it) */
+  #pg-cmd .lens{display:none}
+  /* stat + telemetry rows sit edge-to-edge inside the column (drop the phone 16px inset) */
+  #pg-cmd .stats,#pg-cmd .trow{padding:0}
+  /* S0 (no Master): single centered column — the ingest zone fills; the now-empty rail is removed outright
+     and #cc-center is reassigned to the sole track (rd-review: dropping grid-template to one track while
+     #cc-center kept grid-column:2 spawned an implicit 2nd column + a 720px empty rail box). */
+  #pg-cmd[data-master="0"]{grid-template-columns:minmax(0,720px)}
+  #pg-cmd[data-master="0"] #cc-rail{display:none}
+  #pg-cmd[data-master="0"] #cc-center{grid-column:1}
+}
 /* v1.14.335 Command v2 D4: the hero-scoped 3D control strip and its rail are REMOVED — the Command hero shows no view buttons; tapping the hero opens the full bay with all controls. rackElevation_render3D no longer builds a strip for a hero mount (see the _heroCard branch). */
 #pg-cmd .lens > *{position:relative;z-index:1}   /* v1.14.335: ghost removed (D12), so every lens child simply sits above the card background */
 #pg-cmd .stats{display:flex;gap:10px;padding:0 16px 14px}
@@ -9951,7 +10001,8 @@ body.rd #rd-botnav{display:grid}
  * set only border/background/box-shadow — no margin/max-width — so they do
  * not defeat this even at their higher specificity.
  * ───────────────────────────────────────────────────────────────────── */
-@media (min-width: 980px) {
+@media (min-width: 980px) and (max-width: 1023px) {
+  /* v1.14.337: narrowed to the 980–1023 tablet band — the >=1024px FINAL-LOOK 3-region grid supersedes this column. */
   /* all nine rows: same capped, centered column */
   #pg-cmd .statusrow,
   #pg-cmd .lens,
@@ -12253,7 +12304,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.336';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.337';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -12971,6 +13022,11 @@ if (typeof window !== 'undefined') {
         <span class="cc-z0-spacer"></span>
         <button class="cc-agechip" id="cc-agechip" type="button" onclick="cmd_loadMaster()" aria-label="Master file — tap to re-ingest or swap" style="display:none"></button>
       </div>
+      <!-- v1.14.337 FINAL-LOOK DESKTOP 3-region — the Command page is grouped into a LEFT ASSISTANT RAIL
+           (#cc-rail) and a CENTER column (#cc-center). Both dissolve (display:contents) below 1024px so the
+           .336 phone reflow renders byte-identical; at >=1024px they become the two grid tracks. cc-z0 stays
+           OUTSIDE both as the full-width status band. All #pg-cmd-scoped → ?legacy byte-identical. -->
+      <div class="cc-rail" id="cc-rail">
       <!-- v1.14.336 FINAL-LOOK (OPTION 2) — AI ASSISTANT card. Assistant-first: ghost + greeting + a real
            situational summary; the NBA orders in immediately below it (phone's single NBA). D12 reversed
            (assistant returns as a functional card, not the old decorative floating ghost). #pg-cmd-scoped. -->
@@ -12982,16 +13038,12 @@ if (typeof window !== 'undefined') {
         <div class="cc-asst-greet">Hi, I&rsquo;m Phantom.<br>Your AI shift assistant.</div>
         <div class="cc-asst-summary" id="cc-asst-summary">&mdash;</div>
       </div>
-      <!-- v1.14.335 Command v2 Z1 — rack line: which rack you're on; tap = rack picker (D5). Shown by cmd_mountRackHero when a Master is loaded. -->
-      <button class="cc-rackline" id="cc-rackline" type="button" onclick="cmd_heroPickRack()" style="display:none" aria-label="Switch rack"></button>
-      <!-- v1.14.330 INSPECT-3D LANDING — first Master rack, live in the Command hero.
-           hidden until a Master loads (empty state = byte-identical to pre-.330). -->
-      <div class="cc-rackhero" id="cc-rackhero" hidden>
-        <div class="cc-rackhero-mount" id="cc-rackhero-mount"></div>
-        <div class="cc-rackhero-cap" id="cc-rackhero-cap"></div>
+      <div class="nba">
+        <div class="nlabel">NEXT BEST ACTION</div>
+        <h2 id="cc-nbah">&mdash;</h2>
+        <p id="cc-nbap">&mdash;</p>
+        <span class="route" id="cc-nbar" role="button" tabindex="0"></span>
       </div>
-      <!-- v1.14.335 Command v2 Z3 — rack vitals: RACKED / OPEN / BLOCKERS / NEXT-U (D8). Fed from the same elev cmd_mountRackHero resolves. -->
-      <div class="cc-rackvitals" id="cc-rackvitals" style="display:none"></div>
       <!-- v1.14.336 FINAL-LOOK (OPTION 2) — QUICK TOOLS card (phone §2.6): the same three cold-aisle verbs
            the hero .hverbs carry (SCAN/LOG/BLOCKER), now their own card since the .lens headline block is
            superseded by the assistant card on phone. Same onclick doors — one door per feature. -->
@@ -13003,17 +13055,36 @@ if (typeof window !== 'undefined') {
           <button class="cc-qtool cc-qtool-blk" type="button" onclick="blocker_quick(deploy_getActiveId())" aria-label="Capture a blocker on the active deployment">BLOCKER</button>
         </div>
       </div>
+      <!-- v1.14.337 SUGGESTED ACTIONS (desktop rail; base display:none → phone unchanged). Every door is a
+           CONFIRMED real function (no dead chips): Summarize shift → shiftReport_generate(); Open brief →
+           brief_show(); Review blockers → cmd_route('work','issues'). Resolves the Z5 Shift-Report + Brief re-home. -->
+      <div class="cc-sugg" id="cc-sugg">
+        <div class="cc-sugg-label">SUGGESTED ACTIONS</div>
+        <button class="cc-sugg-act" type="button" onclick="shiftReport_generate()">Summarize shift<span class="cc-sugg-ar" aria-hidden="true">&rarr;</span></button>
+        <button class="cc-sugg-act" type="button" onclick="brief_show()">Open brief<span class="cc-sugg-ar" aria-hidden="true">&rarr;</span></button>
+        <button class="cc-sugg-act" type="button" onclick="cmd_route('work','issues')">Review blockers<span class="cc-sugg-ar" aria-hidden="true">&rarr;</span></button>
+      </div>
+      <!-- v1.14.337 CHAT WITH PHANTOM (desktop rail; base display:none). Door: openVaSheet(). -->
+      <button class="cc-chat" id="cc-chat" type="button" onclick="openVaSheet()"><span class="cc-chat-ic" aria-hidden="true">&#9673;</span>CHAT WITH PHANTOM<span class="cc-chat-ar" aria-hidden="true">&#9654;</span></button>
+      <!-- v1.14.337 AI STATUS foot of the rail (desktop; base display:none). Honest static — the assistant is reachable. -->
+      <div class="cc-aistat" id="cc-aistat"><span class="cc-aistat-dot" aria-hidden="true"></span>AI STATUS &middot; ACTIVE</div>
+      </div>
+      <div class="cc-center" id="cc-center">
+      <!-- v1.14.335 Command v2 Z1 — rack line: which rack you're on; tap = rack picker (D5). Shown by cmd_mountRackHero when a Master is loaded. -->
+      <button class="cc-rackline" id="cc-rackline" type="button" onclick="cmd_heroPickRack()" style="display:none" aria-label="Switch rack"></button>
+      <!-- v1.14.330 INSPECT-3D LANDING — first Master rack, live in the Command hero.
+           hidden until a Master loads (empty state = byte-identical to pre-.330). -->
+      <div class="cc-rackhero" id="cc-rackhero" hidden>
+        <div class="cc-rackhero-mount" id="cc-rackhero-mount"></div>
+        <div class="cc-rackhero-cap" id="cc-rackhero-cap"></div>
+      </div>
+      <!-- v1.14.335 Command v2 Z3 — rack vitals: RACKED / OPEN / BLOCKERS / NEXT-U (D8). Fed from the same elev cmd_mountRackHero resolves. -->
+      <div class="cc-rackvitals" id="cc-rackvitals" style="display:none"></div>
       <!-- v1.14.335 Command v2 S0 — no-Master ingest zone (D10): full-height tap target, shown only when #pg-cmd[data-master="0"]. Single door → cmd_loadMaster() (D11). -->
       <div class="cc-ingest-zone" id="cc-ingest-zone" role="button" tabindex="0" onclick="cmd_loadMaster()" aria-label="Ingest Master file — arrives by email">
         <div class="ciz-mark" aria-hidden="true">&#9672;</div>
         <div class="ciz-title">INGEST MASTER</div>
         <div class="ciz-sub">Master arrives by email &mdash; tap to ingest</div>
-      </div>
-      <div class="nba">
-        <div class="nlabel">NEXT BEST ACTION</div>
-        <h2 id="cc-nbah">&mdash;</h2>
-        <p id="cc-nbap">&mdash;</p>
-        <span class="route" id="cc-nbar" role="button" tabindex="0"></span>
       </div>
       <div class="lens">
         <div class="clock"><div class="t" id="cc-clock">--:--</div><div class="l">LOCAL</div></div>
@@ -13038,6 +13109,12 @@ if (typeof window !== 'undefined') {
       <!-- v1.14.293 (Ship 4 call #3): askrow RETIRED (Ask tile + reserved slot removed) per owner ruling. SCAN-ID dropped - it would duplicate the hero SCAN verb (both open ScanDispatch, which already auto-captures asset/serial). "Ask PHANTOM" stays reachable via the qa-voice button + command palette. Dead .askrow/.apill/.rpill CSS removed in the v1.14.295 CLEAN pass. -->
       <div class="sig-h">OPS SIGNAL</div>
       <div id="cc-sig"></div>
+      <!-- v1.14.337 FOOTER (center, spans; desktop only, base display:none). Honest static — no fake EKG/health telemetry. -->
+      <div class="cc-foot" id="cc-foot">
+        <span class="cc-foot-seg"><span class="cc-foot-dot" aria-hidden="true"></span>SECURE SESSION &middot; ON-DEVICE</span>
+        <span class="cc-foot-seg cc-foot-brand">PHANTOM</span>
+      </div>
+      </div>
     </div>
     <div class="page" id="pg-work">
       <!-- REDESIGN STEP 3 — Workspace subtab strip. Scan is re-homed for real:
