@@ -9204,6 +9204,10 @@ body.rd #ph-sheet.open {
 #pg-cmd .cc-rackhero[hidden]{display:none}
 #pg-cmd .cc-rackhero-mount{position:absolute;inset:0;width:100%;height:100%}
 #pg-cmd .cc-rackhero-cap{position:absolute;left:12px;bottom:10px;z-index:2;pointer-events:none;font-family:var(--mono,'Chakra Petch',monospace);font-size:10px;letter-spacing:2px;color:var(--cyan);text-shadow:0 1px 6px rgba(0,0,0,0.7)}
+/* v1.14.332 — hero-scoped 3D controls: the SAME .reh-3d-seg buttons the panel uses (built by rackElevation_render3D's shared path), overlaid as 2 stacked centered rows at the top of the hero card so they never share one no-wrap row (row1 = CABLES; row2 = FRONT/ISO/TOP/REAR/EXPLODE). flex-wrap is a zero-overflow backstop (Rule 1). Redesign-only (#pg-cmd .cc-rackhero); ID specificity beats the shared body.rd .reh-3d-rail base. */
+#pg-cmd .cc-rackhero .reh-3d-toggle--hero,#pg-cmd .cc-rackhero .reh-3d-rail{position:absolute;left:0;right:0;z-index:4;display:flex;flex-wrap:wrap;justify-content:center;gap:4px;padding:0 8px;margin:0;pointer-events:auto}
+#pg-cmd .cc-rackhero .reh-3d-toggle--hero{top:8px}
+#pg-cmd .cc-rackhero .reh-3d-rail{top:44px}
 #pg-cmd .lens > *:not(.ghosthero){position:relative;z-index:1}   /* v1.14.314: with the ghost lifted to z-index:0, keep every OTHER lens child (clock/llabel/H1/P/shiftpill/cc-magstrip/hverbs verbs) above it so it never paints over a control (B-02) */
 #pg-cmd .stats{display:flex;gap:10px;padding:0 16px 14px}
 #pg-cmd .stat{flex:1;filter:none;border:1px solid color-mix(in srgb,var(--cyan) 15%,transparent);border-radius:16px;background:linear-gradient(158deg,#050506 0%,#010102 46%,#000000 76%,#030304 100%);box-shadow:inset 0 1px 0 rgba(210,234,244,.14),0 8px 20px -14px rgba(0,0,0,.85);padding:14px 8px;text-align:center}
@@ -12177,7 +12181,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.331';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.332';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -33328,9 +33332,31 @@ function rackElevation_render3D(rack, mountEl) {
   // be declared HERE too. Declaring them down with the orbit state (as the first draft did) re-ran
   // `var x = null` AFTER the assignment and wiped the references: setView's is-on toggle silently
   // no-opped and teardown got null, stranding the rail in the DOM forever. Same trap as trayGroups.
-  var _railEl = null, _railBtns = null, _explodeBtn = null;
+  var _railEl = null, _railBtns = null, _explodeBtn = null, _heroStrip = null;
   try {
-    var _strip = document.querySelector('.reh-3d-toggle');
+    // v1.14.332 — resolve the control-strip HOST from the mount's OWN ancestry first. The Command
+    // hero mount (#cc-rackhero) has no panel toolbar, so build/own a hero-scoped strip INSIDE the
+    // hero card; only a non-hero mount (the reh3d panel) uses the panel's .reh-3d-toggle. The SAME
+    // CABLES + VIEW-RAIL + EXPLODE code below then runs for both hosts (ONE code path, two hosts).
+    // ⚠️ Do NOT resolve the hero via a bare document.querySelector('.reh-3d-toggle'): a rack-detail
+    // 3D view opened under Work leaves a HIDDEN .reh-3d-toggle in #pg-work (pages hide, never delete),
+    // and a global query would mistake it for "the panel exists" and silently build the hero controls
+    // into the hidden Work page = a bare hero with no signal (v1.14.332 rd-review catch). Scoping to
+    // mountEl's own card makes that impossible and keeps the panel path + ?legacy byte-identical.
+    var _heroCard = (mountEl && mountEl.closest) ? mountEl.closest('.cc-rackhero') : null;
+    var _strip;
+    if (_heroCard) {
+      _strip = _heroCard.querySelector('.reh-3d-toggle--hero');
+      if (_strip) { _heroStrip = _strip; }   // reuse an existing hero strip (teardown still owns it)
+      else {
+        _heroStrip = document.createElement('div');
+        _heroStrip.className = 'reh-3d-toggle reh-3d-toggle--hero';
+        _heroCard.appendChild(_heroStrip);
+        _strip = _heroStrip;
+      }
+    } else {
+      _strip = document.querySelector('.reh-3d-toggle');   // panel path — unchanged
+    }
     if (_strip && !_strip.querySelector('#reh3dBtnCables')) {
       _cablesBtn = document.createElement('button');
       _cablesBtn.type = 'button';
@@ -33371,7 +33397,7 @@ function rackElevation_render3D(rack, mountEl) {
     // REAR ≈ 390px+) and push the viewport on a 390px phone — Rule 1, and the exact defect the GB300
     // reference file ships. A second row is ~210px and fits with room to spare.
     // Created only while 3D is live and removed in teardown(), same contract as the CABLES chip.
-    if (_strip && _strip.parentNode && !document.getElementById('reh3dRail')) {
+    if (_strip && _strip.parentNode && !_strip.parentNode.querySelector('#reh3dRail')) {   // v1.14.332 — scope to the strip's OWN host (was global getElementById → a stale rail in a hidden page could suppress the build)
       _railEl = document.createElement('div');
       _railEl.id = 'reh3dRail';
       _railEl.className = 'reh-3d-rail';
@@ -33963,7 +33989,11 @@ function rackElevation_render3D(rack, mountEl) {
     // v1.14.271: the rail + the stow hook exist only in 3D — the hook MUST NOT outlive the scene it
     // closes over, or a later sheet-open would call setExplode() on a disposed context.
     try { if (_railEl && _railEl.parentNode) _railEl.parentNode.removeChild(_railEl); } catch (e) {}
-    _railEl = null; _railBtns = null; _explodeBtn = null; trayGroups = [];
+    // v1.14.332 — symmetric with the panel: the hero-scoped strip is created by THIS render, so it
+    // must be torn down here too. (The panel's .reh-3d-toggle pre-exists and is left alone; on the
+    // panel/legacy path _heroStrip is null, so this is a no-op there.)
+    try { if (_heroStrip && _heroStrip.parentNode) _heroStrip.parentNode.removeChild(_heroStrip); } catch (e) {}
+    _railEl = null; _railBtns = null; _explodeBtn = null; _heroStrip = null; trayGroups = [];
     try { if (window._reh3dStow) window._reh3dStow = null; } catch (e) {}
     mountEl._rm3dDispose = null;
     if (_reh3dActive && _reh3dActive.mount === mountEl) _reh3dActive = null;
