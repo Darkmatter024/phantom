@@ -12181,7 +12181,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.333';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.334';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -20109,7 +20109,19 @@ function cmd_rackHeroFlat(mount, elev) {
 // the reh3d PANEL host, which our hero is not, so we can't reuse it directly).
 function cmd_rackHero3D(elev, mount) {
   if (!mount) return;
+  var _tries = 0;
   function paint() {
+    // v1.14.334 — FIX "stuck on Loading 3D…". Abort ONLY if genuinely gone: left Command, or the
+    // mount was detached. If we're still on Command but the mount isn't laid out yet (offsetParent
+    // null / 0x0 — the exact state the old guard stranded on, permanently), RETRY on the hero itself
+    // (bounded ~2s) rather than returning forever. rackElevation_render3D's own 0x0 retry only
+    // re-arms for the reh3d PANEL host (#reh3dCanvasHost.is-3d), never the hero, so the hero needs
+    // this. Last resort = FLAT, so the rack NEVER stays stuck on the loading text.
+    if (_rdMode !== 'command' || !document.body.contains(mount)) return;
+    if (mount.offsetParent === null || !mount.clientWidth || !mount.clientHeight) {
+      if (_tries++ < 120) { requestAnimationFrame(paint); } else { cmd_rackHeroFlat(mount, elev); }
+      return;
+    }
     try { rackElevation_render3D(elev, mount); mount._rm3dRackId = (elev && elev.id) || ''; }
     catch (e) { if (typeof phantom_logErr === 'function') phantom_logErr('cmd_rackHero3D', e); cmd_rackHeroFlat(mount, elev); }
   }
@@ -20117,9 +20129,7 @@ function cmd_rackHero3D(elev, mount) {
   if (typeof loadScript !== 'function') { cmd_rackHeroFlat(mount, elev); return; }
   mount.innerHTML = '<div class="reh-3d-loading">Loading 3D…</div>';
   loadScript('./vendor/three.min.js').then(function () {
-    // Still relevant? (didn't leave Command, Master still loaded, mount still visible.)
-    if (_rdMode !== 'command' || !document.body.contains(mount) || mount.offsetParent === null) return;
-    if (window.THREE) paint(); else cmd_rackHeroFlat(mount, elev);
+    if (window.THREE) paint(); else cmd_rackHeroFlat(mount, elev);   // paint() now owns the still-relevant + laid-out checks (with retry), so no strand
   }).catch(function () { cmd_rackHeroFlat(mount, elev); });
 }
 // The two-state hero slot. No Master -> hidden (page byte-identical to pre-.330 +
