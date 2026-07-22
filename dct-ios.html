@@ -9202,6 +9202,10 @@ body.rd #ph-sheet.open {
 #pg-cmd .cc-rackhero[hidden]{display:none}
 #pg-cmd .cc-rackhero-mount{position:absolute;inset:0;width:100%;height:100%}
 #pg-cmd .cc-rackhero-cap{position:absolute;left:12px;bottom:10px;z-index:2;pointer-events:none;font-family:var(--mono,'Chakra Petch',monospace);font-size:10px;letter-spacing:2px;color:var(--cyan);text-shadow:0 1px 6px rgba(0,0,0,0.7)}
+/* v1.14.338 — OPEN BAY full-width (spec §2.5): cyan-outline secondary, >=52px gloved target. JS-toggled with the rack. */
+#pg-cmd .cc-openbay{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;box-sizing:border-box;min-height:52px;margin:0 0 10px;border:1px solid var(--cyan-border-lo);border-radius:12px;background:rgba(92,242,255,0.06);color:var(--cyan);font-family:var(--raj);font-weight:700;font-size:14px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;-webkit-appearance:none;-webkit-tap-highlight-color:transparent}
+#pg-cmd .cc-openbay:active{background:rgba(92,242,255,0.12)}
+#pg-cmd .cc-ob-ar{font-size:15px}
 /* ━━━ v1.14.335 Command v2 — Z0 header cluster · Z1 rack line · Z3 vitals · S0 ingest. All #pg-cmd-scoped (redesign-only page; never renders under ?legacy → byte-identical). ━━━ */
 #pg-cmd .cc-z0{display:flex;align-items:center;gap:8px;margin:2px 0 10px;min-height:44px}
 #pg-cmd .cc-z0-site{font-family:var(--orb);font-weight:700;font-size:13px;letter-spacing:2px;color:#eaf6ff;flex:0 1 auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -9212,7 +9216,7 @@ body.rd #ph-sheet.open {
 /* v1.14.335: a tappable health dot (Profile door) rides a 44x44 invisible hit box — a bare 9px dot is 5x under the gloved floor (rd-review Rule 13). Decorative dots stay bare spans. */
 #pg-cmd .cc-hdot-hit{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;padding:0;border:0;background:none;cursor:pointer;-webkit-appearance:none;-webkit-tap-highlight-color:transparent;flex:0 0 auto}
 #pg-cmd .cc-z0-spacer{flex:1}
-#pg-cmd .cc-agechip{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:1px;color:var(--cyan);border:1px solid rgba(92,242,255,.30);background:rgba(92,242,255,.06);border-radius:20px;padding:7px 12px;min-height:44px;cursor:pointer;-webkit-appearance:none;-webkit-tap-highlight-color:transparent;white-space:nowrap;flex:0 0 auto}   /* v1.14.335: 44px gloved floor — this is a live re-ingest/swap door (rd-review Rule 13) */
+#pg-cmd .cc-agechip{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:1px;color:var(--cyan);border:1px solid var(--cyan-border-lo);background:linear-gradient(158deg,#050506 0%,#010102 46%,#000000 76%,#030304 100%);box-shadow:inset 0 1px 0 rgba(210,234,244,.14),0 8px 20px -14px rgba(0,0,0,.85);border-radius:12px;padding:7px 12px;min-height:44px;cursor:pointer;-webkit-appearance:none;-webkit-tap-highlight-color:transparent;white-space:nowrap;flex:0 0 auto}   /* v1.14.338: dark stat-card surface + subtle cyan-lo border (was bright cyan border/fill that didn't match the comp). 44px gloved floor kept — live re-ingest/swap door (rd-review Rule 13). */
 #pg-cmd .cc-agechip.age-warn{color:var(--gold);border-color:rgba(255,203,69,.40);background:rgba(255,203,69,.07)}
 #pg-cmd .cc-agechip.age-stale{color:#ff2bd6;border-color:rgba(255,43,214,.45);background:rgba(255,43,214,.08)}   /* v1.14.335: >24h escalates gold(attention)->magenta(fault), NOT red (EXIT-only) */
 #pg-cmd .cc-agechip:active{filter:brightness(1.15)}
@@ -9230,7 +9234,7 @@ body.rd #ph-sheet.open {
 #pg-cmd .cc-vital.v-next .vn{color:var(--cyan)}
 #pg-cmd .cc-vital.v-next:active{filter:brightness(1.2)}
 #pg-cmd .cc-ingest-zone{display:none}
-#pg-cmd[data-master="0"] .cc-rackline,#pg-cmd[data-master="0"] .cc-rackhero,#pg-cmd[data-master="0"] .cc-rackvitals,#pg-cmd[data-master="0"] .nba,#pg-cmd[data-master="0"] .lens,#pg-cmd[data-master="0"] .stats,#pg-cmd[data-master="0"] .trow,#pg-cmd[data-master="0"] .sig-h,#pg-cmd[data-master="0"] #cc-sig,#pg-cmd[data-master="0"] .cmd-grid,#pg-cmd[data-master="0"] .cc-asst,#pg-cmd[data-master="0"] .cc-qtools,#pg-cmd[data-master="0"] .cc-z0 .statusrow,#pg-cmd[data-master="0"] .cc-agechip,#pg-cmd[data-master="0"] #cc-sugg,#pg-cmd[data-master="0"] #cc-chat,#pg-cmd[data-master="0"] #cc-aistat,#pg-cmd[data-master="0"] #cc-foot{display:none!important}
+#pg-cmd[data-master="0"] .cc-rackline,#pg-cmd[data-master="0"] .cc-rackhero,#pg-cmd[data-master="0"] .cc-rackvitals,#pg-cmd[data-master="0"] .nba,#pg-cmd[data-master="0"] .lens,#pg-cmd[data-master="0"] .stats,#pg-cmd[data-master="0"] .trow,#pg-cmd[data-master="0"] .sig-h,#pg-cmd[data-master="0"] #cc-sig,#pg-cmd[data-master="0"] .cmd-grid,#pg-cmd[data-master="0"] .cc-asst,#pg-cmd[data-master="0"] .cc-qtools,#pg-cmd[data-master="0"] .cc-z0 .statusrow,#pg-cmd[data-master="0"] .cc-agechip,#pg-cmd[data-master="0"] #cc-sugg,#pg-cmd[data-master="0"] #cc-chat,#pg-cmd[data-master="0"] #cc-aistat,#pg-cmd[data-master="0"] #cc-foot,#pg-cmd[data-master="0"] #cc-openbay{display:none!important}
 #pg-cmd[data-master="0"] .cc-ingest-zone{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;width:100%;box-sizing:border-box;min-height:min(64vh,520px);padding:32px 20px;border:1.5px dashed rgba(92,242,255,.35);border-radius:18px;background:radial-gradient(120% 90% at 50% 30%,rgba(40,224,255,.08),rgba(4,6,10,0) 60%),#04060a;cursor:pointer;-webkit-tap-highlight-color:transparent;text-align:center}
 #pg-cmd[data-master="0"] .cc-ingest-zone:active{background:radial-gradient(120% 90% at 50% 30%,rgba(40,224,255,.14),rgba(4,6,10,0) 60%),#060a12}
 #pg-cmd .cc-ingest-zone .ciz-mark{font-size:42px;line-height:1}
@@ -9242,7 +9246,7 @@ body.rd #ph-sheet.open {
 #pg-cmd .cc-asst-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
 #pg-cmd .cc-asst-eyebrow{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--slate);text-transform:uppercase}
 #pg-cmd .cc-asst-online{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 6px var(--ok);flex:0 0 auto}
-#pg-cmd .cc-asst-ghost{width:56px;height:56px;object-fit:contain;flex:0 0 auto;filter:drop-shadow(0 0 12px rgba(92,242,255,.35))}
+#pg-cmd .cc-asst-ghost{width:auto;height:84px;object-fit:contain;flex:0 0 auto;filter:drop-shadow(0 0 14px rgba(92,242,255,.4))}   /* v1.14.338: phantom-ghost-v2.webp is PORTRAIT 1086x1448 → size by HEIGHT (art-sizing law); was forced into a 56x56 square (letterboxed to ~42x56 = "squeezed in the corner"). 84px (>=72), glow uncropped (.cc-asst has no overflow:hidden). */
 #pg-cmd .cc-asst-greet{font-family:var(--orb);font-weight:700;font-size:17px;line-height:1.25;color:#eaf6ff;margin:6px 0 6px}
 #pg-cmd .cc-asst-summary{font-family:var(--raj);font-size:13px;line-height:1.45;color:var(--slate)}
 #pg-cmd .cc-qtools{border:1px solid var(--cyan-border-lo);border-radius:14px;background:var(--surf-1);box-shadow:var(--surf-inset),0 8px 20px -14px rgba(0,0,0,.85);padding:14px 16px 16px;margin:0 16px 12px}
@@ -9286,17 +9290,16 @@ body.rd #ph-sheet.open {
    UNCHANGED, so the phone renders byte-identical to .336. The >=1024px 3-region is below. */
 @media (max-width:1023px){
   #pg-cmd{display:flex;flex-direction:column}
-  #pg-cmd #cc-rail,#pg-cmd #cc-center{display:contents}
+  /* v1.14.338: ONLY #cc-rail dissolves. #cc-center stays a REAL box so the rack's WebGL mount keeps a valid
+     offsetParent/size (display:contents on its ancestor made cmd_rackHero3D's layout guard fail on iOS → the
+     rack fell back to a 0-size flat render = "missing"). #cc-center's children keep the comp order via DOM
+     (stats → rack → …), so no per-item order is needed here. */
+  #pg-cmd #cc-rail{display:contents}
   #pg-cmd .cc-z0{order:1}
   #pg-cmd #cc-asst{order:2}
   #pg-cmd .nba{order:3}
-  #pg-cmd .stats{order:4}
-  #pg-cmd .cc-rackline{order:5}
-  #pg-cmd .cc-rackhero{order:6}
-  #pg-cmd .cc-rackvitals{order:7}
-  #pg-cmd #cc-qtools{order:8}
-  #pg-cmd .cmd-grid{order:9}
-  #pg-cmd #cc-ingest-zone{order:2}
+  #pg-cmd #cc-center{order:4}
+  #pg-cmd #cc-qtools{order:5}
   #pg-cmd .lens,#pg-cmd .trow,#pg-cmd .sig-h,#pg-cmd #cc-sig{display:none}
 }
 /* ═══ v1.14.337 FINAL-LOOK DESKTOP 3-region (>=1024px): left assistant RAIL | center column. #pg-cmd-scoped
@@ -9395,7 +9398,7 @@ body.rd #ph-sheet.open {
    FIXES vs the handoff draft: kept display:none default (legacy stays hidden — grid gated to body.rd below so
    ?legacy is byte-identical), kept position:fixed + z-index:40 + the .287 FIX-2 GPU layer (translateZ) so the
    nav stays pinned ABOVE the iOS #pg-ref scroller, and EXIT color is #ff5a4d directly (the live --red is #ff453a). */
-#rd-botnav{display:none;position:fixed;left:0;right:0;bottom:0;z-index:40;overflow:hidden;grid-template-columns:repeat(4,1fr);align-items:stretch;border-top:1px solid rgba(92,242,255,.14);background:linear-gradient(180deg,rgba(12,18,24,.6),rgba(6,9,13,.9));backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);padding:8px 6px calc(8px + var(--safe-bottom));max-width:760px;margin-inline:auto;transform:translateZ(0)}
+#rd-botnav{display:none;position:fixed;left:0;right:0;bottom:0;z-index:40;overflow:hidden;grid-template-columns:repeat(4,1fr);align-items:stretch;border-top:1px solid rgba(92,242,255,.14);background:linear-gradient(158deg,#050506 0%,#010102 46%,#000000 76%,#030304 100%);padding:8px 6px calc(8px + var(--safe-bottom));max-width:760px;margin-inline:auto;transform:translateZ(0)}   /* v1.14.338: solid stat-card surface (matches the RACKS tile), was translucent gradient + blur that read lighter than the cards */
 #bn-rail{display:contents}                 /* its 3 tabs become direct grid cells */
 #bn-core{display:none}                      /* old sliding reactor rail retired */
 /* v1.14.323 — pnav look (owner lab-locked: flush·glass·underbar·large·always-labels·per-icon color·WebP icons)
@@ -12304,7 +12307,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.337';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.338';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -13033,7 +13036,7 @@ if (typeof window !== 'undefined') {
       <div class="cc-asst" id="cc-asst">
         <div class="cc-asst-top">
           <div class="cc-asst-eyebrow"><span class="cc-asst-online" aria-hidden="true"></span>AI ASSISTANT &middot; ONLINE</div>
-          <img class="cc-asst-ghost" src="phantom-ghost-v2.webp" alt="" aria-hidden="true" width="56" height="56">
+          <img class="cc-asst-ghost" src="phantom-ghost-v2.webp" alt="" aria-hidden="true" width="63" height="84">
         </div>
         <div class="cc-asst-greet">Hi, I&rsquo;m Phantom.<br>Your AI shift assistant.</div>
         <div class="cc-asst-summary" id="cc-asst-summary">&mdash;</div>
@@ -13070,6 +13073,8 @@ if (typeof window !== 'undefined') {
       <div class="cc-aistat" id="cc-aistat"><span class="cc-aistat-dot" aria-hidden="true"></span>AI STATUS &middot; ACTIVE</div>
       </div>
       <div class="cc-center" id="cc-center">
+      <!-- v1.14.338 FINAL-LOOK: stats lead the center (comp order: stat cards → rack → bottom cards). Moved up from below the lens. -->
+      <div class="stats" id="cc-stats"></div>
       <!-- v1.14.335 Command v2 Z1 — rack line: which rack you're on; tap = rack picker (D5). Shown by cmd_mountRackHero when a Master is loaded. -->
       <button class="cc-rackline" id="cc-rackline" type="button" onclick="cmd_heroPickRack()" style="display:none" aria-label="Switch rack"></button>
       <!-- v1.14.330 INSPECT-3D LANDING — first Master rack, live in the Command hero.
@@ -13080,6 +13085,8 @@ if (typeof window !== 'undefined') {
       </div>
       <!-- v1.14.335 Command v2 Z3 — rack vitals: RACKED / OPEN / BLOCKERS / NEXT-U (D8). Fed from the same elev cmd_mountRackHero resolves. -->
       <div class="cc-rackvitals" id="cc-rackvitals" style="display:none"></div>
+      <!-- v1.14.338 FINAL-LOOK: OPEN BAY full-width (spec §2.5). Same door as the hero tap → cmd_openHeroBay(mount). JS-shown WITH the rack (cmd_heroAux), hidden in S0 / no-rack (cmd_heroHideAux) — one door, two affordances. -->
+      <button class="cc-openbay" id="cc-openbay" type="button" style="display:none" onclick="cmd_openHeroBay(document.getElementById('cc-rackhero-mount'))" aria-label="Open the rack bay detail">OPEN BAY <span class="cc-ob-ar" aria-hidden="true">&#10230;</span></button>
       <!-- v1.14.335 Command v2 S0 — no-Master ingest zone (D10): full-height tap target, shown only when #pg-cmd[data-master="0"]. Single door → cmd_loadMaster() (D11). -->
       <div class="cc-ingest-zone" id="cc-ingest-zone" role="button" tabindex="0" onclick="cmd_loadMaster()" aria-label="Ingest Master file — arrives by email">
         <div class="ciz-mark" aria-hidden="true">&#9672;</div>
@@ -13100,7 +13107,6 @@ if (typeof window !== 'undefined') {
         </div>
         <!-- v1.14.335 Command v2 D12: the ghost hero (#cc-ghost) is removed — the rack is the identity object. Assistant stays reachable via the header ghost menu. -->
       </div>
-      <div class="stats" id="cc-stats"></div>
       <div class="trow">
         <div class="tile" id="tt-deploy" role="button" tabindex="0" onclick="cmd_route('work','deploy')" aria-label="Deploy status — tap to open Deploy"><span class="ey"><span class="led"></span>Deploy</span><span class="val" id="tt-deploy-val">—</span><span class="sub" id="tt-deploy-sub"></span><div class="bar" id="tt-deploy-bar" style="display:none"><i id="tt-deploy-fill"></i></div></div>
         <div class="tile" id="tt-scan" role="button" tabindex="0" onclick="cmd_route('work','scan')" aria-label="Scan count — tap to open Scan"><span class="ey"><span class="led"></span>Scanned</span><span class="val" id="tt-scan-val">—</span><span class="sub" id="tt-scan-sub"></span></div>
@@ -20396,9 +20402,13 @@ function phantom_nextOpenU(slots, totalU) {
 function cmd_masterAgeInfo() {
   var m = (typeof window !== 'undefined') ? window._lastPhantomMaster : null;
   var ts = m && (m.savedAt || m.ingestedAt);
-  if (!ts) return { text: 'MASTER', cls: '' };
-  var ageMs = Date.now() - ts, h = ageMs / 3600000, label;
-  if (h < 1) { var mins = Math.max(1, Math.round(ageMs / 60000)); label = mins + 'm'; }
+  // v1.14.338 — savedAt is an ISO STRING, so `Date.now() - ts` was NaN → "MASTER · NaNd". Coerce to epoch ms
+  // (number passes through; string via Date.parse); bail to a plain label if absent/unparseable.
+  var tsMs = (typeof ts === 'number') ? ts : (ts ? Date.parse(ts) : NaN);
+  if (!tsMs || isNaN(tsMs)) return { text: 'MASTER', cls: '' };
+  var ageMs = Math.max(0, Date.now() - tsMs), h = ageMs / 3600000, label;
+  if (ageMs < 60000) label = 'just now';
+  else if (h < 1) label = Math.max(1, Math.round(ageMs / 60000)) + 'm';
   else if (h < 48) label = Math.round(h) + 'h';
   else label = Math.round(h / 24) + 'd';
   var cls = (h > 24) ? 'age-stale' : (h > 12 ? 'age-warn' : '');
@@ -20417,6 +20427,7 @@ function cmd_renderZ0(site, loaded) {
 function cmd_heroHideAux() {
   var rl = document.getElementById('cc-rackline'); if (rl) rl.style.display = 'none';
   var rv = document.getElementById('cc-rackvitals'); if (rv) rv.style.display = 'none';
+  var ob = document.getElementById('cc-openbay'); if (ob) ob.style.display = 'none';   // v1.14.338: OPEN BAY hides with the rack (no-rack / S0)
 }
 // this-rack blocker count (honest): the active deployment's matching rack, else 0. No cross-rack aggregate.
 function cmd_rackBlockers(rackElevId) {
@@ -20461,6 +20472,7 @@ function cmd_heroAux(elev) {
     }).join('');
     rv.style.display = '';
   }
+  var ob = document.getElementById('cc-openbay'); if (ob) ob.style.display = '';   // v1.14.338: OPEN BAY rides WITH the rack vitals (spec §2.5) — one door, shown only when a rack is live
 }
 // D5 — rack switch picker: a minimal self-contained overlay listing every Master rack; pick → re-mount
 // the hero to that rack. Reuses the Master (racksByCab) order; the blocker picker's list philosophy.
