@@ -9200,10 +9200,10 @@ body.rd #ph-sheet.open {
 #pg-cmd .ghosthero.dim{filter:grayscale(.9) brightness(.42);opacity:.4}
 #pg-cmd .ghosthero.mid{filter:saturate(.75) brightness(.85);opacity:.9}
 /* v1.14.330 INSPECT-3D LANDING — first Master rack live in the Command hero. Bare #pg-cmd (redesign-only page, never rendered under legacy). Height-capped so it never eats the phone screen; hidden until a Master loads. */
-#pg-cmd .cc-rackhero{position:relative;width:100%;height:min(46vh,420px);margin:0 0 14px;border:1px solid rgba(92,242,255,0.16);border-radius:14px;overflow:hidden;background:radial-gradient(120% 90% at 50% 0,rgba(40,224,255,0.05),rgba(4,6,10,0) 60%),#04060a}
+#pg-cmd .cc-rackhero{position:relative;width:100%;height:min(46vh,420px);margin:0 0 14px;border:1px solid var(--cyan-border-lo);border-radius:14px;overflow:hidden;background:radial-gradient(120% 90% at 50% 0,var(--cyan-dim),rgba(4,6,10,0) 60%),#04060a}
 #pg-cmd .cc-rackhero[hidden]{display:none}
 #pg-cmd .cc-rackhero-mount{position:absolute;inset:0;width:100%;height:100%}
-#pg-cmd .cc-rackhero-cap{position:absolute;left:12px;bottom:10px;z-index:2;pointer-events:none;font-family:var(--mono,'Chakra Petch',monospace);font-size:10px;letter-spacing:2px;color:#7fe9ff;text-shadow:0 1px 6px rgba(0,0,0,0.7)}
+#pg-cmd .cc-rackhero-cap{position:absolute;left:12px;bottom:10px;z-index:2;pointer-events:none;font-family:var(--mono,'Chakra Petch',monospace);font-size:10px;letter-spacing:2px;color:var(--cyan);text-shadow:0 1px 6px rgba(0,0,0,0.7)}
 #pg-cmd .lens > *:not(.ghosthero){position:relative;z-index:1}   /* v1.14.314: with the ghost lifted to z-index:0, keep every OTHER lens child (clock/llabel/H1/P/shiftpill/cc-magstrip/hverbs verbs) above it so it never paints over a control (B-02) */
 #pg-cmd .stats{display:flex;gap:10px;padding:0 16px 14px}
 #pg-cmd .stat{flex:1;filter:none;border:1px solid color-mix(in srgb,var(--cyan) 15%,transparent);border-radius:16px;background:linear-gradient(158deg,#050506 0%,#010102 46%,#000000 76%,#030304 100%);box-shadow:inset 0 1px 0 rgba(210,234,244,.14),0 8px 20px -14px rgba(0,0,0,.85);padding:14px 8px;text-align:center}
@@ -12177,7 +12177,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.330';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.331';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -20091,7 +20091,7 @@ function cmd_resolveFirstRackElev() {
         if (leadKey && m.racksByCab[leadKey]) cabId = leadKey;
       }
     }
-  } catch (_) {}
+  } catch (e) { if (typeof phantom_logErr === 'function') phantom_logErr('cmd_resolveFirstRackElev:d1', e); }   // v1.14.331: was a silent catch — log the D1-sort anomaly; still degrades to the Master-order first rack
   try { return master_rackToElevation(m.racksByCab[cabId], cabId); } catch (_) { return null; }
 }
 // FLAT fallback (capability-only, not a battery choice): the existing HTML elevation.
