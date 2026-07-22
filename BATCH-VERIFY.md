@@ -192,4 +192,22 @@ any HIGH-risk ship). Every ship keeps its own rollback line. Claude Code appends
 - [ ] If banner/version reads unchanged → SW cache-key bump didn't take (check first)
 - [ ] First ship of a new batch (prior .213-.214 released 2026-07-09)
 
+## ⏸ DORMANCY GAP — .216 → .329 not tracked here
+- This file went dormant after .215 (2026-07-09). Ships **.216 → .329** were verified out-of-band (owner device passes + per-ship `version.json` notes + git log), NOT via this file. Absence of a block below does NOT mean a ship was unverified. Re-activated .330 on owner directive (2026-07-21). Source of truth for that gap = `version.json` history + memory `project_repo_sync_v1133.md`.
+
+## v1.14.330 — INSPECT-3D landing: first Master rack live in the Command hero · rollback: `git revert 76375fb`
+- [ ] Hard-refresh / clear SW cache first → version chip reads **v1.14.330**+ (else cached). Not in legacy (`?redesign=1` once if nav shows word-tabs — feature is redesign-only).
+- [ ] **Load a real Master** → HOME (Command) auto-lands with the **first rack live in 3D** at the top, above the status pills / NEXT BEST ACTION; caption reads `RACK · <id>`.
+- [ ] It's **live 3D on the phone** (pan/orbit responds) — not a flat image. Rack shown is a real rack from your loaded file (active-deployment lead rack, else first in Master).
+- [ ] Leave HOME → BUILD/TOOLS → back to HOME: rack **re-appears** cleanly (no blank, no doubled scene). Phone shouldn't warm from a background render (teardown-on-leave).
+- [ ] **Before any Master loaded** (fresh install): HOME looks **exactly like .329** — no rack slot, nothing shifted. Hero only appears once a Master is in.
+- [ ] `?legacy=1` → old 5-tab app totally unaffected (no rack hero anywhere). No new console errors on load / entering HOME.
+- [ ] If blank/wrong: report (a) caption present but no 3D, or (b) nothing at all, and (c) whether WebGL works elsewhere in the app.
+
+## v1.14.331 — fold the 2 rd-review nits on the INSPECT-3D hero (polish) · rollback: `git revert f59c288`
+- [ ] Folds into the .330 check — the hero should look **the same**: cyan frame / glow / caption on the rack landing (token swap is a negligible within-hue shift, corrected to the page's true `--cyan` #5cf2ff).
+- [ ] No behavior change: rack still lands / tears down / re-mounts exactly as .330.
+- [ ] (Diagnostic-only) if a D1 rack-resolution anomaly ever occurs it now logs to SYS › ERRORS instead of being swallowed — nothing to see unless it fires.
+- [ ] Both P3 gate agents (`phantom-ship-gate` + `phantom-rd-reviewer`) returned PASS on f59c288 pre-push.
+
 <!-- append new ships above this line; checkpoint when 6 deep or before HIGH-risk -->
