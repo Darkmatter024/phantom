@@ -9230,12 +9230,54 @@ body.rd #ph-sheet.open {
 #pg-cmd .cc-vital.v-next .vn{color:var(--cyan)}
 #pg-cmd .cc-vital.v-next:active{filter:brightness(1.2)}
 #pg-cmd .cc-ingest-zone{display:none}
-#pg-cmd[data-master="0"] .cc-rackline,#pg-cmd[data-master="0"] .cc-rackhero,#pg-cmd[data-master="0"] .cc-rackvitals,#pg-cmd[data-master="0"] .nba,#pg-cmd[data-master="0"] .lens,#pg-cmd[data-master="0"] .stats,#pg-cmd[data-master="0"] .trow,#pg-cmd[data-master="0"] .sig-h,#pg-cmd[data-master="0"] #cc-sig,#pg-cmd[data-master="0"] .cmd-grid,#pg-cmd[data-master="0"] .cc-z0 .statusrow,#pg-cmd[data-master="0"] .cc-agechip{display:none!important}
+#pg-cmd[data-master="0"] .cc-rackline,#pg-cmd[data-master="0"] .cc-rackhero,#pg-cmd[data-master="0"] .cc-rackvitals,#pg-cmd[data-master="0"] .nba,#pg-cmd[data-master="0"] .lens,#pg-cmd[data-master="0"] .stats,#pg-cmd[data-master="0"] .trow,#pg-cmd[data-master="0"] .sig-h,#pg-cmd[data-master="0"] #cc-sig,#pg-cmd[data-master="0"] .cmd-grid,#pg-cmd[data-master="0"] .cc-asst,#pg-cmd[data-master="0"] .cc-qtools,#pg-cmd[data-master="0"] .cc-z0 .statusrow,#pg-cmd[data-master="0"] .cc-agechip{display:none!important}
 #pg-cmd[data-master="0"] .cc-ingest-zone{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;width:100%;box-sizing:border-box;min-height:min(64vh,520px);padding:32px 20px;border:1.5px dashed rgba(92,242,255,.35);border-radius:18px;background:radial-gradient(120% 90% at 50% 30%,rgba(40,224,255,.08),rgba(4,6,10,0) 60%),#04060a;cursor:pointer;-webkit-tap-highlight-color:transparent;text-align:center}
 #pg-cmd[data-master="0"] .cc-ingest-zone:active{background:radial-gradient(120% 90% at 50% 30%,rgba(40,224,255,.14),rgba(4,6,10,0) 60%),#060a12}
 #pg-cmd .cc-ingest-zone .ciz-mark{font-size:42px;line-height:1}
 #pg-cmd .cc-ingest-zone .ciz-title{font-family:var(--orb);font-weight:700;font-size:20px;letter-spacing:3px;color:var(--cyan)}
 #pg-cmd .cc-ingest-zone .ciz-sub{font-family:var(--mono);font-size:13px;letter-spacing:.5px;color:var(--slate);max-width:24ch;line-height:1.4}
+/* ━━━ v1.14.336 FINAL-LOOK (OPTION 2) — phone assistant-first. Card skin uses REAL :root tokens
+   (--cyan-border-lo / --surf-1 / --surf-inset / --ok), NOT the spec's mock --edge-lo/--surf (owner-ruled). All #pg-cmd → ?legacy safe. ━━━ */
+#pg-cmd .cc-asst{border:1px solid var(--cyan-border-lo);border-radius:14px;background:var(--surf-1);box-shadow:var(--surf-inset),0 8px 20px -14px rgba(0,0,0,.85);padding:16px 18px;margin:0 16px 12px}
+#pg-cmd .cc-asst-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+#pg-cmd .cc-asst-eyebrow{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--slate);text-transform:uppercase}
+#pg-cmd .cc-asst-online{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 6px var(--ok);flex:0 0 auto}
+#pg-cmd .cc-asst-ghost{width:56px;height:56px;object-fit:contain;flex:0 0 auto;filter:drop-shadow(0 0 12px rgba(92,242,255,.35))}
+#pg-cmd .cc-asst-greet{font-family:var(--orb);font-weight:700;font-size:17px;line-height:1.25;color:#eaf6ff;margin:6px 0 6px}
+#pg-cmd .cc-asst-summary{font-family:var(--raj);font-size:13px;line-height:1.45;color:var(--slate)}
+#pg-cmd .cc-qtools{border:1px solid var(--cyan-border-lo);border-radius:14px;background:var(--surf-1);box-shadow:var(--surf-inset),0 8px 20px -14px rgba(0,0,0,.85);padding:14px 16px 16px;margin:0 16px 12px}
+#pg-cmd .cc-qtools-label{font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--slate);text-transform:uppercase;margin-bottom:10px}
+#pg-cmd .cc-qtools-row{display:flex;gap:10px}
+#pg-cmd .cc-qtool{flex:1;display:flex;align-items:center;justify-content:center;min-height:60px;border-radius:12px;border:1px solid rgba(92,242,255,.24);background:rgba(92,242,255,.05);color:var(--cyan);font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:1.5px;cursor:pointer;-webkit-appearance:none;-webkit-tap-highlight-color:transparent}
+#pg-cmd .cc-qtool:active{background:rgba(92,242,255,.12)}
+#pg-cmd .cc-qtool-blk{border-color:rgba(255,43,214,.35);background:rgba(255,43,214,.06);color:#ff2bd6}
+#pg-cmd .cc-qtool-blk:active{background:rgba(255,43,214,.12)}
+/* pills → labeled chips (comp phone: Online / Ready / Active ✓). Tappable (Profile) chip keeps a 44px gloved hit. */
+#pg-cmd .cc-z0 .statusrow{gap:8px}
+#pg-cmd .cc-hchip{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.5px;color:var(--slate);border:1px solid var(--cyan-border-lo);border-radius:14px;padding:6px 10px;white-space:nowrap;background:none}
+#pg-cmd .cc-hchip .cc-hdot{width:7px;height:7px}
+#pg-cmd .cc-hchip.ok{color:#cfe9f0}
+#pg-cmd .cc-hchip.ok .cc-hdot{background:var(--ok);box-shadow:0 0 5px var(--ok)}   /* v1.14.336: pass/healthy = mint --ok, not the .335 teal (clears the rd-review carry-forward) */
+#pg-cmd .cc-hchip-tap{min-height:44px;cursor:pointer;-webkit-appearance:none;-webkit-tap-highlight-color:transparent}
+/* phone (<1024px): assistant-first reflow via flex order. Desktop (>=1024px) is UNCHANGED this ship — the FINAL-LOOK 3-region lands in .337. */
+@media (max-width:1023px){
+  #pg-cmd{display:flex;flex-direction:column}
+  #pg-cmd > .cc-z0{order:1}
+  #pg-cmd > #cc-asst{order:2}
+  #pg-cmd > .nba{order:3}
+  #pg-cmd > .stats{order:4}
+  #pg-cmd > .cc-rackline{order:5}
+  #pg-cmd > .cc-rackhero{order:6}
+  #pg-cmd > .cc-rackvitals{order:7}
+  #pg-cmd > #cc-qtools{order:8}
+  #pg-cmd > .cmd-grid{order:9}
+  #pg-cmd > #cc-ingest-zone{order:2}
+  #pg-cmd > .lens,#pg-cmd > .trow,#pg-cmd > .sig-h,#pg-cmd > #cc-sig{display:none}
+}
+/* v1.14.336 rd-review fix: .336 is the PHONE ship. The assistant + quick-tools cards are NOT part of the old
+   .278 desktop column (the 3-region desktop lands in .337), and without this they'd render full-bleed mid-column
+   at >=1024px = broken desktop. Hide them on desktop so it stays the pre-.336 Command look until .337. */
+@media (min-width:1024px){#pg-cmd .cc-asst,#pg-cmd .cc-qtools{display:none}}
 /* v1.14.335 Command v2 D4: the hero-scoped 3D control strip and its rail are REMOVED — the Command hero shows no view buttons; tapping the hero opens the full bay with all controls. rackElevation_render3D no longer builds a strip for a hero mount (see the _heroCard branch). */
 #pg-cmd .lens > *{position:relative;z-index:1}   /* v1.14.335: ghost removed (D12), so every lens child simply sits above the card background */
 #pg-cmd .stats{display:flex;gap:10px;padding:0 16px 14px}
@@ -12211,7 +12253,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.335';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.336';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -12929,6 +12971,17 @@ if (typeof window !== 'undefined') {
         <span class="cc-z0-spacer"></span>
         <button class="cc-agechip" id="cc-agechip" type="button" onclick="cmd_loadMaster()" aria-label="Master file — tap to re-ingest or swap" style="display:none"></button>
       </div>
+      <!-- v1.14.336 FINAL-LOOK (OPTION 2) — AI ASSISTANT card. Assistant-first: ghost + greeting + a real
+           situational summary; the NBA orders in immediately below it (phone's single NBA). D12 reversed
+           (assistant returns as a functional card, not the old decorative floating ghost). #pg-cmd-scoped. -->
+      <div class="cc-asst" id="cc-asst">
+        <div class="cc-asst-top">
+          <div class="cc-asst-eyebrow"><span class="cc-asst-online" aria-hidden="true"></span>AI ASSISTANT &middot; ONLINE</div>
+          <img class="cc-asst-ghost" src="phantom-ghost-v2.webp" alt="" aria-hidden="true" width="56" height="56">
+        </div>
+        <div class="cc-asst-greet">Hi, I&rsquo;m Phantom.<br>Your AI shift assistant.</div>
+        <div class="cc-asst-summary" id="cc-asst-summary">&mdash;</div>
+      </div>
       <!-- v1.14.335 Command v2 Z1 — rack line: which rack you're on; tap = rack picker (D5). Shown by cmd_mountRackHero when a Master is loaded. -->
       <button class="cc-rackline" id="cc-rackline" type="button" onclick="cmd_heroPickRack()" style="display:none" aria-label="Switch rack"></button>
       <!-- v1.14.330 INSPECT-3D LANDING — first Master rack, live in the Command hero.
@@ -12939,6 +12992,17 @@ if (typeof window !== 'undefined') {
       </div>
       <!-- v1.14.335 Command v2 Z3 — rack vitals: RACKED / OPEN / BLOCKERS / NEXT-U (D8). Fed from the same elev cmd_mountRackHero resolves. -->
       <div class="cc-rackvitals" id="cc-rackvitals" style="display:none"></div>
+      <!-- v1.14.336 FINAL-LOOK (OPTION 2) — QUICK TOOLS card (phone §2.6): the same three cold-aisle verbs
+           the hero .hverbs carry (SCAN/LOG/BLOCKER), now their own card since the .lens headline block is
+           superseded by the assistant card on phone. Same onclick doors — one door per feature. -->
+      <div class="cc-qtools" id="cc-qtools">
+        <div class="cc-qtools-label">QUICK TOOLS</div>
+        <div class="cc-qtools-row">
+          <button class="cc-qtool" type="button" onclick="cmd_route('work','scan')" aria-label="Scan a rack">SCAN</button>
+          <button class="cc-qtool" type="button" onclick="openLogSheet()" aria-label="Log a field note">LOG</button>
+          <button class="cc-qtool cc-qtool-blk" type="button" onclick="blocker_quick(deploy_getActiveId())" aria-label="Capture a blocker on the active deployment">BLOCKER</button>
+        </div>
+      </div>
       <!-- v1.14.335 Command v2 S0 — no-Master ingest zone (D10): full-height tap target, shown only when #pg-cmd[data-master="0"]. Single door → cmd_loadMaster() (D11). -->
       <div class="cc-ingest-zone" id="cc-ingest-zone" role="button" tabindex="0" onclick="cmd_loadMaster()" aria-label="Ingest Master file — arrives by email">
         <div class="ciz-mark" aria-hidden="true">&#9672;</div>
@@ -19994,12 +20058,34 @@ function cmd_render() {
   // v1.14.97 nav_restore guard). 3rd pill slot carries an optional onclick.
   // v1.14.335 Command v2: pills → compact dots-with-tooltip in the Z0 cluster (D12). Same three honest
   // signals; the standalone row between rack and NBA is gone. Tappable Profile dot keeps its door.
-  var pills = [['Online', !online, null], ['Storage ready', !storageOk, null], [confirmed ? 'Profile set' : 'Profile not set', !confirmed, 'firstRun_openProfile()']];
+  // v1.14.336 FINAL-LOOK (OPTION 2): status pills render as labeled chips (Online / Ready / Active ✓) per the
+  // comp. Tappable Profile chip keeps a 44px gloved hit (rd-review Rule 13). Same three honest signals.
+  var pills = [['Online', 'Online', !online, null], ['Storage', 'Ready', !storageOk, null], [confirmed ? 'Profile active' : 'Set up profile', confirmed ? 'Active' : 'Set up', !confirmed, 'firstRun_openProfile()']];
   E('cc-statusrow').innerHTML = pills.map(function(p) {
-    var dot = '<span class="cc-hdot' + (p[1] ? ' bad' : '') + '" title="' + p[0] + '" aria-label="' + p[0] + '"></span>';
-    // Tappable pill (Profile door) rides a 44px hit box; decorative pills stay bare dots. (rd-review Rule 13)
-    return p[2] ? ('<button type="button" class="cc-hdot-hit" title="' + p[0] + '" aria-label="' + p[0] + '" onclick="' + p[2] + '">' + dot + '</button>') : dot;
+    var ok = !p[2];
+    var body = '<span class="cc-hdot' + (ok ? '' : ' bad') + '"></span>' + p[1] + (ok ? ' ✓' : '');
+    return p[3]
+      ? '<button type="button" class="cc-hchip cc-hchip-tap' + (ok ? ' ok' : '') + '" onclick="' + p[3] + '" aria-label="' + p[0] + '">' + body + '</button>'
+      : '<span class="cc-hchip' + (ok ? ' ok' : '') + '" aria-label="' + p[0] + '">' + body + '</span>';
   }).join('');
+
+  // v1.14.336 FINAL-LOOK (OPTION 2) — AI ASSISTANT situational summary. HONEST state only: site + blocker
+  // posture + the live work signal. NO invented "ahead of yesterday" trend (there is no history to compare —
+  // fabricating one violates the no-fake-telemetry law).
+  var _asum = E('cc-asst-summary');
+  if (_asum) {
+    var _s1, _s2;
+    if (rung === 'A') { _s1 = 'Set up your site profile to begin.'; _s2 = ''; }
+    else if (!masterLoaded) { _s1 = 'No Master loaded in ' + escHtml(site) + '.'; _s2 = 'Ingest your Master to start the shift.'; }
+    else {
+      _s1 = (blockerCount === 0) ? ('All clear in ' + escHtml(site) + ' — no open blockers.') : (blockerCount + ' open blocker' + (blockerCount === 1 ? '' : 's') + ' in ' + escHtml(site) + '.');
+      if (handoffDraft) _s2 = 'A handoff draft is open — finish it before shift end.';
+      else if (activeDep && activePct < 100) _s2 = escHtml(activeDep.name || 'Deployment') + ' is ' + activePct + '% deployed.';
+      else if (rackCount === 0) _s2 = 'No racks captured yet this shift.';
+      else _s2 = rackCount + ' rack' + (rackCount === 1 ? '' : 's') + ' captured this shift.';
+    }
+    _asum.innerHTML = _s1 + (_s2 ? ' ' + _s2 : '');
+  }
 
   // ── lens: headline / copy (ghost removed v1.14.335 D12) ──
   var lh, lp;
