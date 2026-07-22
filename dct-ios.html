@@ -9199,6 +9199,11 @@ body.rd #ph-sheet.open {
 #pg-cmd .ghosthero{position:absolute;right:66px;bottom:100px;width:104px;height:auto;pointer-events:none;z-index:0;transition:filter .4s,opacity .4s}   /* v1.14.286 B-02: was right:8px;bottom:-6px;width:150px painting over the BLOCKER verb — constrained + lifted above the verb row + z-index:-1 = ambient art behind hero content, never over a control */
 #pg-cmd .ghosthero.dim{filter:grayscale(.9) brightness(.42);opacity:.4}
 #pg-cmd .ghosthero.mid{filter:saturate(.75) brightness(.85);opacity:.9}
+/* v1.14.330 INSPECT-3D LANDING — first Master rack live in the Command hero. Bare #pg-cmd (redesign-only page, never rendered under legacy). Height-capped so it never eats the phone screen; hidden until a Master loads. */
+#pg-cmd .cc-rackhero{position:relative;width:100%;height:min(46vh,420px);margin:0 0 14px;border:1px solid rgba(92,242,255,0.16);border-radius:14px;overflow:hidden;background:radial-gradient(120% 90% at 50% 0,rgba(40,224,255,0.05),rgba(4,6,10,0) 60%),#04060a}
+#pg-cmd .cc-rackhero[hidden]{display:none}
+#pg-cmd .cc-rackhero-mount{position:absolute;inset:0;width:100%;height:100%}
+#pg-cmd .cc-rackhero-cap{position:absolute;left:12px;bottom:10px;z-index:2;pointer-events:none;font-family:var(--mono,'Chakra Petch',monospace);font-size:10px;letter-spacing:2px;color:#7fe9ff;text-shadow:0 1px 6px rgba(0,0,0,0.7)}
 #pg-cmd .lens > *:not(.ghosthero){position:relative;z-index:1}   /* v1.14.314: with the ghost lifted to z-index:0, keep every OTHER lens child (clock/llabel/H1/P/shiftpill/cc-magstrip/hverbs verbs) above it so it never paints over a control (B-02) */
 #pg-cmd .stats{display:flex;gap:10px;padding:0 16px 14px}
 #pg-cmd .stat{flex:1;filter:none;border:1px solid color-mix(in srgb,var(--cyan) 15%,transparent);border-radius:16px;background:linear-gradient(158deg,#050506 0%,#010102 46%,#000000 76%,#030304 100%);box-shadow:inset 0 1px 0 rgba(210,234,244,.14),0 8px 20px -14px rgba(0,0,0,.85);padding:14px 8px;text-align:center}
@@ -12172,7 +12177,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.329';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.330';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -12881,6 +12886,12 @@ if (typeof window !== 'undefined') {
     <div class="page" id="pg-cmd">
       <!-- REDESIGN STEP 4 — Command Center. Zones from cc-final mockup; populated
            by cmd_render() from honest app state (no demo data, no fake telemetry). -->
+      <!-- v1.14.330 INSPECT-3D LANDING — first Master rack, live in the Command hero.
+           hidden until a Master loads (empty state = byte-identical to pre-.330). -->
+      <div class="cc-rackhero" id="cc-rackhero" hidden>
+        <div class="cc-rackhero-mount" id="cc-rackhero-mount"></div>
+        <div class="cc-rackhero-cap" id="cc-rackhero-cap"></div>
+      </div>
       <div class="statusrow" id="cc-statusrow"></div>
       <div class="nba">
         <div class="nlabel">NEXT BEST ACTION</div>
@@ -18074,6 +18085,14 @@ function showMode(mode) {
   var map = { command: 'cmd', work: 'work', ref: 'ref' };
   var pid = map[mode];
   if (!pid) return;
+  // v1.14.330: leaving Command -> tear down the live rack-hero WebGL scene. Pages go
+  // display:none (not removed), so the render RAF would keep drawing a hidden canvas =
+  // battery drain on phone. cmd_render re-mounts it on return.
+  if (_rdMode === 'command' && mode !== 'command') {
+    var _heroM = document.getElementById('cc-rackhero-mount');
+    if (_heroM && _heroM._rm3dDispose) { try { _heroM._rm3dDispose(); } catch (e) {} }
+    if (_heroM) _heroM._rm3dRackId = null;
+  }
   _rdMode = mode;   // v1.14.97: remember the active redesign mode for nav_restore stickiness
   document.body.classList.remove('ops-detail');   // Rule A (v1.14.123): leaving any detail view → grid-back is valid again
   if (typeof rd_closeProfile === 'function') rd_closeProfile();   // v1.14.104: a bottom-nav tap dismisses the Profile sheet
@@ -19975,6 +19994,7 @@ function cmd_render() {
   cmd_telemetry(activeDep, activePct, handoffDraft);
   cmd_setSiteLabel();
   cmd_clock();
+  cmd_mountRackHero();   // v1.14.330: land on the first rack (live 3D) when a Master is loaded
 }
 // v1.14.159 D3 — Shift Telemetry: read-only over live state (reuses cmd_render's
 // activeDep/activePct/handoffDraft). DEPLOY shows activePct+bar (the dep object carries
@@ -20039,6 +20059,87 @@ function cmd_loadMaster() {
     if (r && typeof r.then === 'function') { r.then(function() { try { cmd_render(); } catch (_) {} }); }
     else { try { cmd_render(); } catch (_) {} }
   } catch (_) {}
+}
+
+// ━━━ v1.14.330 — INSPECT-3D LANDING ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// On Master load, the Command hero lands on the first rack, live in the INSPECT-3D
+// bay. Routing + mount + state only — reh3d engine + Master pipeline UNTOUCHED.
+// resolveFirstRackElev builds a render-ready elevation via master_rackToElevation
+// (the same builder the reh3d panel uses); D1 = active-deployment lead rack when it
+// maps to a real Master rack, else Master-order first rack (Object.keys(racksByCab)[0]).
+function cmd_resolveFirstRackElev() {
+  var m = (typeof window !== 'undefined') ? window._lastPhantomMaster : null;
+  var has = (typeof master_hasMaster === 'function') ? master_hasMaster()
+          : !!(m && m.racksByCab && Object.keys(m.racksByCab).length);
+  if (!has) return null;
+  var keys = Object.keys(m.racksByCab);
+  if (!keys.length) return null;
+  var cabId = keys[0];   // Master (insertion) order
+  // D1 refinement: prefer the active deployment's lead rack (blocked-first, then id) —
+  // but ONLY when it maps to a real Master rack, so the render can never come up empty.
+  try {
+    var aid = (typeof deploy_getActiveId === 'function') ? deploy_getActiveId() : null;
+    if (aid && typeof deploy_loadRacks === 'function') {
+      var dr = deploy_loadRacks(aid) || [];
+      if (dr.length) {
+        dr.sort(function(a, b) {
+          var aBlk = a.status === 'blocked' ? 0 : 1, bBlk = b.status === 'blocked' ? 0 : 1;
+          if (aBlk !== bBlk) return aBlk - bBlk;
+          return String(a.rackId || '').localeCompare(String(b.rackId || ''));
+        });
+        var leadKey = dr[0].rackId || dr[0].id;
+        if (leadKey && m.racksByCab[leadKey]) cabId = leadKey;
+      }
+    }
+  } catch (_) {}
+  try { return master_rackToElevation(m.racksByCab[cabId], cabId); } catch (_) { return null; }
+}
+// FLAT fallback (capability-only, not a battery choice): the existing HTML elevation.
+function cmd_rackHeroFlat(mount, elev) {
+  if (!mount) return;
+  try { mount.innerHTML = (typeof rackElevation_buildHtml === 'function') ? rackElevation_buildHtml(elev) : ''; mount._rm3dRackId = (elev && elev.id) || ''; }
+  catch (e) { mount.innerHTML = ''; }
+}
+// Lazy-load three.js (SW-precached) then render LIVE into the hero. Mirrors the engine's
+// own ensure3D discipline but with a HERO-scoped guard (ensure3D's post-load guard checks
+// the reh3d PANEL host, which our hero is not, so we can't reuse it directly).
+function cmd_rackHero3D(elev, mount) {
+  if (!mount) return;
+  function paint() {
+    try { rackElevation_render3D(elev, mount); mount._rm3dRackId = (elev && elev.id) || ''; }
+    catch (e) { if (typeof phantom_logErr === 'function') phantom_logErr('cmd_rackHero3D', e); cmd_rackHeroFlat(mount, elev); }
+  }
+  if (window.THREE) { paint(); return; }
+  if (typeof loadScript !== 'function') { cmd_rackHeroFlat(mount, elev); return; }
+  mount.innerHTML = '<div class="reh-3d-loading">Loading 3D…</div>';
+  loadScript('./vendor/three.min.js').then(function () {
+    // Still relevant? (didn't leave Command, Master still loaded, mount still visible.)
+    if (_rdMode !== 'command' || !document.body.contains(mount) || mount.offsetParent === null) return;
+    if (window.THREE) paint(); else cmd_rackHeroFlat(mount, elev);
+  }).catch(function () { cmd_rackHeroFlat(mount, elev); });
+}
+// The two-state hero slot. No Master -> hidden (page byte-identical to pre-.330 +
+// any live scene torn down). Master -> land the first rack live (FLAT only if no WebGL).
+function cmd_mountRackHero() {
+  var slot = document.getElementById('cc-rackhero');
+  if (!slot) return;
+  var mount = document.getElementById('cc-rackhero-mount');
+  var loaded = (typeof master_hasMaster === 'function') && master_hasMaster();
+  if (!loaded) {
+    if (mount && mount._rm3dDispose) { try { mount._rm3dDispose(); } catch (e) {} }
+    if (mount) { mount._rm3dRackId = null; mount.innerHTML = ''; }
+    slot.hidden = true;
+    return;
+  }
+  var elev = cmd_resolveFirstRackElev();
+  if (!elev) { console.warn('[PHANTOM] rack hero: Master loaded but no rack resolved — hero hidden'); slot.hidden = true; return; }
+  slot.hidden = false;
+  var cap = document.getElementById('cc-rackhero-cap');
+  if (cap) cap.textContent = 'RACK · ' + (elev.id || '');
+  if (!mount) return;
+  if (mount._rm3dRackId === (elev.id || '') && mount._rm3dDispose) return;   // already live for this rack
+  if (typeof reh3d_webglOK === 'function' && reh3d_webglOK()) cmd_rackHero3D(elev, mount);
+  else cmd_rackHeroFlat(mount, elev);
 }
 // Route from a Command Center control. Step 3: 'work' deep-links the Workspace
 // subtab (Deploy/Scan/Handoff) via showWorkTab(); Scan is re-homed, Deploy/Handoff
