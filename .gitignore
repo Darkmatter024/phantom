@@ -1,0 +1,7 @@
+# PHANTOM — local tooling, config, and generated output (NOT app code/assets).
+# Exact root-anchored paths only, so real app assets (dct-ios.html, sw.js,
+# *.webp, *.png, icons/, manifest*, version.json, docs/*) are never matched.
+/.mcp.json
+/.omc/
+/docs/superpowers/
+/graphify-out/
