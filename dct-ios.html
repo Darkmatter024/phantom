@@ -9196,19 +9196,48 @@ body.rd #ph-sheet.open {
 #shiftend-sheet .se-custom-row label{font-family:var(--mono);font-size:12px;letter-spacing:1px;color:var(--slate)}
 #shiftend-sheet input.se-custom{flex:1;min-height:var(--tap-xl,56px);padding:0 14px;border-radius:10px;border:1px solid rgba(92,242,255,.22);background:rgba(10,14,20,.6);color:var(--cyan);font-family:var(--mono);font-size:16px;-webkit-appearance:none}
 #shiftend-sheet .se-clear{display:block;width:calc(100% - 40px);margin:14px 20px 12px;min-height:var(--tap-xl,56px);background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);border-radius:8px;color:var(--slate);font-family:var(--mono);font-size:13px;letter-spacing:1px;cursor:pointer;-webkit-appearance:none}
-#pg-cmd .ghosthero{position:absolute;right:66px;bottom:100px;width:104px;height:auto;pointer-events:none;z-index:0;transition:filter .4s,opacity .4s}   /* v1.14.286 B-02: was right:8px;bottom:-6px;width:150px painting over the BLOCKER verb — constrained + lifted above the verb row + z-index:-1 = ambient art behind hero content, never over a control */
-#pg-cmd .ghosthero.dim{filter:grayscale(.9) brightness(.42);opacity:.4}
-#pg-cmd .ghosthero.mid{filter:saturate(.75) brightness(.85);opacity:.9}
+/* v1.14.335 Command v2 D12: the Command ghost hero (.ghosthero/#cc-ghost) is removed — the rack is the identity object now. Assistant stays reachable via the header ghost menu button. */
 /* v1.14.330 INSPECT-3D LANDING — first Master rack live in the Command hero. Bare #pg-cmd (redesign-only page, never rendered under legacy). Height-capped so it never eats the phone screen; hidden until a Master loads. */
-#pg-cmd .cc-rackhero{position:relative;width:100%;height:min(46vh,420px);margin:0 0 14px;border:1px solid var(--cyan-border-lo);border-radius:14px;overflow:hidden;background:radial-gradient(120% 90% at 50% 0,var(--cyan-dim),rgba(4,6,10,0) 60%),#04060a}
+#pg-cmd .cc-rackhero{position:relative;width:100%;height:clamp(240px,36vh,340px);margin:0 0 10px;border:1px solid var(--cyan-border-lo);border-radius:14px;overflow:hidden;background:radial-gradient(120% 90% at 50% 0,var(--cyan-dim),rgba(4,6,10,0) 60%),#04060a;cursor:pointer;-webkit-tap-highlight-color:transparent}   /* v1.14.335 Command v2 D6: 36vh (min240/max340) so Z0-Z4 incl. the NBA button clear the fold on 390x844; hero is now tap-to-bay (cursor). */
 #pg-cmd .cc-rackhero[hidden]{display:none}
 #pg-cmd .cc-rackhero-mount{position:absolute;inset:0;width:100%;height:100%}
 #pg-cmd .cc-rackhero-cap{position:absolute;left:12px;bottom:10px;z-index:2;pointer-events:none;font-family:var(--mono,'Chakra Petch',monospace);font-size:10px;letter-spacing:2px;color:var(--cyan);text-shadow:0 1px 6px rgba(0,0,0,0.7)}
-/* v1.14.332 — hero-scoped 3D controls: the SAME .reh-3d-seg buttons the panel uses (built by rackElevation_render3D's shared path), overlaid as 2 stacked centered rows at the top of the hero card so they never share one no-wrap row (row1 = CABLES; row2 = FRONT/ISO/TOP/REAR/EXPLODE). flex-wrap is a zero-overflow backstop (Rule 1). Redesign-only (#pg-cmd .cc-rackhero); ID specificity beats the shared body.rd .reh-3d-rail base. */
-#pg-cmd .cc-rackhero .reh-3d-toggle--hero,#pg-cmd .cc-rackhero .reh-3d-rail{position:absolute;left:0;right:0;z-index:4;display:flex;flex-wrap:wrap;justify-content:center;gap:4px;padding:0 8px;margin:0;pointer-events:auto}
-#pg-cmd .cc-rackhero .reh-3d-toggle--hero{top:8px}
-#pg-cmd .cc-rackhero .reh-3d-rail{top:44px}
-#pg-cmd .lens > *:not(.ghosthero){position:relative;z-index:1}   /* v1.14.314: with the ghost lifted to z-index:0, keep every OTHER lens child (clock/llabel/H1/P/shiftpill/cc-magstrip/hverbs verbs) above it so it never paints over a control (B-02) */
+/* ━━━ v1.14.335 Command v2 — Z0 header cluster · Z1 rack line · Z3 vitals · S0 ingest. All #pg-cmd-scoped (redesign-only page; never renders under ?legacy → byte-identical). ━━━ */
+#pg-cmd .cc-z0{display:flex;align-items:center;gap:8px;margin:2px 0 10px;min-height:44px}
+#pg-cmd .cc-z0-site{font-family:var(--orb);font-weight:700;font-size:13px;letter-spacing:2px;color:#eaf6ff;flex:0 1 auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#pg-cmd .cc-z0 .statusrow{display:flex;align-items:center;gap:7px;flex:0 0 auto;margin:0;padding:0;border:0;background:none;min-height:0}
+#pg-cmd .cc-hdot{width:9px;height:9px;border-radius:50%;background:var(--teal);box-shadow:0 0 6px rgba(31,255,208,.55);flex:0 0 auto}
+#pg-cmd .cc-hdot.bad{background:#ff2bd6;box-shadow:0 0 6px rgba(255,43,214,.7)}   /* v1.14.335: fault channel (magenta #ff2bd6), NOT red — red is the owner-ruled EXIT exception only */
+#pg-cmd .cc-hdot.tap{cursor:pointer}
+/* v1.14.335: a tappable health dot (Profile door) rides a 44x44 invisible hit box — a bare 9px dot is 5x under the gloved floor (rd-review Rule 13). Decorative dots stay bare spans. */
+#pg-cmd .cc-hdot-hit{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;padding:0;border:0;background:none;cursor:pointer;-webkit-appearance:none;-webkit-tap-highlight-color:transparent;flex:0 0 auto}
+#pg-cmd .cc-z0-spacer{flex:1}
+#pg-cmd .cc-agechip{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:1px;color:var(--cyan);border:1px solid rgba(92,242,255,.30);background:rgba(92,242,255,.06);border-radius:20px;padding:7px 12px;min-height:44px;cursor:pointer;-webkit-appearance:none;-webkit-tap-highlight-color:transparent;white-space:nowrap;flex:0 0 auto}   /* v1.14.335: 44px gloved floor — this is a live re-ingest/swap door (rd-review Rule 13) */
+#pg-cmd .cc-agechip.age-warn{color:var(--gold);border-color:rgba(255,203,69,.40);background:rgba(255,203,69,.07)}
+#pg-cmd .cc-agechip.age-stale{color:#ff2bd6;border-color:rgba(255,43,214,.45);background:rgba(255,43,214,.08)}   /* v1.14.335: >24h escalates gold(attention)->magenta(fault), NOT red (EXIT-only) */
+#pg-cmd .cc-agechip:active{filter:brightness(1.15)}
+#pg-cmd .cc-rackline{display:flex;align-items:center;gap:8px;width:100%;box-sizing:border-box;margin:0 0 10px;padding:11px 14px;min-height:var(--tap-l,52px);border:1px solid rgba(92,242,255,.20);border-radius:12px;background:rgba(92,242,255,.04);color:#dff2ff;font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:.5px;cursor:pointer;-webkit-appearance:none;-webkit-tap-highlight-color:transparent;text-align:left}
+#pg-cmd .cc-rackline .cc-rl-arrow{color:var(--cyan);font-weight:700}
+#pg-cmd .cc-rackline .cc-rl-meta{color:var(--slate);font-weight:600;font-size:12px;margin-left:auto;white-space:nowrap}
+#pg-cmd .cc-rackline:active{background:rgba(92,242,255,.09)}
+#pg-cmd .cc-rackvitals{display:flex;gap:8px;margin:0 0 12px}
+#pg-cmd .cc-vital{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 4px;border:1px solid rgba(92,242,255,.14);border-radius:12px;background:linear-gradient(158deg,#050506 0%,#000 76%);text-align:center}
+#pg-cmd .cc-vital .vn{font-family:var(--mono);font-weight:700;font-size:16px;letter-spacing:.5px;color:#eaf6ff;line-height:1}
+#pg-cmd .cc-vital .vk{font-family:var(--mono);font-size:8.5px;letter-spacing:1.5px;color:var(--slate)}
+#pg-cmd .cc-vital.v-open .vn{color:var(--teal)}
+#pg-cmd .cc-vital.v-blk .vn{color:#ff2bd6}   /* v1.14.335: BLOCKERS count uses the SAME fault magenta as the BLOCKER verb (one colour, one meaning) — not red */
+#pg-cmd .cc-vital.v-next{cursor:pointer;-webkit-tap-highlight-color:transparent}
+#pg-cmd .cc-vital.v-next .vn{color:var(--cyan)}
+#pg-cmd .cc-vital.v-next:active{filter:brightness(1.2)}
+#pg-cmd .cc-ingest-zone{display:none}
+#pg-cmd[data-master="0"] .cc-rackline,#pg-cmd[data-master="0"] .cc-rackhero,#pg-cmd[data-master="0"] .cc-rackvitals,#pg-cmd[data-master="0"] .nba,#pg-cmd[data-master="0"] .lens,#pg-cmd[data-master="0"] .stats,#pg-cmd[data-master="0"] .trow,#pg-cmd[data-master="0"] .sig-h,#pg-cmd[data-master="0"] #cc-sig,#pg-cmd[data-master="0"] .cmd-grid,#pg-cmd[data-master="0"] .cc-z0 .statusrow,#pg-cmd[data-master="0"] .cc-agechip{display:none!important}
+#pg-cmd[data-master="0"] .cc-ingest-zone{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;width:100%;box-sizing:border-box;min-height:min(64vh,520px);padding:32px 20px;border:1.5px dashed rgba(92,242,255,.35);border-radius:18px;background:radial-gradient(120% 90% at 50% 30%,rgba(40,224,255,.08),rgba(4,6,10,0) 60%),#04060a;cursor:pointer;-webkit-tap-highlight-color:transparent;text-align:center}
+#pg-cmd[data-master="0"] .cc-ingest-zone:active{background:radial-gradient(120% 90% at 50% 30%,rgba(40,224,255,.14),rgba(4,6,10,0) 60%),#060a12}
+#pg-cmd .cc-ingest-zone .ciz-mark{font-size:42px;line-height:1}
+#pg-cmd .cc-ingest-zone .ciz-title{font-family:var(--orb);font-weight:700;font-size:20px;letter-spacing:3px;color:var(--cyan)}
+#pg-cmd .cc-ingest-zone .ciz-sub{font-family:var(--mono);font-size:13px;letter-spacing:.5px;color:var(--slate);max-width:24ch;line-height:1.4}
+/* v1.14.335 Command v2 D4: the hero-scoped 3D control strip and its rail are REMOVED — the Command hero shows no view buttons; tapping the hero opens the full bay with all controls. rackElevation_render3D no longer builds a strip for a hero mount (see the _heroCard branch). */
+#pg-cmd .lens > *{position:relative;z-index:1}   /* v1.14.335: ghost removed (D12), so every lens child simply sits above the card background */
 #pg-cmd .stats{display:flex;gap:10px;padding:0 16px 14px}
 #pg-cmd .stat{flex:1;filter:none;border:1px solid color-mix(in srgb,var(--cyan) 15%,transparent);border-radius:16px;background:linear-gradient(158deg,#050506 0%,#010102 46%,#000000 76%,#030304 100%);box-shadow:inset 0 1px 0 rgba(210,234,244,.14),0 8px 20px -14px rgba(0,0,0,.85);padding:14px 8px;text-align:center}
 #pg-cmd .stat .n{font-family:var(--mono);font-size:30px;font-weight:700;letter-spacing:1px}
@@ -9224,7 +9253,8 @@ body.rd #ph-sheet.open {
 #pg-cmd .nba .nlabel{font-family:var(--mono);font-size:12px;letter-spacing:3px;color:#b98bff}
 #pg-cmd .nba h2{font-size:23px;font-weight:700;margin:8px 0 6px;line-height:1.1}
 #pg-cmd .nba p{color:var(--slate);font-size:13px;line-height:1.4;margin:0 0 12px}
-#pg-cmd .nba .route{display:inline-flex;align-items:center;gap:8px;font-family:var(--raj);font-weight:700;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--cyan);border:1px solid rgba(92,242,255,0.35);border-radius:20px;padding:9px 16px;background:rgba(92,242,255,0.05)}
+#pg-cmd .nba .route{display:flex;width:100%;box-sizing:border-box;align-items:center;justify-content:center;gap:8px;min-height:52px;margin-top:4px;font-family:var(--raj);font-weight:700;font-size:14px;letter-spacing:1.5px;text-transform:uppercase;color:#c9a9ff;border:1px solid rgba(155,89,255,0.45);border-radius:14px;padding:9px 16px;background:rgba(155,89,255,0.10);cursor:pointer;-webkit-tap-highlight-color:transparent}   /* v1.14.335 Command v2 Z4: NBA is the one violet action button — full-width, >=52pt gloved target */
+#pg-cmd .nba .route:active{background:rgba(155,89,255,0.18)}
 /* Ship 3b — Active Shift hero verbs (SCAN / LOG / BLOCKER): 60px gloved targets, uniform cyan (BLOCKER fault-channel accent + hero mag strip ride Ship 4b). */
 #pg-cmd .hverbs{display:flex;gap:10px;margin-top:14px}
 #pg-cmd .hverb{flex:1;display:flex;align-items:center;justify-content:center;min-height:60px;border-radius:12px;border:1px solid rgba(92,242,255,.24);background:rgba(92,242,255,.05);color:var(--cyan);font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:1.5px;cursor:pointer;-webkit-appearance:none}
@@ -12181,7 +12211,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.334';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.335';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -12887,16 +12917,34 @@ if (typeof window !== 'undefined') {
     <div id="page-search"></div>
 
     <!-- REDESIGN STEP 1 — 3-PAGE SHELL (empty scaffolds; nothing re-homed). -->
-    <div class="page" id="pg-cmd">
+    <div class="page" id="pg-cmd" data-master="0">
       <!-- REDESIGN STEP 4 — Command Center. Zones from cc-final mockup; populated
            by cmd_render() from honest app state (no demo data, no fake telemetry). -->
+      <!-- v1.14.335 Command v2 — Z0 header cluster (site · system-health dots · Master-age/re-ingest chip).
+           #cc-statusrow moved HERE (pills → dots-with-tooltip); the standalone row that sat between the
+           rack and the NBA is gone (D12). All #pg-cmd-scoped → ?legacy byte-identical. -->
+      <div class="cc-z0" id="cc-z0">
+        <span class="cc-z0-site" id="cc-z0-site">&mdash;</span>
+        <div class="statusrow" id="cc-statusrow"></div>
+        <span class="cc-z0-spacer"></span>
+        <button class="cc-agechip" id="cc-agechip" type="button" onclick="cmd_loadMaster()" aria-label="Master file — tap to re-ingest or swap" style="display:none"></button>
+      </div>
+      <!-- v1.14.335 Command v2 Z1 — rack line: which rack you're on; tap = rack picker (D5). Shown by cmd_mountRackHero when a Master is loaded. -->
+      <button class="cc-rackline" id="cc-rackline" type="button" onclick="cmd_heroPickRack()" style="display:none" aria-label="Switch rack"></button>
       <!-- v1.14.330 INSPECT-3D LANDING — first Master rack, live in the Command hero.
            hidden until a Master loads (empty state = byte-identical to pre-.330). -->
       <div class="cc-rackhero" id="cc-rackhero" hidden>
         <div class="cc-rackhero-mount" id="cc-rackhero-mount"></div>
         <div class="cc-rackhero-cap" id="cc-rackhero-cap"></div>
       </div>
-      <div class="statusrow" id="cc-statusrow"></div>
+      <!-- v1.14.335 Command v2 Z3 — rack vitals: RACKED / OPEN / BLOCKERS / NEXT-U (D8). Fed from the same elev cmd_mountRackHero resolves. -->
+      <div class="cc-rackvitals" id="cc-rackvitals" style="display:none"></div>
+      <!-- v1.14.335 Command v2 S0 — no-Master ingest zone (D10): full-height tap target, shown only when #pg-cmd[data-master="0"]. Single door → cmd_loadMaster() (D11). -->
+      <div class="cc-ingest-zone" id="cc-ingest-zone" role="button" tabindex="0" onclick="cmd_loadMaster()" aria-label="Ingest Master file — arrives by email">
+        <div class="ciz-mark" aria-hidden="true">&#9672;</div>
+        <div class="ciz-title">INGEST MASTER</div>
+        <div class="ciz-sub">Master arrives by email &mdash; tap to ingest</div>
+      </div>
       <div class="nba">
         <div class="nlabel">NEXT BEST ACTION</div>
         <h2 id="cc-nbah">&mdash;</h2>
@@ -12915,7 +12963,7 @@ if (typeof window !== 'undefined') {
           <button class="hverb" type="button" onclick="openLogSheet()" aria-label="Log a field note">LOG</button>
           <button class="hverb hverb-blk" type="button" onclick="blocker_quick(deploy_getActiveId())" aria-label="Capture a blocker on the active deployment">BLOCKER</button>
         </div>
-        <img class="ghosthero" id="cc-ghost" src="cc-ghost.webp" alt="" aria-hidden="true">
+        <!-- v1.14.335 Command v2 D12: the ghost hero (#cc-ghost) is removed — the rack is the identity object. Assistant stays reachable via the header ghost menu. -->
       </div>
       <div class="stats" id="cc-stats"></div>
       <div class="trow">
@@ -19944,16 +19992,21 @@ function cmd_render() {
   // this, a set profile is unreachable/uneditable in redesign. firstRun_openProfile()
   // opens the master profile section; frame-safe (back returns to redesign via the
   // v1.14.97 nav_restore guard). 3rd pill slot carries an optional onclick.
-  var pills = [['Online', !online, null], ['Storage ready', !storageOk, null], [confirmed ? 'Profile ✓' : 'Profile', !confirmed, 'firstRun_openProfile()']];
-  E('cc-statusrow').innerHTML = pills.map(function(p) { return '<div class="spill' + (p[1] ? ' bad' : '') + (p[2] ? ' spill-tap' : '') + '"' + (p[2] ? ' role="button" tabindex="0" style="cursor:pointer" onclick="' + p[2] + '"' : '') + '><span class="dot"></span>' + p[0] + '</div>'; }).join('');
+  // v1.14.335 Command v2: pills → compact dots-with-tooltip in the Z0 cluster (D12). Same three honest
+  // signals; the standalone row between rack and NBA is gone. Tappable Profile dot keeps its door.
+  var pills = [['Online', !online, null], ['Storage ready', !storageOk, null], [confirmed ? 'Profile set' : 'Profile not set', !confirmed, 'firstRun_openProfile()']];
+  E('cc-statusrow').innerHTML = pills.map(function(p) {
+    var dot = '<span class="cc-hdot' + (p[1] ? ' bad' : '') + '" title="' + p[0] + '" aria-label="' + p[0] + '"></span>';
+    // Tappable pill (Profile door) rides a 44px hit box; decorative pills stay bare dots. (rd-review Rule 13)
+    return p[2] ? ('<button type="button" class="cc-hdot-hit" title="' + p[0] + '" aria-label="' + p[0] + '" onclick="' + p[2] + '">' + dot + '</button>') : dot;
+  }).join('');
 
-  // ── lens: headline / copy / ghost brightness ──
-  var lh, lp, ghostCls;
-  if (rung === 'A') { lh = 'Set up<br>your site'; lp = 'Add your facility profile to begin capturing work.'; ghostCls = 'dim'; }
-  else if (rung === 'B') { if (!masterLoaded) { lh = 'Load your<br>Master.'; lp = 'Profile set. Load your Master file to start the shift.'; } else { lh = 'Ready.<br>Capture a rack.'; lp = 'Profile set. No work captured yet this shift.'; } ghostCls = 'mid'; }
-  else { lh = escHtml(site) + '<br>Ready State'; lp = 'One-glance build, scan &amp; blocker awareness for this shift.'; ghostCls = ''; }
+  // ── lens: headline / copy (ghost removed v1.14.335 D12) ──
+  var lh, lp;
+  if (rung === 'A') { lh = 'Set up<br>your site'; lp = 'Add your facility profile to begin capturing work.'; }
+  else if (rung === 'B') { if (!masterLoaded) { lh = 'Load your<br>Master.'; lp = 'Profile set. Load your Master file to start the shift.'; } else { lh = 'Ready.<br>Capture a rack.'; lp = 'Profile set. No work captured yet this shift.'; } }
+  else { lh = escHtml(site) + '<br>Ready State'; lp = 'One-glance build, scan &amp; blocker awareness for this shift.'; }
   E('cc-lh').innerHTML = lh; E('cc-lp').innerHTML = lp;
-  var gh = E('cc-ghost'); if (gh) gh.className = 'ghosthero ' + ghostCls;
   if (typeof shift_renderHero === 'function') shift_renderHero();
   // -- hero fault strip (Ship 4 call #4): state-driven, shows ONLY when the aggregate
   //    blockerCount>0; owner-confirmed copy + always-on mag BLOCKER-verb identity. --
@@ -19998,6 +20051,7 @@ function cmd_render() {
   cmd_telemetry(activeDep, activePct, handoffDraft);
   cmd_setSiteLabel();
   cmd_clock();
+  cmd_renderZ0(site, masterLoaded);   // v1.14.335 Command v2: Z0 site + Master-age chip + S0/S1 data-master gate
   cmd_mountRackHero();   // v1.14.330: land on the first rack (live 3D) when a Master is loaded
 }
 // v1.14.159 D3 — Shift Telemetry: read-only over live state (reuses cmd_render's
@@ -20079,6 +20133,11 @@ function cmd_resolveFirstRackElev() {
   var keys = Object.keys(m.racksByCab);
   if (!keys.length) return null;
   var cabId = keys[0];   // Master (insertion) order
+  // v1.14.335 D5: an explicit rack-switch override (from the Z1 cc-rackline picker) wins over the D1
+  // default. Guarded to a real Master rack so the render can never come up empty.
+  if (_cmdHeroRack && m.racksByCab[_cmdHeroRack]) {
+    try { return master_rackToElevation(m.racksByCab[_cmdHeroRack], _cmdHeroRack); } catch (_) { return null; }
+  }
   // D1 refinement: prefer the active deployment's lead rack (blocked-first, then id) —
   // but ONLY when it maps to a real Master rack, so the render can never come up empty.
   try {
@@ -20143,17 +20202,174 @@ function cmd_mountRackHero() {
     if (mount && mount._rm3dDispose) { try { mount._rm3dDispose(); } catch (e) {} }
     if (mount) { mount._rm3dRackId = null; mount.innerHTML = ''; }
     slot.hidden = true;
+    cmd_heroHideAux();   // v1.14.335: hide Z1 rack line + Z3 vitals in S0 (no Master)
     return;
   }
   var elev = cmd_resolveFirstRackElev();
-  if (!elev) { console.warn('[PHANTOM] rack hero: Master loaded but no rack resolved — hero hidden'); slot.hidden = true; return; }
+  if (!elev) { console.warn('[PHANTOM] rack hero: Master loaded but no rack resolved — hero hidden'); slot.hidden = true; cmd_heroHideAux(); return; }
   slot.hidden = false;
   var cap = document.getElementById('cc-rackhero-cap');
   if (cap) cap.textContent = 'RACK · ' + (elev.id || '');
+  cmd_heroAux(elev);   // v1.14.335 Command v2: Z1 rack line + Z3 vitals, refreshed every render (blocker/next-U stay live)
+  if (mount && !mount._heroTapBound) { cmd_bindHeroTap(mount); mount._heroTapBound = true; }   // tap hero → full bay (D4)
   if (!mount) return;
   if (mount._rm3dRackId === (elev.id || '') && mount._rm3dDispose) return;   // already live for this rack
   if (typeof reh3d_webglOK === 'function' && reh3d_webglOK()) cmd_rackHero3D(elev, mount);
   else cmd_rackHeroFlat(mount, elev);
+}
+// ━━━ v1.14.335 Command v2 — Z0 cluster · Z1 rack line · Z3 vitals · tap-to-bay · rack picker ━━━━━━━━
+// All read-only over live state (Master + active deployment). No Master pipeline writes. #pg-cmd-scoped.
+var _cmdHeroRack = null;   // D5 rack-switch override (a cabId); null → cmd_resolveFirstRackElev's D1 default
+// Lowest open U above the highest populated U (ONE source of truth: the Z3 NEXT vital + the 3D marker
+// both call this so they can never disagree). null when the rack tops out (nothing to place).
+function phantom_nextOpenU(slots, totalU) {
+  if (!Array.isArray(slots)) return null;
+  var maxU = 0;
+  for (var i = 0; i < slots.length; i++) { var e = parseInt(slots[i] && slots[i].uEnd, 10); if (e > maxU) maxU = e; }
+  var n = maxU + 1;
+  return (n >= 1 && n <= (totalU || 0)) ? n : null;
+}
+// D2 — Master freshness. Reads the persisted savedAt (else ingestedAt); >12h amber, >24h red. Never blocks.
+function cmd_masterAgeInfo() {
+  var m = (typeof window !== 'undefined') ? window._lastPhantomMaster : null;
+  var ts = m && (m.savedAt || m.ingestedAt);
+  if (!ts) return { text: 'MASTER', cls: '' };
+  var ageMs = Date.now() - ts, h = ageMs / 3600000, label;
+  if (h < 1) { var mins = Math.max(1, Math.round(ageMs / 60000)); label = mins + 'm'; }
+  else if (h < 48) label = Math.round(h) + 'h';
+  else label = Math.round(h / 24) + 'd';
+  var cls = (h > 24) ? 'age-stale' : (h > 12 ? 'age-warn' : '');
+  return { text: 'MASTER · ' + label + (cls ? '' : ' ✓'), cls: cls };
+}
+function cmd_renderZ0(site, loaded) {
+  var pg = document.getElementById('pg-cmd');
+  if (pg) pg.setAttribute('data-master', loaded ? '1' : '0');
+  var s = document.getElementById('cc-z0-site'); if (s) s.textContent = site || 'SITE';
+  var chip = document.getElementById('cc-agechip');
+  if (chip) {
+    if (loaded) { var a = cmd_masterAgeInfo(); chip.textContent = a.text; chip.className = 'cc-agechip' + (a.cls ? ' ' + a.cls : ''); chip.style.display = ''; }
+    else { chip.style.display = 'none'; }
+  }
+}
+function cmd_heroHideAux() {
+  var rl = document.getElementById('cc-rackline'); if (rl) rl.style.display = 'none';
+  var rv = document.getElementById('cc-rackvitals'); if (rv) rv.style.display = 'none';
+}
+// this-rack blocker count (honest): the active deployment's matching rack, else 0. No cross-rack aggregate.
+function cmd_rackBlockers(rackElevId) {
+  try {
+    var aid = (typeof deploy_getActiveId === 'function') ? deploy_getActiveId() : null;
+    if (!aid || typeof deploy_loadRacks !== 'function') return 0;
+    var rs = deploy_loadRacks(aid) || [];
+    for (var i = 0; i < rs.length; i++) { var r = rs[i]; if ((r.rackId || r.id) === rackElevId) { if (Array.isArray(r.blockers)) return r.blockers.length; return r.status === 'blocked' ? 1 : 0; } }
+  } catch (e) { if (typeof phantom_logErr === 'function') phantom_logErr('cmd_rackBlockers', e); }
+  return 0;
+}
+function cmd_heroAux(elev) {
+  var slots = (elev && Array.isArray(elev.slots)) ? elev.slots : [];
+  var totalU = (elev && elev.totalU) || 48;
+  // occupied U (distinct, overlap-safe) → RACKED / OPEN
+  var occ = {}, occCount = 0;
+  for (var i = 0; i < slots.length; i++) {
+    var us = parseInt(slots[i].uStart, 10), ue = parseInt(slots[i].uEnd, 10);
+    if (!(us >= 1)) continue; if (!(ue >= us)) ue = us; if (ue > totalU) ue = totalU;
+    for (var u = us; u <= ue; u++) { if (!occ[u]) { occ[u] = 1; occCount++; } }
+  }
+  var openU = Math.max(0, totalU - occCount);
+  var nextU = phantom_nextOpenU(slots, totalU);
+  var blk = cmd_rackBlockers(elev && elev.id);
+  // Z1 rack line
+  var rl = document.getElementById('cc-rackline');
+  if (rl) {
+    rl.innerHTML = '<span class="cc-rl-arrow">&#9656;</span> ' + escHtml(String(elev.id || 'rack')) + ' &middot; ' + totalU + 'U &middot; ' + slots.length + ' device' + (slots.length === 1 ? '' : 's') + '<span class="cc-rl-meta">SWITCH &#9656;</span>';
+    rl.style.display = '';
+  }
+  // Z3 vitals — RACKED / OPEN / BLOCKERS / NEXT
+  var rv = document.getElementById('cc-rackvitals');
+  if (rv) {
+    var vit = [
+      ['', occCount + '/' + totalU + 'U', 'RACKED', ''],
+      ['v-open', openU + 'U', 'OPEN', ''],
+      ['v-blk', String(blk), 'BLOCKERS', ''],
+      ['v-next', nextU ? ('U' + nextU) : '—', 'NEXT', nextU ? 'cmd_pulseNextU()' : '']
+    ];
+    rv.innerHTML = vit.map(function(v) {
+      return '<div class="cc-vital ' + v[0] + '"' + (v[3] ? ' role="button" tabindex="0" onclick="' + v[3] + '"' : '') + '><div class="vn">' + v[1] + '</div><div class="vk">' + v[2] + '</div></div>';
+    }).join('');
+    rv.style.display = '';
+  }
+}
+// D5 — rack switch picker: a minimal self-contained overlay listing every Master rack; pick → re-mount
+// the hero to that rack. Reuses the Master (racksByCab) order; the blocker picker's list philosophy.
+function cmd_heroPickRack() {
+  var m = (typeof window !== 'undefined') ? window._lastPhantomMaster : null;
+  if (!m || !m.racksByCab) { if (typeof phantomToast === 'function') phantomToast('No Master loaded', 'warn'); return; }
+  var keys = Object.keys(m.racksByCab);
+  if (!keys.length) { if (typeof phantomToast === 'function') phantomToast('No racks in this Master', 'warn'); return; }
+  var prev = document.getElementById('cc-rackpick'); if (prev && prev.parentNode) prev.parentNode.removeChild(prev);
+  var ov = document.createElement('div');
+  ov.id = 'cc-rackpick';
+  ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-label', 'Switch rack');
+  ov.style.cssText = 'position:fixed;inset:0;z-index:9000;display:flex;flex-direction:column;background:rgba(2,4,8,0.86);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)';
+  var cur = (_cmdHeroRack || (function(){ var e = cmd_resolveFirstRackElev(); return e && e.id; })());
+  var rows = keys.map(function(k) {
+    var rk = m.racksByCab[k], n = (rk && Array.isArray(rk.hosts)) ? rk.hosts.length : 0, on = (k === cur);
+    return '<button type="button" class="cc-rp-row" data-cab="' + escHtml(k) + '" style="display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;text-align:left;min-height:56px;padding:14px 16px;margin-bottom:8px;border:1px solid ' + (on ? 'rgba(92,242,255,0.55)' : 'rgba(92,242,255,0.16)') + ';border-radius:12px;background:' + (on ? 'rgba(92,242,255,0.10)' : 'rgba(255,255,255,0.02)') + ';color:#eaf6ff;font-family:var(--mono);font-size:14px;font-weight:700;letter-spacing:0.5px;cursor:pointer;-webkit-appearance:none;-webkit-tap-highlight-color:transparent">' +
+      '<span>' + (on ? '&#9656; ' : '') + escHtml(k) + '</span><span style="color:var(--slate);font-weight:600;font-size:12px">' + n + ' device' + (n === 1 ? '' : 's') + '</span></button>';
+  }).join('');
+  ov.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;padding:16px;border-bottom:1px solid rgba(92,242,255,0.14)">' +
+    '<div style="font-family:var(--orb);font-weight:700;font-size:14px;letter-spacing:2px;color:var(--cyan)">SWITCH RACK</div>' +
+    '<button type="button" id="cc-rp-close" aria-label="Close" style="min-width:44px;min-height:44px;border:0;background:none;color:var(--slate);font-size:22px;cursor:pointer">&times;</button></div>' +
+    '<div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 16px">' + rows + '</div>';
+  document.body.appendChild(ov);
+  function close() { if (ov.parentNode) ov.parentNode.removeChild(ov); }
+  ov.addEventListener('click', function(ev) {
+    if (ev.target === ov || (ev.target && ev.target.id === 'cc-rp-close')) { close(); return; }
+    var btn = ev.target && ev.target.closest ? ev.target.closest('.cc-rp-row') : null;
+    if (!btn) return;
+    var cab = btn.getAttribute('data-cab');
+    if (cab && m.racksByCab[cab]) {
+      var _prev = _cmdHeroRack; _cmdHeroRack = cab; close();
+      try { cmd_mountRackHero(); } catch (e) { if (typeof phantom_logErr === 'function') phantom_logErr('cmd_heroPickRack:mount', e); }
+      var _slot = document.getElementById('cc-rackhero');
+      if (_slot && _slot.hidden) {   // rd-review advisory: resolve failed on an EXPLICITLY picked rack — revert + toast, never strand the tech on an empty hero
+        _cmdHeroRack = _prev; try { cmd_mountRackHero(); } catch (e2) {}
+        if (typeof phantomToast === 'function') phantomToast('Could not open ' + cab + ' — kept the current rack', 'warn');
+      }
+    }
+  });
+}
+// D4 — tap the hero → open the full rack-detail bay (all controls). Resolve the active deployment's
+// matching rack for deploy_showRackDetail; if this Master rack maps to no deployment rack, fall back to
+// the Rack Map floor (the canonical Work/BUILD browser) — never a dead tap (No-Silent-Failures).
+function cmd_openHeroBay(mount) {
+  var rackId = mount && mount._rm3dRackId;
+  try {
+    var aid = (typeof deploy_getActiveId === 'function') ? deploy_getActiveId() : null;
+    if (aid && typeof deploy_loadRacks === 'function' && typeof deploy_showRackDetail === 'function') {
+      var rs = deploy_loadRacks(aid) || [];
+      for (var i = 0; i < rs.length; i++) { if ((rs[i].rackId || rs[i].id) === rackId) { return deploy_showRackDetail(aid, rs[i].id); } }
+    }
+  } catch (e) { if (typeof phantom_logErr === 'function') phantom_logErr('cmd_openHeroBay', e); }
+  if (typeof rd_openOpsTool === 'function') { rd_openOpsTool('rackmap'); if (typeof phantomToast === 'function') phantomToast('Opening Rack Map — this rack isn’t in the active deployment yet', 'info'); return; }
+  if (typeof phantomToast === 'function') phantomToast('Rack detail unavailable', 'warn');
+}
+// Bind a capture-phase tap (pointer travel < 8px) so a genuine tap opens the bay while an orbit-drag on
+// the live canvas is ignored. Capture phase so the canvas's own gesture handler can't swallow it.
+function cmd_bindHeroTap(mount) {
+  var sx = 0, sy = 0, moved = false, down = false;
+  mount.addEventListener('pointerdown', function(e) { down = true; moved = false; sx = e.clientX; sy = e.clientY; }, true);
+  mount.addEventListener('pointermove', function(e) { if (down && (Math.abs(e.clientX - sx) > 8 || Math.abs(e.clientY - sy) > 8)) moved = true; }, true);
+  mount.addEventListener('pointerup', function() { if (down && !moved) { try { cmd_openHeroBay(mount); } catch (e) { if (typeof phantom_logErr === 'function') phantom_logErr('cmd_bindHeroTap', e); } } down = false; }, true);
+  mount.addEventListener('pointercancel', function() { down = false; }, true);
+}
+// NEXT vital tap → flash the 3D NEXT-U marker (set by rackElevation_render3D on the hero mount).
+function cmd_pulseNextU() {
+  var mount = document.getElementById('cc-rackhero-mount');
+  if (mount && typeof mount._pulseNextU === 'function') { try { mount._pulseNextU(); } catch (e) { if (typeof phantom_logErr === 'function') phantom_logErr('cmd_pulseNextU', e); } return; }
+  // FLAT-fallback hero (WebGL unavailable) or mid-load has no 3D marker to flash — give honest feedback,
+  // never a dead tap (No-Silent-Failures). The NEXT-U value itself is already visible in the vital chip.
+  if (typeof phantomToast === 'function') phantomToast('Next open slot is shown in the rack vitals — 3D marker unavailable in this view', 'info');
 }
 // Route from a Command Center control. Step 3: 'work' deep-links the Workspace
 // subtab (Deploy/Scan/Handoff) via showWorkTab(); Scan is re-homed, Deploy/Handoff
@@ -33342,7 +33558,7 @@ function rackElevation_render3D(rack, mountEl) {
   // be declared HERE too. Declaring them down with the orbit state (as the first draft did) re-ran
   // `var x = null` AFTER the assignment and wiped the references: setView's is-on toggle silently
   // no-opped and teardown got null, stranding the rail in the DOM forever. Same trap as trayGroups.
-  var _railEl = null, _railBtns = null, _explodeBtn = null, _heroStrip = null;
+  var _railEl = null, _railBtns = null, _explodeBtn = null;   // v1.14.335: _heroStrip retired (D4 — hero builds no strip)
   try {
     // v1.14.332 — resolve the control-strip HOST from the mount's OWN ancestry first. The Command
     // hero mount (#cc-rackhero) has no panel toolbar, so build/own a hero-scoped strip INSIDE the
@@ -33356,14 +33572,11 @@ function rackElevation_render3D(rack, mountEl) {
     var _heroCard = (mountEl && mountEl.closest) ? mountEl.closest('.cc-rackhero') : null;
     var _strip;
     if (_heroCard) {
-      _strip = _heroCard.querySelector('.reh-3d-toggle--hero');
-      if (_strip) { _heroStrip = _strip; }   // reuse an existing hero strip (teardown still owns it)
-      else {
-        _heroStrip = document.createElement('div');
-        _heroStrip.className = 'reh-3d-toggle reh-3d-toggle--hero';
-        _heroCard.appendChild(_heroStrip);
-        _strip = _heroStrip;
-      }
+      // v1.14.335 Command v2 D4: the Command hero shows NO view controls. Tapping the hero opens the
+      // full bay (rack-detail 3D) with the rail / EXPLODE / CABLES. So on a hero mount build NO strip —
+      // leave _strip null and the CABLES + VIEW-RAIL + EXPLODE blocks below all skip (they are `if (_strip
+      // && ...)`-guarded). The panel path (else) is byte-identical; ?legacy is unaffected (hero is rd-only).
+      _strip = null;
     } else {
       _strip = document.querySelector('.reh-3d-toggle');   // panel path — unchanged
     }
@@ -33505,6 +33718,27 @@ function rackElevation_render3D(rack, mountEl) {
     _rail3dSel = { uS: uS, uE: uE };
     _rail3dSelGrp.visible = true;
   }
+
+  // ── v1.14.335 Command v2 D7 — NEXT-U marker (HERO ONLY). The lowest open U above the highest populated
+  //    U gets a pulsing cyan additive strip across the rack front — "where does the next node go", read from
+  //    six feet away. Additive MeshBasic = the SAME owner-cleared emitter class as the N-06 rail-compass
+  //    (no locked material / light / geometry value touched); parented under rackGrp so the teardown
+  //    traverse frees it. SCOPED to the hero mount so the Work/BUILD rack bay stays byte-identical. Skipped
+  //    when the rack tops out (no open U). Pulse rides the shared bt in bayTick; cmd_pulseNextU() flashes it.
+  var _nextUMat = null, _nextUFlash = 0;
+  (function () {
+    var _isHero = (mountEl && mountEl.closest) ? !!mountEl.closest('.cc-rackhero') : false;
+    if (!_isHero) return;
+    var nU = (typeof phantom_nextOpenU === 'function') ? phantom_nextOpenU(slots, totalU) : null;
+    if (!nU) return;
+    _nextUMat = new THREE.MeshBasicMaterial({ color: 0x28e0ff, transparent: true, opacity: 0.30, blending: THREE.AdditiveBlending, depthWrite: false });
+    var _nuMesh = new THREE.Mesh(new THREE.PlaneGeometry(RW - 0.42, uH * 0.86), _nextUMat);
+    _nuMesh.position.set(0, yFor(nU), RD / 2 - 0.18);   // proud of the front rail face, centered on the open U
+    var _nextUGrp = new THREE.Group();
+    _nextUGrp.add(_nuMesh);
+    rackGrp.add(_nextUGrp);
+    mountEl._pulseNextU = function () { try { _nextUFlash = performance.now() + 900; } catch (e) {} };
+  })();
 
   // ── §D THE INSPECTION BAY — all elements additive, dimmer than the rack (bayGrp for clean dispose) ──
   var VOID_SCENE = true;   // v1.14.262 CLEAR-PORT S3 void: hide bay clutter, keep reflective floor + reflection
@@ -33751,6 +33985,11 @@ function rackElevation_render3D(rack, mountEl) {
     if (_rail3dSelGrp && _rail3dSelGrp.visible) {   // N-06 Stage 2: breathe the selection emitters on the shared bt (no-ops when hidden)
       _rail3dSelGrp.userData.bandMat.opacity = 0.18 + 0.10 * Math.sin(bt);
       _rail3dSelGrp.userData.dotMat.opacity = 0.62 + 0.30 * Math.sin(bt);
+    }
+    if (_nextUMat) {   // v1.14.335 D7 NEXT-U marker pulse (hero only; null on the panel path). cmd_pulseNextU() bumps it bright.
+      var _nb = 0.20 + 0.16 * Math.sin(bt * 1.4);
+      if (_nextUFlash && nowMs < _nextUFlash) _nb = 0.55;
+      _nextUMat.opacity = _nb;
     }
     var swt = nowMs * 0.00012;                             // §D9 ~50s orbit
     sweepL.position.set(Math.sin(swt) * RH * 0.7, floorY + RH * (0.55 + 0.2 * Math.sin(swt * 0.7)), Math.cos(swt) * RH * 0.7);
@@ -33999,12 +34238,12 @@ function rackElevation_render3D(rack, mountEl) {
     // v1.14.271: the rail + the stow hook exist only in 3D — the hook MUST NOT outlive the scene it
     // closes over, or a later sheet-open would call setExplode() on a disposed context.
     try { if (_railEl && _railEl.parentNode) _railEl.parentNode.removeChild(_railEl); } catch (e) {}
-    // v1.14.332 — symmetric with the panel: the hero-scoped strip is created by THIS render, so it
-    // must be torn down here too. (The panel's .reh-3d-toggle pre-exists and is left alone; on the
-    // panel/legacy path _heroStrip is null, so this is a no-op there.)
-    try { if (_heroStrip && _heroStrip.parentNode) _heroStrip.parentNode.removeChild(_heroStrip); } catch (e) {}
-    _railEl = null; _railBtns = null; _explodeBtn = null; _heroStrip = null; trayGroups = [];
+    // v1.14.335 Command v2 D4: the hero no longer creates a control strip, so there is nothing hero-scoped
+    // to remove here. The panel's .reh-3d-toggle pre-exists and is left alone. _railEl/_explodeBtn are only
+    // ever built on the panel path now, and their teardown below is unchanged.
+    _railEl = null; _railBtns = null; _explodeBtn = null; trayGroups = [];
     try { if (window._reh3dStow) window._reh3dStow = null; } catch (e) {}
+    try { mountEl._pulseNextU = null; } catch (e) {}   // v1.14.335 D7: drop the NEXT-U flash hook with the scene
     mountEl._rm3dDispose = null;
     if (_reh3dActive && _reh3dActive.mount === mountEl) _reh3dActive = null;
   }
