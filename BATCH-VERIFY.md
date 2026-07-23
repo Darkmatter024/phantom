@@ -252,3 +252,7 @@ Maintained through `.215`, then drifted. `.216–.339` verify status = git log +
 - [ ] `?legacy=1` pixel-identical
 
 **Batch is now `.340–.345` = 6 ships → at the CALL-0 count cap. Verify + release before the next ship.**
+
+---
+## ✅ BATCH `.340–.345` — RELEASED by owner 2026-07-23 ("340-345 good")
+All 6 ships device-verified on iPhone. CALL-0 6-ship count cap **cleared** + the MASTER FULL-INGEST HIGH-risk prereq **cleared**. Next ship opens a new batch.
