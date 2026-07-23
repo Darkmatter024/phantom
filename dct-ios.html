@@ -9405,7 +9405,7 @@ body.rd #ph-sheet.open {
    applied to the EXISTING #rd-botnav (keeps ids + showMode routing + hold-to-exit). Per-tab color = --tc (inline).
    Underbar = .btick (order:2 → sits under the icon, above the always-on label). Icons are precached WebP <img>. */
 #rd-botnav .botitem,#rd-botnav #rd-exit{position:relative;min-height:54px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:4px 4px;border:none;background:none;border-radius:0;margin:0;min-width:0;cursor:pointer;transition:opacity .2s}
-#rd-botnav .bicon{order:1;width:46px;height:46px;object-fit:contain;display:block;opacity:.82;transition:opacity .2s,filter .2s}
+#rd-botnav .bicon{order:1;width:54px;height:54px;object-fit:contain;display:block;opacity:.82;transition:opacity .2s,filter .2s}   /* v1.14.339: +~17% (46→54) for the re-cut crisp-glass icons; nav-height cap +8px */
 #rd-botnav .btick{order:2;width:18px;height:3px;border-radius:2px;background:var(--tc,var(--cyan));opacity:0;transition:opacity .2s,width .2s,background .2s}
 #rd-botnav .blabel{order:3;font-family:var(--orb);font-weight:700;font-size:9px;letter-spacing:1.6px;text-transform:uppercase;color:#4a565f;white-space:nowrap;transition:color .2s,text-shadow .2s}
 #rd-botnav .botitem.active .bicon,#rd-botnav #rd-exit .bicon{opacity:1}
@@ -12307,7 +12307,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.338';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.339';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -13036,7 +13036,7 @@ if (typeof window !== 'undefined') {
       <div class="cc-asst" id="cc-asst">
         <div class="cc-asst-top">
           <div class="cc-asst-eyebrow"><span class="cc-asst-online" aria-hidden="true"></span>AI ASSISTANT &middot; ONLINE</div>
-          <img class="cc-asst-ghost" src="phantom-ghost-v2.webp" alt="" aria-hidden="true" width="63" height="84">
+          <img class="cc-asst-ghost" src="phantom-ghost-v3.webp" alt="" aria-hidden="true" width="74" height="84">
         </div>
         <div class="cc-asst-greet">Hi, I&rsquo;m Phantom.<br>Your AI shift assistant.</div>
         <div class="cc-asst-summary" id="cc-asst-summary">&mdash;</div>
@@ -15617,21 +15617,21 @@ if (typeof window !== 'undefined') {
     <div id="bn-rail">
       <span id="bn-core" aria-hidden="true"></span>
       <div class="botitem active" id="bn-command" role="button" tabindex="0" onclick="showMode('command')" aria-label="Home" style="--tc:#61efff">
-        <img class="bicon" src="icons/phantom-nav-home-256.webp" width="256" height="256" alt="" loading="eager">
+        <img class="bicon" src="icons/phantom-nav-home-v2-256.webp" width="256" height="256" alt="" loading="eager">
         <span class="blabel">Home</span><span class="btick"></span>
       </div>
       <div class="botitem" id="bn-work" role="button" tabindex="0" onclick="showMode('work')" aria-label="Build" style="--tc:#3d84ff">
-        <img class="bicon" src="icons/phantom-nav-build-256.webp" width="256" height="256" alt="" loading="eager">
+        <img class="bicon" src="icons/phantom-nav-build-v2-256.webp" width="256" height="256" alt="" loading="eager">
         <span class="blabel">Build</span><span class="btick"></span>
       </div>
       <div class="botitem" id="bn-ref" role="button" tabindex="0" onclick="showMode('ref')" aria-label="Tools" style="--tc:#cfe3ee">
-        <img class="bicon" src="icons/phantom-nav-tools-256.webp" width="256" height="256" alt="" loading="eager">
+        <img class="bicon" src="icons/phantom-nav-tools-v2-256.webp" width="256" height="256" alt="" loading="eager">
         <span class="blabel">Tools</span><span class="btick"></span>
       </div>
     </div>
     <div id="rd-exit" role="button" aria-label="Hold to exit and freeze the app" tabindex="0" style="--tc:#ff4d4d">
       <span class="rd-exit-charge"></span>
-      <img class="bicon" src="icons/phantom-nav-exit-256.webp" width="256" height="256" alt="" loading="eager">
+      <img class="bicon" src="icons/phantom-nav-exit-v2-256.webp" width="256" height="256" alt="" loading="eager">
       <span class="blabel">Exit</span><span class="btick"></span>
     </div>
   </div>

@@ -34,7 +34,7 @@
 // a clean v1.13.3 — dropping the prior -N cache-iteration suffix — so this real
 // version bump busts every client's cache and the three stamps (app const /
 // version.json / this key) line up again. Patch bumps continue from here.
-const CACHE_VERSION = 'phantom-v1.14.338';
+const CACHE_VERSION = 'phantom-v1.14.339';
 
 // Assets to precache on install. Keep this minimal — single-file PWA means
 // most of PHANTOM is in dct-ios.html itself.
@@ -48,6 +48,7 @@ const PRECACHE_URLS = [
   'vendor/lz-string.min.js',
   'vendor/three.min.js',
   'phantom-ghost-v2.webp',
+  'phantom-ghost-v3.webp',
   'phantom-lockup.png',
   'cc-ghost.webp',
   'cc-wordmark.png',
@@ -61,10 +62,10 @@ const PRECACHE_URLS = [
   'icons/phantom-nav-work-96.webp',
   'icons/phantom-nav-ref-96.webp',
   // v1.14.323: glass WebP nav icons (pnav look) — Home/Build/Tools/Exit bottom nav
-  'icons/phantom-nav-home-256.webp',
-  'icons/phantom-nav-build-256.webp',
-  'icons/phantom-nav-tools-256.webp',
-  'icons/phantom-nav-exit-256.webp',
+  'icons/phantom-nav-home-v2-256.webp',
+  'icons/phantom-nav-build-v2-256.webp',
+  'icons/phantom-nav-tools-v2-256.webp',
+  'icons/phantom-nav-exit-v2-256.webp',
   // v1.14.325: PLATFORMS feature-hero art (mounted on the Site Profile sheet). Now a
   // precached FILE (owner ruled files-not-inline 2026-07-21) so it stays offline-first.
   'icons/phantom-feat-platforms-720.webp',
