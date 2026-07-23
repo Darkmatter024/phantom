@@ -243,3 +243,12 @@ Maintained through `.215`, then drifted. `.216–.339` verify status = git log +
 - [ ] Desktop: card tap AND the CHAT WITH PHANTOM button both open the same sheet
 
 **On release:** owner marks this batch RELEASED → clears the CALL-0 HIGH-risk gate for MASTER FULL-INGEST Phase 2.
+
+### v1.14.345 — GHOST IS THE DOOR: assistant doors land on intent menu (`5a5dada`) · rollback: revert commit
+**⚠ SUPERSEDES the .344 "tap card → sheet opens" item above — that door opened BLANK (bare openVaSheet()). .345 fixes it.**
+- [ ] Tap AI ASSISTANT card (and desktop CHAT WITH PHANTOM) → the FOUR-DOOR intent menu opens EVERY time (SPEAK / PASTE TICKET / TYPE OR PASTE / IMPORT FILE), never blank
+- [ ] CHAT chip → same menu · sheet's own close returns to Home
+- [ ] SPEAK is the ONLY control that starts the mic (no surprise mic on any other tap)
+- [ ] `?legacy=1` pixel-identical
+
+**Batch is now `.340–.345` = 6 ships → at the CALL-0 count cap. Verify + release before the next ship.**
