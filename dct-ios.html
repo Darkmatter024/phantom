@@ -9223,7 +9223,8 @@ body.rd #ph-sheet.open {
 /* v1.14.335: a tappable health dot (Profile door) rides a 44x44 invisible hit box — a bare 9px dot is 5x under the gloved floor (rd-review Rule 13). Decorative dots stay bare spans. */
 #pg-cmd .cc-hdot-hit{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;padding:0;border:0;background:none;cursor:pointer;-webkit-appearance:none;-webkit-tap-highlight-color:transparent;flex:0 0 auto}
 #pg-cmd .cc-z0-spacer{flex:1}
-#pg-cmd .cc-agechip{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:1px;color:var(--cyan);border:1px solid var(--cyan-border-lo);background:linear-gradient(158deg,#050506 0%,#010102 46%,#000000 76%,#030304 100%);box-shadow:inset 0 1px 0 rgba(210,234,244,.14),0 8px 20px -14px rgba(0,0,0,.85);border-radius:12px;padding:7px 12px;min-height:44px;cursor:pointer;-webkit-appearance:none;-webkit-tap-highlight-color:transparent;white-space:nowrap;flex:0 0 auto}   /* v1.14.338: dark stat-card surface + subtle cyan-lo border (was bright cyan border/fill that didn't match the comp). 44px gloved floor kept — live re-ingest/swap door (rd-review Rule 13). */
+#pg-cmd .cc-agechip{position:relative;display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.5px;color:var(--cyan);border:1px solid var(--cyan-border-lo);background:linear-gradient(158deg,#050506 0%,#010102 46%,#000000 76%,#030304 100%);box-shadow:inset 0 1px 0 rgba(210,234,244,.14),0 8px 20px -14px rgba(0,0,0,.85);border-radius:14px;padding:6px 10px;cursor:pointer;-webkit-appearance:none;-webkit-tap-highlight-color:transparent;white-space:nowrap;flex:0 0 auto}   /* v1.14.342: the MASTER chip's 11px/44px body dominated the Z0 row next to the ~24px Online/Ready chips (owner: shrink to match, MASTER shouldn't dominate). Now matches the .cc-hchip footprint (10.5px, 6/10 pad, r14) but KEEPS the .338 dark stat-card surface; the 44px gloved hit (live re-ingest/swap door, rd-review Rule 13) is restored via the transparent ::after below. */
+#pg-cmd .cc-agechip::after{content:"";position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);height:44px}   /* v1.14.342: transparent vertical hit-area — small visible chip, 44px gloved tap. */
 #pg-cmd .cc-agechip.age-warn{color:var(--gold);border-color:rgba(255,203,69,.40);background:rgba(255,203,69,.07)}
 #pg-cmd .cc-agechip.age-stale{color:#ff2bd6;border-color:rgba(255,43,214,.45);background:rgba(255,43,214,.08)}   /* v1.14.335: >24h escalates gold(attention)->magenta(fault), NOT red (EXIT-only) */
 #pg-cmd .cc-agechip:active{filter:brightness(1.15)}
@@ -9269,7 +9270,8 @@ body.rd #ph-sheet.open {
 #pg-cmd .cc-hchip .cc-hdot{width:7px;height:7px}
 #pg-cmd .cc-hchip.ok{color:#cfe9f0}
 #pg-cmd .cc-hchip.ok .cc-hdot{background:var(--ok);box-shadow:0 0 5px var(--ok)}   /* v1.14.336: pass/healthy = mint --ok, not the .335 teal (clears the rd-review carry-forward) */
-#pg-cmd .cc-hchip-tap{min-height:44px;cursor:pointer;-webkit-appearance:none;-webkit-tap-highlight-color:transparent}
+#pg-cmd .cc-hchip-tap{position:relative;cursor:pointer;-webkit-appearance:none;-webkit-tap-highlight-color:transparent}   /* v1.14.342: the tappable Profile chip ("Active ✓") was 44px vs the ~24px Online/Ready spans, so it dominated the row (owner: shrink to match). Visible size now equals .cc-hchip; the 44px gloved hit is restored via the transparent ::after below (no sub-44px tap — rd-review Rule 13 stays green). */
+#pg-cmd .cc-hchip-tap::after{content:"";position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);height:44px}
 /* ━━━ v1.14.337 FINAL-LOOK DESKTOP — new rail/center elements. BASE display:none so the phone (<1024px)
    is byte-identical to .336; the >=1024px block below reveals them. Card skin = REAL :root tokens. ━━━ */
 #pg-cmd #cc-sugg,#pg-cmd #cc-chat,#pg-cmd #cc-aistat,#pg-cmd #cc-foot{display:none}
@@ -12314,7 +12316,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.341';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.342';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -20301,46 +20303,65 @@ function cmd_loadMaster() {
 }
 
 // ━━━ v1.14.330 — INSPECT-3D LANDING ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// On Master load, the Command hero lands on the first rack, live in the INSPECT-3D
-// bay. Routing + mount + state only — reh3d engine + Master pipeline UNTOUCHED.
-// resolveFirstRackElev builds a render-ready elevation via master_rackToElevation
-// (the same builder the reh3d panel uses); D1 = active-deployment lead rack when it
-// maps to a real Master rack, else Master-order first rack (Object.keys(racksByCab)[0]).
+// On Master load, the Command hero lands on the first rack, live in the INSPECT-3D bay.
+// Routing + mount + state only — reh3d engine + Master pipeline UNTOUCHED.
+// v1.14.342 — ONE RACK, ONE TRUTH. The hero must render the SAME rack object OPEN BAY renders. With an
+// active deployment that object is the DEPLOYMENT rack (deploy_loadRacks → edpParsed slots), NOT
+// master_rackToElevation(racksByCab): those are two builders off two uploads (a master file vs the
+// deployment EDP) and had diverged for the same rack label (hero showed 6 devices, the bay 8 incl. the
+// real q3400-ra IB switch). We resolve the deployment rack here and build the elevation from it, so the
+// hero and the bay are the same object. The racksByCab/master path SURVIVES ONLY as the
+// Master-loaded-but-no-active-deployment fallback — there OPEN BAY opens the Rack Map floor, not
+// deploy_showRackDetail, so no hero/bay divergence is possible.
+// A deployment rack's .slots already carry the shared {uStart,uEnd,name,model,type} contract the
+// reh3d renderer consumes (identical to what master_rackToElevation emits), so this is a thin wrap.
+// elev.id = the DISPLAY rackId so cmd_openHeroBay's mount._rm3dRackId lookup ((r.rackId||r.id)===id)
+// resolves the SAME deployment rack the hero drew from.
+function deploy_rackToElevation(r) {
+  if (!r) return null;
+  return { id: (r.rackId || r.id || ''), totalU: (r.totalU || 42), slots: Array.isArray(r.slots) ? r.slots : [], unplaced: [] };
+}
 function cmd_resolveFirstRackElev() {
+  // (1) Active deployment → the deployment rack IS the truth the bay shows. Feed the hero from it.
+  try {
+    var aid = (typeof deploy_getActiveId === 'function') ? deploy_getActiveId() : null;
+    var depRacks = (aid && typeof deploy_loadRacks === 'function') ? (deploy_loadRacks(aid) || []) : [];
+    if (depRacks.length) {
+      // D5 explicit rack-switch override: honor it when it names a deployment rack (display or internal id).
+      // The picker only ever offers racks from THIS universe (see cmd_heroPickRack), so a set-but-unmatched
+      // override is stale cross-context state (a prior deployment / master swap) — clear it so the D1 lead
+      // applies. Never silently substitute a DIFFERENT rack for an explicit pick (No-Silent-Failures), and
+      // keep the picker's "current" highlight honest.
+      var picked = _cmdHeroRack ? depRacks.filter(function(r) { return (r.rackId === _cmdHeroRack) || (r.id === _cmdHeroRack); })[0] : null;
+      if (_cmdHeroRack && !picked) _cmdHeroRack = null;
+      var target = picked || depRacks.slice().sort(function(a, b) {
+        var aBlk = a.status === 'blocked' ? 0 : 1, bBlk = b.status === 'blocked' ? 0 : 1;
+        if (aBlk !== bBlk) return aBlk - bBlk;
+        return String(a.rackId || '').localeCompare(String(b.rackId || ''));
+      })[0];
+      if (target) return deploy_rackToElevation(target);
+    }
+  } catch (e) { if (typeof phantom_logErr === 'function') phantom_logErr('cmd_resolveFirstRackElev:dep', e); }
+  // (2) Master loaded, NO active deployment → land on the first Master rack (the bay here is the Rack Map
+  //     floor, so nothing to diverge from). D5 override still honored when it maps to a real Master cab.
   var m = (typeof window !== 'undefined') ? window._lastPhantomMaster : null;
   var has = (typeof master_hasMaster === 'function') ? master_hasMaster()
           : !!(m && m.racksByCab && Object.keys(m.racksByCab).length);
   if (!has) return null;
   var keys = Object.keys(m.racksByCab);
   if (!keys.length) return null;
-  var cabId = keys[0];   // Master (insertion) order
-  // v1.14.335 D5: an explicit rack-switch override (from the Z1 cc-rackline picker) wins over the D1
-  // default. Guarded to a real Master rack so the render can never come up empty.
   if (_cmdHeroRack && m.racksByCab[_cmdHeroRack]) {
     try { return master_rackToElevation(m.racksByCab[_cmdHeroRack], _cmdHeroRack); } catch (_) { return null; }
   }
-  // D1 refinement: prefer the active deployment's lead rack (blocked-first, then id) —
-  // but ONLY when it maps to a real Master rack, so the render can never come up empty.
-  try {
-    var aid = (typeof deploy_getActiveId === 'function') ? deploy_getActiveId() : null;
-    if (aid && typeof deploy_loadRacks === 'function') {
-      var dr = deploy_loadRacks(aid) || [];
-      if (dr.length) {
-        dr.sort(function(a, b) {
-          var aBlk = a.status === 'blocked' ? 0 : 1, bBlk = b.status === 'blocked' ? 0 : 1;
-          if (aBlk !== bBlk) return aBlk - bBlk;
-          return String(a.rackId || '').localeCompare(String(b.rackId || ''));
-        });
-        var leadKey = dr[0].rackId || dr[0].id;
-        if (leadKey && m.racksByCab[leadKey]) cabId = leadKey;
-      }
-    }
-  } catch (e) { if (typeof phantom_logErr === 'function') phantom_logErr('cmd_resolveFirstRackElev:d1', e); }   // v1.14.331: was a silent catch — log the D1-sort anomaly; still degrades to the Master-order first rack
-  try { return master_rackToElevation(m.racksByCab[cabId], cabId); } catch (_) { return null; }
+  try { return master_rackToElevation(m.racksByCab[keys[0]], keys[0]); } catch (_) { return null; }
 }
 // FLAT fallback (capability-only, not a battery choice): the existing HTML elevation.
 function cmd_rackHeroFlat(mount, elev) {
   if (!mount) return;
+  // v1.14.342 — hide the "RACK · id" overlay caption in FLAT. It is an absolute overlay tuned to float over
+  // the 3D canvas; over the flat elevation LIST it overlaps the rows. The flat list is self-labeling and the
+  // Z1 rackline above already shows the id, so the caption is redundant here. (3D re-shows it on success.)
+  var cap = document.getElementById('cc-rackhero-cap'); if (cap) cap.style.display = 'none';
   try { mount.innerHTML = (typeof rackElevation_buildHtml === 'function') ? rackElevation_buildHtml(elev) : ''; mount._rm3dRackId = (elev && elev.id) || ''; }
   catch (e) { mount.innerHTML = ''; }
 }
@@ -20359,10 +20380,16 @@ function cmd_rackHero3D(elev, mount) {
     // this. Last resort = FLAT, so the rack NEVER stays stuck on the loading text.
     if (_rdMode !== 'command' || !document.body.contains(mount)) return;
     if (mount.offsetParent === null || !mount.clientWidth || !mount.clientHeight) {
-      if (_tries++ < 120) { requestAnimationFrame(paint); } else { cmd_rackHeroFlat(mount, elev); }
+      // v1.14.342 — do NOT fall to FLAT on a layout timeout. FLAT is the WebGL-unavailable fallback ONLY
+      // (owner ruling: "land live 3D; FLAT only as the webglOK fallback"). We only reach here because
+      // webglOK was TRUE, so a mount that won't lay out is a layout anomaly, not a WebGL failure — leave the
+      // loading state and let the next cmd_render re-arm a fresh attempt (its dedup only skips an already-live
+      // 3D rack), rather than masking it with the flat list. ~600 frames of foreground retry before yielding.
+      if (_tries++ < 600) { requestAnimationFrame(paint); }
+      else if (typeof phantom_logErr === 'function') phantom_logErr('cmd_rackHero3D', new Error('hero mount not laid out after 600f — will retry on next render'));
       return;
     }
-    try { rackElevation_render3D(elev, mount); mount._rm3dRackId = (elev && elev.id) || ''; }
+    try { rackElevation_render3D(elev, mount); mount._rm3dRackId = (elev && elev.id) || ''; var _cap = document.getElementById('cc-rackhero-cap'); if (_cap) _cap.style.display = ''; }
     catch (e) { if (typeof phantom_logErr === 'function') phantom_logErr('cmd_rackHero3D', e); cmd_rackHeroFlat(mount, elev); }
   }
   if (window.THREE) { paint(); return; }
@@ -20395,8 +20422,21 @@ function cmd_mountRackHero() {
   if (mount && !mount._heroTapBound) { cmd_bindHeroTap(mount); mount._heroTapBound = true; }   // tap hero → full bay (D4)
   if (!mount) return;
   if (mount._rm3dRackId === (elev.id || '') && mount._rm3dDispose) return;   // already live for this rack
-  if (typeof reh3d_webglOK === 'function' && reh3d_webglOK()) cmd_rackHero3D(elev, mount);
-  else cmd_rackHeroFlat(mount, elev);
+  if (typeof reh3d_webglOK === 'function' && reh3d_webglOK()) { cmd_rackHero3D(elev, mount); return; }
+  cmd_rackHeroFlat(mount, elev);
+  // v1.14.342 — FLAT is the fallback ONLY when the device genuinely lacks WebGL. On a cold iOS boot the
+  // probe can fail transiently (GPU contexts not yet free / page mid-layout) even though WebGL IS supported,
+  // which made the hero land on the flat list some loads and 3D others. Re-arm a bounded upgrade to 3D so it
+  // lands live per the ruling. A device with no WebGL at all (no window.WebGLRenderingContext) stays flat.
+  if (window.WebGLRenderingContext && !mount._heroReArm) {
+    mount._heroReArm = true;
+    var _reN = 0;
+    (function reArm() {
+      if (_rdMode !== 'command' || !document.body.contains(mount) || mount._rm3dDispose) { mount._heroReArm = false; return; }
+      if (typeof reh3d_webglOK === 'function' && reh3d_webglOK()) { mount._heroReArm = false; try { cmd_mountRackHero(); } catch (e) {} return; }
+      if (_reN++ < 12) setTimeout(reArm, 400); else mount._heroReArm = false;   // ~5s of bounded re-checks
+    })();
+  }
 }
 // ━━━ v1.14.335 Command v2 — Z0 cluster · Z1 rack line · Z3 vitals · tap-to-bay · rack picker ━━━━━━━━
 // All read-only over live state (Master + active deployment). No Master pipeline writes. #pg-cmd-scoped.
@@ -20489,20 +20529,35 @@ function cmd_heroAux(elev) {
 // D5 — rack switch picker: a minimal self-contained overlay listing every Master rack; pick → re-mount
 // the hero to that rack. Reuses the Master (racksByCab) order; the blocker picker's list philosophy.
 function cmd_heroPickRack() {
+  // v1.14.342 — the picker must offer the SAME rack universe the hero renders, or a pick lands on a rack the
+  // hero can't faithfully show (the .341 one-truth bug in miniature). With an active deployment that universe
+  // is the deployment racks (deploy_loadRacks → the very objects OPEN BAY opens); otherwise it's Master cabs.
+  // items[] = {key,label,count}; key is what we stash in _cmdHeroRack (a deployment rackId, or a Master cab).
   var m = (typeof window !== 'undefined') ? window._lastPhantomMaster : null;
-  if (!m || !m.racksByCab) { if (typeof phantomToast === 'function') phantomToast('No Master loaded', 'warn'); return; }
-  var keys = Object.keys(m.racksByCab);
-  if (!keys.length) { if (typeof phantomToast === 'function') phantomToast('No racks in this Master', 'warn'); return; }
+  var items = [];
+  try {
+    var aid = (typeof deploy_getActiveId === 'function') ? deploy_getActiveId() : null;
+    var depRacks = (aid && typeof deploy_loadRacks === 'function') ? (deploy_loadRacks(aid) || []) : [];
+    if (depRacks.length) items = depRacks.map(function(r) {
+      return { key: (r.rackId || r.id || ''), label: (r.rackId || r.id || 'rack'), count: (Array.isArray(r.slots) ? r.slots.length : 0) };
+    });
+  } catch (e) { if (typeof phantom_logErr === 'function') phantom_logErr('cmd_heroPickRack:dep', e); }
+  if (!items.length) {
+    if (!m || !m.racksByCab) { if (typeof phantomToast === 'function') phantomToast('No Master loaded', 'warn'); return; }
+    var keys = Object.keys(m.racksByCab);
+    if (!keys.length) { if (typeof phantomToast === 'function') phantomToast('No racks in this Master', 'warn'); return; }
+    items = keys.map(function(k) { var rk = m.racksByCab[k]; return { key: k, label: k, count: (rk && Array.isArray(rk.hosts)) ? rk.hosts.length : 0 }; });
+  }
   var prev = document.getElementById('cc-rackpick'); if (prev && prev.parentNode) prev.parentNode.removeChild(prev);
   var ov = document.createElement('div');
   ov.id = 'cc-rackpick';
   ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-label', 'Switch rack');
   ov.style.cssText = 'position:fixed;inset:0;z-index:9000;display:flex;flex-direction:column;background:rgba(2,4,8,0.86);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)';
   var cur = (_cmdHeroRack || (function(){ var e = cmd_resolveFirstRackElev(); return e && e.id; })());
-  var rows = keys.map(function(k) {
-    var rk = m.racksByCab[k], n = (rk && Array.isArray(rk.hosts)) ? rk.hosts.length : 0, on = (k === cur);
-    return '<button type="button" class="cc-rp-row" data-cab="' + escHtml(k) + '" style="display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;text-align:left;min-height:56px;padding:14px 16px;margin-bottom:8px;border:1px solid ' + (on ? 'rgba(92,242,255,0.55)' : 'rgba(92,242,255,0.16)') + ';border-radius:12px;background:' + (on ? 'rgba(92,242,255,0.10)' : 'rgba(255,255,255,0.02)') + ';color:#eaf6ff;font-family:var(--mono);font-size:14px;font-weight:700;letter-spacing:0.5px;cursor:pointer;-webkit-appearance:none;-webkit-tap-highlight-color:transparent">' +
-      '<span>' + (on ? '&#9656; ' : '') + escHtml(k) + '</span><span style="color:var(--slate);font-weight:600;font-size:12px">' + n + ' device' + (n === 1 ? '' : 's') + '</span></button>';
+  var rows = items.map(function(it) {
+    var on = (it.key === cur) || (it.label === cur);
+    return '<button type="button" class="cc-rp-row" data-cab="' + escHtml(it.key) + '" style="display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;text-align:left;min-height:56px;padding:14px 16px;margin-bottom:8px;border:1px solid ' + (on ? 'rgba(92,242,255,0.55)' : 'rgba(92,242,255,0.16)') + ';border-radius:12px;background:' + (on ? 'rgba(92,242,255,0.10)' : 'rgba(255,255,255,0.02)') + ';color:#eaf6ff;font-family:var(--mono);font-size:14px;font-weight:700;letter-spacing:0.5px;cursor:pointer;-webkit-appearance:none;-webkit-tap-highlight-color:transparent">' +
+      '<span>' + (on ? '&#9656; ' : '') + escHtml(it.label) + '</span><span style="color:var(--slate);font-weight:600;font-size:12px">' + it.count + ' device' + (it.count === 1 ? '' : 's') + '</span></button>';
   }).join('');
   ov.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;padding:16px;border-bottom:1px solid rgba(92,242,255,0.14)">' +
     '<div style="font-family:var(--orb);font-weight:700;font-size:14px;letter-spacing:2px;color:var(--cyan)">SWITCH RACK</div>' +
@@ -20515,14 +20570,13 @@ function cmd_heroPickRack() {
     var btn = ev.target && ev.target.closest ? ev.target.closest('.cc-rp-row') : null;
     if (!btn) return;
     var cab = btn.getAttribute('data-cab');
-    if (cab && m.racksByCab[cab]) {
-      var _prev = _cmdHeroRack; _cmdHeroRack = cab; close();
-      try { cmd_mountRackHero(); } catch (e) { if (typeof phantom_logErr === 'function') phantom_logErr('cmd_heroPickRack:mount', e); }
-      var _slot = document.getElementById('cc-rackhero');
-      if (_slot && _slot.hidden) {   // rd-review advisory: resolve failed on an EXPLICITLY picked rack — revert + toast, never strand the tech on an empty hero
-        _cmdHeroRack = _prev; try { cmd_mountRackHero(); } catch (e2) {}
-        if (typeof phantomToast === 'function') phantomToast('Could not open ' + cab + ' — kept the current rack', 'warn');
-      }
+    if (!cab) return;   // v1.14.342: was guarded on m.racksByCab[cab], which rejected a DEPLOYMENT rackId (dead tap in the active-deployment universe). Validity is enforced below by the resolve-failed revert, so any non-empty key proceeds.
+    var _prev = _cmdHeroRack; _cmdHeroRack = cab; close();
+    try { cmd_mountRackHero(); } catch (e) { if (typeof phantom_logErr === 'function') phantom_logErr('cmd_heroPickRack:mount', e); }
+    var _slot = document.getElementById('cc-rackhero');
+    if (_slot && _slot.hidden) {   // resolve failed on an EXPLICITLY picked rack — revert + toast, never strand the tech on an empty hero (No-Silent-Failures)
+      _cmdHeroRack = _prev; try { cmd_mountRackHero(); } catch (e2) {}
+      if (typeof phantomToast === 'function') phantomToast('Could not open ' + cab + ' — kept the current rack', 'warn');
     }
   });
 }
