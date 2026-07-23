@@ -211,3 +211,35 @@ any HIGH-risk ship). Every ship keeps its own rollback line. Claude Code appends
 - [ ] Both P3 gate agents (`phantom-ship-gate` + `phantom-rd-reviewer`) returned PASS on f59c288 pre-push.
 
 <!-- append new ships above this line; checkpoint when 6 deep or before HIGH-risk -->
+
+---
+
+## ⚠ FILE DRIFT NOTE (appended 2026-07-23)
+Maintained through `.215`, then drifted. `.216–.339` verify status = git log + INTEGRATION-STATE, not here. Resuming batch tracking at `.340`.
+
+## CURRENT BATCH TO RUN — `.340–.344` (5 ships stacked, unverified)
+**Prep:** unregister SW + delete caches, reload, confirm top-right build badge = `v1.14.344` (hard-refresh alone will NOT bypass the SW). `?legacy=1` must stay pixel-identical throughout.
+
+### v1.14.340 — device fix (OPEN BAY clip + back-to-Home, ghost, nav clearance) (`b02fec8`) · rollback: revert commit
+- [ ] OPEN BAY: bay art not clipped at the edge
+- [ ] Back from OPEN BAY returns cleanly to Home
+- [ ] Assistant ghost present; content clears the bottom nav
+
+### v1.14.341 — global nav clearance + ghost co-star (`24111f4`) · rollback: revert commit
+- [ ] Scroll every page to the bottom — nothing hides behind the nav strip (`--rd-navclear`)
+- [ ] Assistant ghost sits as co-star, not cropped
+
+### v1.14.342 — device fix #3 (hero=bay truth, land-3D, nav-icon baseline, pills) (`f3bb9af`) · rollback: revert commit
+- [ ] Hero rack shows the SAME rack as an OPEN BAY (one truth)
+- [ ] Landing 3D intact · nav icons on baseline · pills sized right
+
+### v1.14.343 — Home card-surface unification (`bbe0554`) · rollback: revert commit
+- [ ] Every Home card = the same near-black as the 98 RACKS stat tile (assistant/quick-tools/suggestions/rackline no longer blue)
+- [ ] Zero visual pop between cards
+
+### v1.14.344 — assistant-card tap→openVaSheet (`d72e1c8`) · rollback: revert commit
+- [ ] Home: tap AI ASSISTANT card ANYWHERE → Phantom assistant sheet opens
+- [ ] `CHAT →` chip visible bottom-right of the card · sheet's own close returns to Home
+- [ ] Desktop: card tap AND the CHAT WITH PHANTOM button both open the same sheet
+
+**On release:** owner marks this batch RELEASED → clears the CALL-0 HIGH-risk gate for MASTER FULL-INGEST Phase 2.
