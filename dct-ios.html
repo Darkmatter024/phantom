@@ -9203,9 +9203,9 @@ body.rd #ph-sheet.open {
 #pg-cmd .cc-rackhero-mount{position:absolute;inset:0;width:100%;height:100%}
 #pg-cmd .cc-rackhero-cap{position:absolute;left:12px;bottom:10px;z-index:2;pointer-events:none;font-family:var(--mono,'Chakra Petch',monospace);font-size:10px;letter-spacing:2px;color:var(--cyan);text-shadow:0 1px 6px rgba(0,0,0,0.7)}
 /* v1.14.338 — OPEN BAY full-width (spec §2.5): cyan-outline secondary, >=52px gloved target. JS-toggled with the rack. */
-#pg-cmd .cc-openbay{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;box-sizing:border-box;min-height:52px;margin:0 0 10px;border:1px solid var(--cyan-border-lo);border-radius:12px;background:rgba(92,242,255,0.06);color:var(--cyan);font-family:var(--raj);font-weight:700;font-size:14px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;-webkit-appearance:none;-webkit-tap-highlight-color:transparent}
+#pg-cmd .cc-openbay{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;box-sizing:border-box;min-height:52px;padding:10px 18px;white-space:nowrap;margin:0 0 10px;border:1px solid var(--cyan-border-lo);border-radius:12px;background:rgba(92,242,255,0.06);color:var(--cyan);font-family:var(--raj);font-weight:700;font-size:14px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;-webkit-appearance:none;-webkit-tap-highlight-color:transparent}   /* v1.14.340: +padding & nowrap so the label/arrow never clip (was 0 padding → letter-spacing pushed the → to the edge) */
 #pg-cmd .cc-openbay:active{background:rgba(92,242,255,0.12)}
-#pg-cmd .cc-ob-ar{font-size:15px}
+#pg-cmd .cc-ob-ar{font-size:15px;letter-spacing:0}   /* v1.14.340: kill trailing letter-spacing on the arrow */
 /* ━━━ v1.14.335 Command v2 — Z0 header cluster · Z1 rack line · Z3 vitals · S0 ingest. All #pg-cmd-scoped (redesign-only page; never renders under ?legacy → byte-identical). ━━━ */
 #pg-cmd .cc-z0{display:flex;align-items:center;gap:8px;margin:2px 0 10px;min-height:44px}
 #pg-cmd .cc-z0-site{font-family:var(--orb);font-weight:700;font-size:13px;letter-spacing:2px;color:#eaf6ff;flex:0 1 auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -9246,7 +9246,7 @@ body.rd #ph-sheet.open {
 #pg-cmd .cc-asst-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
 #pg-cmd .cc-asst-eyebrow{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--slate);text-transform:uppercase}
 #pg-cmd .cc-asst-online{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 6px var(--ok);flex:0 0 auto}
-#pg-cmd .cc-asst-ghost{width:auto;height:84px;object-fit:contain;flex:0 0 auto;filter:drop-shadow(0 0 14px rgba(92,242,255,.4))}   /* v1.14.338: phantom-ghost-v2.webp is PORTRAIT 1086x1448 → size by HEIGHT (art-sizing law); was forced into a 56x56 square (letterboxed to ~42x56 = "squeezed in the corner"). 84px (>=72), glow uncropped (.cc-asst has no overflow:hidden). */
+#pg-cmd .cc-asst-ghost{width:auto;height:98px;object-fit:contain;flex:0 0 auto;filter:drop-shadow(0 0 14px rgba(92,242,255,.4))}   /* v1.14.340: 84→98 (+17%, owner). Portrait, sized by HEIGHT (art-law); glow uncropped. .cc-asst-top is top-aligned so the taller ghost adds ~14px to the card only — within the fold. */
 #pg-cmd .cc-asst-greet{font-family:var(--orb);font-weight:700;font-size:17px;line-height:1.25;color:#eaf6ff;margin:6px 0 6px}
 #pg-cmd .cc-asst-summary{font-family:var(--raj);font-size:13px;line-height:1.45;color:var(--slate)}
 #pg-cmd .cc-qtools{border:1px solid var(--cyan-border-lo);border-radius:14px;background:var(--surf-1);box-shadow:var(--surf-inset),0 8px 20px -14px rgba(0,0,0,.85);padding:14px 16px 16px;margin:0 16px 12px}
@@ -9306,7 +9306,7 @@ body.rd #ph-sheet.open {
    → ?legacy byte-identical. SUPERSEDES the .278 centered column (its @media min-width:980px is narrowed to a
    980–1023 tablet band below — owner ruling: reconcile, not stack). #cc-rail/#cc-center are real boxes only here. ═══ */
 @media (min-width:1024px){
-  #pg-cmd{display:grid;grid-template-columns:340px minmax(0,760px);justify-content:center;align-content:start;column-gap:28px;row-gap:0;padding:26px 40px calc(var(--tabnav-h) + 40px)}
+  #pg-cmd{display:grid;grid-template-columns:340px minmax(0,760px);justify-content:center;align-content:start;column-gap:28px;row-gap:0;padding:26px 40px calc(var(--tabnav-h) + 44px)}   /* v1.14.340: +44 bottom clears the taller .339 nav (ops-signal/footer) */
   #pg-cmd .cc-z0{grid-column:1 / -1;display:flex;align-items:center;gap:14px;margin:0 0 18px;padding:0}
   #pg-cmd .cc-z0 .statusrow{max-width:none;margin:0}
   #pg-cmd #cc-rail{grid-column:1;display:flex;flex-direction:column;gap:16px;align-self:start}
@@ -9385,7 +9385,7 @@ body.rd #ph-sheet.open {
 #pg-cmd .sigrow .st small{display:block;color:var(--slate);font-size:11px;margin-top:2px}
 #pg-cmd .sigrow .sgo{font-family:var(--raj);font-weight:700;font-size:11px;letter-spacing:1px;color:var(--cyan);border:1px solid rgba(92,242,255,0.3);border-radius:16px;padding:7px 13px;white-space:nowrap}
 #pg-cmd .sig-empty{margin:0 16px;color:var(--slate-dim);font-size:13px;text-align:center;padding:18px;border:1px dashed rgba(92,242,255,0.15);border-radius:12px}
-#pg-cmd{padding-bottom:calc(var(--tabnav-h) + 20px)}   /* v1.14.282: omni-bar retired under rd, so this only clears #rd-botnav (var(--tabnav-h)) + 20px breathing. Was +76px when it also had to clear the ~57px fixed omni-bar stacked above the nav (B3 v1.14.119). #pg-cmd is redesign-only (showMode 'cmd'); legacy never renders it. */
+#pg-cmd{padding-bottom:calc(var(--tabnav-h) + 44px)}   /* v1.14.340: 20→44 — the .339 icon bump grew #rd-botnav to ~90px but :root --tabnav-h (72) is stale + can't change (legacy uses it); compensate here so the last row (qtools/ops-signal) scrolls fully clear of the taller nav + safe-area. v1.14.282: omni-bar retired under rd, so this only clears #rd-botnav (var(--tabnav-h)) + breathing. Was +76px when it also had to clear the ~57px fixed omni-bar stacked above the nav (B3 v1.14.119). #pg-cmd is redesign-only (showMode 'cmd'); legacy never renders it. */
 /* ━━━ REDESIGN STEP 5 — frame (chrome wordmark + COREWEAVE·{site} subtitle + bottom
    nav + search icon). Hidden until body.rd; under body.rd the legacy chrome hides and
    the frame shows, so ?redesign=0 is byte-for-byte untouched. Selectors scoped to ids/
@@ -12307,7 +12307,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.339';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.340';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -13036,7 +13036,7 @@ if (typeof window !== 'undefined') {
       <div class="cc-asst" id="cc-asst">
         <div class="cc-asst-top">
           <div class="cc-asst-eyebrow"><span class="cc-asst-online" aria-hidden="true"></span>AI ASSISTANT &middot; ONLINE</div>
-          <img class="cc-asst-ghost" src="phantom-ghost-v3.webp" alt="" aria-hidden="true" width="74" height="84">
+          <img class="cc-asst-ghost" src="phantom-ghost-v3.webp" alt="" aria-hidden="true" width="86" height="98">
         </div>
         <div class="cc-asst-greet">Hi, I&rsquo;m Phantom.<br>Your AI shift assistant.</div>
         <div class="cc-asst-summary" id="cc-asst-summary">&mdash;</div>
@@ -17999,6 +17999,11 @@ function nav_restore(state) {
       return;
     }
   } catch (_) {}
+  // v1.14.340 — Command (Home) restore. cmd_openHeroBay pushes {p:'command'} so the bay's Back returns
+  // HOME regardless of the mode the bay left _rdMode in (rd_openOpsTool flips it to 'work'). showMode('command')
+  // clears ops-detail + re-runs cmd_render (re-mounts the hero). Redesign-only (legacy never pushes
+  // p:'command') → ?legacy=1 restore byte-identical.
+  try { if (redesign_isOn() && state.p === 'command' && !state.d) { showMode('command'); return; } } catch (_) {}
   _navSuppressPush = true;
   try {
     var p = state.p;
@@ -20518,15 +20523,22 @@ function cmd_heroPickRack() {
 // matching rack for deploy_showRackDetail; if this Master rack maps to no deployment rack, fall back to
 // the Rack Map floor (the canonical Work/BUILD browser) — never a dead tap (No-Silent-Failures).
 function cmd_openHeroBay(mount) {
-  var rackId = mount && mount._rm3dRackId;
+  var rackId = mount && mount._rm3dRackId;   // read FIRST — the dispose below nulls it
+  // v1.14.340 — tear down the hero WebGL BEFORE leaving Command (no GL leak; showMode/cmd_render re-mounts
+  // on return), then drop a {p:'command'} history waypoint so the bay's Back returns HOME (nav_restore
+  // branch), not Work. Null _rm3dDispose so showMode('work') below doesn't double-dispose.
+  try {
+    if (mount && mount._rm3dDispose) { try { mount._rm3dDispose(); } catch (e) {} mount._rm3dDispose = null; mount._rm3dRackId = null; }
+  } catch (e) {}
+  try { if (typeof nav_push === 'function') nav_push({ p: 'command' }); } catch (e) {}
   try {
     var aid = (typeof deploy_getActiveId === 'function') ? deploy_getActiveId() : null;
     if (aid && typeof deploy_loadRacks === 'function' && typeof deploy_showRackDetail === 'function') {
       var rs = deploy_loadRacks(aid) || [];
-      for (var i = 0; i < rs.length; i++) { if ((rs[i].rackId || rs[i].id) === rackId) { return deploy_showRackDetail(aid, rs[i].id); } }
+      for (var i = 0; i < rs.length; i++) { if ((rs[i].rackId || rs[i].id) === rackId) { if (typeof showMode === 'function') showMode('work'); return deploy_showRackDetail(aid, rs[i].id); } }   // showMode('work') makes #pg-work visible; its Back (nav_back) → {p:'command'} → Home
     }
   } catch (e) { if (typeof phantom_logErr === 'function') phantom_logErr('cmd_openHeroBay', e); }
-  if (typeof rd_openOpsTool === 'function') { rd_openOpsTool('rackmap'); if (typeof phantomToast === 'function') phantomToast('Opening Rack Map — this rack isn’t in the active deployment yet', 'info'); return; }
+  if (typeof rd_openOpsTool === 'function') { rd_openOpsTool('rackmap', 'nav_back()'); if (typeof phantomToast === 'function') phantomToast('Opening Rack Map — this rack isn’t in the active deployment yet', 'info'); return; }   // v1.14.340: 'nav_back()' back → {p:'command'} → Home (was wk_showGrid → Work grid)
   if (typeof phantomToast === 'function') phantomToast('Rack detail unavailable', 'warn');
 }
 // Bind a capture-phase tap (pointer travel < 8px) so a genuine tap opens the bay while an orbit-drag on
@@ -27788,7 +27800,7 @@ function _deploy_toolsBackHdr(title, backOnclick) {
 // showOpsTab() (16583) which paints the legacy #ops-tab-strip pills — the confirmed leak;
 // showPage('work') just activates #pg-work (exists) with no legacy render. BACK target is the
 // Work grid via the tool header's wk_showGrid(). Legacy path untouched → ?legacy=1 byte-identical.
-function rd_openOpsTool(tab) {
+function rd_openOpsTool(tab, backAction) {
   if (typeof redesign_isOn === 'function' && !redesign_isOn()) return;   // redesign-only; legacy uses #ops-tab-strip
   if (!OPS_TABS || !OPS_TABS[tab]) { if (typeof phantomToast === 'function') phantomToast('Unknown tool: ' + tab, 'error'); return; }
   var host = deploy_opsHost(); if (!host) return;                        // #wk-deploy under redesign
@@ -27807,7 +27819,7 @@ function rd_openOpsTool(tab) {
   if (typeof nav_push === 'function') nav_push({ p: 'work', o: 'deploy', d: 'tool:' + tab });
   var meta = DEPLOY_TOOLS.filter(function (t) { return t.tab === tab; })[0];
   host.innerHTML = _deploy_toolsBackHdr((meta ? meta.name : 'TOOL'),
-    "wk_showGrid();document.body.classList.remove('ops-detail')") + '<div id="ops-tool-host"></div>';
+    backAction || "wk_showGrid();document.body.classList.remove('ops-detail')") + '<div id="ops-tool-host"></div>';   // v1.14.340: optional backAction (default = Work grid); cmd_openHeroBay passes 'nav_back()' so hero→rackmap Back returns Home
   var sub2 = document.getElementById('ops-tool-host');
   try { OPS_TABS[tab](sub2); } catch (e) { try { console.warn('rd_openOpsTool render failed', tab, e); } catch (_) {} }
 }
