@@ -9179,7 +9179,7 @@ body.rd #ph-sheet.open {
 #pg-cmd .spill .dot{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 6px var(--ok)}
 #pg-cmd .spill.bad .dot{background:var(--gold);box-shadow:0 0 6px var(--gold)}
 #pg-cmd .spill.bad{color:var(--gold)}
-#pg-cmd .lens{margin:0 16px 14px;filter:none;border:1px solid color-mix(in srgb,var(--cyan) 15%,transparent);border-radius:16px;background:linear-gradient(158deg,#050506 0%,#010102 46%,#000000 76%,#030304 100%);box-shadow:inset 0 1px 0 rgba(210,234,244,.14),0 8px 20px -14px rgba(0,0,0,.85);padding:18px 16px;position:relative;overflow:hidden;min-height:230px}
+#pg-cmd .lens{margin:0 16px 14px;filter:none;border:1px solid color-mix(in srgb,var(--cyan) 15%,transparent);border-radius:16px;background:var(--rd-cardfill);box-shadow:inset 0 1px 0 rgba(210,234,244,.14),0 8px 20px -14px rgba(0,0,0,.85);padding:18px 16px;position:relative;overflow:hidden;min-height:230px}
 #pg-cmd .lens .llabel{font-family:var(--mono);font-size:12px;letter-spacing:3px;color:var(--cyan)}
 #pg-cmd .lens h1{font-size:30px;font-weight:700;line-height:1.05;margin:10px 0 8px;max-width:62%}
 #pg-cmd .lens p{color:var(--slate);font-size:14px;line-height:1.4;max-width:60%;margin:0}
@@ -9223,17 +9223,17 @@ body.rd #ph-sheet.open {
 /* v1.14.335: a tappable health dot (Profile door) rides a 44x44 invisible hit box — a bare 9px dot is 5x under the gloved floor (rd-review Rule 13). Decorative dots stay bare spans. */
 #pg-cmd .cc-hdot-hit{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;padding:0;border:0;background:none;cursor:pointer;-webkit-appearance:none;-webkit-tap-highlight-color:transparent;flex:0 0 auto}
 #pg-cmd .cc-z0-spacer{flex:1}
-#pg-cmd .cc-agechip{position:relative;display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.5px;color:var(--cyan);border:1px solid var(--cyan-border-lo);background:linear-gradient(158deg,#050506 0%,#010102 46%,#000000 76%,#030304 100%);box-shadow:inset 0 1px 0 rgba(210,234,244,.14),0 8px 20px -14px rgba(0,0,0,.85);border-radius:14px;padding:6px 10px;cursor:pointer;-webkit-appearance:none;-webkit-tap-highlight-color:transparent;white-space:nowrap;flex:0 0 auto}   /* v1.14.342: the MASTER chip's 11px/44px body dominated the Z0 row next to the ~24px Online/Ready chips (owner: shrink to match, MASTER shouldn't dominate). Now matches the .cc-hchip footprint (10.5px, 6/10 pad, r14) but KEEPS the .338 dark stat-card surface; the 44px gloved hit (live re-ingest/swap door, rd-review Rule 13) is restored via the transparent ::after below. */
+#pg-cmd .cc-agechip{position:relative;display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.5px;color:var(--cyan);border:1px solid var(--cyan-border-lo);background:var(--rd-cardfill);box-shadow:inset 0 1px 0 rgba(210,234,244,.14),0 8px 20px -14px rgba(0,0,0,.85);border-radius:14px;padding:6px 10px;cursor:pointer;-webkit-appearance:none;-webkit-tap-highlight-color:transparent;white-space:nowrap;flex:0 0 auto}   /* v1.14.342: the MASTER chip's 11px/44px body dominated the Z0 row next to the ~24px Online/Ready chips (owner: shrink to match, MASTER shouldn't dominate). Now matches the .cc-hchip footprint (10.5px, 6/10 pad, r14) but KEEPS the .338 dark stat-card surface; the 44px gloved hit (live re-ingest/swap door, rd-review Rule 13) is restored via the transparent ::after below. */
 #pg-cmd .cc-agechip::after{content:"";position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);height:44px}   /* v1.14.342: transparent vertical hit-area — small visible chip, 44px gloved tap. */
 #pg-cmd .cc-agechip.age-warn{color:var(--gold);border-color:rgba(255,203,69,.40);background:rgba(255,203,69,.07)}
 #pg-cmd .cc-agechip.age-stale{color:#ff2bd6;border-color:rgba(255,43,214,.45);background:rgba(255,43,214,.08)}   /* v1.14.335: >24h escalates gold(attention)->magenta(fault), NOT red (EXIT-only) */
 #pg-cmd .cc-agechip:active{filter:brightness(1.15)}
-#pg-cmd .cc-rackline{display:flex;align-items:center;gap:8px;width:100%;box-sizing:border-box;margin:0 0 10px;padding:11px 14px;min-height:var(--tap-l,52px);border:1px solid rgba(92,242,255,.20);border-radius:12px;background:rgba(92,242,255,.04);color:#dff2ff;font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:.5px;cursor:pointer;-webkit-appearance:none;-webkit-tap-highlight-color:transparent;text-align:left}
+#pg-cmd .cc-rackline{display:flex;align-items:center;gap:8px;width:100%;box-sizing:border-box;margin:0 0 10px;padding:11px 14px;min-height:var(--tap-l,52px);border:1px solid rgba(92,242,255,.20);border-radius:12px;background:var(--rd-cardfill);color:#dff2ff;font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:.5px;cursor:pointer;-webkit-appearance:none;-webkit-tap-highlight-color:transparent;text-align:left}
 #pg-cmd .cc-rackline .cc-rl-arrow{color:var(--cyan);font-weight:700}
 #pg-cmd .cc-rackline .cc-rl-meta{color:var(--slate);font-weight:600;font-size:12px;margin-left:auto;white-space:nowrap}
 #pg-cmd .cc-rackline:active{background:rgba(92,242,255,.09)}
 #pg-cmd .cc-rackvitals{display:flex;gap:8px;margin:0 0 12px}
-#pg-cmd .cc-vital{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 4px;border:1px solid rgba(92,242,255,.14);border-radius:12px;background:linear-gradient(158deg,#050506 0%,#000 76%);text-align:center}
+#pg-cmd .cc-vital{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 4px;border:1px solid rgba(92,242,255,.14);border-radius:12px;background:var(--rd-cardfill);text-align:center}
 #pg-cmd .cc-vital .vn{font-family:var(--mono);font-weight:700;font-size:16px;letter-spacing:.5px;color:#eaf6ff;line-height:1}
 #pg-cmd .cc-vital .vk{font-family:var(--mono);font-size:8.5px;letter-spacing:1.5px;color:var(--slate)}
 #pg-cmd .cc-vital.v-open .vn{color:var(--teal)}
@@ -9250,14 +9250,14 @@ body.rd #ph-sheet.open {
 #pg-cmd .cc-ingest-zone .ciz-sub{font-family:var(--mono);font-size:13px;letter-spacing:.5px;color:var(--slate);max-width:24ch;line-height:1.4}
 /* ━━━ v1.14.336 FINAL-LOOK (OPTION 2) — phone assistant-first. Card skin uses REAL :root tokens
    (--cyan-border-lo / --surf-1 / --surf-inset / --ok), NOT the spec's mock --edge-lo/--surf (owner-ruled). All #pg-cmd → ?legacy safe. ━━━ */
-#pg-cmd .cc-asst{border:1px solid var(--cyan-border-lo);border-radius:14px;background:var(--surf-1);box-shadow:var(--surf-inset),0 8px 20px -14px rgba(0,0,0,.85);padding:16px 18px;margin:0 16px 12px}
+#pg-cmd .cc-asst{border:1px solid var(--cyan-border-lo);border-radius:14px;background:var(--rd-cardfill);box-shadow:var(--surf-inset),0 8px 20px -14px rgba(0,0,0,.85);padding:16px 18px;margin:0 16px 12px}   /* v1.14.343: fill → shared stat-tile surface (was --surf-1 blue) */
 #pg-cmd .cc-asst::after{content:"";display:block;clear:both}   /* v1.14.341: clearfix — the card wraps the floated ghost without overflow:hidden, so the glow stays uncropped */
 #pg-cmd .cc-asst-eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--slate);text-transform:uppercase;line-height:1.5}   /* v1.14.341: block (was flex) so it flows beside the floated ghost */
 #pg-cmd .cc-asst-online{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 6px var(--ok);margin-right:6px;vertical-align:middle}
 #pg-cmd .cc-asst-ghost{float:right;width:auto;height:122px;object-fit:contain;margin:2px 0 8px 14px;filter:drop-shadow(0 0 16px rgba(92,242,255,.42))}   /* v1.14.341: CO-STAR — 98→122 (+25%, owner), floated right so the eyebrow/greeting/summary wrap beside + UNDER it (text wraps, ghost doesn't shrink); portrait sized by HEIGHT (art-law); glow uncropped. */
 #pg-cmd .cc-asst-greet{font-family:var(--orb);font-weight:700;font-size:17px;line-height:1.25;color:#eaf6ff;margin:6px 0 6px}
 #pg-cmd .cc-asst-summary{font-family:var(--raj);font-size:13px;line-height:1.45;color:var(--slate)}
-#pg-cmd .cc-qtools{border:1px solid var(--cyan-border-lo);border-radius:14px;background:var(--surf-1);box-shadow:var(--surf-inset),0 8px 20px -14px rgba(0,0,0,.85);padding:14px 16px 16px;margin:0 16px 12px}
+#pg-cmd .cc-qtools{border:1px solid var(--cyan-border-lo);border-radius:14px;background:var(--rd-cardfill);box-shadow:var(--surf-inset),0 8px 20px -14px rgba(0,0,0,.85);padding:14px 16px 16px;margin:0 16px 12px}   /* v1.14.343: fill → shared stat-tile surface (was --surf-1 blue) */
 #pg-cmd .cc-qtools-label{font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--slate);text-transform:uppercase;margin-bottom:10px}
 #pg-cmd .cc-qtools-row{display:flex;gap:10px}
 #pg-cmd .cc-qtool{flex:1;display:flex;align-items:center;justify-content:center;min-height:60px;border-radius:12px;border:1px solid rgba(92,242,255,.24);background:rgba(92,242,255,.05);color:var(--cyan);font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:1.5px;cursor:pointer;-webkit-appearance:none;-webkit-tap-highlight-color:transparent}
@@ -9275,7 +9275,7 @@ body.rd #ph-sheet.open {
 /* ━━━ v1.14.337 FINAL-LOOK DESKTOP — new rail/center elements. BASE display:none so the phone (<1024px)
    is byte-identical to .336; the >=1024px block below reveals them. Card skin = REAL :root tokens. ━━━ */
 #pg-cmd #cc-sugg,#pg-cmd #cc-chat,#pg-cmd #cc-aistat,#pg-cmd #cc-foot{display:none}
-#pg-cmd .cc-sugg{border:1px solid var(--cyan-border-lo);border-radius:14px;background:var(--surf-1);box-shadow:var(--surf-inset),0 8px 20px -14px rgba(0,0,0,.85);padding:14px 16px 12px}
+#pg-cmd .cc-sugg{border:1px solid var(--cyan-border-lo);border-radius:14px;background:var(--rd-cardfill);box-shadow:var(--surf-inset),0 8px 20px -14px rgba(0,0,0,.85);padding:14px 16px 12px}   /* v1.14.343: fill → shared stat-tile surface (was --surf-1 blue) */
 #pg-cmd .cc-sugg-label{font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--slate);text-transform:uppercase;margin-bottom:10px}
 #pg-cmd .cc-sugg-act{display:flex;align-items:center;justify-content:space-between;width:100%;box-sizing:border-box;min-height:44px;margin-top:8px;padding:10px 12px;border:1px solid var(--cyan-border-lo);border-radius:10px;background:rgba(92,242,255,.04);color:#cfe9f0;font-family:var(--raj);font-weight:600;font-size:13.5px;letter-spacing:.5px;text-align:left;cursor:pointer;-webkit-appearance:none;-webkit-tap-highlight-color:transparent}
 #pg-cmd .cc-sugg-act:first-of-type{margin-top:0}
@@ -9343,7 +9343,7 @@ body.rd #ph-sheet.open {
 /* v1.14.335 Command v2 D4: the hero-scoped 3D control strip and its rail are REMOVED — the Command hero shows no view buttons; tapping the hero opens the full bay with all controls. rackElevation_render3D no longer builds a strip for a hero mount (see the _heroCard branch). */
 #pg-cmd .lens > *{position:relative;z-index:1}   /* v1.14.335: ghost removed (D12), so every lens child simply sits above the card background */
 #pg-cmd .stats{display:flex;gap:10px;padding:0 16px 14px}
-#pg-cmd .stat{flex:1;filter:none;border:1px solid color-mix(in srgb,var(--cyan) 15%,transparent);border-radius:16px;background:linear-gradient(158deg,#050506 0%,#010102 46%,#000000 76%,#030304 100%);box-shadow:inset 0 1px 0 rgba(210,234,244,.14),0 8px 20px -14px rgba(0,0,0,.85);padding:14px 8px;text-align:center}
+#pg-cmd .stat{flex:1;filter:none;border:1px solid color-mix(in srgb,var(--cyan) 15%,transparent);border-radius:16px;background:var(--rd-cardfill);box-shadow:inset 0 1px 0 rgba(210,234,244,.14),0 8px 20px -14px rgba(0,0,0,.85);padding:14px 8px;text-align:center}
 #pg-cmd .stat .n{font-family:var(--mono);font-size:30px;font-weight:700;letter-spacing:1px}
 #pg-cmd .stat .k{font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--slate);margin-top:4px}
 #pg-cmd .stat.racks .n{color:#27e0c4}
@@ -9353,7 +9353,7 @@ body.rd #ph-sheet.open {
 /* v1.14.225 — Command Lens tap-through affordance (cards only get .cc-tap under redesign via cmd_render; legacy never renders them → byte-identical) */
 #pg-cmd .stat.cc-tap{cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .12s ease,filter .12s ease}
 #pg-cmd .stat.cc-tap:active{transform:scale(.97);filter:brightness(1.18)}
-#pg-cmd .nba{margin:0 16px 14px;filter:none;border:1px solid color-mix(in srgb,var(--violet) 16%,transparent);border-radius:16px;background:linear-gradient(158deg,#050506 0%,#010102 46%,#000000 76%,#030304 100%);box-shadow:inset 0 1px 0 rgba(210,234,244,.14),0 8px 20px -14px rgba(0,0,0,.85);padding:16px;position:relative}
+#pg-cmd .nba{margin:0 16px 14px;filter:none;border:1px solid color-mix(in srgb,var(--violet) 16%,transparent);border-radius:16px;background:var(--rd-cardfill);box-shadow:inset 0 1px 0 rgba(210,234,244,.14),0 8px 20px -14px rgba(0,0,0,.85);padding:16px;position:relative}
 #pg-cmd .nba .nlabel{font-family:var(--mono);font-size:12px;letter-spacing:3px;color:#b98bff}
 #pg-cmd .nba h2{font-size:23px;font-weight:700;margin:8px 0 6px;line-height:1.1}
 #pg-cmd .nba p{color:var(--slate);font-size:13px;line-height:1.4;margin:0 0 12px}
@@ -9373,7 +9373,7 @@ body.rd #ph-sheet.open {
 #pg-cmd .cc-magstrip:active{background:rgba(255,43,214,0.12)}
 /* v1.14.159 Shift Telemetry tiles (mock-telemetry-tiles) — replace the old launcher row. */
 #pg-cmd .trow{display:flex;gap:10px;padding:0 16px 14px}
-#pg-cmd .tile{flex:1;--tc:#33465a;display:flex;flex-direction:column;gap:6px;min-height:96px;aspect-ratio:auto;/* v1.14.207: reset the aspect-ratio:1/1.6 that leaks in from the generic .tile rule (8415) — this id-scoped rule overrides everything else but never reset AR, so on wide/desktop viewports the shift tiles ballooned to ~474px (296px wide × 1.6), pushing the DEPLOY/SCANNED/HANDOFF row far below the fold under the fixed bottom nav = unclickable deploy tile on laptop. On phone the tiles are narrow so it stayed hidden. */filter:none;border:1px solid color-mix(in srgb,var(--tc) var(--glow-border),transparent);border-radius:16px;background:linear-gradient(158deg,#050506 0%,#010102 46%,#000000 76%,#030304 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.06),inset 0 0 30px -6px color-mix(in srgb,var(--tc) var(--glow-inner),transparent),0 0 var(--glow-outer) -2px color-mix(in srgb,var(--tc) var(--glow-a),transparent),0 12px 26px -14px rgba(0,0,0,.9);padding:13px 12px 12px;position:relative;overflow:hidden;color:var(--white)}
+#pg-cmd .tile{flex:1;--tc:#33465a;display:flex;flex-direction:column;gap:6px;min-height:96px;aspect-ratio:auto;/* v1.14.207: reset the aspect-ratio:1/1.6 that leaks in from the generic .tile rule (8415) — this id-scoped rule overrides everything else but never reset AR, so on wide/desktop viewports the shift tiles ballooned to ~474px (296px wide × 1.6), pushing the DEPLOY/SCANNED/HANDOFF row far below the fold under the fixed bottom nav = unclickable deploy tile on laptop. On phone the tiles are narrow so it stayed hidden. */filter:none;border:1px solid color-mix(in srgb,var(--tc) var(--glow-border),transparent);border-radius:16px;background:var(--rd-cardfill);box-shadow:inset 0 1px 0 rgba(255,255,255,.06),inset 0 0 30px -6px color-mix(in srgb,var(--tc) var(--glow-inner),transparent),0 0 var(--glow-outer) -2px color-mix(in srgb,var(--tc) var(--glow-a),transparent),0 12px 26px -14px rgba(0,0,0,.9);padding:13px 12px 12px;position:relative;overflow:hidden;color:var(--white)}
 #pg-cmd .tile.hot{--tc:var(--cyan)}
 #pg-cmd .tile.hot-teal{--tc:var(--teal)}
 #pg-cmd .tile.hot-gold{--tc:var(--gold)}
@@ -9394,7 +9394,8 @@ body.rd #ph-sheet.open {
 #pg-cmd .sigrow .st small{display:block;color:var(--slate);font-size:11px;margin-top:2px}
 #pg-cmd .sigrow .sgo{font-family:var(--raj);font-weight:700;font-size:11px;letter-spacing:1px;color:var(--cyan);border:1px solid rgba(92,242,255,0.3);border-radius:16px;padding:7px 13px;white-space:nowrap}
 #pg-cmd .sig-empty{margin:0 16px;color:var(--slate-dim);font-size:13px;text-align:center;padding:18px;border:1px dashed rgba(92,242,255,0.15);border-radius:12px}
-#pg-cmd{}   /* v1.14.341: per-page bottom padding REMOVED — the shared `body.rd .page{padding-bottom:calc(var(--rd-navclear)+20px)}` rule now owns nav clearance for every scrollable redesign page (Home/BUILD/TOOLS). v1.14.282: omni-bar retired under rd. Was +76px when it also had to clear the ~57px fixed omni-bar stacked above the nav (B3 v1.14.119). #pg-cmd is redesign-only (showMode 'cmd'); legacy never renders it. */
+body.rd{--rd-cardfill:linear-gradient(158deg,#050506 0%,#010102 46%,#000000 76%,#030304 100%)}   /* v1.14.343: ONE shared redesign card-surface token = the 98 RACKS stat-tile fill (owner: unify every Home card to the stat-tile black; one token, not per-card values). Defined on body.rd so it ALSO feeds the v1.14.310 SURFACE-GLOW !important block below (the REAL source-of-truth for .lens/.nba/.stat/.tile/.spill + BUILD .gx/.gx-bg/.gx-gold) → the token is now genuinely single-source, zero visual change (identical literal). ?legacy=1 has no body.rd, so untouched. */
+/* v1.14.341: per-page bottom padding REMOVED — the shared `body.rd .page{padding-bottom:calc(var(--rd-navclear)+20px)}` rule now owns nav clearance for every scrollable redesign page (Home/BUILD/TOOLS). v1.14.282: omni-bar retired under rd. Was +76px when it also had to clear the ~57px fixed omni-bar stacked above the nav (B3 v1.14.119). #pg-cmd is redesign-only (showMode 'cmd'); legacy never renders it. */
 /* ━━━ REDESIGN STEP 5 — frame (chrome wordmark + COREWEAVE·{site} subtitle + bottom
    nav + search icon). Hidden until body.rd; under body.rd the legacy chrome hides and
    the frame shows, so ?redesign=0 is byte-for-byte untouched. Selectors scoped to ids/
@@ -12072,6 +12073,7 @@ body.rd #pg-cmd .sigrow, body.rd .kpi, body.rd .nav-back-btn {
     inset 0 -1px 0 rgba(160,190,220,.07),
     0 5px 12px rgba(0,0,0,.45);
 }
+body.rd #pg-cmd .sigrow{background:var(--rd-cardfill);border:1px solid var(--cyan-border-lo)}   /* v1.14.343: OPS SIGNAL rows → the shared stat-tile black. Overrides the machined-glass skin above (equal specificity, later source). The glass EDGE was baked into that multi-layer background, so removing the blue fill also removes the glass border → restore the standard cyan-lo hairline the other unified cards carry. border-radius / box-shadow untouched. */
 body.rd .qa-btn, body.rd .hdr-ghost-btn:not(.alert) {
   border: 2px solid transparent;
   background:
@@ -12316,7 +12318,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.342';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.343';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -51445,7 +51447,7 @@ body.rd #pg-cmd .spill,
 body.rd .gx,
 body.rd .gx-bg,
 body.rd .gx-gold {
-  background: linear-gradient(158deg,#050506 0%,#010102 46%,#000000 76%,#030304 100%) !important;
+  background: var(--rd-cardfill) !important;   /* v1.14.343: was the hardcoded stat-tile literal — now references the shared token (defined on body.rd) so --rd-cardfill is the GENUINE single source for every Command + BUILD glow surface. Zero visual change (identical value). */
   border: 1px solid color-mix(in srgb, var(--glow-hue) var(--glow-a), rgba(150,185,205,.12)) !important;
   box-shadow:
     inset 0 1px 0 rgba(210,234,244,.14),
