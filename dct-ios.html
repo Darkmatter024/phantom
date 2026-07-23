@@ -1079,6 +1079,13 @@ body {
   to   { opacity: 1; transform: none; }
 }
 .page::-webkit-scrollbar { display: none; }
+/* ━━━ v1.14.341 — ONE shared bottom clearance for every redesign scrollable page (Home / BUILD / TOOLS / …)
+   so nothing hides behind the fixed bottom nav. --rd-navclear = the redesign nav's footprint (content height
+   + safe-area). The .339 icon bump made the nav taller than the legacy :root --tabnav-h (72), which can't
+   change (legacy pages consume it). Redesign-only (body.rd) → legacy .page padding byte-identical. The fixed
+   #ph-dock phase strip anchors to the SAME var so it sits ABOVE the nav, not behind it. ━━━ */
+body.rd { --rd-navclear: calc(96px + var(--safe-bottom)); }
+body.rd .page { padding-bottom: calc(var(--rd-navclear) + 20px); }
 
 /* search results page */
 #page-search {
@@ -9092,7 +9099,7 @@ body.rd #ver-stamp { display: inline-flex; align-items: center; align-self: cent
    the sibling detail screens are the braces. */
 #ph-dock { display: none; }
 body.rd.ops-detail.ph-dock-on #ph-dock {
-  position: fixed; left: 0; right: 0; bottom: var(--tabnav-h); z-index: 30;
+  position: fixed; left: 0; right: 0; bottom: var(--rd-navclear); z-index: 30;   /* v1.14.341: --rd-navclear (real nav footprint) — was --tabnav-h (72, stale) so the dock's bottom hid behind the taller .339 nav */
   display: flex; align-items: stretch; gap: 5px;
   padding: 6px calc(10px + var(--safe-right)) 6px calc(10px + var(--safe-left));
   background: linear-gradient(180deg, rgba(4,7,11,0.80), rgba(8,14,22,0.96));
@@ -9243,10 +9250,10 @@ body.rd #ph-sheet.open {
 /* ━━━ v1.14.336 FINAL-LOOK (OPTION 2) — phone assistant-first. Card skin uses REAL :root tokens
    (--cyan-border-lo / --surf-1 / --surf-inset / --ok), NOT the spec's mock --edge-lo/--surf (owner-ruled). All #pg-cmd → ?legacy safe. ━━━ */
 #pg-cmd .cc-asst{border:1px solid var(--cyan-border-lo);border-radius:14px;background:var(--surf-1);box-shadow:var(--surf-inset),0 8px 20px -14px rgba(0,0,0,.85);padding:16px 18px;margin:0 16px 12px}
-#pg-cmd .cc-asst-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
-#pg-cmd .cc-asst-eyebrow{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--slate);text-transform:uppercase}
-#pg-cmd .cc-asst-online{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 6px var(--ok);flex:0 0 auto}
-#pg-cmd .cc-asst-ghost{width:auto;height:98px;object-fit:contain;flex:0 0 auto;filter:drop-shadow(0 0 14px rgba(92,242,255,.4))}   /* v1.14.340: 84→98 (+17%, owner). Portrait, sized by HEIGHT (art-law); glow uncropped. .cc-asst-top is top-aligned so the taller ghost adds ~14px to the card only — within the fold. */
+#pg-cmd .cc-asst::after{content:"";display:block;clear:both}   /* v1.14.341: clearfix — the card wraps the floated ghost without overflow:hidden, so the glow stays uncropped */
+#pg-cmd .cc-asst-eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--slate);text-transform:uppercase;line-height:1.5}   /* v1.14.341: block (was flex) so it flows beside the floated ghost */
+#pg-cmd .cc-asst-online{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 6px var(--ok);margin-right:6px;vertical-align:middle}
+#pg-cmd .cc-asst-ghost{float:right;width:auto;height:122px;object-fit:contain;margin:2px 0 8px 14px;filter:drop-shadow(0 0 16px rgba(92,242,255,.42))}   /* v1.14.341: CO-STAR — 98→122 (+25%, owner), floated right so the eyebrow/greeting/summary wrap beside + UNDER it (text wraps, ghost doesn't shrink); portrait sized by HEIGHT (art-law); glow uncropped. */
 #pg-cmd .cc-asst-greet{font-family:var(--orb);font-weight:700;font-size:17px;line-height:1.25;color:#eaf6ff;margin:6px 0 6px}
 #pg-cmd .cc-asst-summary{font-family:var(--raj);font-size:13px;line-height:1.45;color:var(--slate)}
 #pg-cmd .cc-qtools{border:1px solid var(--cyan-border-lo);border-radius:14px;background:var(--surf-1);box-shadow:var(--surf-inset),0 8px 20px -14px rgba(0,0,0,.85);padding:14px 16px 16px;margin:0 16px 12px}
@@ -9306,7 +9313,7 @@ body.rd #ph-sheet.open {
    → ?legacy byte-identical. SUPERSEDES the .278 centered column (its @media min-width:980px is narrowed to a
    980–1023 tablet band below — owner ruling: reconcile, not stack). #cc-rail/#cc-center are real boxes only here. ═══ */
 @media (min-width:1024px){
-  #pg-cmd{display:grid;grid-template-columns:340px minmax(0,760px);justify-content:center;align-content:start;column-gap:28px;row-gap:0;padding:26px 40px calc(var(--tabnav-h) + 44px)}   /* v1.14.340: +44 bottom clears the taller .339 nav (ops-signal/footer) */
+  #pg-cmd{display:grid;grid-template-columns:340px minmax(0,760px);justify-content:center;align-content:start;column-gap:28px;row-gap:0;padding:26px 40px calc(var(--rd-navclear) + 20px)}   /* v1.14.341: bottom = shared --rd-navclear + 20 (clears the nav; ops-signal/footer) */
   #pg-cmd .cc-z0{grid-column:1 / -1;display:flex;align-items:center;gap:14px;margin:0 0 18px;padding:0}
   #pg-cmd .cc-z0 .statusrow{max-width:none;margin:0}
   #pg-cmd #cc-rail{grid-column:1;display:flex;flex-direction:column;gap:16px;align-self:start}
@@ -9385,7 +9392,7 @@ body.rd #ph-sheet.open {
 #pg-cmd .sigrow .st small{display:block;color:var(--slate);font-size:11px;margin-top:2px}
 #pg-cmd .sigrow .sgo{font-family:var(--raj);font-weight:700;font-size:11px;letter-spacing:1px;color:var(--cyan);border:1px solid rgba(92,242,255,0.3);border-radius:16px;padding:7px 13px;white-space:nowrap}
 #pg-cmd .sig-empty{margin:0 16px;color:var(--slate-dim);font-size:13px;text-align:center;padding:18px;border:1px dashed rgba(92,242,255,0.15);border-radius:12px}
-#pg-cmd{padding-bottom:calc(var(--tabnav-h) + 44px)}   /* v1.14.340: 20→44 — the .339 icon bump grew #rd-botnav to ~90px but :root --tabnav-h (72) is stale + can't change (legacy uses it); compensate here so the last row (qtools/ops-signal) scrolls fully clear of the taller nav + safe-area. v1.14.282: omni-bar retired under rd, so this only clears #rd-botnav (var(--tabnav-h)) + breathing. Was +76px when it also had to clear the ~57px fixed omni-bar stacked above the nav (B3 v1.14.119). #pg-cmd is redesign-only (showMode 'cmd'); legacy never renders it. */
+#pg-cmd{}   /* v1.14.341: per-page bottom padding REMOVED — the shared `body.rd .page{padding-bottom:calc(var(--rd-navclear)+20px)}` rule now owns nav clearance for every scrollable redesign page (Home/BUILD/TOOLS). v1.14.282: omni-bar retired under rd. Was +76px when it also had to clear the ~57px fixed omni-bar stacked above the nav (B3 v1.14.119). #pg-cmd is redesign-only (showMode 'cmd'); legacy never renders it. */
 /* ━━━ REDESIGN STEP 5 — frame (chrome wordmark + COREWEAVE·{site} subtitle + bottom
    nav + search icon). Hidden until body.rd; under body.rd the legacy chrome hides and
    the frame shows, so ?redesign=0 is byte-for-byte untouched. Selectors scoped to ids/
@@ -11468,7 +11475,7 @@ body.rd #master-section-bar [data-section="profile"] { display:none; }
      CORRECT FIX: keep padding_bottom ≈ the nav height so the sticky bar's content-box bottom sits
      just ABOVE the fixed #rd-botnav, not mid-list. The .msc-foot-pad runway (≥ bar height) still
      lets the last cab scroll clear of the bar. Legacy (no body.rd) keeps the plain sticky rule. */
-  body.rd #pg-work:has(.msc-actions) { padding-bottom: calc(var(--tabnav-h) + 12px) !important; }
+  body.rd #pg-work:has(.msc-actions) { padding-bottom: calc(var(--rd-navclear) + 12px) !important; }   /* v1.14.341: --tabnav-h→--rd-navclear so the sticky scope-picker action bar clears the taller .339 nav; keeps the original "+12 just above the nav" tuning (NOT an over-pad → doesn't reopen the .212 mid-list tap-eating regression). */
   body.rd .msc-foot-pad { height:112px; }
 
 /* ══ PHANTOM entry screen (v1.14.49) — globe hero + CoreWeave mesh + Spectral Iris + calibration.
@@ -12307,7 +12314,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.340';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.341';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -13034,10 +13041,10 @@ if (typeof window !== 'undefined') {
            situational summary; the NBA orders in immediately below it (phone's single NBA). D12 reversed
            (assistant returns as a functional card, not the old decorative floating ghost). #pg-cmd-scoped. -->
       <div class="cc-asst" id="cc-asst">
-        <div class="cc-asst-top">
-          <div class="cc-asst-eyebrow"><span class="cc-asst-online" aria-hidden="true"></span>AI ASSISTANT &middot; ONLINE</div>
-          <img class="cc-asst-ghost" src="phantom-ghost-v3.webp" alt="" aria-hidden="true" width="86" height="98">
-        </div>
+        <!-- v1.14.341: ghost is the card's CO-STAR — floated so the eyebrow/greeting/summary wrap beside it
+             and continue UNDER it (bigger art without shrinking the card past the fold). -->
+        <img class="cc-asst-ghost" src="phantom-ghost-v3.webp" alt="" aria-hidden="true" width="107" height="122">
+        <div class="cc-asst-eyebrow"><span class="cc-asst-online" aria-hidden="true"></span>AI ASSISTANT &middot; ONLINE</div>
         <div class="cc-asst-greet">Hi, I&rsquo;m Phantom.<br>Your AI shift assistant.</div>
         <div class="cc-asst-summary" id="cc-asst-summary">&mdash;</div>
       </div>
