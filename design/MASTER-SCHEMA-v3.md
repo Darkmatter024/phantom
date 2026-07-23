@@ -1,7 +1,7 @@
 # MASTER SCHEMA v3 — RECON RESULTS + TEST FIXTURE
 **Phase 1 of `HANDOFF-MASTER-FULL-INGEST.md` is COMPLETE.** Headers below are **observed**, read from two real files, not guessed.
 
-**Sources:** `MASTER-US-CENTRAL-DFW02-BRUTAL.xlsx` (6 sheets) · `US-LZL01_-_BOM_-_Slack_Channel.xlsx` (7 sheets)
+**Sources:** two real production Masters (site codes + filenames redacted) — a 6-sheet site Master and a 7-sheet BOM workbook.
 **Fixture produced:** `MASTER-US-CENTRAL-AUS03-TEST.xlsx` — fictional site, safe to commit.
 
 > **Legend:** ✅ OBSERVED = header read verbatim from a real file, build against it.
@@ -11,7 +11,7 @@
 
 ## 1. RECON RESULT — what the real Master actually contains
 
-`MASTER-US-CENTRAL-DFW02-BRUTAL.xlsx` sheets, in file order:
+The 6-sheet real site Master, sheets in file order:
 
 | Sheet | Rows | Cols | Parser today |
 |---|---|---|---|
@@ -36,7 +36,7 @@
 TAGS, IPV4, IPV6, GRID-GROUP, GRID, GRID-POD, ASN, RAIL, PLANE, SUPERPOD-ID,
 LEAF-GROUP-ID, FABRIC
 ```
-Sample: `1 | 2026-05-08 | DFW2 | c1:001:44 | leaf-c1-001-a.dfw2.cwz | NVIDIA Quantum-2 QM9700 | SN5092891721 | ib-fabric | leaf | ndr;400g;qm9700 | …`
+Sample (site code / DNS / serial redacted): `1 | 2026-05-08 | <SITE> | c1:001:44 | leaf-c1-001-a.<site>.<tld> | NVIDIA Quantum-2 QM9700 | <SERIAL> | ib-fabric | leaf | ndr;400g;qm9700 | …`
 
 - `LOC(cab:ru)` format is **`row:cabinet:ru`** — `c1:001:44` = row C1, cabinet 001, RU 44.
 - **Divider rows exist**: col A contains `──── HOSTS ROW C1 ────` with all other cells empty. Must be skipped, not parsed as a host.
@@ -62,11 +62,11 @@ Z-BRKOUT-SLOT/PORT, Z-OPTIC, Z-PATCH, CABLE-ID
 
 ## 5. ✅ OBSERVED — the BOM workbook (two distinct sheet shapes)
 
-**Shape A — cover/metadata sheets** (`LZL01 B2 DH1`…): scattered key/value pairs, not a table. Carries Region, LOCODE, Customer, DH, Phase, Stack/HPC Net, Physical Access / Power Delivery / Production Due dates, status flags (`Overhead: Complete`, `Cutsheets: Not Complete`), staffing, and a Q&A block.
+**Shape A — cover/metadata sheets** (per-datahall cover tabs; real sheet name redacted): scattered key/value pairs, not a table. Carries Region, LOCODE, Customer, DH, Phase, Stack/HPC Net, Physical Access / Power Delivery / Production Due dates, status flags (`Overhead: Complete`, `Cutsheets: Not Complete`), staffing, and a Q&A block.
 
 > **This is the richest site-profile source that exists** — far richer than SITE-VARS. If site pre-fill should include region, customer, phase, data hall, and due dates, this sheet has them today. But it is **irregular in layout** (values sit at varying column offsets across sheets), so parsing it is label-driven, not positional. Treat as a Phase 4 candidate, not a quick win.
 
-**Shape B — line-item sheets** (`CID-1213 …`, `CID-1171 …`) — **this is the actual BOM**:
+**Shape B — line-item sheets** (per-CID tabs; real CID numbers redacted) — **this is the actual BOM**:
 ```
 Status, LoCode, Data Hall Row / Rack, CAP # & Description, Category - Link (IM),
 Type - Link (IM), Part #, Description - Link (IM), Qty, Qty + Spares,
