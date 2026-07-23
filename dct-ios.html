@@ -12325,7 +12325,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.344';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.345';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -13055,7 +13055,7 @@ if (typeof window !== 'undefined') {
            the existing assistant surface (openVaSheet, the same door the desktop CHAT WITH PHANTOM button uses),
            gloved-hand target; a "CHAT →" chip is the visible affordance. role/tabindex match the .route/.stat.cc-tap
            rd pattern. No new assistant logic — reuse the existing surface + its own close/return. -->
-      <div class="cc-asst" id="cc-asst" role="button" tabindex="0" aria-label="Chat with the Phantom assistant" onclick="openVaSheet()">
+      <div class="cc-asst" id="cc-asst" role="button" tabindex="0" aria-label="Chat with the Phantom assistant" onclick="openVaSheet('intent')">
         <!-- v1.14.341: ghost is the card's CO-STAR — floated so the eyebrow/greeting/summary wrap beside it
              and continue UNDER it (bigger art without shrinking the card past the fold). -->
         <img class="cc-asst-ghost" src="phantom-ghost-v3.webp" alt="" aria-hidden="true" width="107" height="122">
@@ -13090,8 +13090,8 @@ if (typeof window !== 'undefined') {
         <button class="cc-sugg-act" type="button" onclick="brief_show()">Open brief<span class="cc-sugg-ar" aria-hidden="true">&rarr;</span></button>
         <button class="cc-sugg-act" type="button" onclick="cmd_route('work','issues')">Review blockers<span class="cc-sugg-ar" aria-hidden="true">&rarr;</span></button>
       </div>
-      <!-- v1.14.337 CHAT WITH PHANTOM (desktop rail; base display:none). Door: openVaSheet(). -->
-      <button class="cc-chat" id="cc-chat" type="button" onclick="openVaSheet()"><span class="cc-chat-ic" aria-hidden="true">&#9673;</span>CHAT WITH PHANTOM<span class="cc-chat-ar" aria-hidden="true">&#9654;</span></button>
+      <!-- v1.14.337 CHAT WITH PHANTOM (desktop rail; base display:none). Door: openVaSheet('intent'). -->
+      <button class="cc-chat" id="cc-chat" type="button" onclick="openVaSheet('intent')"><span class="cc-chat-ic" aria-hidden="true">&#9673;</span>CHAT WITH PHANTOM<span class="cc-chat-ar" aria-hidden="true">&#9654;</span></button>
       <!-- v1.14.337 AI STATUS foot of the rail (desktop; base display:none). Honest static — the assistant is reachable. -->
       <div class="cc-aistat" id="cc-aistat"><span class="cc-aistat-dot" aria-hidden="true"></span>AI STATUS &middot; ACTIVE</div>
       </div>
