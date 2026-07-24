@@ -1097,9 +1097,9 @@ Section line-number markers below are <em>approximate</em> after the delete pass
   <div class="fn-name fn-line">deploy_getById</div><div class="fn-line fn-purpose">Lookup deployment by id.</div>
   <div class="fn-name fn-line">deploy_isPhaseGated</div><div class="fn-line fn-purpose">Is this phase blocked by a predecessor?</div>
   <div class="fn-name fn-line">deploy_loadAll</div><div class="fn-line fn-purpose">All deployments from <code>phantom_deployments_v1</code>.</div>
-  <div class="fn-name fn-line">deploy_loadOptics</div><div class="fn-line fn-purpose">Optics ledger for a deployment.</div>
-  <div class="fn-name fn-line">deploy_loadPhases</div><div class="fn-line fn-purpose">Phases for a deployment.</div>
-  <div class="fn-name fn-line">deploy_loadRacks</div><div class="fn-line fn-purpose">Filter <code>phantom_deploy_racks_v1</code> by deployment.</div>
+  <div class="fn-name fn-line">deploy_loadOpticsFor</div><div class="fn-line fn-purpose">Optics ledger for a deployment.</div>
+  <div class="fn-name fn-line">deploy_loadPhasesFor</div><div class="fn-line fn-purpose">Phases for a deployment.</div>
+  <div class="fn-name fn-line">deploy_loadRacksFor</div><div class="fn-line fn-purpose">Filter <code>phantom_deploy_racks_v1</code> by deployment.</div>
   <div class="fn-name fn-line">deploy_overrideGate</div><div class="fn-line fn-purpose">PIN-protected gate override.</div>
   <div class="fn-name fn-line">deploy_renderPhaseMatrix</div><div class="fn-line fn-purpose">Render the phase matrix grid across deployments.</div>
   <div class="fn-name fn-line">deploy_saveAll</div><div class="fn-line fn-purpose">Save all + bump rollup generation.</div>
@@ -1134,7 +1134,7 @@ Section line-number markers below are <em>approximate</em> after the delete pass
 <div class="group-line">lines 20355–20585</div>
 <div class="fn-list">
   <div class="fn-name fn-line">deploy_flagPhaseReverify</div><div class="fn-line fn-purpose">Flag a phase for re-verify.</div>
-  <div class="fn-name fn-line">deploy_loadAudit</div><div class="fn-line fn-purpose">Load audit log for a deployment.</div>
+  <div class="fn-name fn-line">deploy_loadAuditFor</div><div class="fn-line fn-purpose">Load audit log for a deployment.</div>
   <div class="fn-name fn-line">deploy_logAudit</div><div class="fn-line fn-purpose">Append (actor, action, entity, summary) row to audit.</div>
   <div class="fn-name fn-line">deploy_openPhaseDriftModal</div><div class="fn-line fn-purpose">Open the per-phase drift modal.</div>
   <div class="fn-name fn-line">deploy_phaseDriftEvents</div><div class="fn-line fn-purpose">Compute drift / stale events for a phase.</div>
@@ -1540,10 +1540,10 @@ Section line-number markers below are <em>approximate</em> after the delete pass
 <tr><td class="const">CRASH_KEY</td><td class="key">phantom_crash_log</td><td class="shape">Array of <code>{ts, type, msg, src, line, col, ver}</code>. Written by <code>logCrash</code>; wiped by <code>phantomViewCrashLog</code>.</td></tr>
 <tr><td class="const">PHANTOM_SESSION_KEY</td><td class="key">phantom_session_state_v1</td><td class="shape">JSON <code>{page, opsTab, ts}</code>. Written by <code>_session_save</code>; cleared by <code>_session_clear</code>.</td></tr>
 <tr><td class="const">DEPLOY_KEY</td><td class="key">phantom_deployments_v1</td><td class="shape">Array&lt;Deployment&gt;. RW <code>deploy_loadAll</code> / <code>deploy_saveAll</code>.</td></tr>
-<tr><td class="const">DEPLOY_RACKS_KEY</td><td class="key">phantom_deploy_racks_v1</td><td class="shape">Array&lt;Rack&gt;. RW <code>deploy_loadRacks</code> / <code>deploy_saveAllRacks</code>.</td></tr>
-<tr><td class="const">DEPLOY_PHASES_KEY</td><td class="key">phantom_deploy_phases_v1</td><td class="shape">Array&lt;Phase&gt;. RW <code>deploy_loadPhases</code> / <code>deploy_saveAllPhases</code>.</td></tr>
-<tr><td class="const">DEPLOY_OPTICS_KEY</td><td class="key">phantom_deploy_optics_v1</td><td class="shape">Array&lt;OpticRow&gt;. RW <code>deploy_loadOptics</code> / <code>deploy_saveAllOptics</code>.</td></tr>
-<tr><td class="const">DEPLOY_AUDIT_KEY</td><td class="key">phantom_deploy_audit_v1</td><td class="shape">Array&lt;AuditEvent&gt;. RW <code>deploy_loadAudit</code> / <code>deploy_saveAllAudit</code> / <code>deploy_logAudit</code>. Per-deployment purge via <code>deploy_purgeAudit</code>.</td></tr>
+<tr><td class="const">DEPLOY_RACKS_KEY</td><td class="key">phantom_deploy_racks_v1</td><td class="shape">Array&lt;Rack&gt;. RW <code>deploy_loadRacksFor</code> / <code>deploy_saveAllRacks</code>.</td></tr>
+<tr><td class="const">DEPLOY_PHASES_KEY</td><td class="key">phantom_deploy_phases_v1</td><td class="shape">Array&lt;Phase&gt;. RW <code>deploy_loadPhasesFor</code> / <code>deploy_saveAllPhases</code>.</td></tr>
+<tr><td class="const">DEPLOY_OPTICS_KEY</td><td class="key">phantom_deploy_optics_v1</td><td class="shape">Array&lt;OpticRow&gt;. RW <code>deploy_loadOpticsFor</code> / <code>deploy_saveAllOptics</code>.</td></tr>
+<tr><td class="const">DEPLOY_AUDIT_KEY</td><td class="key">phantom_deploy_audit_v1</td><td class="shape">Array&lt;AuditEvent&gt;. RW <code>deploy_loadAuditFor</code> / <code>deploy_saveAllAudit</code> / <code>deploy_logAudit</code>. Per-deployment purge via <code>deploy_purgeAudit</code>.</td></tr>
 <tr><td class="const">SITE_PROFILE_KEY</td><td class="key">phantom_site_profile_v1</td><td class="shape">Object <code>{site, platforms[], pdus[], switches[]}</code>. RW <code>siteProfile_load</code> / <code>siteProfile_save</code>.</td></tr>
 <tr><td class="const">HANDOFF_KEY</td><td class="key">phantom_handoff_v1</td><td class="shape">Array&lt;Handoff&gt;. RW <code>handoff_loadAll</code> / <code>handoff_save</code>; cleared per-deploy by <code>handoff_purge</code>.</td></tr>
 <tr><td class="const">IDENTITY_USER_KEY</td><td class="key">phantom_current_user_v1</td><td class="shape">String user name. RW <code>identity_getUser</code> / <code>identity_setUser</code>.</td></tr>

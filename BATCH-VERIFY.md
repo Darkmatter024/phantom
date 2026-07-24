@@ -326,3 +326,18 @@ Both gates PASS; all three prior suites re-run green. **Regression sweep only, n
 - [ ] Nothing visual changed anywhere
 
 **Batch `.346–.349` = 4 of 6.**
+
+## v1.14.350 — loader arity split, .347/.348 bug class made unrepresentable (`1734dc9`) · rollback: revert commit
+**Larger diff (158/111) but no new feature — it splits each deployment loader into a scoped door and an
+all door so a scoped read can never silently become a whole-store write.** Both gates PASS; new .350 suite
+(20 assertions) + all prior suites green. Falsy-id branch is a dormant tripwire, unreachable through the app
+today (rd-review traced every entry point to a guard). **Regression sweep — confirm nothing leaks between
+deployments or vanishes.**
+
+- [ ] TWO deployments loaded: open each and confirm its racks / phases / optics / audit are ITS OWN and complete
+- [ ] Advance a phase, block one with a note, tick a checklist item, add a checklist item, dispense an optic, assign a rack — each in deployment A
+- [ ] Reopen deployment B: everything still present and correct, nothing leaked in from A, nothing vanished
+- [ ] Audit log for each deployment shows only its own events
+- [ ] Nothing visual changed anywhere
+
+**Batch `.346–.350` = 5 of 6. Next ship hits the CALL-0 count cap — verify + release this batch before or at .351.**
