@@ -12325,7 +12325,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.348';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.349';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -21585,7 +21585,7 @@ function blocker_save(deployId, rackId, phaseId, note) {
     var wasBlocked = all[idx].status === 'blocked';
     all[idx].blockerNote = note;
     all[idx].blockedAt   = Date.now();
-    if (!deploy_savePhases(all)) {
+    if (!deploy_saveAllPhases(all)) {
       if (typeof phantomToast === 'function') phantomToast('Storage full — blocker not saved', 'error');
       return false;
     }
@@ -25989,7 +25989,7 @@ function deploy_loadPhases(deployId) {
   if (!Array.isArray(all)) all = [];
   return deployId ? all.filter(function(p) { return p.deploymentId === deployId; }) : all;
 }
-function deploy_savePhases(arr) { var ok = safeStore(DEPLOY_PHASES_KEY, JSON.stringify(arr)); if (ok) _deployRollupGen++; return ok; }
+function deploy_saveAllPhases(arr) { var ok = safeStore(DEPLOY_PHASES_KEY, JSON.stringify(arr)); if (ok) _deployRollupGen++; return ok; }
 
 // ─────────────────────────────────────────────────────────────────────
 // PHASE CHECKLIST (v1.14.208) — expandable per-phase item lists inside
@@ -26117,7 +26117,7 @@ function checklist_toggle(deployId, phaseId, itemId) {
   if (!ph.checks || typeof ph.checks !== 'object') ph.checks = {};
   var nowChecked = !ph.checks[itemId];
   if (nowChecked) ph.checks[itemId] = true; else delete ph.checks[itemId];
-  deploy_savePhases(all);
+  deploy_saveAllPhases(all);
   // In-place paint — no full re-render, so the accordion stays put.
   var chk = document.getElementById('pcl-chk-' + phaseId + '-' + itemId);
   if (chk) chk.className = 'pcl-chk' + (nowChecked ? ' pcl-chk-on' : '');
@@ -26147,7 +26147,7 @@ function checklist_setNote(deployId, phaseId, itemId, str) {
     if (!ph.notes || typeof ph.notes !== 'object') ph.notes = {};
     var v = (str == null ? '' : String(str));
     if (v) ph.notes[itemId] = v; else delete ph.notes[itemId];
-    deploy_savePhases(all);
+    deploy_saveAllPhases(all);
   }, 400);
 }
 function checklist_revealNote(deployId, phaseId, itemId, el) {
@@ -26273,7 +26273,7 @@ function deploy_loadOptics(deployId) {
   if (!Array.isArray(all)) all = [];
   return deployId ? all.filter(function(o) { return o.deploymentId === deployId; }) : all;
 }
-function deploy_saveOptics(arr) { var ok = safeStore(DEPLOY_OPTICS_KEY, JSON.stringify(arr)); if (ok) _deployRollupGen++; return ok; }
+function deploy_saveAllOptics(arr) { var ok = safeStore(DEPLOY_OPTICS_KEY, JSON.stringify(arr)); if (ok) _deployRollupGen++; return ok; }
 
 // ── Stage 7: Site Profile Editor ──
 function siteProfile_showEditor(container) {
@@ -26527,7 +26527,7 @@ function deploy_loadAudit(deployId) {
   if (!Array.isArray(all)) all = [];
   return deployId ? all.filter(function(e) { return e.deploymentId === deployId; }) : all;
 }
-function deploy_saveAudit(arr) { return safeStore(DEPLOY_AUDIT_KEY, JSON.stringify(arr)); }
+function deploy_saveAllAudit(arr) { return safeStore(DEPLOY_AUDIT_KEY, JSON.stringify(arr)); }
 
 // C4: tamper-evident audit chain. Canonical = FIXED whitelist (annotation fields excluded).
 var _AUDIT_HASH_FIELDS = ['id','deploymentId','ts','actor','action','entityType','entityId','summary','prevHash'];
@@ -26598,7 +26598,7 @@ function deploy_logAudit(deploymentId, action, entityType, entityId, summary) {
       all[0].truncatedAt = Date.now();
       all[0].truncatedLastHash = (_last && _last.hash) ? _last.hash : '';
     }
-    deploy_saveAudit(all);
+    deploy_saveAllAudit(all);
   } catch(e) {
     // Audit log is non-blocking — a write failure must never interrupt the main operation
   }
@@ -26608,7 +26608,7 @@ function deploy_logAudit(deploymentId, action, entityType, entityId, summary) {
 function deploy_purgeAudit(deploymentId) {
   var all = safeParse(localStorage.getItem(DEPLOY_AUDIT_KEY) || '[]', []);
   all = all.filter(function(e) { return e.deploymentId !== deploymentId; });
-  deploy_saveAudit(all);
+  deploy_saveAllAudit(all);
 }
 
 // ━━━ STALE PHASE SURFACER ━━━
@@ -26824,7 +26824,7 @@ function deploy_seedOptics(deploymentId) {
       notes: ''
     });
   });
-  if (!deploy_saveOptics(all)) {
+  if (!deploy_saveAllOptics(all)) {
     phantomToast('Optic ledger write failed — storage may be full', 'error');
   }
 }
@@ -26858,7 +26858,7 @@ function deploy_updateOpticCount(opticId, field, delta) {
   rec[field] = newVal;
   rec.remaining = rec.required - rec.installed;
   all[idx] = rec;
-  if (!deploy_saveOptics(all)) {
+  if (!deploy_saveAllOptics(all)) {
     phantomToast('Storage write failed', 'error');
     return false;
   }
@@ -27562,7 +27562,7 @@ function deploy_seedRacksAndPhases(deployment) {
   });
 
   if (!deploy_saveAllRacks(allRacks)) { phantomToast('Storage full — racks not saved', 'error'); return false; }
-  if (!deploy_savePhases(allPhases)) { phantomToast('Storage full — phases not saved', 'error'); return false; }
+  if (!deploy_saveAllPhases(allPhases)) { phantomToast('Storage full — phases not saved', 'error'); return false; }
   return true;
 }
 
@@ -27607,7 +27607,7 @@ function deploy_advancePhase(phaseId, newStatus, deployId) {
     all[idx].signedOffBy = (typeof identity_getUser === 'function' && identity_getUser())
       || (_dep && _dep.buildLead) || 'Tech';
   }
-  if (!deploy_savePhases(all)) {
+  if (!deploy_saveAllPhases(all)) {
     phantomToast('Storage full — phase not saved. Export backup and clear old data.', 'error');
     return false;
   }
@@ -27675,7 +27675,7 @@ function deploy_overrideGate(phaseId, deployId) {
   all[idx].status = 'in_progress';
   all[idx]._gateOverride = true;
   all[idx]._notes = (all[idx]._notes || '') + '[GATE OVERRIDE ' + new Date().toISOString() + '] ';
-  if (!deploy_savePhases(all)) {
+  if (!deploy_saveAllPhases(all)) {
     phantomToast('Storage full — override not saved. Export backup and clear old data.', 'error');
     return false;
   }
@@ -35594,12 +35594,12 @@ function deploy_purgeHeavyData(deploymentId) {
   // Phases
   var allPhases = safeParse(localStorage.getItem(DEPLOY_PHASES_KEY) || '[]', []);
   allPhases = allPhases.filter(function(p) { return p.deploymentId !== deploymentId; });
-  if (!deploy_savePhases(allPhases)) { phantomToast('Storage error — phase cleanup incomplete', 'warn'); }
+  if (!deploy_saveAllPhases(allPhases)) { phantomToast('Storage error — phase cleanup incomplete', 'warn'); }
 
   // Optics
   var allOptics = safeParse(localStorage.getItem(DEPLOY_OPTICS_KEY) || '[]', []);
   allOptics = allOptics.filter(function(o) { return o.deploymentId !== deploymentId; });
-  if (!deploy_saveOptics(allOptics)) { phantomToast('Storage error — optic cleanup incomplete', 'warn'); }
+  if (!deploy_saveAllOptics(allOptics)) { phantomToast('Storage error — optic cleanup incomplete', 'warn'); }
 
   // Audit trail
   deploy_purgeAudit(deploymentId);
