@@ -282,3 +282,19 @@ strands you on a wrong Master. One-line change to lock if you want it locked.
 editor drops `operator` — your name is wiped from sign-offs and the editor has no field to put it
 back. It also drops the new `sources` map, which makes Master-filled fields permanently
 hand-entered after any editor save (fail-safe, never a clobber).
+
+## v1.14.347 — OPERATOR WIPE fix: site-profile save destroyed your name (`09d142b`) · rollback: revert commit
+**HIGH-risk surface:** user-data write path. Both gates PASS; 9/9 offline assertions on the shipped
+save path, .346 suite still green. **This is a live bug that has been eating names — verify it first.**
+
+- [ ] SITE PROFILE sheet → a **YOUR NAME** field now sits at the top, showing your operator name (blank if a past save already ate it — type it back in)
+- [ ] Change PDU TYPE → SAVE PROFILE → reopen the sheet → **your name is still there** (before .347 it vanished silently)
+- [ ] Clear the YOUR NAME box → SAVE → reopen → your name is **unchanged** (blank = no change, never an erase)
+- [ ] Load the AUS03 Master again → the PDU TYPE you typed **survives**; fields you never touched still refresh from the Master
+- [ ] Your name still appears on a sign-off / handoff after a profile save
+- [ ] `?legacy=1` → profile editor looks exactly as before (no YOUR NAME field there — it is redesign-only)
+
+**Note:** names already lost to a pre-.347 save are gone — localStorage was overwritten. The new
+field is how you put yours back.
+
+**Batch `.346–.347` = 2 of 6.**
