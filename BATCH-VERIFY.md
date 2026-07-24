@@ -312,3 +312,17 @@ field is how you put yours back.
 **Note:** racks already destroyed by this bug are gone — the key was overwritten. This stops the bleeding.
 
 **Batch `.346–.348` = 3 of 6.**
+
+## v1.14.349 — saver rename cleanup, all four now `deploy_saveAll*` (`b8a54fe`) · rollback: revert commit
+**LOW risk — pure mechanical rename, zero behavior change**, proven: 15 sites, occurrence-count parity,
+zero residue, and after excluding renamed identifiers the only changed lines are the version stamps.
+Both gates PASS; all three prior suites re-run green. **Regression sweep only, no new feature to check.**
+
+- [ ] Open a deployment → advance a phase → it sticks after closing and reopening
+- [ ] Block a phase, add a blocker note → note persists
+- [ ] Tick a phase-checklist item and add an item note → both persist
+- [ ] Dispense / install an optic → counts persist and the ledger still adds up
+- [ ] Audit trail still records each of the above
+- [ ] Nothing visual changed anywhere
+
+**Batch `.346–.349` = 4 of 6.**

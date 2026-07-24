@@ -1140,7 +1140,7 @@ Section line-number markers below are <em>approximate</em> after the delete pass
   <div class="fn-name fn-line">deploy_phaseDriftEvents</div><div class="fn-line fn-purpose">Compute drift / stale events for a phase.</div>
   <div class="fn-name fn-line">deploy_purgeAudit</div><div class="fn-line fn-purpose">Wipe audit for one deployment.</div>
   <div class="fn-name fn-line">deploy_renderPhaseStaleBadge</div><div class="fn-line fn-purpose">Render a stale-phase badge if drift exists.</div>
-  <div class="fn-name fn-line">deploy_saveAudit</div><div class="fn-line fn-purpose">Persist audit log.</div>
+  <div class="fn-name fn-line">deploy_saveAllAudit</div><div class="fn-line fn-purpose">Persist audit log.</div>
   <div class="fn-name fn-line">handoff_generate</div><div class="fn-line fn-purpose">AI-generate handoff text from current state.</div>
   <div class="fn-name fn-line">handoff_loadAll</div><div class="fn-line fn-purpose">Load all handoffs from <code>phantom_handoff_v1</code>.</div>
   <div class="fn-name fn-line">handoff_loadForDeployment</div><div class="fn-line fn-purpose">Filter handoffs by deployment.</div>
@@ -1540,10 +1540,10 @@ Section line-number markers below are <em>approximate</em> after the delete pass
 <tr><td class="const">CRASH_KEY</td><td class="key">phantom_crash_log</td><td class="shape">Array of <code>{ts, type, msg, src, line, col, ver}</code>. Written by <code>logCrash</code>; wiped by <code>phantomViewCrashLog</code>.</td></tr>
 <tr><td class="const">PHANTOM_SESSION_KEY</td><td class="key">phantom_session_state_v1</td><td class="shape">JSON <code>{page, opsTab, ts}</code>. Written by <code>_session_save</code>; cleared by <code>_session_clear</code>.</td></tr>
 <tr><td class="const">DEPLOY_KEY</td><td class="key">phantom_deployments_v1</td><td class="shape">Array&lt;Deployment&gt;. RW <code>deploy_loadAll</code> / <code>deploy_saveAll</code>.</td></tr>
-<tr><td class="const">DEPLOY_RACKS_KEY</td><td class="key">phantom_deploy_racks_v1</td><td class="shape">Array&lt;Rack&gt;. RW <code>deploy_loadRacks</code> / <code>deploy_saveRacks</code>.</td></tr>
-<tr><td class="const">DEPLOY_PHASES_KEY</td><td class="key">phantom_deploy_phases_v1</td><td class="shape">Array&lt;Phase&gt;. RW <code>deploy_loadPhases</code> / <code>deploy_savePhases</code>.</td></tr>
-<tr><td class="const">DEPLOY_OPTICS_KEY</td><td class="key">phantom_deploy_optics_v1</td><td class="shape">Array&lt;OpticRow&gt;. RW <code>deploy_loadOptics</code> / <code>deploy_saveOptics</code>.</td></tr>
-<tr><td class="const">DEPLOY_AUDIT_KEY</td><td class="key">phantom_deploy_audit_v1</td><td class="shape">Array&lt;AuditEvent&gt;. RW <code>deploy_loadAudit</code> / <code>deploy_saveAudit</code> / <code>deploy_logAudit</code>. Per-deployment purge via <code>deploy_purgeAudit</code>.</td></tr>
+<tr><td class="const">DEPLOY_RACKS_KEY</td><td class="key">phantom_deploy_racks_v1</td><td class="shape">Array&lt;Rack&gt;. RW <code>deploy_loadRacks</code> / <code>deploy_saveAllRacks</code>.</td></tr>
+<tr><td class="const">DEPLOY_PHASES_KEY</td><td class="key">phantom_deploy_phases_v1</td><td class="shape">Array&lt;Phase&gt;. RW <code>deploy_loadPhases</code> / <code>deploy_saveAllPhases</code>.</td></tr>
+<tr><td class="const">DEPLOY_OPTICS_KEY</td><td class="key">phantom_deploy_optics_v1</td><td class="shape">Array&lt;OpticRow&gt;. RW <code>deploy_loadOptics</code> / <code>deploy_saveAllOptics</code>.</td></tr>
+<tr><td class="const">DEPLOY_AUDIT_KEY</td><td class="key">phantom_deploy_audit_v1</td><td class="shape">Array&lt;AuditEvent&gt;. RW <code>deploy_loadAudit</code> / <code>deploy_saveAllAudit</code> / <code>deploy_logAudit</code>. Per-deployment purge via <code>deploy_purgeAudit</code>.</td></tr>
 <tr><td class="const">SITE_PROFILE_KEY</td><td class="key">phantom_site_profile_v1</td><td class="shape">Object <code>{site, platforms[], pdus[], switches[]}</code>. RW <code>siteProfile_load</code> / <code>siteProfile_save</code>.</td></tr>
 <tr><td class="const">HANDOFF_KEY</td><td class="key">phantom_handoff_v1</td><td class="shape">Array&lt;Handoff&gt;. RW <code>handoff_loadAll</code> / <code>handoff_save</code>; cleared per-deploy by <code>handoff_purge</code>.</td></tr>
 <tr><td class="const">IDENTITY_USER_KEY</td><td class="key">phantom_current_user_v1</td><td class="shape">String user name. RW <code>identity_getUser</code> / <code>identity_setUser</code>.</td></tr>
