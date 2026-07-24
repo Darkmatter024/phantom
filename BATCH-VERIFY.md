@@ -298,3 +298,17 @@ save path, .346 suite still green. **This is a live bug that has been eating nam
 field is how you put yours back.
 
 **Batch `.346–.347` = 2 of 6.**
+
+## v1.14.348 — ASSIGN RACK destroyed other deployments' racks (`pending`) · rollback: revert commit
+**HIGH-risk surface:** deployment record storage. Both gates PASS; 10/10 offline assertions.
+**Needs TWO deployments with racks to verify — with one deployment the bug was invisible.**
+
+- [ ] Deployment A → open a rack → ASSIGN to a tech → then open deployment B: **all of B's racks are still there**, with their slots and phase state (pre-.348 they were silently deleted)
+- [ ] The assignment itself still lands, and shows on the rack in A
+- [ ] Unassign (blank name) still clears it, and still destroys nothing
+- [ ] Single-deployment device: assign works exactly as before
+- [ ] Phases/optics for B still line up with B's racks (nothing orphaned)
+
+**Note:** racks already destroyed by this bug are gone — the key was overwritten. This stops the bleeding.
+
+**Batch `.346–.348` = 3 of 6.**
