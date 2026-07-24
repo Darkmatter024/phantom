@@ -12325,7 +12325,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.349';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.350';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -17346,8 +17346,8 @@ function shiftReport_generate() {
   var dep = deploys[0];
 
   var profile = siteProfile_load();
-  var audit = deploy_loadAudit(dep.id) || [];
-  var optics = deploy_loadOptics(dep.id) || [];
+  var audit = deploy_loadAuditFor(dep.id) || [];
+  var optics = deploy_loadOpticsFor(dep.id) || [];
   var rollup = null;
   try { rollup = deploy_computeDeployRollup(dep.id); } catch(_) {}
 
@@ -17379,8 +17379,8 @@ function shiftReport_generate() {
   var fieldNotes = audit.filter(function(e) { return e && e.action === 'OMNI_NOTE'; }).slice(-25).reverse();
 
   // Open blockers — phase records with status 'blocked'
-  var phases = deploy_loadPhases(dep.id) || [];
-  var racks = deploy_loadRacks(dep.id) || [];
+  var phases = deploy_loadPhasesFor(dep.id) || [];
+  var racks = deploy_loadRacksFor(dep.id) || [];
   var blockerItems = [];
   phases.filter(function(p) { return p.status === 'blocked'; }).forEach(function(bp) {
     var r = racks.find(function(x) { return x.id === bp.rackId; });
@@ -19778,7 +19778,7 @@ function wk_renderJob() {
   var jobRack = (_ac && _ac.rack && _ac.deployment && _ac.deployment.id === dep.id) ? _ac.rack : null;
   var jobStart = false;
   if (!jobRack && pct === 0 && totalRacks > 0) {
-    try { var _fr = deploy_loadRacks(dep.id); if (_fr && _fr.length) { jobRack = _fr[0]; jobStart = true; } } catch (_) {}
+    try { var _fr = deploy_loadRacksFor(dep.id); if (_fr && _fr.length) { jobRack = _fr[0]; jobStart = true; } } catch (_) {}
   }
   var jobRackLabel = jobRack ? (jobRack.rackId || jobRack.name || jobRack.id || '?') : '';
   var jobAction = jobRack
@@ -20147,7 +20147,7 @@ function cmd_render() {
   try { if (typeof deploy_loadAll === 'function') deploys = deploy_loadAll() || []; } catch (e) { phantom_logErr('cmd_render:loadAll', e); }
   var deployCount = deploys.length, rackCount = 0, blockerCount = 0;
   deploys.forEach(function(d) {
-    try { if (typeof deploy_loadRacks === 'function') rackCount += (deploy_loadRacks(d.id) || []).length; } catch (e) { phantom_logErr('cmd_render:loadRacks', e); }
+    try { if (typeof deploy_loadRacksFor === 'function') rackCount += (deploy_loadRacksFor(d.id) || []).length; } catch (e) { phantom_logErr('cmd_render:loadRacks', e); }
     try { if (typeof deploy_countBlockers === 'function') blockerCount += deploy_countBlockers(d.id) || 0; } catch (e) { phantom_logErr('cmd_render:countBlockers', e); }
   });
   var activeDep = null, activePct = 0;
@@ -20320,7 +20320,7 @@ function cmd_loadMaster() {
 // On Master load, the Command hero lands on the first rack, live in the INSPECT-3D bay.
 // Routing + mount + state only — reh3d engine + Master pipeline UNTOUCHED.
 // v1.14.342 — ONE RACK, ONE TRUTH. The hero must render the SAME rack object OPEN BAY renders. With an
-// active deployment that object is the DEPLOYMENT rack (deploy_loadRacks → edpParsed slots), NOT
+// active deployment that object is the DEPLOYMENT rack (deploy_loadRacksFor → edpParsed slots), NOT
 // master_rackToElevation(racksByCab): those are two builders off two uploads (a master file vs the
 // deployment EDP) and had diverged for the same rack label (hero showed 6 devices, the bay 8 incl. the
 // real q3400-ra IB switch). We resolve the deployment rack here and build the elevation from it, so the
@@ -20339,7 +20339,7 @@ function cmd_resolveFirstRackElev() {
   // (1) Active deployment → the deployment rack IS the truth the bay shows. Feed the hero from it.
   try {
     var aid = (typeof deploy_getActiveId === 'function') ? deploy_getActiveId() : null;
-    var depRacks = (aid && typeof deploy_loadRacks === 'function') ? (deploy_loadRacks(aid) || []) : [];
+    var depRacks = (aid && typeof deploy_loadRacksFor === 'function') ? (deploy_loadRacksFor(aid) || []) : [];
     if (depRacks.length) {
       // D5 explicit rack-switch override: honor it when it names a deployment rack (display or internal id).
       // The picker only ever offers racks from THIS universe (see cmd_heroPickRack), so a set-but-unmatched
@@ -20499,8 +20499,8 @@ function cmd_heroHideAux() {
 function cmd_rackBlockers(rackElevId) {
   try {
     var aid = (typeof deploy_getActiveId === 'function') ? deploy_getActiveId() : null;
-    if (!aid || typeof deploy_loadRacks !== 'function') return 0;
-    var rs = deploy_loadRacks(aid) || [];
+    if (!aid || typeof deploy_loadRacksFor !== 'function') return 0;
+    var rs = deploy_loadRacksFor(aid) || [];
     for (var i = 0; i < rs.length; i++) { var r = rs[i]; if ((r.rackId || r.id) === rackElevId) { if (Array.isArray(r.blockers)) return r.blockers.length; return r.status === 'blocked' ? 1 : 0; } }
   } catch (e) { if (typeof phantom_logErr === 'function') phantom_logErr('cmd_rackBlockers', e); }
   return 0;
@@ -20545,13 +20545,13 @@ function cmd_heroAux(elev) {
 function cmd_heroPickRack() {
   // v1.14.342 — the picker must offer the SAME rack universe the hero renders, or a pick lands on a rack the
   // hero can't faithfully show (the .341 one-truth bug in miniature). With an active deployment that universe
-  // is the deployment racks (deploy_loadRacks → the very objects OPEN BAY opens); otherwise it's Master cabs.
+  // is the deployment racks (deploy_loadRacksFor → the very objects OPEN BAY opens); otherwise it's Master cabs.
   // items[] = {key,label,count}; key is what we stash in _cmdHeroRack (a deployment rackId, or a Master cab).
   var m = (typeof window !== 'undefined') ? window._lastPhantomMaster : null;
   var items = [];
   try {
     var aid = (typeof deploy_getActiveId === 'function') ? deploy_getActiveId() : null;
-    var depRacks = (aid && typeof deploy_loadRacks === 'function') ? (deploy_loadRacks(aid) || []) : [];
+    var depRacks = (aid && typeof deploy_loadRacksFor === 'function') ? (deploy_loadRacksFor(aid) || []) : [];
     if (depRacks.length) items = depRacks.map(function(r) {
       return { key: (r.rackId || r.id || ''), label: (r.rackId || r.id || 'rack'), count: (Array.isArray(r.slots) ? r.slots.length : 0) };
     });
@@ -20608,8 +20608,8 @@ function cmd_openHeroBay(mount) {
   try { if (typeof nav_push === 'function') nav_push({ p: 'command' }); } catch (e) {}
   try {
     var aid = (typeof deploy_getActiveId === 'function') ? deploy_getActiveId() : null;
-    if (aid && typeof deploy_loadRacks === 'function' && typeof deploy_showRackDetail === 'function') {
-      var rs = deploy_loadRacks(aid) || [];
+    if (aid && typeof deploy_loadRacksFor === 'function' && typeof deploy_showRackDetail === 'function') {
+      var rs = deploy_loadRacksFor(aid) || [];
       for (var i = 0; i < rs.length; i++) { if ((rs[i].rackId || rs[i].id) === rackId) { if (typeof showMode === 'function') showMode('work'); return deploy_showRackDetail(aid, rs[i].id); } }   // showMode('work') makes #pg-work visible; its Back (nav_back) → {p:'command'} → Home
     }
   } catch (e) { if (typeof phantom_logErr === 'function') phantom_logErr('cmd_openHeroBay', e); }
@@ -21450,7 +21450,7 @@ function _blocker_renderRackPicker() {
   try { dep = (typeof deploy_getById === 'function') ? deploy_getById(deployId) : null; } catch (e) { phantom_logErr('blocker_rackPicker:getById', e); }
   var depName = (dep && dep.name) ? dep.name : 'Deployment';
   var racks = [];
-  try { racks = deploy_loadRacks(deployId) || []; } catch (e) { phantom_logErr('blocker_rackPicker:loadRacks', e); }
+  try { racks = deploy_loadRacksFor(deployId) || []; } catch (e) { phantom_logErr('blocker_rackPicker:loadRacks', e); }
 
   var html = '<div style="font-family:var(--mono);font-size:11px;letter-spacing:1.5px;color:var(--cyan,#5cf2ff);margin-bottom:4px">' + escHtml(depName) + '</div>';
   html += '<div style="font-family:var(--mono);font-size:11px;letter-spacing:1.5px;color:var(--slate,#8a99ad);margin-bottom:10px">' + racks.length + ' racks · tap to log blocker</div>';
@@ -21491,7 +21491,7 @@ function _blocker_renderNoteEntry() {
 
   var dep = null, rack = null, phase = null;
   try { dep = (typeof deploy_getById === 'function') ? deploy_getById(deployId) : null; } catch (e) {}
-  try { rack = (deploy_loadRacks(deployId) || []).find(function(r) { return r.id === rackId; }); } catch (e) {}
+  try { rack = (deploy_loadRacksFor(deployId) || []).find(function(r) { return r.id === rackId; }); } catch (e) {}
   try {
     var all = safeParse(localStorage.getItem(DEPLOY_PHASES_KEY) || '[]', []);
     if (Array.isArray(all)) phase = all.find(function(p) { return p.id === phaseId; });
@@ -21913,7 +21913,7 @@ function _issue_deployName(deployId) {
 function _issue_rackLabel(deployId, rackId) {
   if (!deployId || !rackId) return null;
   try {
-    var racks = deploy_loadRacks(deployId) || [];
+    var racks = deploy_loadRacksFor(deployId) || [];
     var r = racks.find(function(x) { return x.id === rackId; });
     return r ? (r.rackId || r.name || null) : null;
   } catch (e) { return null; }
@@ -22491,7 +22491,7 @@ function _issue_renderStep2() {
   // Rack select — only if deployment chosen
   if (_issueDraft.deploymentId) {
     var racks = [];
-    try { racks = deploy_loadRacks(_issueDraft.deploymentId) || []; } catch (e) {}
+    try { racks = deploy_loadRacksFor(_issueDraft.deploymentId) || []; } catch (e) {}
     if (racks.length) {
       html += '<label style="font-family:var(--mono);font-size:10px;letter-spacing:1.5px;color:#ff8a00;display:block;margin-bottom:5px">RACK</label>';
       html += '<select id="issue-rack-select" onchange="_issue_setRack(this.value)" style="width:100%;box-sizing:border-box;background:rgba(0,0,0,0.35);border:1px solid rgba(255,138,0,0.3);border-radius:8px;color:#fff;font-family:var(--mono);font-size:13px;padding:12px;min-height:var(--tap-s);margin-bottom:12px">';
@@ -22670,7 +22670,7 @@ function issue_pageOpen() {
 function burndown_buildSeries(deployId, dep) {
   if (!dep) return null;
   var phases;
-  try { phases = deploy_loadPhases(deployId) || []; }
+  try { phases = deploy_loadPhasesFor(deployId) || []; }
   catch(e) { return null; }
   var total = phases.length;
   if (total === 0) return null;
@@ -22945,8 +22945,8 @@ function today_render() {
 
     // Blocked racks in this deployment → blocker cards
     try {
-      var racks  = deploy_loadRacks(mostRecentDeploy.id);
-      var phases = deploy_loadPhases(mostRecentDeploy.id);
+      var racks  = deploy_loadRacksFor(mostRecentDeploy.id);
+      var phases = deploy_loadPhasesFor(mostRecentDeploy.id);
       racks.forEach(function(r) {
         var ru = deploy_computeRackRollup(r.id, phases);
         if (ru.isBlocked) {
@@ -22981,7 +22981,7 @@ function today_render() {
     var heroStart = false;
     if (!heroRack && pct === 0 && totalRacks > 0) {
       try {
-        var _firstRacks = deploy_loadRacks(mostRecentDeploy.id);
+        var _firstRacks = deploy_loadRacksFor(mostRecentDeploy.id);
         if (_firstRacks && _firstRacks.length) { heroRack = _firstRacks[0]; heroStart = true; }
       } catch(_) {}
     }
@@ -23634,7 +23634,7 @@ function brief_generate() {
     var pct = roll.phasePct || 0;
 
     // Read last 12h audit events
-    var audit = deploy_loadAudit(dep.id) || [];
+    var audit = deploy_loadAuditFor(dep.id) || [];
     var cutoff = Date.now() - 12 * 60 * 60 * 1000;
     var recent = audit.filter(function(e) { return e.ts > cutoff; });
     var phasesDone = recent.filter(function(e) { return e.action === 'PHASE_COMPLETE'; }).length;
@@ -23715,7 +23715,7 @@ async function deploy_assignRack(deployId, rackId) {
   var _dep = deploy_getById(deployId);
   if (_dep && _dep.status === 'complete') { phantomToast('Deployment is complete — assignments are locked', 'warn'); return; }
   var user = identity_getUser() || 'Tech';
-  var current = deploy_loadRacks(deployId).find(function(r) { return r.id === rackId; });
+  var current = deploy_loadRacksFor(deployId).find(function(r) { return r.id === rackId; });
   var currentAssignee = (current && current.assignedTo) || '';
   var name = await phantomPromptAsk({
     title: 'Assign Rack to Tech',
@@ -23725,7 +23725,7 @@ async function deploy_assignRack(deployId, rackId) {
     allowEmpty: true
   });
   if (name === null) return;
-  // v1.14.348 — DATA-LOSS FIX. This MUST load UNSCOPED. deploy_loadRacks(deployId)
+  // v1.14.348 — DATA-LOSS FIX. This MUST load UNSCOPED. deploy_loadRacksFor(deployId)
   // returns only THIS deployment's racks, while deploy_saveAllRacks writes its argument
   // as the ENTIRE DEPLOY_RACKS_KEY — so handing it a scoped list deleted the rack records
   // of every other deployment on the device (their slots, currentPhase, assignedTo,
@@ -23781,9 +23781,9 @@ function deploy_getRelevantSOPs(rack, dep) {
 var PHASE_BASELINE_MINS = { mechanical: 90, power: 60, network: 120, compute: 45, validation: 60 };
 
 function deploy_checkPhaseAnomaly(deployId, rackId, phaseType) {
-  var audit = deploy_loadAudit(deployId);
+  var audit = deploy_loadAuditFor(deployId);
   // Look up the rack display name for matching against audit summaries
-  var allRacks = deploy_loadRacks(deployId);
+  var allRacks = deploy_loadRacksFor(deployId);
   var rackRec = allRacks.find(function(r) { return r.id === rackId; });
   var rackName = (rackRec && rackRec.rackId) || rackId;
   var phaseLabel = DEPLOY_PHASE_LABELS_FULL[phaseType] || phaseType;
@@ -23811,7 +23811,7 @@ function brief_buildLiveContext() {
   deploys.sort(function(a, b) { return b.updated - a.updated; });
   var dep = deploys[0];
   var blockers = deploy_countBlockers(dep.id);
-  var audit = deploy_loadAudit(dep.id);
+  var audit = deploy_loadAuditFor(dep.id);
   var recent = audit.slice(-5);
   var ctx = '\n\n--- LIVE DEPLOYMENT CONTEXT ---\n';
   ctx += 'Active pod: ' + dep.name + '\n';
@@ -23888,7 +23888,7 @@ function va_confirmAuditLog(depId, type, rack, note) {
 
 // ━━━ FEATURE: QR LABEL GENERATION ━━━
 function deploy_generateRackQR(deployId, rackId) {
-  var racks = deploy_loadRacks(deployId);
+  var racks = deploy_loadRacksFor(deployId);
   var rack = racks.find(function(r) { return r.id === rackId; });
   var dep = deploy_getById(deployId);
   if (!rack || !dep) return;
@@ -24408,7 +24408,7 @@ function activeContext_get() {
     return null;
   }
 
-  var racks = (typeof deploy_loadRacks === 'function') ? deploy_loadRacks(ctx.deploymentId) : [];
+  var racks = (typeof deploy_loadRacksFor === 'function') ? deploy_loadRacksFor(ctx.deploymentId) : [];
   var rack = ctx.rackId ? racks.find(function(r) { return r.id === ctx.rackId; }) : null;
 
   var completeRacks = racks.filter(function(r) { return r.status === 'complete'; }).length;
@@ -24481,8 +24481,8 @@ function activeContext_getContextBlock() {
 
       // Optic ledger summary scoped to this rack
       try {
-        if (typeof deploy_loadOptics === 'function' && ctx.deployment && ctx.deployment.id) {
-          var allOptics = deploy_loadOptics(ctx.deployment.id) || [];
+        if (typeof deploy_loadOpticsFor === 'function' && ctx.deployment && ctx.deployment.id) {
+          var allOptics = deploy_loadOpticsFor(ctx.deployment.id) || [];
           var rackOptics = allOptics.filter(function(o) { return o.rackId === ctx.rack.id; });
           if (rackOptics.length > 0) {
             // Tally by type — installed vs required
@@ -24602,7 +24602,7 @@ function wakeLock_release() {
 
 function wakeLock_evaluate(deployId, rackId) {
   if (!deployId || !rackId) { wakeLock_release(); return; }
-  var phases = deploy_loadPhases(deployId).filter(function(p) { return p.rackId === rackId; });
+  var phases = deploy_loadPhasesFor(deployId).filter(function(p) { return p.rackId === rackId; });
   var hasActive = phases.some(function(p) { return p.status === 'in_progress'; });
   if (hasActive) wakeLock_acquire(deployId, rackId);
   else wakeLock_release();
@@ -25859,10 +25859,36 @@ window.addEventListener('storage', function(ev) {
 });
 
 // ── Stage 3: Rack & Phase Storage ──
-function deploy_loadRacks(deployId) {
+// v1.14.350 — one place to report a scoped loader called with no deployId. Uses
+// phantom_logErr rather than console.warn deliberately: this lands in the on-device crash
+// log, so a stray call site surfaces on the phone in the aisle instead of only in a
+// laptop's devtools. A tripwire only a developer can see is half a tripwire.
+function _deploy_loaderMisuse(fnName) {
+  try {
+    if (typeof phantom_logErr === 'function') {
+      phantom_logErr(fnName, new Error('called with no deployId — returned empty, not the whole store'));
+    } else if (typeof console !== 'undefined') {
+      console.warn('[' + fnName + '] called with no deployId — returning empty, not the whole store');
+    }
+  } catch (e) {}
+}
+
+// v1.14.350 — TWO NAMED DOORS, NO ARITY BRANCH. This used to be one function whose
+// SHAPE depended on whether you passed an argument: with a deployId it returned that
+// deployment's racks, without one it returned every deployment's, and nothing at the
+// call site said which you had. That is the exact mechanism of the .348 data loss — a
+// scoped read handed to a whole-key write. Splitting it makes that bug unrepresentable
+// instead of merely visible: you now have to NAME which set you want.
+function deploy_loadAllRacks() {
   var all = safeParse(localStorage.getItem(DEPLOY_RACKS_KEY) || '[]', []);
-  if (!Array.isArray(all)) all = [];
-  return deployId ? all.filter(function(r) { return r.deploymentId === deployId; }) : all;
+  return Array.isArray(all) ? all : [];
+}
+function deploy_loadRacksFor(deployId) {
+  // A missing id used to fall through and return the ENTIRE store — the silent failure
+  // that made .348 possible. Fail small and loud instead: callers that genuinely want
+  // everything must say deploy_loadAllRacks().
+  if (!deployId) { _deploy_loaderMisuse('deploy_loadRacksFor'); return []; }
+  return deploy_loadAllRacks().filter(function(r) { return r.deploymentId === deployId; });
 }
 function deploy_saveAllRacks(arr) { var ok = safeStore(DEPLOY_RACKS_KEY, JSON.stringify(arr)); if (ok) _deployRollupGen++; return ok; }
 
@@ -25984,10 +26010,23 @@ function power_blastRadius(topo, nodeId) {
   return hits;
 }
 
-function deploy_loadPhases(deployId) {
+// v1.14.350 — see deploy_loadAllRacks above. Phases is the one family read unscoped, at
+// four sites that now say deploy_loadAllPhases() out loud. TWO of them — checklist_toggle
+// and checklist_setNote — mutate a phase found by globally-unique phaseId inside the
+// unscoped array and round-trip it through deploy_saveAllPhases, so read and write scopes
+// match by construction; a scoped read there would reproduce the .348 clobber for Phases.
+// The other TWO only READ the unscoped array to locate a phase by id and never write
+// DEPLOY_PHASES_KEY: checklist_addItem sets the transient _checklist_open render map and
+// persists its own change to CHECKLIST_SITE_KEY, and ge_onCompleteTap's unchecked-items
+// soft guard writes nothing at all. Both could have used the scoped loader and stayed
+// correct; noted here so the next reader doesn't infer a save that isn't there.
+function deploy_loadAllPhases() {
   var all = safeParse(localStorage.getItem(DEPLOY_PHASES_KEY) || '[]', []);
-  if (!Array.isArray(all)) all = [];
-  return deployId ? all.filter(function(p) { return p.deploymentId === deployId; }) : all;
+  return Array.isArray(all) ? all : [];
+}
+function deploy_loadPhasesFor(deployId) {
+  if (!deployId) { _deploy_loaderMisuse('deploy_loadPhasesFor'); return []; }
+  return deploy_loadAllPhases().filter(function(p) { return p.deploymentId === deployId; });
 }
 function deploy_saveAllPhases(arr) { var ok = safeStore(DEPLOY_PHASES_KEY, JSON.stringify(arr)); if (ok) _deployRollupGen++; return ok; }
 
@@ -26103,7 +26142,7 @@ function checklist_labelOf(phaseType, itemId) {
 }
 function _checklist_hwForPhase(deployId, ph) {
   try {
-    var racks = deploy_loadRacks(deployId);
+    var racks = deploy_loadRacksFor(deployId);
     var rack = racks.find(function(r){ return r.id === ph.rackId; });
     return rack ? ge_deriveHardwareType(rack) : null;
   } catch (e) { return null; }
@@ -26111,7 +26150,7 @@ function _checklist_hwForPhase(deployId, ph) {
 
 // Per-rack check state — rides ph.checks on the phase object.
 function checklist_toggle(deployId, phaseId, itemId) {
-  var all = deploy_loadPhases();
+  var all = deploy_loadAllPhases();
   var ph = all.find(function(p){ return p.id === phaseId; });
   if (!ph) { if (typeof console !== 'undefined') console.warn('[checklist] phase not found', phaseId); phantomToast('Phase not found', 'error'); return; }
   if (!ph.checks || typeof ph.checks !== 'object') ph.checks = {};
@@ -26141,7 +26180,7 @@ function checklist_setNote(deployId, phaseId, itemId, str) {
   if (_checklist_noteTimers[key]) clearTimeout(_checklist_noteTimers[key]);
   _checklist_noteTimers[key] = setTimeout(function() {
     _checklist_noteTimers[key] = null;
-    var all = deploy_loadPhases();
+    var all = deploy_loadAllPhases();
     var ph = all.find(function(p){ return p.id === phaseId; });
     if (!ph) { if (typeof console !== 'undefined') console.warn('[checklist] phase not found for note', phaseId); return; }
     if (!ph.notes || typeof ph.notes !== 'object') ph.notes = {};
@@ -26179,7 +26218,7 @@ function checklist_addItem(deployId, rackId, phaseType) {
   var id = 'usr-' + Date.now().toString(36);
   site.added.push({ id: id, phase: phaseType, label: label });
   checklist_saveSite(site);
-  var ph = deploy_loadPhases().find(function(p){ return p.rackId === rackId && p.type === phaseType; });
+  var ph = deploy_loadAllPhases().find(function(p){ return p.rackId === rackId && p.type === phaseType; });
   if (ph) _checklist_open[ph.id] = true;
   deploy_showRackDetail(deployId, rackId);
 }
@@ -26268,10 +26307,14 @@ function checklist_renderPhase(deployId, rackId, ph, hardwareType, depLocked) {
 }
 
 // ── Stage 5: Optic Ledger Storage ──
-function deploy_loadOptics(deployId) {
+// v1.14.350 — see deploy_loadAllRacks above.
+function deploy_loadAllOptics() {
   var all = safeParse(localStorage.getItem(DEPLOY_OPTICS_KEY) || '[]', []);
-  if (!Array.isArray(all)) all = [];
-  return deployId ? all.filter(function(o) { return o.deploymentId === deployId; }) : all;
+  return Array.isArray(all) ? all : [];
+}
+function deploy_loadOpticsFor(deployId) {
+  if (!deployId) { _deploy_loaderMisuse('deploy_loadOpticsFor'); return []; }
+  return deploy_loadAllOptics().filter(function(o) { return o.deploymentId === deployId; });
 }
 function deploy_saveAllOptics(arr) { var ok = safeStore(DEPLOY_OPTICS_KEY, JSON.stringify(arr)); if (ok) _deployRollupGen++; return ok; }
 
@@ -26522,10 +26565,14 @@ function siteProfile_resetToDefaults() {
 }
 
 // ── Stage 6: Audit Trail Storage ──
-function deploy_loadAudit(deployId) {
+// v1.14.350 — see deploy_loadAllRacks above.
+function deploy_loadAllAudit() {
   var all = safeParse(localStorage.getItem(DEPLOY_AUDIT_KEY) || '[]', []);
-  if (!Array.isArray(all)) all = [];
-  return deployId ? all.filter(function(e) { return e.deploymentId === deployId; }) : all;
+  return Array.isArray(all) ? all : [];
+}
+function deploy_loadAuditFor(deployId) {
+  if (!deployId) { _deploy_loaderMisuse('deploy_loadAuditFor'); return []; }
+  return deploy_loadAllAudit().filter(function(e) { return e.deploymentId === deployId; });
 }
 function deploy_saveAllAudit(arr) { return safeStore(DEPLOY_AUDIT_KEY, JSON.stringify(arr)); }
 
@@ -26654,10 +26701,10 @@ function deploy_renderPhaseStaleBadge(phase, audit, deployId, rackId) {
 }
 
 function deploy_openPhaseDriftModal(phaseId, deployId, rackId) {
-  var phases = deploy_loadPhases(deployId);
+  var phases = deploy_loadPhasesFor(deployId);
   var phase = phases.find(function(p) { return p.id === phaseId; });
   if (!phase) { phantomToast('Phase not found', 'error'); return; }
-  var audit = deploy_loadAudit(deployId) || [];
+  var audit = deploy_loadAuditFor(deployId) || [];
   var events = deploy_phaseDriftEvents(phase, audit);
   var phaseLabel = DEPLOY_PHASE_LABELS_FULL[phase.type] || (phase.type || '').toString().toUpperCase();
   var sigStr = phase.signedOffAt ? new Date(phase.signedOffAt).toLocaleString() : 'unknown';
@@ -26700,7 +26747,7 @@ function deploy_openPhaseDriftModal(phaseId, deployId, rackId) {
 }
 
 function deploy_flagPhaseReverify(phaseId, deployId, rackId) {
-  var phases = deploy_loadPhases(deployId);
+  var phases = deploy_loadPhasesFor(deployId);
   var phase = phases.find(function(p) { return p.id === phaseId; });
   if (!phase) { phantomToast('Phase not found', 'error'); return; }
   var phaseLabel = DEPLOY_PHASE_LABELS_FULL[phase.type] || (phase.type || '').toString().toUpperCase();
@@ -26736,8 +26783,8 @@ function handoff_generate(deploymentId) {
   var cutoff = Date.now() - SHIFT_WINDOW_MS;
 
   var roll   = deploy_computeDeployRollup(deploymentId);
-  var optics = deploy_loadOptics(deploymentId);
-  var audit  = deploy_loadAudit(deploymentId);
+  var optics = deploy_loadOpticsFor(deploymentId);
+  var audit  = deploy_loadAuditFor(deploymentId);
 
   // Events from the last 12 hours
   var shiftEvents = audit.filter(function(e) { return e.ts >= cutoff; });
@@ -26830,7 +26877,7 @@ function deploy_seedOptics(deploymentId) {
 }
 
 function deploy_ensureOptics(deployment) {
-  var existing = deploy_loadOptics(deployment.id);
+  var existing = deploy_loadOpticsFor(deployment.id);
   if (existing.length === 0 && deployment.edpParsed && (deployment.edpParsed.optics || []).length > 0) {
     deploy_seedOptics(deployment.id);
   }
@@ -27199,10 +27246,10 @@ function ge_onCompleteTap(phaseId, deployId, rackId, phaseType) {
   // only prompt a soft confirm.
   if (typeof redesign_isOn === 'function' && redesign_isOn()) {
     try {
-      var _all = deploy_loadPhases();
+      var _all = deploy_loadAllPhases();
       var _ph = _all.find(function(p){ return p.id === phaseId; });
       if (_ph) {
-        var _racks0 = deploy_loadRacks(deployId);
+        var _racks0 = deploy_loadRacksFor(deployId);
         var _rk0 = _racks0.find(function(r){ return r.id === rackId; });
         var _items0 = checklist_effectiveItems(phaseType, _rk0 ? ge_deriveHardwareType(_rk0) : null);
         var _un = 0;
@@ -27211,7 +27258,7 @@ function ge_onCompleteTap(phaseId, deployId, rackId, phaseType) {
       }
     } catch (e) { if (typeof console !== 'undefined') console.warn('[checklist] complete guard skipped', e); }
   }
-  var racks = deploy_loadRacks(deployId);
+  var racks = deploy_loadRacksFor(deployId);
   var rack = racks.find(function(r) { return r.id === rackId; });
   if (!rack) {
     // Fallback to legacy inline confirm if rack somehow missing
@@ -27293,10 +27340,10 @@ var _ta_q = '';       // current search-widen query; '' = ranked shortlist mode
 function ta_open(deployId, rackId, phaseId) {
   var dep = (typeof deploy_getById === 'function') ? deploy_getById(deployId) : null;
   if (!dep) { phantomToast('Deployment not found', 'error'); return; }
-  var racks = deploy_loadRacks(deployId);
+  var racks = deploy_loadRacksFor(deployId);
   var rack = racks.find(function(r){ return r.id === rackId; });
   if (!rack) { phantomToast('Rack not found', 'error'); return; }
-  var phases = deploy_loadPhases(deployId);
+  var phases = deploy_loadPhasesFor(deployId);
   var phase = phases.find(function(p){ return p.id === phaseId; });
   if (!phase) { phantomToast('Phase not found', 'error'); return; }
   var hwType = (typeof ge_deriveHardwareType === 'function') ? ge_deriveHardwareType(rack) : 'generic';
@@ -27444,8 +27491,8 @@ function deploy_computeDeployRollup(deployId) {
   if (_deployDashCache[deployId] && _deployDashCacheGen[deployId] === _deployRollupGen) {
     return _deployDashCache[deployId];
   }
-  var racks = deploy_loadRacks(deployId);
-  var phases = deploy_loadPhases(deployId);
+  var racks = deploy_loadRacksFor(deployId);
+  var phases = deploy_loadPhasesFor(deployId);
   var racksComplete = 0, racksBlocked = 0, racksInProg = 0;
   var phaseAgg = {};
   DEPLOY_PHASE_TYPES.forEach(function(t) { phaseAgg[t] = { total: 0, complete: 0, inProgress: 0, blocked: 0 }; });
@@ -27568,7 +27615,7 @@ function deploy_seedRacksAndPhases(deployment) {
 
 // ── Migrate Legacy Deployments (pre-Stage 3) ──
 function deploy_ensureRacksAndPhases(deployment) {
-  var racks = deploy_loadRacks(deployment.id);
+  var racks = deploy_loadRacksFor(deployment.id);
   if (racks.length === 0 && deployment.edpParsed && (deployment.edpParsed.racks || []).length > 0) {
     deploy_seedRacksAndPhases(deployment);
   }
@@ -27651,7 +27698,7 @@ function deploy_advancePhase(phaseId, newStatus, deployId) {
 }
 
 function deploy_isPhaseGated(deployId, rackId, phaseType) {
-  var phases = deploy_loadPhases(deployId).filter(function(p) { return p.rackId === rackId; });
+  var phases = deploy_loadPhasesFor(deployId).filter(function(p) { return p.rackId === rackId; });
   phases.sort(function(a,b) { return a.seqOrder - b.seqOrder; });
   var typeIdx = DEPLOY_PHASE_TYPES.indexOf(phaseType);
   if (typeIdx <= 0) return false; // mechanical is never gated
@@ -27764,7 +27811,7 @@ function deploy_computeAggregateStats() {
       stats.phaseTotal += roll.phaseAgg[t].total;
     });
 
-    var optics = deploy_loadOptics(dep.id);
+    var optics = deploy_loadOpticsFor(dep.id);
     optics.forEach(function(o) {
       stats.opticsInstalled += (o.installed || 0);
       stats.opticsRequired  += (o.required  || 0);
@@ -28159,7 +28206,7 @@ function deploy_showList(container) {
 
       // ── Live stat reads (all sync) ──
       var roll        = deploy_computeDeployRollup(dep.id);
-      var optics      = deploy_loadOptics(dep.id);
+      var optics      = deploy_loadOpticsFor(dep.id);
       var blockers    = deploy_countBlockers(dep.id);
       var criteria    = Array.isArray(dep.acceptanceCriteria) ? dep.acceptanceCriteria : [];
       var metCount    = criteria.filter(function(c) { return c.status === 'met'; }).length;
@@ -32134,7 +32181,7 @@ async function _deploy_create_postIntake(_results, name, lead, raw, precomputedH
   deploy_seedAcceptance(deployment.id);
 
   // Verify seeding integrity
-  var verifyRacks = deploy_loadRacks(deployment.id);
+  var verifyRacks = deploy_loadRacksFor(deployment.id);
   if (verifyRacks.length === 0 && ((deployment.edpParsed || {}).racks || []).length > 0) {
     var rollback2 = deploy_loadAll().filter(function(d) { return d.id !== deployment.id; });
     deploy_saveAll(rollback2);
@@ -32330,7 +32377,7 @@ function deploy_showDetail(id) {
   html += '</div>';
 
   // ── Rollup Stats Row ──
-  var opticLedger    = deploy_loadOptics(dep.id);
+  var opticLedger    = deploy_loadOpticsFor(dep.id);
   var opticInstalled = 0, opticRequired = 0;
   opticLedger.forEach(function(o) { opticInstalled += (o.installed || 0); opticRequired += (o.required || 0); });
   var opticStatVal   = opticLedger.length ? (opticInstalled + '/' + opticRequired) : ('0/' + opticCount);
@@ -32584,9 +32631,9 @@ function deploy_floorTileHtml(deployId, rack, ru, f) {
 function deploy_activeRacks(deployId) {
   var out = [];
   try {
-    var racks = deploy_loadRacks(deployId);
+    var racks = deploy_loadRacksFor(deployId);
     if (!racks || !racks.length) return out;
-    var phases = deploy_loadPhases(deployId);
+    var phases = deploy_loadPhasesFor(deployId);
     var byRow = {};
     racks.forEach(function(rack) {
       var rowKey = String(rack.rackId || rack.id || '').split(':')[0] || '—';
@@ -32610,12 +32657,12 @@ function deploy_activeRacks(deployId) {
 function deploy_renderFloorMap(deployId) {
   var mapEl = document.getElementById('deploy-floor-map');
   if (!mapEl) return;
-  var racks = deploy_loadRacks(deployId);
+  var racks = deploy_loadRacksFor(deployId);
   if (!racks || !racks.length) {
     mapEl.innerHTML = '<div style="text-align:center;padding:40px 20px;background:var(--surf-1);border:1px solid var(--cyan-border-lo);border-radius:var(--hud-r12)"><div style="font-family:var(--orb);font-size:var(--fs-micro);letter-spacing:2px;color:var(--slate);margin-bottom:8px">NO RACKS</div><div style="font-family:var(--mono);font-size:var(--fs-caption);color:var(--slate)">No rack data found for this deployment.</div></div>';
     return;
   }
-  var allPhases = deploy_loadPhases(deployId);
+  var allPhases = deploy_loadPhasesFor(deployId);
   // FLOOR TILES (v1.6.99) — fixed-proportion rack tiles, wrapped grid, grouped by row.
   // Row = cab-ID segment before the first ':' (same rule as mscope_groupByRow). ONE rack
   // = ONE normal tile (no inflation). Same rollup, same hud_rackFill metaphor as the skyline.
@@ -32708,7 +32755,7 @@ function deploy_renderFloorMap(deployId) {
 //   rackLookup_render()        — (re-)paints into #deploy-rack-lookup
 //
 // STATE ISOLATION:
-//   - Reads only from existing data layer (deploy_loadRacks, deploy_loadPhases,
+//   - Reads only from existing data layer (deploy_loadRacksFor, deploy_loadPhasesFor,
 //     deploy_computeRackRollup). Writes only to localStorage key
 //     'phantom_rack_recent_v1' which is non-critical and degrades gracefully.
 //   - Uses inline event attributes (onclick, oninput) set via innerHTML — NO
@@ -35160,7 +35207,7 @@ function deploy_showRackDetail(deployId, rackId) {
   if (!dep) { phantomToast('Deployment not found', 'error'); return; }
   document.body.classList.add('ops-detail');   // Rule A (v1.14.123): rack detail renders its own inline '‹ Back' step-back → suppress the redundant grid-back
 
-  var racks = deploy_loadRacks(deployId);
+  var racks = deploy_loadRacksFor(deployId);
   var rack = racks.find(function(r) { return r.id === rackId; });
   if (!rack) { phantomToast('Rack not found', 'error'); deploy_showDetail(deployId); return; }
 
@@ -35176,12 +35223,12 @@ function deploy_showRackDetail(deployId, rackId) {
 
   wakeLock_evaluate(deployId, rackId);
 
-  var allPhases = deploy_loadPhases(deployId);
+  var allPhases = deploy_loadPhasesFor(deployId);
   var rackPhases = allPhases.filter(function(p) { return p.rackId === rackId; });
   rackPhases.sort(function(a,b) { return a.seqOrder - b.seqOrder; });
 
   // Stale Phase Surfacer — load audit once, pass into per-phase badge render.
-  var rackAudit = deploy_loadAudit(deployId) || [];
+  var rackAudit = deploy_loadAuditFor(deployId) || [];
 
   var c = deploy_opsHost();
   if (!c) return;
@@ -35875,7 +35922,7 @@ function deploy_showAuditLog(deploymentId) {
   // Cut 14: push nav state for back navigation.
   nav_push({ p: (redesign_isOn() ? 'work' : 'sop'), o: 'deploy', d: 'audit_log:' + deploymentId });
 
-  var entries = deploy_loadAudit(deploymentId);
+  var entries = deploy_loadAuditFor(deploymentId);
   // Newest first
   entries = entries.slice().sort(function(a, b) { return b.ts - a.ts; });
 
@@ -35996,7 +36043,7 @@ function deploy_showOpticLedger(deploymentId) {
   nav_push({ p: (redesign_isOn() ? 'work' : 'sop'), o: 'deploy', d: 'optic_ledger:' + deploymentId });
 
   deploy_ensureOptics(dep);
-  var optics = deploy_loadOptics(deploymentId);
+  var optics = deploy_loadOpticsFor(deploymentId);
   var html = '';
 
   html += '<div style="display:flex;align-items:center;gap: 8px;margin-bottom:14px">';
@@ -36110,7 +36157,7 @@ function deploy_opticTap(opticId, field, delta, deploymentId) {
 }
 
 function deploy_renderOpticSummary(deploymentId) {
-  var optics = deploy_loadOptics(deploymentId);
+  var optics = deploy_loadOpticsFor(deploymentId);
   if (!optics.length) return '';
 
   var totalInstalled = 0, totalRequired = 0, anyOverPull = false;
@@ -36313,7 +36360,7 @@ function deploy_evaluateAcceptance(deploymentId) {
   var roll       = deploy_computeDeployRollup(deploymentId);
   var allPhases  = roll.racks.length > 0 && roll.racksComplete === roll.racks.length;
 
-  var optics     = deploy_loadOptics(deploymentId);
+  var optics     = deploy_loadOpticsFor(deploymentId);
   var allOptics  = optics.length > 0 && optics.every(function(o) { return (o.installed || 0) >= o.required && o.required > 0; });
 
   var reviewHasBeenRun = dep.reviewVerdict !== null && dep.reviewVerdict !== undefined;
@@ -36490,10 +36537,10 @@ function deploy_generateReport(deploymentId) {
   var dep = deploy_getById(deploymentId);
   if (!dep) return null;
 
-  var racks   = deploy_loadRacks(deploymentId);
-  var phases  = deploy_loadPhases(deploymentId);
-  var optics  = deploy_loadOptics(deploymentId);
-  var audit   = deploy_loadAudit(deploymentId).sort(function(a, b) { return a.ts - b.ts; });
+  var racks   = deploy_loadRacksFor(deploymentId);
+  var phases  = deploy_loadPhasesFor(deploymentId);
+  var optics  = deploy_loadOpticsFor(deploymentId);
+  var audit   = deploy_loadAuditFor(deploymentId).sort(function(a, b) { return a.ts - b.ts; });
   var roll    = deploy_computeDeployRollup(deploymentId);
 
   // Per-rack phase summary
@@ -36890,10 +36937,10 @@ function deploy_closeOut(deploymentId, exportFormat, exportFilenames) {
   // Snapshot final stats BEFORE purging anything
   var roll = null;
   try { roll = deploy_computeDeployRollup(deploymentId); } catch(e) { roll = null; }
-  var racks  = deploy_loadRacks(deploymentId);
-  var phases = deploy_loadPhases(deploymentId);
-  var optics = deploy_loadOptics(deploymentId);
-  var audit  = deploy_loadAudit(deploymentId);
+  var racks  = deploy_loadRacksFor(deploymentId);
+  var phases = deploy_loadPhasesFor(deploymentId);
+  var optics = deploy_loadOpticsFor(deploymentId);
+  var audit  = deploy_loadAuditFor(deploymentId);
 
   var phasesComplete  = phases.filter(function(p) { return p.status === 'complete'; }).length;
   var opticsInstalled = optics.reduce(function(s, o) { return s + (o.installed || 0); }, 0);
@@ -36975,10 +37022,10 @@ function deploy_showCloseOutModal(deploymentId) {
   }
 
   // Preview stats for the "what will be exported/purged" card
-  var racks  = deploy_loadRacks(deploymentId);
-  var phases = deploy_loadPhases(deploymentId);
-  var optics = deploy_loadOptics(deploymentId);
-  var audit  = deploy_loadAudit(deploymentId);
+  var racks  = deploy_loadRacksFor(deploymentId);
+  var phases = deploy_loadPhasesFor(deploymentId);
+  var optics = deploy_loadOpticsFor(deploymentId);
+  var audit  = deploy_loadAuditFor(deploymentId);
 
   _closeOutState = {
     deployId:        deploymentId,
@@ -37169,9 +37216,9 @@ function _asbuilt_rackBuild(rack, phases, audit) {
 function deploy_buildAsBuilt(deployId) {
   var dep = deploy_getById(deployId);
   if (!dep) return null;
-  var racks   = deploy_loadRacks(deployId) || [];
-  var phases  = deploy_loadPhases(deployId) || [];
-  var audit   = deploy_loadAudit(deployId) || [];
+  var racks   = deploy_loadRacksFor(deployId) || [];
+  var phases  = deploy_loadPhasesFor(deployId) || [];
+  var audit   = deploy_loadAuditFor(deployId) || [];
   var awAll   = (typeof _auditWalk_loadAll === 'function') ? _auditWalk_loadAll() : {};
   var scans   = _asbuilt_loadAssetScans();
 
@@ -42518,8 +42565,8 @@ function _rackResolve(rawQuery, silent, opts) {
   if (!rack) {
     try {
       activeDep = (typeof deploy_getActive === 'function') ? deploy_getActive() : null;
-      if (activeDep && activeDep.id && typeof deploy_loadRacks === 'function') {
-        var aRacks = deploy_loadRacks(activeDep.id) || [];
+      if (activeDep && activeDep.id && typeof deploy_loadRacksFor === 'function') {
+        var aRacks = deploy_loadRacksFor(activeDep.id) || [];
         for (var ja = 0; ja < aRacks.length; ja++) {
           var dra = aRacks[ja];
           if (String(dra.id || '').toLowerCase() === qLower || String(dra.name || '').toLowerCase() === qLower || String(dra.rackId || '').toLowerCase() === qLower) { rack = dra; break; }
@@ -42531,14 +42578,14 @@ function _rackResolve(rawQuery, silent, opts) {
   // 3) OTHER deployments — confirm before cross-loading
   if (!rack) {
     try {
-      if (typeof deploy_loadAll === 'function' && typeof deploy_loadRacks === 'function') {
+      if (typeof deploy_loadAll === 'function' && typeof deploy_loadRacksFor === 'function') {
         var allDeps = deploy_loadAll();
         if (Array.isArray(allDeps) && allDeps.length > 0) {
           for (var d = 0; d < allDeps.length && !rack; d++) {
             var dep = allDeps[d];
             if (!dep || !dep.id) continue;
             if (activeDep && dep.id === activeDep.id) continue;
-            var depRacks = deploy_loadRacks(dep.id) || [];
+            var depRacks = deploy_loadRacksFor(dep.id) || [];
             for (var j = 0; j < depRacks.length; j++) {
               var dr = depRacks[j];
               if (String(dr.id || '').toLowerCase() === qLower || String(dr.name || '').toLowerCase() === qLower || String(dr.rackId || '').toLowerCase() === qLower) {
@@ -45472,7 +45519,7 @@ function optic_autoCreditLedger(entry, matches) {
     var dep = (typeof deploy_getActive === 'function') ? deploy_getActive() : null;
     if (!dep) return null; // no active deployment → inventory only
     if (dep.status === 'complete') return { credited: false, reason: 'locked' };
-    var optics = (typeof deploy_loadOptics === 'function') ? deploy_loadOptics(dep.id) : [];
+    var optics = (typeof deploy_loadOpticsFor === 'function') ? deploy_loadOpticsFor(dep.id) : [];
     if (!optics || !optics.length) return null;
     var norm = function(s) { return String(s == null ? '' : s).toUpperCase().replace(/[^A-Z0-9]/g, ''); };
     var target = norm(m.optic);
@@ -45484,7 +45531,7 @@ function optic_autoCreditLedger(entry, matches) {
     var okD = deploy_updateOpticCount(rec.id, 'dispensed', 1);
     var okI = okD && deploy_updateOpticCount(rec.id, 'installed', 1);
     if (!okI) return { credited: false, reason: 'guard' };
-    var fresh = (deploy_loadOptics(dep.id) || []).find(function(o) { return o.id === rec.id; }) || rec;
+    var fresh = (deploy_loadOpticsFor(dep.id) || []).find(function(o) { return o.id === rec.id; }) || rec;
     return {
       credited: true,
       opticType: rec.opticType,
@@ -46944,7 +46991,7 @@ async function reconcile_run(force){
         if (ii % 1000 === 999) await _rec_yield();
       }
     }
-    var ledger = (typeof deploy_loadOptics === 'function') ? (deploy_loadOptics(dep.id) || []) : [];
+    var ledger = (typeof deploy_loadOpticsFor === 'function') ? (deploy_loadOpticsFor(dep.id) || []) : [];
     // ---- diff ----
     var findings = [];
     function bomLooseMatch(map, nt){ if (map[nt]!=null) return {q:map[nt],conf:'high'}; var k=Object.keys(map).find(function(x){return x.indexOf(nt)>-1||nt.indexOf(x)>-1;}); return k?{q:map[k],conf:'review'}:null; }
@@ -49170,7 +49217,7 @@ function nerve_buildRackCard(deployId, rackId, dep, rack, ru, rackPhases) {
     }
 
     // ── 2. LAST 3 AUDIT EVENTS for this rack ──
-    var audit = deploy_loadAudit(deployId);
+    var audit = deploy_loadAuditFor(deployId);
     var rackName = rack.rackId || '';
     var rackAudit = audit.filter(function(e) {
       return e.summary && e.summary.indexOf(rackName) !== -1;
@@ -49477,7 +49524,7 @@ function stripeView_clear() {
 async function stripeRack_logNote(deployId, rackId) {
   var rackLabel = rackId;
   try {
-    var racks = deploy_loadRacks(deployId);
+    var racks = deploy_loadRacksFor(deployId);
     var rack = racks.find(function(r) { return r.id === rackId; });
     if (rack) rackLabel = rack.rackId || rack.name || rackId;
   } catch (e) { /* fall through with raw id */ }
@@ -49519,7 +49566,7 @@ async function stripeRack_logNote(deployId, rackId) {
 function actionStripe_renderRackToolbar(el, deployId, rackId) {
   var rackLabel = rackId;
   try {
-    var racks = deploy_loadRacks(deployId);
+    var racks = deploy_loadRacksFor(deployId);
     var rack = racks.find(function(r) { return r.id === rackId; });
     if (rack) rackLabel = rack.rackId || rack.name || rackId;
   } catch (e) { /* fall through with raw id */ }
@@ -49621,7 +49668,7 @@ function actionStripe_refresh() {
       }
       // Priority 5: Optic ledger gap
       else {
-        var optics = deploy_loadOptics(dep.id);
+        var optics = deploy_loadOpticsFor(dep.id);
         var opticGap = optics.find(function(o) { return (o.installed || 0) < o.required; });
         if (opticGap) {
           var totalRemaining = 0;
