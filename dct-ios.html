@@ -12325,7 +12325,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.345';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.346';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -24069,6 +24069,69 @@ function site_derivePlatformsFromMaster() {
   } catch (e) { if (typeof console !== 'undefined') console.warn('[site_derivePlatformsFromMaster]', e); }
 }
 
+// v1.14.346 — the ONE accessor for the loaded Master's SITE-VARS map. The profile
+// pre-fill, the first-run gate and the profile editor all read through it, so exactly
+// one place knows where site vars live. Returns null when no Master is loaded, the
+// Master predates .346, or its SITE-VARS sheet was absent/empty.
+function master_siteVars() {
+  try {
+    var m = (typeof window !== 'undefined') ? window._lastPhantomMaster : null;
+    var v = (m && m.siteVars && typeof m.siteVars === 'object') ? m.siteVars : null;
+    return (v && Object.keys(v).length > 0) ? v : null;
+  } catch (e) { return null; }
+}
+
+// SITE-VARS key → site-profile field. ONLY keys with an exact 1:1 counterpart are
+// mapped — a `customer` or `data-hall` value shoved into FACILITY NAME would be a guess
+// wearing a label, and §1c says an unsupplied field renders explicitly empty instead.
+// The other ~14 keys stay on the Master and are shown read-only in the profile editor.
+// `platforms` is deliberately NOT mapped: site_derivePlatformsFromMaster owns that field
+// from observed host models, which is richer and more current than a SITE-VARS label.
+// One writer per field.
+var SITE_VARS_PROFILE_MAP = [
+  { keys: ['locode', 'site'], field: 'facilityId'           },
+  { keys: ['rack-naming'],    field: 'rackNamingConvention' },
+  { keys: ['pdu-type'],       field: 'pduType'              },
+  { keys: ['standard-optic'], field: 'standardOptics'       }
+];
+
+// v1.14.346 — MASTER INGEST PHASE 2. Pre-fill the site profile from SITE-VARS so a tech
+// never types what the Master already knows. Same discipline as
+// site_derivePlatformsFromMaster above, and for the same reasons:
+//   · runs ONLY after the first-run gate is confirmed — never auto-confirms a fresh device
+//   · MERGE, NEVER OVERWRITE: writes a field only when it is empty, or when whatever is
+//     in it also came from a Master (so a newer Master can refresh its own data). A
+//     hand-typed value always wins and always survives a reload.
+//   · per-field provenance in prof.sources — additive, profile schemaVersion stays 2
+//   · idempotent: no write, no lastUpdated churn, when nothing actually changed
+function site_prefillProfileFromMaster() {
+  try {
+    if (typeof siteProfile_isConfirmed === 'function' && !siteProfile_isConfirmed()) return;
+    var vars = master_siteVars();
+    if (!vars) return;
+    var prof = siteProfile_load();
+    if (!prof) return;
+    // Fresh object every time — prof.sources may be absent, and SITE_PROFILE_DEFAULTS is
+    // shallow-copied by siteProfile_load(), so a shared nested object would be mutated.
+    var sources = Object.assign({}, prof.sources || {});
+    var changed = false;
+    SITE_VARS_PROFILE_MAP.forEach(function(m) {
+      var val = '';
+      for (var i = 0; i < m.keys.length && !val; i++) val = vars[m.keys[i]] || '';
+      if (!val) return;                                  // Master is silent — leave the field empty, never guess
+      var cur = prof[m.field];
+      if (cur && sources[m.field] !== 'master') return;  // hand-entered wins
+      if (cur === val) return;                           // already current
+      prof[m.field] = val;
+      sources[m.field] = 'master';
+      changed = true;
+    });
+    if (!changed) return;
+    prof.sources = sources;
+    siteProfile_save(prof);
+  } catch (e) { if (typeof console !== 'undefined') console.warn('[site_prefillProfileFromMaster]', e); }
+}
+
 // ━━━ FIRST-RUN CONFIRM GATE (v1.6.70) ━━━
 // A fresh device runs on unconfirmed (now-empty) defaults no human has verified — and
 // getContextBlock() already feeds them to the AI as fact. This gate makes a
@@ -24089,22 +24152,37 @@ function firstRun_show() {
     var frMach = function(id, ph, attrs, val) {
       return '<div class="fr-mach"><div class="fr-well"><input id="' + id + '" type="text" class="fr-in" placeholder="' + ph + '" ' + attrs + ' value="' + escHtml(val || '') + '"></div></div>';
     };
+    // v1.14.346 (ingest Phase 2) — when a Master is already loaded (restored from storage
+    // on a device whose profile was cleared, or a second device setup after an import),
+    // the gate shows what the Master already knows instead of an empty form. Values stay
+    // EDITABLE: a tech in the aisle has to be able to correct a wrong Master, and
+    // firstRun_confirm() saves whatever is in the field. Anything SITE-VARS does not
+    // supply stays an explicit empty field — never a guess. rd branch only; the legacy
+    // gate below is untouched and renders byte-identically.
+    var _mv = (typeof master_siteVars === 'function') ? master_siteVars() : null;
+    var _pf = function(field, k1, k2) {
+      if (p[field]) return p[field];
+      if (!_mv) return '';
+      return _mv[k1] || (k2 ? (_mv[k2] || '') : '');
+    };
+    var _fid = _pf('facilityId', 'locode', 'site');
     inner.innerHTML =
       '<div style="padding:26px 0 4px">'
       +   '<p class="fr-crumb"><b>PHANTOM</b> // SET UP THIS DEVICE</p>'
-      +   '<h1 class="fr-h1">' + (p.facilityId ? escHtml(p.facilityId) : 'New device') + '</h1>'
+      +   '<h1 class="fr-h1">' + (_fid ? escHtml(_fid) : 'New device') + '</h1>'
       +   '<p class="fr-lede">' + escHtml(p.facilityName || 'Tell PHANTOM where this device is working.') + '</p>'
       + '</div>'
       + '<div class="fr-sec">YOUR NAME</div>'
       + frMach('fr-operator', 'e.g. J. Hamilton', 'autocapitalize="words" autocomplete="name" spellcheck="false"', p.operator)
       + '<p class="fr-hint">Used on your sign-offs and handoffs.</p>'
       + '<div class="fr-sec">SITE</div>'
-      + frMach('fr-facilityId', 'Site code (e.g. DFW-07)', 'autocapitalize="characters" spellcheck="false"', p.facilityId)
+      + frMach('fr-facilityId', 'Site code (e.g. DFW-07)', 'autocapitalize="characters" spellcheck="false"', _fid)
       + frMach('fr-facilityName', 'Facility name (e.g. CoreWeave Dallas)', 'autocapitalize="words" spellcheck="false"', p.facilityName)
+      + (_mv ? '<p class="fr-hint">Pre-filled from the loaded Master — check it, correct anything wrong.</p>' : '')
       + '<p class="fr-hint">Hardware — switches, GPUs, optics — fills in from the Master you load. PHANTOM doesn\'t assume your gear.</p>'
       + '<div class="fr-sec fr-sec-opt">FLOOR DETAILS <span>— optional, fill when you are on the floor</span></div>'
-      + frMach('fr-rackNaming', 'Rack naming convention', 'autocapitalize="characters" spellcheck="false"', p.rackNamingConvention)
-      + frMach('fr-pdu', 'PDU type', 'autocapitalize="characters" spellcheck="false"', p.pduType)
+      + frMach('fr-rackNaming', 'Rack naming convention', 'autocapitalize="characters" spellcheck="false"', _pf('rackNamingConvention', 'rack-naming'))
+      + frMach('fr-pdu', 'PDU type', 'autocapitalize="characters" spellcheck="false"', _pf('pduType', 'pdu-type'))
       + '<div id="fr-error" role="alert" style="display:none;margin-top:18px;padding:12px 14px;border-radius:10px;border:1px solid rgba(255,69,58,0.5);background:rgba(255,69,58,0.10);color:#ffb3ad;font-family:var(--mono);font-size:12px;line-height:1.5"></div>'
       + '<button id="fr-confirm" class="fr-go" style="--angle:0deg" onclick="firstRun_confirm()"><span class="fr-go-plate"></span><span class="fr-go-spot"></span><b>CONFIRM &amp; ENTER</b></button>';
     // touch-following spotlight (mock verbatim; passive — never blocks scroll)
@@ -26260,6 +26338,30 @@ function siteProfile_showEditor(container) {
   html += field('rackNamingConvention', 'RACK NAMING CONVENTION',   p.rackNamingConvention, 'e.g. L-01 through R-08', false);
   html += field('pduType',             'PDU TYPE',                  p.pduType,              'e.g. Vertiv Geist 3-phase 208V', false);
   html += field('buildLead',           'DEFAULT BUILD LEAD',        p.buildLead,            'e.g. Lead DCT Operator', false);
+
+  // v1.14.346 (ingest Phase 2) — FROM MASTER, read-only. The Master's SITE-VARS sheet
+  // verbatim, read LIVE and never copied into the profile — one source of truth, no
+  // second copy to drift (the two-sources-one-label bug that broke the rack hero).
+  // Deliberately UNFILTERED: the four keys that also pre-fill editable fields above are
+  // still listed, because once a tech types over a pre-filled field this block is the
+  // only place left that still says what the Master actually claims. rd-gated: the
+  // legacy editor renders byte-identically.
+  if (typeof redesign_isOn === 'function' && redesign_isOn()) {
+    var _mvars = (typeof master_siteVars === 'function') ? master_siteVars() : null;
+    if (_mvars) {
+      var _mkeys = Object.keys(_mvars).sort();
+      html += '<div style="background:rgba(155,89,255,0.04);border:1px solid rgba(155,89,255,0.22);border-radius:var(--hud-r12,12px);padding:14px 16px;margin:4px 0 14px">';
+      html += '<div style="font-family:var(--mono);font-size: var(--fs-caption);color:var(--violet-bright,#b58cff);margin-bottom:8px;letter-spacing:1px">FROM MASTER · SITE-VARS (' + _mkeys.length + ')</div>';
+      _mkeys.forEach(function(k) {
+        html += '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:5px 0;border-top:1px solid rgba(155,89,255,0.10)">'
+             +    '<span style="font-family:var(--mono);font-size:10px;letter-spacing:1px;color:var(--slate);text-transform:uppercase;flex:0 0 auto">' + escHtml(k) + '</span>'
+             +    '<span style="font-family:var(--raj);font-size:12px;color:var(--white);text-align:right;flex:1 1 auto;min-width:0;overflow-wrap:anywhere">' + escHtml(_mvars[k]) + '</span>'
+             + '</div>';
+      });
+      html += '<div style="font-family:var(--mono);font-size:10px;color:var(--slate);margin-top:8px;line-height:1.5">Read-only — these come from the loaded Master. Load a different Master to change them.</div>';
+      html += '</div>';
+    }
+  }
 
   html += '<div style="display:flex;gap:8px;margin-top:4px">';
   html += '<button class="pt-btn pt-btn-primary" style="flex:1;padding:14px" onclick="siteProfile_saveFromEditor()">\u25B6 SAVE PROFILE</button>';
@@ -29458,7 +29560,7 @@ function _phantom_master_findSheet(wb, name) {
 // Wraps three methods over a single key 'phantom_master_v1'. The _v1 suffix
 // is the schema version — future schema changes use 'phantom_master_v2' etc.
 // Persisted payload contains schemaVersion, savedAt, sourceFileHash,
-// siteCode, racksByCab. Per Step 1.5 scope: the top-level flat hosts[] and cables[]
+// siteCode, siteVars, racksByCab. Per Step 1.5 scope: the top-level flat hosts[] and cables[]
 // arrays are NOT persisted; restored window._lastPhantomMaster carries racksByCab
 // only — BUT each rack's nested .hosts[] IS retained inside racksByCab, and
 // site_derivePlatformsFromMaster() relies on it for restore-time platform derivation.
@@ -29477,6 +29579,13 @@ var PHANTOM_MASTER_STORE = {
         // OPTIONAL: load() validates only `schemaVersion !== 1`, so payloads written
         // before .237 restore fine and simply report an unknown source.
         sourceFile: parseResult.sourceFile || null,
+        // v1.14.346 — persist SITE-VARS under the same additive/optional contract as
+        // sourceFile above: load() validates only schemaVersion, so payloads written
+        // before .346 restore fine and simply report no site vars. Without this the map
+        // would die at every cold start and the profile pre-fill would only ever run in
+        // the session that imported the file. Weight is ~18 short strings — negligible
+        // against the quota ceiling this handler already guards.
+        siteVars: parseResult.siteVars || null,
         racksByCab: parseResult.racksByCab
       };
       var compressed = LZString.compressToUTF16(JSON.stringify(payload));
@@ -29703,6 +29812,10 @@ async function phantom_parseMaster(arrayBuffer, options) {
     if (!hostsSheet)    throw new Error('phantom_parseMaster: Master file missing required sheet: SITE-HOSTS');
     var cableSheet  = wipSheet || cutsheetSheet;
     var cableSource = wipSheet ? 'WIP' : 'CUTSHEET';
+    // v1.14.346 (ingest Phase 2) — SITE-VARS is ENRICHMENT, never a requirement. Absent
+    // sheet ⇒ siteVars stays null and every consumer degrades to its own empty state.
+    // Only SITE-HOSTS + WIP/CUTSHEET may ever hard-block a Master.
+    var varsSheet   = _phantom_master_findSheet(wb, 'SITE-VARS');
 
     // 6. Output containers + single-pass index helper
     var racksByCab = {};
@@ -29818,6 +29931,31 @@ async function phantom_parseMaster(arrayBuffer, options) {
       }
     }
 
+    // 9b. SITE-VARS → flat key/value map (v1.14.346, ingest Phase 2). KEY-DRIVEN, never
+    //     positional: unknown keys are carried verbatim, missing keys simply never appear,
+    //     so this works with the 3 keys a real Master ships today or the 18 in the test
+    //     fixture. Keys lower-cased for stable lookup; values kept verbatim (they get
+    //     displayed). A 'KEY | VALUE' header row is tolerated and dropped, so a Master
+    //     without one loses nothing. Wrapped: a malformed sheet must never kill the parse.
+    var siteVars = null;
+    if (varsSheet) {
+      try {
+        var varRows = XLSX.utils.sheet_to_json(varsSheet, { header: 1, raw: true, defval: '', blankrows: false });
+        var varMap = {};
+        for (var vi = 0; vi < varRows.length; vi++) {
+          var vr = varRows[vi] || [];
+          var vKey = nLow(vr[0]);
+          var vVal = n(vr[1]);
+          if (!vKey || !vVal) continue;                                     // blank / section row
+          if (vKey === 'key' && vVal.toLowerCase() === 'value') continue;   // header row
+          varMap[vKey] = vVal;
+        }
+        if (Object.keys(varMap).length > 0) siteVars = varMap;
+      } catch (varErr) {
+        console.warn('phantom_parseMaster: SITE-VARS unreadable — continuing without it:', varErr);
+      }
+    }
+
     // 10. Site identity
     if (!siteCode) siteCode = 'UNKNOWN';
     var siteName = siteCode;
@@ -29844,8 +29982,12 @@ async function phantom_parseMaster(arrayBuffer, options) {
         totalHosts: hosts.length,
         totalCables: cables.length,
         cableSource: cableSource,
-        sheetsParsed:  [cableSource, 'SITE-HOSTS'],
-        sheetsSkipped: ['OVERHEAD', 'LEGEND-NET', 'LEGEND-GPU', 'LEGEND-CPU', 'SITE-NODE-DATA', 'SITE-VARS'],
+        // v1.14.346 — honest accounting: SITE-VARS reports as parsed only when it actually
+        // parsed, and stays in sheetsSkipped when this Master doesn't carry it.
+        sheetsParsed:  siteVars ? [cableSource, 'SITE-HOSTS', 'SITE-VARS'] : [cableSource, 'SITE-HOSTS'],
+        sheetsSkipped: siteVars
+          ? ['OVERHEAD', 'LEGEND-NET', 'LEGEND-GPU', 'LEGEND-CPU', 'SITE-NODE-DATA']
+          : ['OVERHEAD', 'LEGEND-NET', 'LEGEND-GPU', 'LEGEND-CPU', 'SITE-NODE-DATA', 'SITE-VARS'],
         parseMs: Math.round(t1 - t0),
         sourceFileHash: sourceFileHash
       },
@@ -29853,7 +29995,7 @@ async function phantom_parseMaster(arrayBuffer, options) {
       hosts: hosts,
       cables: cables,
       legends: { net: null, gpu: null, cpu: null },
-      siteVars: null,
+      siteVars: siteVars,
       ingestedAt: Date.now(),
       schemaVersion: 1
     };
@@ -29923,6 +30065,7 @@ window.master_loadFromPicker = function master_loadFromPicker(opts) {
         } catch (_) {}
         window._lastPhantomMaster = site;
         try { if (typeof site_derivePlatformsFromMaster === 'function') site_derivePlatformsFromMaster(); } catch (_) {}
+        try { if (typeof site_prefillProfileFromMaster === 'function') site_prefillProfileFromMaster(); } catch (_) {}
         try { input.remove(); } catch (_) {}
         resolve(site);
       } catch (err) {
@@ -50125,6 +50268,7 @@ compass_loadState();
     if (!loaded) return;
     window._lastPhantomMaster = Object.assign({}, loaded, { restoredFromStorage: true });
     try { if (typeof site_derivePlatformsFromMaster === 'function') site_derivePlatformsFromMaster(); } catch (_) {}
+    try { if (typeof site_prefillProfileFromMaster === 'function') site_prefillProfileFromMaster(); } catch (_) {}
     console.log('PHANTOM: Master restored from localStorage',
                 '· siteCode=' + loaded.siteCode,
                 '· saved=' + loaded.savedAt);
