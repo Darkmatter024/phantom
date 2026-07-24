@@ -12325,7 +12325,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.347';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.348';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -23725,11 +23725,25 @@ async function deploy_assignRack(deployId, rackId) {
     allowEmpty: true
   });
   if (name === null) return;
-  var racks = deploy_loadRacks(deployId);
+  // v1.14.348 — DATA-LOSS FIX. This MUST load UNSCOPED. deploy_loadRacks(deployId)
+  // returns only THIS deployment's racks, while deploy_saveAllRacks writes its argument
+  // as the ENTIRE DEPLOY_RACKS_KEY — so handing it a scoped list deleted the rack records
+  // of every other deployment on the device (their slots, currentPhase, assignedTo,
+  // powerCircuits), leaving their phases and optics orphaned under their own keys. Every
+  // other rack/phase/optic MUTATION path in the file already reads the raw array for
+  // exactly this reason; this one call site reached for the convenience loader instead.
+  // Rack ids are globally unique ('rack_<deployId>_<idx>'), so the findIndex below still
+  // resolves the right rack out of the full array.
+  var racks = safeParse(localStorage.getItem(DEPLOY_RACKS_KEY) || '[]', []);
+  if (!Array.isArray(racks)) racks = [];
   var idx = racks.findIndex(function(r) { return r.id === rackId; });
-  if (idx === -1) return;
+  if (idx === -1) {
+    console.warn('[deploy_assignRack] rack not in store:', rackId);
+    phantomToast('Rack record not found — refresh and retry', 'error');
+    return;
+  }
   racks[idx].assignedTo = name.trim();
-  if (!deploy_saveRacks(racks)) { phantomToast('Save failed', 'error'); return; }
+  if (!deploy_saveAllRacks(racks)) { phantomToast('Save failed', 'error'); return; }
   deploy_logAudit(deployId, 'RACK_ASSIGNED', 'rack', rackId, name.trim() ? 'Assigned to: ' + name.trim() : 'Unassigned');
   haptic([8]);
   phantomToast(name.trim() ? 'Assigned to ' + name.trim() : 'Assignment cleared', 'ok');
@@ -25850,7 +25864,7 @@ function deploy_loadRacks(deployId) {
   if (!Array.isArray(all)) all = [];
   return deployId ? all.filter(function(r) { return r.deploymentId === deployId; }) : all;
 }
-function deploy_saveRacks(arr) { var ok = safeStore(DEPLOY_RACKS_KEY, JSON.stringify(arr)); if (ok) _deployRollupGen++; return ok; }
+function deploy_saveAllRacks(arr) { var ok = safeStore(DEPLOY_RACKS_KEY, JSON.stringify(arr)); if (ok) _deployRollupGen++; return ok; }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // BLAST RADIUS — Power topology data layer
@@ -27547,7 +27561,7 @@ function deploy_seedRacksAndPhases(deployment) {
     });
   });
 
-  if (!deploy_saveRacks(allRacks)) { phantomToast('Storage full — racks not saved', 'error'); return false; }
+  if (!deploy_saveAllRacks(allRacks)) { phantomToast('Storage full — racks not saved', 'error'); return false; }
   if (!deploy_savePhases(allPhases)) { phantomToast('Storage full — phases not saved', 'error'); return false; }
   return true;
 }
@@ -27611,7 +27625,7 @@ function deploy_advancePhase(phaseId, newStatus, deployId) {
   var rackDisplayName = (ri !== -1) ? (allRacks[ri].rackId || phaseRackId) : phaseRackId;
   if (ri !== -1) {
     allRacks[ri].currentPhase = cp;
-    if (!deploy_saveRacks(allRacks)) { phantomToast('Storage full — rack state may be stale', 'warn'); }
+    if (!deploy_saveAllRacks(allRacks)) { phantomToast('Storage full — rack state may be stale', 'warn'); }
   }
 
   // Update deployment timestamp
@@ -35575,7 +35589,7 @@ function deploy_purgeHeavyData(deploymentId) {
   // Racks
   var allRacks = safeParse(localStorage.getItem(DEPLOY_RACKS_KEY) || '[]', []);
   allRacks = allRacks.filter(function(r) { return r.deploymentId !== deploymentId; });
-  if (!deploy_saveRacks(allRacks)) { phantomToast('Storage error — rack cleanup incomplete', 'warn'); }
+  if (!deploy_saveAllRacks(allRacks)) { phantomToast('Storage error — rack cleanup incomplete', 'warn'); }
 
   // Phases
   var allPhases = safeParse(localStorage.getItem(DEPLOY_PHASES_KEY) || '[]', []);
