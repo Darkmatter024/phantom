@@ -299,7 +299,7 @@ field is how you put yours back.
 
 **Batch `.346–.347` = 2 of 6.**
 
-## v1.14.348 — ASSIGN RACK destroyed other deployments' racks (`pending`) · rollback: revert commit
+## v1.14.348 — ASSIGN RACK destroyed other deployments' racks (`9d9b371`) · rollback: revert commit
 **HIGH-risk surface:** deployment record storage. Both gates PASS; 10/10 offline assertions.
 **Needs TWO deployments with racks to verify — with one deployment the bug was invisible.**
 
@@ -341,3 +341,15 @@ deployments or vanishes.**
 - [ ] Nothing visual changed anywhere
 
 **Batch `.346–.350` = 5 of 6. Next ship hits the CALL-0 count cap — verify + release this batch before or at .351.**
+
+---
+## ✅ BATCH `.346–.350` — CLEARED by owner 2026-07-24 ("all good moving on")
+All 5 ships cleared in one call. CALL-0 count cap **reset** — the next ship opens a new batch at 1 of 6.
+
+**Recorded honestly:** the owner cleared the batch in chat rather than checking the boxes above
+item-by-item. The `.348` / `.350` two-deployment cross-contamination checks in particular were
+**not reported back individually**. Both ships carry offline proof (10/10 and 20/20 assertions on
+the shipped bytes, both gates PASS) and both are independently revertible by their own commit, so
+this is a low-exposure clear — but if racks or phase state ever look wrong across two deployments,
+**start here**: `git revert 9d9b371` (.348 data fix) and `git revert 1734dc9` (.350 split) are
+independent of each other.
