@@ -1,7 +1,7 @@
 # BATCH-VERIFY — consolidated device checklist (CALL 0, DIRECTIVE 2026-07-06)
 **Protocol:** ships stack; owner runs THIS list once per batch (cap: every 6 stacked ships or before
 any HIGH-risk ship). Every ship keeps its own rollback line. Claude Code appends; owner checks off.
-**Batches .192-.197, .198-.201, .202-.212, .213-.214, and .215: RELEASED by owner (.202-.212 verified 2026-07-08; .213 boot plate + .214 deploy-tap FIX verified 2026-07-09; .215 crash-log hardening verified "all good" 2026-07-09). Current batch: (open — next ship starts a new batch)** · Clear SW cache before the pass.
+**Batches .192-.197, .198-.201, .202-.212, .213-.214, and .215: RELEASED by owner (.202-.212 verified 2026-07-08; .213 boot plate + .214 deploy-tap FIX verified 2026-07-09; .215 crash-log hardening verified "all good" 2026-07-09). Batch .340-.345: RELEASED 2026-07-23 ("340-345 good") — cleared the 6-ship count cap and the MASTER FULL-INGEST HIGH-risk prereq. Current batch: OPEN, starts at .346 (1 of 6) — see the last section of this file.** · Clear SW cache before the pass.
 
 ---
 
@@ -256,3 +256,29 @@ Maintained through `.215`, then drifted. `.216–.339` verify status = git log +
 ---
 ## ✅ BATCH `.340–.345` — RELEASED by owner 2026-07-23 ("340-345 good")
 All 6 ships device-verified on iPhone. CALL-0 6-ship count cap **cleared** + the MASTER FULL-INGEST HIGH-risk prereq **cleared**. Next ship opens a new batch.
+
+---
+
+# ▶ OPEN BATCH — starts at `.346` (count 1 of 6)
+
+## v1.14.346 — MASTER FULL-INGEST Phase 2: SITE-VARS (`38bb94a`) · rollback: revert commit
+**HIGH-risk surface:** sacred parse path + a user-data write. Both gates PASS; 25/25 offline
+assertions against `test/MASTER-US-CENTRAL-AUS03-TEST.xlsx` executing the shipped bytes.
+**Clear the SW cache first, then load the AUS03 test Master.**
+
+- [ ] Load the test Master → SITE PROFILE sheet shows a violet **FROM MASTER · SITE-VARS (18)** block, all 18 rows readable, nothing running off the right edge at phone width
+- [ ] FACILITY ID / RACK NAMING / PDU TYPE / STANDARD OPTICS fill themselves **only if they were blank**
+- [ ] Type your own value over PDU TYPE → save → load the Master again → **your value is still there** (merge, never overwrite)
+- [ ] A Master with no SITE-VARS sheet still ingests normally; the FROM MASTER block simply does not render
+- [ ] Console after a load: `stats.sheetsParsed` includes `SITE-VARS`, and it is gone from `sheetsSkipped`
+- [ ] Force-quit and cold-start the app → the FROM MASTER block is still populated (siteVars survives the restore)
+- [ ] `?legacy=1` → site profile editor and first-run gate look exactly as before
+
+**Known deviation to rule on:** spec asked for a read-only setup screen (name-only editable).
+Fields are pre-filled + provenance-tagged but left EDITABLE — a locked field with no override
+strands you on a wrong Master. One-line change to lock if you want it locked.
+
+**Separate pre-existing bug found, NOT fixed here (owns its own ship):** saving the SITE PROFILE
+editor drops `operator` — your name is wiped from sign-offs and the editor has no field to put it
+back. It also drops the new `sources` map, which makes Master-filled fields permanently
+hand-entered after any editor save (fail-safe, never a clobber).
