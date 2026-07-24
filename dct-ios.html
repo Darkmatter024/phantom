@@ -12325,7 +12325,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.346';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.347';
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
@@ -26302,6 +26302,13 @@ function siteProfile_showEditor(container) {
   html += '<div style="font-family:var(--raj);font-size:12px;color:var(--slate-readable)">This profile is automatically prepended to every AI prompt — AI Review, BOM Analyzer, and Voice Assistant. Keep it accurate to your current facility state.</div>';
   html += '</div>';
 
+  // v1.14.347 — YOUR NAME. The identity field finally lives on the surface that owns
+  // identity, so a name wiped by the pre-.347 editor save can be typed back. Leaving it
+  // blank changes nothing (siteProfile_saveFromEditor treats blank as "no change").
+  // rd-gated: the legacy editor renders byte-identically.
+  if (typeof redesign_isOn === 'function' && redesign_isOn()) {
+    html += field('operator',           'YOUR NAME',                p.operator,             'e.g. J. Hamilton', false);
+  }
   html += field('facilityId',           'FACILITY ID',              p.facilityId,           'e.g. DFW-07', false);
   html += field('facilityName',         'FACILITY NAME',            p.facilityName,         'e.g. CoreWeave Dallas', false);
 
@@ -26442,19 +26449,43 @@ function siteProfile_saveFromEditor() {
     var el = document.getElementById('sp-' + id);
     return el ? el.value.trim() : '';
   };
-  var profile = {
-    facilityId:           get('facilityId')           || SITE_PROFILE_DEFAULTS.facilityId,
-    facilityName:         get('facilityName')         || SITE_PROFILE_DEFAULTS.facilityName,
-    platforms:            (_spEditorDraft && Array.isArray(_spEditorDraft.platforms))
-                            ? _spEditorDraft.platforms.slice()
-                            : SITE_PROFILE_DEFAULTS.platforms.slice(),
-    standardOptics:       get('standardOptics')       || SITE_PROFILE_DEFAULTS.standardOptics,
-    floorZones:           get('floorZones')           || SITE_PROFILE_DEFAULTS.floorZones,
-    rackNamingConvention: get('rackNamingConvention') || SITE_PROFILE_DEFAULTS.rackNamingConvention,
-    pduType:              get('pduType')              || SITE_PROFILE_DEFAULTS.pduType,
-    buildLead:            get('buildLead'),
-    schemaVersion:        2
-  };
+  // v1.14.347 — DATA-LOSS FIX. This used to build a FRESH literal, which silently dropped
+  // every profile field the editor has no input for. `operator` above all: saving the site
+  // profile wiped the tech's name off every sign-off and handoff, and nothing in the app
+  // could put it back (the editor had no name field and the first-run gate never fires
+  // twice). It also dropped confirmedAt (survived only by siteProfile_load's lastUpdated
+  // backfill) and, as of .346, the `sources` provenance map. Now: start from the STORED
+  // profile and overwrite ONLY the fields this editor actually owns.
+  var profile = siteProfile_load();
+  // Provenance bookkeeping: a Master-filled field the human types over becomes THEIRS —
+  // drop its 'master' tag so a future Master reload can never overwrite the edit. A field
+  // left exactly as the Master set it keeps its tag and stays refreshable.
+  var _srcs = Object.assign({}, profile.sources || {});
+  var _prev = {};
+  Object.keys(_srcs).forEach(function(k) { _prev[k] = profile[k]; });
+
+  profile.facilityId           = get('facilityId')           || SITE_PROFILE_DEFAULTS.facilityId;
+  profile.facilityName         = get('facilityName')         || SITE_PROFILE_DEFAULTS.facilityName;
+  profile.platforms            = (_spEditorDraft && Array.isArray(_spEditorDraft.platforms))
+                                   ? _spEditorDraft.platforms.slice()
+                                   : SITE_PROFILE_DEFAULTS.platforms.slice();
+  profile.standardOptics       = get('standardOptics')       || SITE_PROFILE_DEFAULTS.standardOptics;
+  profile.floorZones           = get('floorZones')           || SITE_PROFILE_DEFAULTS.floorZones;
+  profile.rackNamingConvention = get('rackNamingConvention') || SITE_PROFILE_DEFAULTS.rackNamingConvention;
+  profile.pduType              = get('pduType')              || SITE_PROFILE_DEFAULTS.pduType;
+  profile.buildLead            = get('buildLead');
+  profile.schemaVersion        = 2;
+
+  // YOUR NAME — only when the field is actually on screen (rd only). A blank box is
+  // treated as "no change", never as "erase my name": that is the bug this ship fixes.
+  var _opEl = document.getElementById('sp-operator');
+  if (_opEl && _opEl.value.trim()) profile.operator = _opEl.value.trim();
+
+  Object.keys(_srcs).forEach(function(k) {
+    if (profile[k] !== _prev[k]) delete _srcs[k];
+  });
+  profile.sources = _srcs;
+
   if (siteProfile_save(profile)) {
     haptic([10, 30, 10]);
     _spEditorDraft = null; // clear draft so next open reads fresh from storage
