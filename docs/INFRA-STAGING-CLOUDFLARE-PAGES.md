@@ -62,15 +62,38 @@ production branch `main`, preview branches none. Owner-created. The `phantom-api
 | GitHub Pages `version.json` vs `origin/release` (f95ece0) | **byte-identical**, still `phantom-v1.14.585` — release untouched |
 | `/dct-ios.html` on staging | **307 → `/dct-ios`** (also `/index.html` → `/`, and `?legacy` survives the redirect). Bytes after the redirect are identical to `main`. |
 
-⚠ **The `.html` → extensionless 307 is a lead, not a defect proven on a phone.** It is Workers static assets'
-default `html_handling: "auto-trailing-slash"`, not anything in the repo. `version.json` is unaffected, so
-`tools/verify.ps1` reads it directly. What it *could* affect, unmeasured: the service worker precaches
-`'dct-ios.html'` via `cache.addAll`, which follows the redirect and stores a response flagged `redirected`; a
-navigation answered offline from that entry is rejected by browsers as a redirected response to a
-non-`follow` request. **So offline boot of the PHANTOM STAGING icon may fail where the PHANTOM icon's does
-not.** Only an offline-behaviour look on staging would hit it; version verifies do not. **Fix, when wanted,
-is infra-side:** `html_handling: "none"` on the Worker's assets config (dashboard, or a `wrangler.jsonc` at the
-repo root — the latter is a repo change and needs a GO). Owner's call; parked here.
+✅ **The `.html` → extensionless 307 is CLOSED — `64e6cf8`, owner GO 2026-09-09 ("html_handling none via
+wrangler.jsonc, no version bump").** It was Workers static assets' default `html_handling: "auto-trailing-slash"`,
+not anything in the repo. `wrangler.jsonc` at the repo root now pins the Worker: `name phantom-staging` (it is
+the workers.dev hostname), `assets.directory ./`, `html_handling none`, `not_found_handling none`. `.assetsignore`
+keeps `.git/`, `node_modules/` and the gitignored local tooling out of the upload; `.gitattributes` pins that file
+to LF because wrangler splits it on bare LF and a CRLF copy ignores nothing (measured: the first local dry-run
+walked all 6,441 files under `.git`; with LF, 8,635 of 9,086 entries ignored). Why the redirect mattered: the
+service worker precaches `'dct-ios.html'` through a redirect as a response flagged `redirected`, which browsers
+reject for an offline navigation, so the staging icon could have failed to boot offline where the release icon
+does not.
+
+**Measured after the rebuild, staging at `64e6cf8` (2026-09-09):**
+
+| Path | Before | After |
+|---|---|---|
+| `/dct-ios.html` · `/dct-ios.html?legacy` · `/index.html` | 307 | **200, no redirect** — parity with Pages |
+| `/dct-ios` | 200 (the redirect target) | 404 — as on Pages |
+| `/` | 200 (index.html) | **404** — see the lead below |
+| `/.git/HEAD` · `/.git/config` · `/.assetsignore` | — | 404 — nothing under `.git` was uploaded |
+| `/wrangler.jsonc` · `/tools/verify.ps1` | — | 200, byte-identical to `origin/main` — the build is from the new commit |
+| `version.json` · `sw.js` · `dct-ios.html` · `manifest.json` · `index.html` vs `origin/main` | identical | identical |
+| GitHub Pages | `.585`, `origin/release` f95ece0 | unchanged |
+
+⚠ **New lead from the same measurement: the bare root `/` is 404 on staging.** With `html_handling: none`
+nothing maps `/` to `index.html`, whereas Pages renders the landing at `/phantom/`. No verify path uses the root:
+the icon opens `/dct-ios.html`, the QR helper builds absolute URLs, the service worker's offline root fallback is
+its own cache. If root parity is wanted, the exact fix is a one-line `_redirects` at the repo root —
+`/ /index.html 200` — a rewrite, not a redirect, inert on Pages. **Not added; owner's call.**
+
+⚠ **The PHANTOM STAGING icon was added to the phone while `/dct-ios.html` still redirected.** If it now opens
+to a not-found page, remove it and re-add from `https://phantom-staging.wfj6t2fk7w.workers.dev/dct-ios.html`.
+A re-add is a fresh install (iOS deletes a removed web app's storage): load a Master again.
 
 **Tools follow the surface — landed the same day** (the script-only ship this doc's §3 promised):
 `tools/verify.ps1` NOT-SERVED reads `origin/main` and requires `HEAD == origin/main`; SERVED-BYTES reads the
