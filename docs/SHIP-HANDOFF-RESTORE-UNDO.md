@@ -1,7 +1,7 @@
 # SHIP-HANDOFF-RESTORE-UNDO
 
 **Written:** 2026-09-09 · **Ruling:** `OWNER-RULINGS.md` 2026-09-09 RESTORE-UNDO · **Evidence:** `docs/RESTORE-UNDO-PHASE0-EVIDENCE.md` (read it first; every anchor is there)
-**Status:** spec only. **Not authorised to build.** Q1 is ruled (refuse when the snapshot cannot be taken, one-line reason). Q2 waits on the owner picking a placement from the evidence §6 options. Q3 (expiry) is parked until the storage budget is measured on the phone (evidence §4). Not inside `.585` or `.586`.
+**Status:** spec only. **Not authorised to build.** Q1 is ruled (refuse when the snapshot cannot be taken, one-line reason). Q2 is ruled (2026-09-09): **A, the header band** — evidence §6, no interstitial, no SYS row. Q3 (expiry) is parked until the storage budget is read off the phone (evidence §4: the backup file's size in Files, and `N MB / M MB` from the STORAGE gauge on SYS → PROFILE). Not inside `.585` or `.586`.
 
 ## Purpose
 A restore becomes undoable: the device's current state is snapshotted before any write, and exactly one revert is offered afterwards. The confirm (`.585`) stays; the undo is what works when the confirm was not read.

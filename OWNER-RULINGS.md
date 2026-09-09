@@ -35,6 +35,10 @@ lacks a deploy section may clear it on the device:**
 - **Q2, band placement:** *"whatever puts the revert in front of the tech at the moment they realize
   it went wrong, not buried. Show me your options with tap counts before you build."* → options with
   tap counts in `docs/RESTORE-UNDO-PHASE0-EVIDENCE.md` §6; owner picks before any build.
+  **RULED 2026-09-09 — A, the header band.** Owner, verbatim, with the §6 table and its tap counts in
+  front of him: *"a"*. One door: the band beside the storage/backup warnings on every screen while a
+  slot exists — `RESTORE APPLIED HH:MM · from <file> · UNDO | KEEP` — persistent until UNDO or KEEP,
+  no auto-hide, no interstitial, no SYS row.
 - **Q3, expiry:** *"parked, don't guess. Bring me what the storage budget actually allows in
   IndexedDB and I'll rule from that."* → measurement plan in the same evidence §4; the harness engine
   returns `null` for `navigator.storage.estimate()`, so the number comes from the phone.

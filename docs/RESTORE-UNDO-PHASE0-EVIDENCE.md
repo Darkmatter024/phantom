@@ -80,7 +80,7 @@ Snapshot exists before the first `safeStore` (stub `Storage.prototype.setItem` t
 ## 9 · Questions for the owner — answered 2026-09-09 (verbatim in `OWNER-RULINGS.md`)
 
 - **Q1 — RULED: refuse.** *"Refuse the restore when the snapshot cannot be taken: yes, refuse. Tell the tech why in one line."* The refusal line: `Restore not started — could not save an undo point (<reason>). Nothing was changed.`
-- **Q2 — options with tap counts in §6; the owner picks before any build.** Recommendation: A, the header band.
+- **Q2 — RULED 2026-09-09: A, the header band** (owner, verbatim: *"a"*, picking from the §6 table). No interstitial, no SYS row.
 - **Q3 — PARKED by the owner until the storage budget is measured on the phone** (§4: the backup file size from Files, and `M MB` from the STORAGE gauge on SYS → PROFILE — both already readable, no slice needed). Not guessed.
 
 ## 9a · The honest round-trip pin (`test/e2e/53-restore-reload-honesty.spec.js`, pinned 2026-09-09)
