@@ -6,6 +6,40 @@ is stale until edited. Newest first.
 
 ---
 
+## 2026-09-09 · RESTORE-UNDO — a restore becomes undoable; neither "blank is never an erase" nor strict replace
+
+**Ruling, verbatim (in session, 2026-09-09), answering the `.585` question of whether a backup that
+lacks a deploy section may clear it on the device:**
+
+> I'm not ruling "blank is never an erase" and I'm not ruling strict replace either. Neither is
+> right. There is no cross-device sync, so there is exactly one copy of that deploy data and an
+> unrecoverable clear is the actual risk — but a merge produces a state that never existed on any
+> device and gives me no way back to clean. Ruling: restore becomes undoable. Snapshot current state
+> before applying, offer one revert. A confirm dialog is something a tech reads with gloves on at
+> 3am; an undo is something that works when they didn't. Write that as its own spec, evidence first,
+> don't ship it inside .585 or .586.
+
+### What it settles
+
+- The restore keeps its replace semantics; the confirm keeps saying CLEARED (`.585`). Neither is
+  the fix. **The fix is a persisted pre-restore snapshot and one revert.**
+- **Own ship, own version, evidence first:** `docs/RESTORE-UNDO-PHASE0-EVIDENCE.md` (what a restore
+  writes, what it does not touch, why the snapshot cannot live in `localStorage`, what one revert
+  must capture) and `docs/SHIP-HANDOFF-RESTORE-UNDO.md` (the spec). Not folded into `.585` or `.586`.
+
+### Reported in the same message, NOT recorded here as law — owner ruling pending
+
+The owner stated the canonical order as *verify → stamp → promote, device checks against main's
+live Pages URL*, and asked not to be told to promote `.585` before the phone check. **Measured the
+same hour (2026-09-09 14:26:54 GMT last-modified):** Pages serves `release` (`.584`, `d02a081`);
+`main` (`.585`) is not served at any URL; there is no `.github/workflows`. That is ruling C
+(`30f3822`, 2026-09-08) and rev 2 §0 of the owner's own handoff (*"Order is serve → device-see →
+verify"*), and it is the reason `.583` and `.584` were adjudicated promote → phone → `verify.ps1`.
+The contradiction is reported, not resolved: the owner rules whether to keep serve → see → verify,
+or to fund a served staging surface for `main` so his stated order becomes executable.
+
+---
+
 ## 2026-09-08 · PREVIEW-DIAG — RACK-PREVIEW-CONTEXT Option 5, INSTRUMENTATION ONLY, APPROVED
 
 **Ruling, verbatim (in session, 2026-09-08):**

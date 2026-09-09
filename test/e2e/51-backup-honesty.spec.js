@@ -67,7 +67,11 @@ async function arm(page, opts) {
       });
     }
     if (o.idb === 'fail') {
-      window.indexedDB.open = function () {
+      // On the PROTOTYPE, not the instance (owner, 2026-09-09, from the .585 finding): an own
+      // property on window.indexedDB vanishes within ~500 ms on the same page — WebKit does not
+      // keep an expando on a platform-object wrapper alive unless JS holds a reference. This
+      // stub only ever worked here because the export consumes it within milliseconds.
+      IDBFactory.prototype.open = function () {
         const r = {};
         setTimeout(() => { if (r.onerror) r.onerror({ target: r }); }, 0);
         return r;
