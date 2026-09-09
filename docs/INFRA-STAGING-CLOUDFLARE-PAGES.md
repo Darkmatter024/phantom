@@ -89,11 +89,12 @@ does not.
 nothing maps `/` to `index.html`, whereas Pages renders the landing at `/phantom/`. No verify path uses the root:
 the icon opens `/dct-ios.html`, the QR helper builds absolute URLs, the service worker's offline root fallback is
 its own cache. If root parity is wanted, the exact fix is a one-line `_redirects` at the repo root —
-`/ /index.html 200` — a rewrite, not a redirect, inert on Pages. **Not added; owner's call.**
+`/ /index.html 200` — a rewrite, not a redirect, inert on Pages. **Ruled 2026-09-09, owner verbatim:** *"Skip the
+_redirects file — no verify path uses the root and I'd rather keep staging simple."* **Closed; the root stays 404.**
 
-⚠ **The PHANTOM STAGING icon was added to the phone while `/dct-ios.html` still redirected.** If it now opens
-to a not-found page, remove it and re-add from `https://phantom-staging.wfj6t2fk7w.workers.dev/dct-ios.html`.
-A re-add is a fresh install (iOS deletes a removed web app's storage): load a Master again.
+✅ **The PHANTOM STAGING icon** had been added while `/dct-ios.html` still redirected; the owner re-added it from
+`https://phantom-staging.wfj6t2fk7w.workers.dev/dct-ios.html` after the fix and reports it loading fine (2026-09-09).
+A re-add is a fresh install (iOS deletes a removed web app's storage), so the Master was loaded again.
 
 **Tools follow the surface — landed the same day** (the script-only ship this doc's §3 promised):
 `tools/verify.ps1` NOT-SERVED reads `origin/main` and requires `HEAD == origin/main`; SERVED-BYTES reads the
