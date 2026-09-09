@@ -12862,7 +12862,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.584';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.585';
 // Immediate version check: reload if cached HTML is stale. Runs before anything else.
 (function() {
   fetch('./version.json?_=' + Date.now(), { cache: 'no-store' })
@@ -56119,9 +56119,213 @@ setInterval(phantomStorageCheck, 300000);
 // adopts the Master through PHANTOM_MASTER.adoptRestored, re-runs both migrations, and rebuilds
 // every derived index. §9's classification for this path is RECOVERY ONLY — it restores state and
 // hands control straight back to the one boot path, never to a half-updated running app.
-function phantom_restoreComplete() {
+// ━━━ v1.14.585 — RESTORE HONESTY helpers (DATA-HONESTY-COMMAND Batch 2 P0 sub-ship 2) ━━━
+// Every bundle section the restore knows about: [bundle field, manifest store, label, device key,
+// kind]. 'array-always' sections are written on every restore even when the file lacks them (the
+// pre-existing replace semantics), which is exactly why the confirm must say CLEARED for them.
+var PHANTOM_RESTORE_SECTIONS = [
+  ['sops',              'dct_sops_v1',               'SOPs',                 'dct_sops_v1',              'array'],
+  ['rackMaps',          'dct_racks_v1',              'Rack maps',            'dct_racks_v1',             'array'],
+  ['burndown',          'dct_burndown_v1',           'Burndown jobs',        'dct_burndown_v1',          'array'],
+  ['opticInventory',    'phantom_optic_inventory',   'Optic scans',          'phantom_optic_inventory',  'array'],
+  ['deployments',       'phantom_deployments_v1',    'Deployments',          'phantom_deployments_v1',   'array'],
+  ['deployRacks',       'phantom_deploy_racks_v1',   'Deploy racks',         'phantom_deploy_racks_v1',  'array-always'],
+  ['deployPhases',      'phantom_deploy_phases_v1',  'Deploy phases',        'phantom_deploy_phases_v1', 'array-always'],
+  ['deployOptics',      'phantom_deploy_optics_v1',  'Optic ledger records', 'phantom_deploy_optics_v1', 'array-always'],
+  ['deployAudit',       'phantom_deploy_audit_v1',   'Audit events',         'phantom_deploy_audit_v1',  'array-always'],
+  ['handoffs',          'phantom_handoff_v1',        'Shift handoffs',       'phantom_handoff_v1',       'array-always'],
+  ['ghostEcho',         'GhostEchoDB:ghosts',        'Ghost Echo entries',   null,                       'array'],
+  ['discrepancies',     'phantom_discrepancies_v1',  'Discrepancies',        null,                       'array'],
+  ['discrepancyPhotos', 'phantom_discrepancy_photos','Discrepancy photos',   null,                       'array'],
+  ['rackHistory',       'phantom_rack_history',      'Rack history',         'phantom_rack_history',     'object'],
+  ['edpCache',          'phantom_edp_cache_v1',      'EDP cache',            'phantom_edp_cache_v1',     'object'],
+  ['siteProfile',       'phantom_site_profile_v1',   'Site profile',         'phantom_site_profile_v1',  'object'],
+  ['ghostQuirks',       'phantom_ghost_echo_v1',     'Ghost Echo quirks',    null,                       'object'],
+  ['keys',              '[extra-keys-registry]',     'additional data keys', null,                       'object'],
+  ['master',            'phantom_master_v1',         'Master',               'phantom_master_v1',        'string'],
+  ['jobsnap',           'phantom_jobsnap_v1',        'Scope snapshot',       'phantom_jobsnap_v1',       'string']
+];
+
+// Structural validation, BEFORE any write. Returns null, or the reason the file is damaged. Kept
+// tight on purpose — a false refusal blocks a real recovery: type checks on the sections above,
+// and the manifest's recordCount against the list it describes (a truncated or hand-edited file).
+function phantom_restoreValidate(bundle) {
+  var i, s, v;
+  for (i = 0; i < PHANTOM_RESTORE_SECTIONS.length; i++) {
+    s = PHANTOM_RESTORE_SECTIONS[i]; v = bundle[s[0]];
+    if (v === undefined || v === null) continue;
+    var kind = (s[4] === 'array-always') ? 'array' : s[4];
+    if (kind === 'array' && !Array.isArray(v)) return s[0] + ' is not a list';
+    if (kind === 'object' && (typeof v !== 'object' || Array.isArray(v))) return s[0] + ' is not a record';
+    if (kind === 'string' && typeof v !== 'string') return s[0] + ' is not text';
+  }
+  if (Array.isArray(bundle.manifest)) {
+    for (i = 0; i < bundle.manifest.length; i++) {
+      var m = bundle.manifest[i];
+      if (!m || m.included !== true || typeof m.recordCount !== 'number') continue;
+      var sec = null;
+      for (var j = 0; j < PHANTOM_RESTORE_SECTIONS.length; j++) { if (PHANTOM_RESTORE_SECTIONS[j][1] === m.store) { sec = PHANTOM_RESTORE_SECTIONS[j]; break; } }
+      if (!sec || (sec[4] !== 'array' && sec[4] !== 'array-always')) continue;   // counts are checked for lists only
+      v = bundle[sec[0]];
+      var n = Array.isArray(v) ? v.length : 0;
+      if (n !== m.recordCount) return 'manifest says ' + m.recordCount + ' ' + sec[2].toLowerCase() + ', file has ' + n;
+    }
+  }
+  return null;
+}
+
+// The referential-integrity filter, verbatim from the write path, returned with what it dropped so
+// the confirm can name the orphans instead of the write set silently losing them.
+function phantom_restoreOrphans(bundle) {
+  var validDepIds = {};
+  if (Array.isArray(bundle.deployments)) bundle.deployments.forEach(function(d) { if (d && d.id) validDepIds[d.id] = true; });
+  var racks  = Array.isArray(bundle.deployRacks)  ? bundle.deployRacks  : [];
+  var phases = Array.isArray(bundle.deployPhases) ? bundle.deployPhases : [];
+  var optics = Array.isArray(bundle.deployOptics) ? bundle.deployOptics : [];
+  var audit  = Array.isArray(bundle.deployAudit)  ? bundle.deployAudit  : [];
+  var hand   = Array.isArray(bundle.handoffs)     ? bundle.handoffs     : [];
+  var cleanRacks = racks.filter(function(r) { return r && r.deploymentId && validDepIds[r.deploymentId]; });
+  var validRackIds = {};
+  cleanRacks.forEach(function(r) { if (r && r.id) validRackIds[r.id] = true; });
+  var _rackOk = function(x) { return !x.rackId || validRackIds[x.rackId]; }; // tolerate records with no rackId
+  var cleanPhases  = phases.filter(function(p) { return p && p.deploymentId && validDepIds[p.deploymentId] && _rackOk(p); });
+  var cleanOptics  = optics.filter(function(o) { return o && o.deploymentId && validDepIds[o.deploymentId] && _rackOk(o); });
+  var cleanAudit   = audit.filter(function(a) { return a && a.deploymentId && validDepIds[a.deploymentId]; });
+  var cleanHandoff = hand.filter(function(h) { return h && h.deploymentId && validDepIds[h.deploymentId]; });
+  return {
+    cleanRacks: cleanRacks, cleanPhases: cleanPhases, cleanOptics: cleanOptics, cleanAudit: cleanAudit, cleanHandoff: cleanHandoff,
+    dropped: {
+      racks: racks.length - cleanRacks.length, phases: phases.length - cleanPhases.length,
+      optics: optics.length - cleanOptics.length, audit: audit.length - cleanAudit.length,
+      handoffs: hand.length - cleanHandoff.length
+    }
+  };
+}
+
+function phantom_restoreCountNoun(n, one, many) {
+  if (typeof n !== 'number') return many + ' (count unavailable)';
+  return n + ' ' + (n === 1 ? one : many);
+}
+
+function phantom_restoreDroppedParts(dropped, sep) {
+  var out = [];
+  [['racks', 'rack', 'racks'], ['phases', 'phase', 'phases'], ['optics', 'optic record', 'optic records'],
+   ['audit', 'audit event', 'audit events'], ['handoffs', 'handoff', 'handoffs']].forEach(function(d) {
+    var n = dropped[d[0]] || 0;
+    if (n) out.push(n + sep + (n === 1 ? d[1] : d[2]));
+  });
+  return out;
+}
+
+// This device's Ghost Echo count, through the engine's own door (GE.init creates the store on
+// upgrade; a raw open without that would leave a store-less database behind). null = unknown.
+function phantom_restoreCountGhosts(cb) {
+  var done = false, t = null;
+  var fin = function(n) { if (done) return; done = true; clearTimeout(t); cb(n); };
+  t = setTimeout(function() { fin(null); }, 3000);
   try {
-    alert('Restore complete. PHANTOM will reload now so every surface reads the restored data.');
+    if (typeof GE === 'undefined' || !GE || typeof GE.init !== 'function') { fin(null); return; }
+    GE.init().then(function(idb) {
+      if (!idb) { fin(null); return; }
+      try {
+        if (!idb.objectStoreNames.contains('ghosts')) { fin(0); return; }
+        var r = idb.transaction('ghosts', 'readonly').objectStore('ghosts').count();
+        r.onsuccess = function() { fin(typeof r.result === 'number' ? r.result : null); };
+        r.onerror = function() { fin(null); };
+      } catch (_) { fin(null); }
+    }, function() { fin(null); });
+  } catch (_) { fin(null); }
+}
+
+// The confirm's content: what the file declares missing, what the restore cannot carry, what the
+// integrity pass drops, and — per section — what is on this device against what is in the file.
+// Reads only. Returns { text, empty, ghostsKept }.
+function phantom_restorePreview(bundle, ri, deviceGhosts, notes) {
+  var warn = (notes || []).slice();
+  var lines = [];
+  var failed = {};
+  (Array.isArray(bundle.readFailures) ? bundle.readFailures : []).forEach(function(s) { if (s) failed[s] = true; });
+  (Array.isArray(bundle.manifest) ? bundle.manifest : []).forEach(function(m) { if (m && m.included === false && m.store) failed[m.store] = true; });
+  var ghostsKept = false;
+  Object.keys(failed).forEach(function(store) {
+    if (store === 'GhostEchoDB:ghosts') {
+      ghostsKept = true;
+      warn.push("⚠ PARTIAL BACKUP — GhostEchoDB:ghosts was not readable when this file was written. This device's " + phantom_restoreCountNoun(deviceGhosts, 'Ghost Echo entry', 'Ghost Echo entries') + ' will be KEPT.');
+    } else {
+      warn.push('⚠ PARTIAL BACKUP — ' + store + ' was not readable when this file was written; it is not in this file.');
+    }
+  });
+  if (bundle.partial === true && !Object.keys(failed).length) warn.push('⚠ PARTIAL BACKUP — the file says it is incomplete but does not name the store.');
+  if (Array.isArray(bundle.discrepancyPhotos) && bundle.discrepancyPhotos.length) {
+    var np = bundle.discrepancyPhotos.length;
+    warn.push('⚠ ' + np + ' discrepancy photo' + (np === 1 ? ' is' : 's are') + ' in this backup — this version does not restore photos; the discrepancy records are restored without them.');
+  }
+  var dp = phantom_restoreDroppedParts(ri.dropped, ' ');
+  if (dp.length) warn.push('⚠ DROPPED as orphans (they reference a deployment or rack not in this backup): ' + dp.join(', '));
+
+  PHANTOM_RESTORE_SECTIONS.forEach(function(s) {
+    var field = s[0], label = s[2], key = s[3], kind = s[4];
+    var v = bundle[field];
+    var has = (v !== undefined && v !== null);
+    if (field === 'discrepancyPhotos') return;                       // said above
+    if (field === 'ghostEcho' && ghostsKept) return;                 // said above
+    if (kind === 'array' || kind === 'array-always') {
+      var b = (has && Array.isArray(v)) ? v.length : 0;
+      var d = 0;
+      if (field === 'ghostEcho') d = (typeof deviceGhosts === 'number') ? deviceGhosts : 0;
+      else if (key) { var dv = safeGet(key, null); d = Array.isArray(dv) ? dv.length : 0; }
+      if (!key && field !== 'ghostEcho') { if (b) lines.push(label + ': ' + b + ' in backup'); return; }
+      if (has) lines.push(label + ': ' + d + ' on this device → ' + b + ' in backup');
+      else if (kind === 'array-always' && d) lines.push(label + ': ' + d + ' on this device → CLEARED (not in backup)');
+      else if (d) lines.push(label + ': ' + d + ' on this device → kept (not in backup)');
+      return;
+    }
+    if (kind === 'object') {
+      if (!has) return;
+      if (field === 'keys') {
+        var strKeys = 0, over = 0, nonStr = 0;
+        Object.keys(v).forEach(function(k) {
+          if (typeof v[k] !== 'string') { nonStr++; return; }
+          strKeys++;
+          try { if (localStorage.getItem(k) !== null) over++; } catch (_) {}
+        });
+        if (strKeys) lines.push(strKeys + ' additional data keys (' + over + ' already on this device, will be overwritten)');
+        if (nonStr) warn.push('⚠ ' + nonStr + ' registry entr' + (nonStr === 1 ? 'y is' : 'ies are') + ' not text and will be skipped');
+        return;
+      }
+      if (field === 'ghostQuirks') {
+        var qn = ((v.outgoing || []).length + (v.incoming || []).length);
+        if (qn) lines.push('Ghost Echo quirks: ' + qn + ' in backup (merged by id, never overwritten)');
+        return;
+      }
+      if (field === 'siteProfile') {
+        var dpf = safeGet(key, null);
+        lines.push('Site profile: ' + (dpf && dpf.facilityId ? dpf.facilityId : (dpf ? 'set' : 'none')) + ' on this device → ' + (v.facilityId || 'set') + ' in backup');
+        return;
+      }
+      var dobj = key ? safeGet(key, null) : null;
+      var dn = (dobj && typeof dobj === 'object') ? Object.keys(dobj).length : 0;
+      lines.push(label + ': ' + dn + ' on this device → ' + Object.keys(v).length + ' in backup');
+      return;
+    }
+    if (kind === 'string') {
+      if (!has || !v) return;
+      var present = false;
+      try { present = localStorage.getItem(key) !== null; } catch (_) {}
+      lines.push(label + ': ' + (present ? "present on this device → replaced by the backup's" : 'none on this device → restored from backup'));
+    }
+  });
+
+  var text = 'Restore from backup?\n\n' +
+    (warn.length ? warn.join('\n') + '\n\n' : '') +
+    'Replaces on this device:\n' + lines.map(function(l) { return '  ' + l; }).join('\n') +
+    '\n\nThis will OVERWRITE current data.';
+  return { text: text, empty: lines.length === 0, ghostsKept: ghostsKept };
+}
+
+function phantom_restoreComplete(summary) {
+  try {
+    alert('Restore complete. ' + (summary ? summary + ' ' : '') + 'PHANTOM will reload now so every surface reads the restored data.');
   } catch (_) {}
   try { location.reload(); } catch (_) {}
 }
@@ -56149,47 +56353,40 @@ function phantomImport() {
           alert('This backup is from a NEWER PHANTOM version (backup schema ' + _bs + '; this app supports up to ' + PHANTOM_BACKUP_SCHEMA + ').\n\nUpdate PHANTOM before restoring — nothing was changed (your data is untouched).');
           return;
         }
-        const items = [];
-        if (_bs && _bs < PHANTOM_BACKUP_SCHEMA) items.push('⚠ older backup schema (' + _bs + ') — best-effort restore');
+        // ━━━ v1.14.585 — RESTORE HONESTY (DATA-HONESTY-COMMAND Batch 2 P0 sub-ship 2, owner GO 2026-09-09) ━━━
+        // Three things the confirm never said: what is ON THIS DEVICE that the file replaces or
+        // clears, what the referential-integrity pass will DROP, and what the file itself declares
+        // it could not read (partial:true / manifest included:false — the .584 vocabulary). And a
+        // structurally damaged file could reach the write set. Now: validate → refuse before any
+        // write; preview device → backup per section; name CLEARED / DROPPED / KEPT; same confirm.
+        // THE WRITE SET BELOW IS UNCHANGED. The referential-integrity predicates moved into
+        // phantom_restoreOrphans, computed once here, so the confirm and the writes count the same.
+        var _damage = phantom_restoreValidate(bundle);
+        if (_damage) { alert('Backup file is damaged — ' + _damage + '. Nothing was changed.'); return; }
+        const notes = [];
+        if (_bs && _bs < PHANTOM_BACKUP_SCHEMA) notes.push('⚠ older backup schema (' + _bs + ') — best-effort restore');
         // v1.14.397 (M1-a): tell the user BEFORE they commit if this file predates the key
         // registry. Such a backup cannot contain field-verify status, discrepancies, deploy
         // issues, audit walks or the scan collection — they were never written to it.
-        else if (!_bs) items.push('⚠ backup predates schema versioning — best-effort restore');
-        if (!bundle.keys) {
-          items.push('⚠ backup predates the key registry — field-verify status, discrepancies, deploy issues, audit walks and the scan collection are NOT in this file');
-        } else {
-          var _kn = Object.keys(bundle.keys).length;
-          if (_kn) items.push(_kn + ' additional data keys');
-        }
-        if (Array.isArray(bundle.sops) && bundle.sops.length)      items.push(bundle.sops.length + ' SOPs');
-        if (Array.isArray(bundle.rackMaps) && bundle.rackMaps.length) items.push(bundle.rackMaps.length + ' rack maps');
-        if (Array.isArray(bundle.burndown) && bundle.burndown.length)  items.push(bundle.burndown.length + ' burndown jobs');
-        if (Array.isArray(bundle.ghostEcho) && bundle.ghostEcho.length) items.push(bundle.ghostEcho.length + ' Ghost Echo entries');
-        if (bundle.ghostQuirks) { var _qn = ((bundle.ghostQuirks.outgoing||[]).length + (bundle.ghostQuirks.incoming||[]).length); if (_qn) items.push(_qn + ' Ghost Echo quirks'); }
-        if (typeof bundle.master === 'string' && bundle.master) items.push('Master source-of-truth');
-        if (typeof bundle.jobsnap === 'string' && bundle.jobsnap) items.push('scope snapshot');
-        if (Array.isArray(bundle.opticInventory) && bundle.opticInventory.length) items.push(bundle.opticInventory.length + ' optic scans');
-        if (Array.isArray(bundle.deployments) && bundle.deployments.length) items.push(bundle.deployments.length + ' deployments');
-        if (Array.isArray(bundle.deployOptics) && bundle.deployOptics.length) items.push(bundle.deployOptics.length + ' optic ledger records');
-        if (Array.isArray(bundle.deployAudit) && bundle.deployAudit.length) items.push(bundle.deployAudit.length + ' audit events');
-        if (Array.isArray(bundle.handoffs) && bundle.handoffs.length) items.push(bundle.handoffs.length + ' shift handoff' + (bundle.handoffs.length !== 1 ? 's' : ''));
-        if (!items.length) { alert('Backup file appears empty.'); return; }
-        if (!confirm('Restore from backup?\n\n' + items.join('\n') + '\n\nThis will OVERWRITE current data.')) return;
+        else if (!_bs) notes.push('⚠ backup predates schema versioning — best-effort restore');
+        if (!bundle.keys) notes.push('⚠ backup predates the key registry — field-verify status, discrepancies, deploy issues, audit walks and the scan collection are NOT in this file');
+        var _ri = phantom_restoreOrphans(bundle);
+        // This device's Ghost Echo count lives in IndexedDB, so the preview is async. Nothing is
+        // written before the confirm inside this callback; the callback is closed after the
+        // Ghost Echo restore below.
+        phantom_restoreCountGhosts(function(_deviceGhosts) {
+        try {
+        var _pv = phantom_restorePreview(bundle, _ri, _deviceGhosts, notes);
+        if (_pv.empty) { alert('Backup file appears empty.'); return; }
+        if (!confirm(_pv.text)) return;
 
-        // ── Referential integrity pass ──
-        // Build valid deployment ID set to filter orphaned records
-        var validDepIds = {};
-        if (Array.isArray(bundle.deployments)) {
-          bundle.deployments.forEach(function(d) { if (d && d.id) validDepIds[d.id] = true; });
-        }
-        var cleanRacks   = Array.isArray(bundle.deployRacks)  ? bundle.deployRacks.filter(function(r)  { return r && r.deploymentId && validDepIds[r.deploymentId]; })  : [];
-        var validRackIds = {};
-        cleanRacks.forEach(function(r) { if (r && r.id) validRackIds[r.id] = true; });
-        var _rackOk = function(x) { return !x.rackId || validRackIds[x.rackId]; }; // tolerate records with no rackId
-        var cleanPhases  = Array.isArray(bundle.deployPhases) ? bundle.deployPhases.filter(function(p)  { return p && p.deploymentId && validDepIds[p.deploymentId] && _rackOk(p); }) : [];
-        var cleanOptics  = Array.isArray(bundle.deployOptics) ? bundle.deployOptics.filter(function(o)  { return o && o.deploymentId && validDepIds[o.deploymentId] && _rackOk(o); }) : [];
-        var cleanAudit   = Array.isArray(bundle.deployAudit)  ? bundle.deployAudit.filter(function(a)   { return a && a.deploymentId && validDepIds[a.deploymentId]; })   : [];
-        var cleanHandoff = Array.isArray(bundle.handoffs)      ? bundle.handoffs.filter(function(h)      { return h && h.deploymentId && validDepIds[h.deploymentId]; })  : [];
+        // ── Referential integrity pass ── v1.14.585: the predicates live in phantom_restoreOrphans,
+        // computed once above the confirm, so the DROPPED line and these write sets cannot disagree.
+        var cleanRacks   = _ri.cleanRacks;
+        var cleanPhases  = _ri.cleanPhases;
+        var cleanOptics  = _ri.cleanOptics;
+        var cleanAudit   = _ri.cleanAudit;
+        var cleanHandoff = _ri.cleanHandoff;
         // C4 interaction: filtering may have removed audit entries → mark restored head as an
         // authorized chain reset so the tamper-verify doesn't false-flag a post-import gap.
         if (cleanAudit.length) { cleanAudit[0] = cleanAudit[0] || {}; cleanAudit[0].chainReset = true; cleanAudit[0].truncatedAt = Date.now(); }
@@ -56279,21 +56476,49 @@ function phantomImport() {
             ge_save(_gq);
           } catch (_) {}
         }
-        if (Array.isArray(bundle.ghostEcho) && bundle.ghostEcho.length) {
-          const req = indexedDB.open('GhostEchoDB', 1);
-          req.onsuccess = function(ev2) {
-            const db = ev2.target.result;
-            if (!db.objectStoreNames.contains('ghosts')) { alert('Ghost Echo DB not ready — other data restored.'); return; }
-            const tx = db.transaction('ghosts', 'readwrite');
-            const store = tx.objectStore('ghosts');
-            store.clear().onsuccess = function() {
-              bundle.ghostEcho.forEach(function(entry) { store.put(entry); });
+        // v1.14.585: the completion alert reports what was written, what was dropped, and what
+        // happened to Ghost Echo — including failure. Every IndexedDB outcome ends in a report and
+        // the reload. The old path had no onerror at all, and "DB not ready" ended without a reload.
+        var _droppedParts = phantom_restoreDroppedParts(_ri.dropped, ' orphan ');
+        var _summary = _writes.length + ' keys written (' + _extraRestored + ' from the registry).' +
+          (_droppedParts.length ? ' Dropped ' + _droppedParts.join(', ') + '.' : '');
+        var _finishRestore = function(ghostText) { phantom_restoreComplete(_summary + ' ' + ghostText); };
+        if (_pv.ghostsKept) {
+          // The file declared its Ghost Echo read failed. [] is not a store; this device's copy is the only copy.
+          _finishRestore("Ghost Echo: KEPT this device's " + phantom_restoreCountNoun(_deviceGhosts, 'entry', 'entries') + ' — the backup had none readable.');
+        } else if (Array.isArray(bundle.ghostEcho) && bundle.ghostEcho.length) {
+          var _gdone = false;
+          var _gwatch = null;
+          var _gfinish = function(t) { if (_gdone) return; _gdone = true; clearTimeout(_gwatch); _finishRestore(t); };
+          var _gfail = function(why) { _gfinish('Ghost Echo: NOT restored (' + why + ") — this device's entries are unchanged; everything else was restored."); };
+          _gwatch = setTimeout(function() { _gfail('timed out after 15 s'); }, 15000);
+          try {
+            const req = indexedDB.open('GhostEchoDB', 1);
+            req.onsuccess = function(ev2) {
+              try {
+                const db = ev2.target.result;
+                if (!db.objectStoreNames.contains('ghosts')) { _gfail('Ghost Echo DB not ready'); return; }
+                const tx = db.transaction('ghosts', 'readwrite');
+                const store = tx.objectStore('ghosts');
+                store.clear().onsuccess = function() {
+                  bundle.ghostEcho.forEach(function(entry) { store.put(entry); });
+                };
+                tx.oncomplete = function() { _gfinish('Ghost Echo: restored ' + phantom_restoreCountNoun(bundle.ghostEcho.length, 'entry', 'entries') + '.'); };
+                tx.onerror = function() { _gfail('transaction failed' + (tx.error && tx.error.message ? ': ' + tx.error.message : '')); };
+                tx.onabort = function() { _gfail('transaction aborted' + (tx.error && tx.error.message ? ': ' + tx.error.message : '')); };
+              } catch (e3) { _gfail(e3 && e3.message ? e3.message : 'transaction threw'); }
             };
-            tx.oncomplete = function() { phantom_restoreComplete(); };
-          };
+            req.onerror = function() { _gfail('open error'); };
+            req.onblocked = function() { _gfail('open blocked'); };
+          } catch (e4) { _gfail(e4 && e4.message ? e4.message : 'open threw'); }
         } else {
-          phantom_restoreComplete();
+          _finishRestore("Ghost Echo: nothing in this backup — this device's entries are unchanged.");
         }
+        } catch (err) {
+          // Inside the confirm callback a throw may land AFTER some keys were written. Say so.
+          alert('Restore stopped by an error: ' + err.message + '. If you had already confirmed, some keys may have been written — run the restore again from the same file.');
+        }
+        });
       } catch(err) {
         alert('Failed to parse backup file: ' + err.message);
       }
