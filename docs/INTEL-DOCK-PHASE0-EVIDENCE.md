@@ -257,3 +257,72 @@ The `.473` deferral it replaced is quoted in the comment above it (`:19260-19273
 - ⛔ Source only. E-5 (dock capture at iPhone-15 WebKit) was **not run**; geometry above is derived from `:9980`/`:9985`/`:10020` and the `.562` measurement. E-3's phone-door claim is source-derived and contradicts the spec's wording — harness confirmation owed.
 - ⛔ Nothing here is design or authorisation. The ruling in §5 is framed with a recommendation; John decides.
 - 📌 Out of my directive, noted in one line each: the static `AI ASSISTANT · ONLINE` gauge (`:13956`) is a B10 item for the data-honesty batch; SYS carries a `v1.14.222` "PROVISIONAL" Forge 3D door (`:13603`) that was to be relocated "when the hero / rack-switch stages land" — `SEE IN AISLE` landed, so that door may now be a duplicate path for the ledger.
+
+---
+
+# ADDENDUM — 2026-09-09 · ANCHORS RE-SWEPT TO `.586`, AND A HARNESS FINDING THAT CHANGES HOW THE GHOST CAN BE TESTED
+
+**Written:** 2026-09-09 · **Read against:** the working tree at `phantom-v1.14.586` (the ICON-REFRESH ship, uncommitted at the time of writing; nothing in it touches the dock, SYS, the assistant, or any anchor below) · **Mode:** READ-ONLY, source plus one read-only network probe. Nothing in the app was edited.
+**Why this exists:** the census above is stamped *"valid against `.582` only (F-4b)"*. Four versions have landed since. Every anchor below was re-found **by verbatim string, not by line number**, so these numbers are measured rather than assumed.
+
+## A1 · Every `.582` anchor still resolves. All shifted by exactly −1.
+
+The uniform −1 has one cause, and it is not drift: `.586` deleted a single line from the `<head>` — the `favicon-16.png` icon link at `:28` — so everything below it moved up one. **No anchor moved relative to any other anchor. The dock, SYS and assistant structures are byte-for-byte the shapes section 2 described.**
+
+| `.582` | `.586` | anchor |
+|---|---|---|
+| `:16591` | **`:16590`** | `<div class="botnav" id="rd-botnav">` |
+| `:16592` | **`:16591`** | `<div id="bn-rail">` |
+| `:16593` | **`:16592`** | `#bn-command` |
+| `:16597` | **`:16596`** | `#bn-work` |
+| `:16606` | **`:16603`** | `#bn-work-n` badge |
+| `:16608` | **`:16605`** | `#bn-ref` |
+| `:16611` | **`:16610`** | `#rd-exit` — still a sibling of the rail, still not a `.botitem` |
+| `:16562` | **`:16561`** | `#cs-nav-ext` (desktop EXIT, still unruled) |
+| `:13564` | **`:13563`** | `#hdr-agg-pill` |
+| `:13569` | **`:13568`** | `#hdr-agg-panel` |
+| `:13591` | **`:13590`** | DIAGNOSTICS row |
+| `:13603` | **`:13602`** | Forge 3D "PROVISIONAL" door |
+| `:13605` | **`:13604`** | SITE PROFILE row |
+| `:13952` | **`:13951`** | `#cc-asst` |
+| `:13956` | **`:13955`** | the static `AI ASSISTANT · ONLINE` eyebrow |
+| `:13989` | **`:13988`** | `#cc-chat` |
+| `:16670` | **`:16670`** | `#vaSheet` — unmoved; it sits far enough down that the deleted head line is absorbed by intervening edits |
+
+Functions, re-found by declaration: `rd_holdGesture` **`:19116`** · `rd_freeze` **`:19128`** · `rd_wake` **`:19141`** · `rd_initExit` **`:19146`** · `rd_freezeBootRestore` **`:19203`** · `rd_openProfile` **`:19481`** · `rd_openErrors` **`:19652`** · `ops_init` **`:21890`** · `openVaSheet` **`:51141`** · `va_intentHtml` **`:51183`** · `phantomCheckApi` **`:55846`** · `phantomUpdateNetPill` **`:55855`**.
+
+**Dock shape at `.586`, counted rather than assumed:** **three** `.botitem` inside `#bn-rail`, plus `#rd-exit` as the fourth grid cell. The icons are `icons/phantom-nav-command-v3-256.webp`, `-build-v3-`, `-tools-v4-` and `-exit-v3-`, every one `loading="eager"` at 256x256 — **the art pipeline a ghost cut has to match** (sub-ruling 1).
+
+**The exact insertion point for EXIT-in-SYS, re-counted:** `:13604` opens the SITE PROFILE row, `:13605`-`:13607` are its dot, name and value, **`:13608` closes the row, and `:13609` closes `#hdr-agg-panel`.** The EXIT row goes **between `:13608` and `:13609`**. That confirms section 6's "insert after SITE PROFILE" against current bytes.
+
+## A2 · NEW FINDING — the harness can never see the ghost lit, and that shapes the tests
+
+Section 2f proposed binding the ghost's lit and dim states to `body[data-net]` plus the `api` health colour, "with zero new detection code". That reuse is still right. **But the API half of it cannot go green under Playwright, by design and permanently.**
+
+Measured 2026-09-09 with a read-only `OPTIONS` preflight against `PHANTOM_PROXY_URL`, after the owner deployed Worker CORS **v2.3**:
+
+| Origin | Preflight | `Access-Control-Allow-Origin` |
+|---|---|---|
+| `https://phantom-staging.wfj6t2fk7w.workers.dev` | 204 | **echoed — allowed** |
+| `https://darkmatter024.github.io` | 204 | **echoed — allowed** |
+| `http://127.0.0.1:4317` (the Playwright origin) | 204 | **absent — refused** |
+| `https://evil.example.com` (control) | 204 | **absent — refused** |
+
+**The Worker is behaving correctly.** It is a real allowlist: it echoes only the two genuine origins and refuses everything else, including a bogus control. The harness is simply not one of the two, and it should not be.
+
+**Three consequences for this ship, none of them optional:**
+
+1. **`phantomCheckApi()` always resolves to `UNREACHABLE` under Playwright**, so the SYS aggregate is always `offline` (section 2f: the aggregate is offline when net is red **or** api is red). A ghost bound to that aggregate **renders dim in every harness run, including runs where `navigator.onLine` is true.** A test asserting "the ghost is lit when online" against the live Worker would fail forever, and would be read as a product defect.
+2. **The ship's tests must drive that state rather than observe it** — a `page.route` intercept on `PHANTOM_PROXY_URL` returning a permissive 204, or a stub on `phantomCheckApi`, established **before** the lit-state assertions are written (section 5, "Tests before edit"). The dim-state test needs no stub at all: it is the harness's natural condition, which makes the offline path the cheaper of the two to pin.
+3. **This is already costing a green board, and it is not new.** `00-boot.spec.js:18` ("boots with no uncaught exception and no console error") **fails at `.585` and at `.586` on exactly these three CORS entries** — one `pageerror` and two `error`. It is a documented harness artifact (`docs/BATCH1-582-EVIDENCE.md:111`), and `.584` chose to filter it **inside** the spec that needed it, "with the reason, not added to the global allowlist" (`docs/BATCH2-584-EVIDENCE.md:32`). `fixtures.js`'s `BENIGN_CONSOLE` still filters **only** a favicon 404, so the boot spec has been carrying this failure. **Not fixed here, and deliberately not fixed by widening the allowlist** — CLAUDE.md's standing rule is "Never widen the console allow-list to get green." The honest options are an in-spec filter that names the Worker origin and the reason, or a route intercept in the fixture so the probe never leaves the harness. **Owner's call. It is a harness ship, not an app ship, and it should land before INTEL-DOCK's tests are written, or those tests inherit a red baseline.**
+
+## A3 · What is still blocking the build — unchanged, restated against `.586`
+
+Nothing in section 5 or section 6 above is superseded. The build is blocked on the owner, in this order:
+
+1. **The dock-count ruling** — section 5 Option A (four slots, ghost fourth, EXIT last in SYS), recommended and deliberately not assumed.
+2. **`#cc-asst`'s fate** — this decides whether the door ledger is 0 or +1, and whether the static `AI ASSISTANT · ONLINE` gauge at **`:13955`** retires with it. That gauge is a Contract B10 data-honesty item in its own right: it reads ONLINE beside a green dot regardless of `body[data-net]` or the API check, and the probe above proves the API can be genuinely unreachable while it still says ONLINE.
+3. **The ghost art cut** — it must match the `icons/phantom-nav-*-256.webp` eager 256x256 pipeline confirmed in A1. The only ghost raster today is `phantom-ghost-v3.webp`, sized for a 107x122 card. Do not precache it until a consumer exists (the `.364` lesson).
+4. **`#cs-nav-ext`** — the desktop side-nav EXIT at **`:16561`**. The default is to leave it, per the `.576` pattern.
+
+**And one gate that is not the owner's:** the ship-discipline rule that only one unverified ship may be in flight. `.586` (ICON REFRESH) is built and unadjudicated, so INTEL-DOCK cannot be **built** until `.586` has been on the phone and ruled. Every item above can be **ruled** now, and the harness ship in A2 can land in parallel because it touches no app source.
