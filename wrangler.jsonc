@@ -1,0 +1,27 @@
+// wrangler.jsonc - the STAGING Worker's configuration. Infrastructure, not app: GitHub Pages
+// (release) never reads this file, and nothing in dct-ios.html does either.
+//
+// WHY THIS FILE EXISTS (owner GO 2026-09-09, "html_handling none via wrangler.jsonc, no version bump"):
+//   The staging Worker (https://phantom-staging.wfj6t2fk7w.workers.dev) was created from the
+//   dashboard as a Worker with static assets. With no config in the repo it ran the platform
+//   default html_handling of "auto-trailing-slash", which answers /dct-ios.html with a 307 to
+//   /dct-ios. GitHub Pages serves /dct-ios.html directly. The two surfaces must answer the same
+//   path the same way, or a staging look is not a look at the release path: the service worker
+//   precaches 'dct-ios.html' through that redirect and stores a response flagged redirected, and
+//   an offline navigation answered from such an entry is rejected by the browser.
+//   "none" means exact paths only - what GitHub Pages does. Measured after deploy; the numbers
+//   are in docs/INFRA-STAGING-CLOUDFLARE-PAGES.md section 5.
+//
+// WHAT MUST NOT CHANGE HERE WITHOUT A RULING: "name" (it IS the workers.dev hostname; a different
+// name deploys a second Worker at a second URL and the tools point at the wrong one), and
+// "directory" (the repo root is the site - every path is relative, exactly as GitHub Pages
+// serves release). Files that must never be served are listed in .assetsignore, next to this.
+{
+  "name": "phantom-staging",
+  "compatibility_date": "2026-06-01",
+  "assets": {
+    "directory": "./",
+    "html_handling": "none",
+    "not_found_handling": "none"
+  }
+}

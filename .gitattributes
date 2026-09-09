@@ -10,3 +10,9 @@
 # the shebang fails at runtime as: /bin/sh^M: bad interpreter. Shell scripts
 # must be LF regardless of platform.
 tools/githooks/* text eol=lf
+
+# Same trap, second file (2026-09-09): wrangler reads .assetsignore with split("\n"), so a CRLF
+# checkout leaves a stray CR on every pattern and NOTHING is ignored - measured with a local
+# `wrangler deploy --dry-run`. Cloudflare's Linux checkout gets LF from the index either way;
+# this keeps the working tree on this box honest so a local dry-run means what it says.
+.assetsignore text eol=lf
