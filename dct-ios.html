@@ -12862,7 +12862,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.583';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.584';
 // Immediate version check: reload if cached HTML is stale. Runs before anything else.
 (function() {
   fetch('./version.json?_=' + Date.now(), { cache: 'no-store' })
@@ -55363,8 +55363,71 @@ function phantom_collectExtraKeys() {
   return out;
 }
 
+// ━━━ v1.14.584 — BACKUP HONESTY (DATA-HONESTY-COMMAND Batch 2 P0, owner GO 2026-09-09) ━━━
+// WHAT WAS WRONG, three lines that each read as "backed up" to a technician (Contract B10 / B14):
+//   1. phantomMarkBackupDone() was the FIRST line of this function. phantom_last_backup_ts was
+//      written and the reminder banner hidden before the IndexedDB read, before the share sheet,
+//      before anything could fail. A dismissed share sheet counted as a backup.
+//   2. Both GhostEchoDB error paths built the bundle from [] and the manifest recorded the store
+//      as included:true, recordCount:0 — a failed read serialised as a clean, empty store.
+//   3. downloadJSON never consulted navigator.share()'s promise, so a dismissed sheet fell
+//      through to a second download prompt and nothing ever learned the outcome.
+// NOW the banner (#backup-remind, the one backup surface) reports the op as it completes:
+//   SAVING          while the read and the sheet are in flight; a second tap is refused with a toast
+//   done            only when the sheet resolved or the download was handed to the browser — that
+//                   is the moment phantomMarkBackupDone() runs, and a toast names the time
+//   NOT SAVED       persistent, tap to retry, never marked done: a dismissed sheet or a throw
+//   PARTIAL BACKUP  persistent, names the store, never marked done: a store read failed; the
+//                   manifest says included:false with the reason and the file says partial:true
+// A 15 s watchdog on the IndexedDB open keeps a hung request from leaving the banner on SAVING and
+// the BACKUP door refusing taps forever — that would be a new silent failure, not a fix.
+// The body below is wrapped in one try so a throw anywhere before the bundle exists is NOT SAVED
+// at the banner instead of an exception at the tap; it is deliberately not re-indented (surgical).
+var _backupInFlight = false;
 function exportAllData() {
-  if (window.phantomMarkBackupDone) phantomMarkBackupDone();
+  if (_backupInFlight) {
+    if (typeof phantomToast === 'function') phantomToast('Backup already in progress', 'warn');
+    return;
+  }
+  _backupInFlight = true;
+  var readFailures = [];
+  var finished = false;
+  function setState(kind, text) { if (window.phantomBackupState) phantomBackupState(kind, text); }
+  function finish(r) {
+    if (finished) return;
+    finished = true;
+    _backupInFlight = false;
+    var d = new Date();
+    var hhmm = ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+    var toast = (typeof phantomToast === 'function') ? phantomToast : function() {};
+    if (r.outcome === 'shared' || r.outcome === 'downloaded') {
+      if (readFailures.length) {
+        // The file left the phone, but it is not the backup the technician thinks it is.
+        setState('partial', 'PARTIAL BACKUP — review missing data: ' + readFailures.join(', ') + ' — tap to retry');
+        toast('Partial backup — ' + readFailures.join(', ') + ' not included', 'warn');
+        return;
+      }
+      if (window.phantomMarkBackupDone) phantomMarkBackupDone();
+      // Handoff rev 2: a browser download is NOT proof of a retained, recoverable copy — the anchor
+      // path says the file was PREPARED and where to look, never that it was saved. The share path
+      // says EXPORTED: the sheet resolved, but its destination (Files, AirDrop, Mail) is the user's.
+      // The timestamp records that an export happened; the reminder measures exports, not copies.
+      if (r.outcome === 'shared') toast('Backup exported ' + hhmm, 'ok');
+      else toast('Backup file prepared ' + hhmm + ' — check your downloads', 'ok');
+      return;
+    }
+    if (r.outcome === 'cancelled') {
+      try { console.warn('[PHANTOM] backup: share sheet dismissed - nothing saved'); } catch (_) {}
+      setState('failed', 'BACKUP NOT SAVED — share sheet dismissed — tap to retry');
+      toast('Backup not saved — tap the banner to retry', 'error');   // Contract 14: warn AND toast; the banner persists
+      return;
+    }
+    try { console.warn('[PHANTOM] backup failed: ' + ((r.error && r.error.message) || r.error)); } catch (_) {}
+    setState('failed', 'BACKUP NOT SAVED — retry or free space — tap to retry');
+    toast('Backup not saved — tap the banner to retry', 'error');
+  }
+  setState('saving', 'BACKUP · SAVING…');
+  try {
   // v1.14.398: an unclassified key at export time is a candidate silent data loss. Say so.
   try {
     var _unc = phantom_backupCoverage();
@@ -55390,8 +55453,10 @@ function exportAllData() {
   function buildBundle(ghosts) {
     // v1.14.517 (Phase 1.1): manifest documents every store in the bundle for import-time honesty checks
     var manifestEntries = [];
-    function _addManifest(storeName, included, count, bytes) {
-      manifestEntries.push({ store: storeName, included: included, recordCount: count, bytes: bytes });
+    function _addManifest(storeName, included, count, bytes, error) {
+      var entry = { store: storeName, included: included, recordCount: count, bytes: bytes };
+      if (error) entry.error = error;   // v1.14.584: a failed read is named, never serialised as empty
+      manifestEntries.push(entry);
     }
     function _estBytes(obj) { try { return JSON.stringify(obj).length; } catch (_) { return 0; } }
     // Named sections — these carry integrity filtering and merge semantics
@@ -55423,7 +55488,9 @@ function exportAllData() {
     var jobsnap = localStorage.getItem('phantom_jobsnap_v1') || null;
     _addManifest('phantom_jobsnap_v1', true, jobsnap ? 1 : 0, _estBytes(jobsnap));
     // GhostEchoDB: separate from quirks
-    _addManifest('GhostEchoDB:ghosts', true, Array.isArray(ghosts) ? ghosts.length : 0, _estBytes(ghosts));
+    // v1.14.584: included is FALSE when the read failed — the [] it fell back to is not a store.
+    var ghostsFailed = readFailures.indexOf('GhostEchoDB:ghosts') !== -1;
+    _addManifest('GhostEchoDB:ghosts', !ghostsFailed, Array.isArray(ghosts) ? ghosts.length : 0, _estBytes(ghosts), ghostsFailed ? 'read failed' : null);
     // Ghost Echo quirks (tribal knowledge layer)
     var quirks = (typeof ge_load === 'function') ? ge_load() : null;
     _addManifest('phantom_ghost_echo_v1', true, quirks ? ((quirks.outgoing || []).length + (quirks.incoming || []).length) : 0, _estBytes(quirks));
@@ -55467,38 +55534,85 @@ function exportAllData() {
       // v1.14.398: keys present in storage that NOBODY has classified. Normally empty. Recorded
       // in the bundle rather than dropped silently, so a backup can never quietly under-report
       // its own coverage — and so the gap is visible in the file itself, not only in a console.
-      unclassifiedKeys: phantom_backupCoverage()
+      unclassifiedKeys: phantom_backupCoverage(),
+      // v1.14.584: the FILE says when it is not the whole backup, so an import — or a human opening
+      // the JSON — cannot mistake a failed read for an empty store. Additive; schema stays 1.
+      partial: readFailures.length > 0,
+      readFailures: readFailures.slice()
     };
     return bundle;
   }
 
+  // v1.14.584: ONE exit. The bundle is built and handed to downloadJSON here and nowhere else, and
+  // downloadJSON's outcome — not the tap — is what finish() records.
+  var shipped = false;
+  function ship(ghosts) {
+    clearTimeout(watchdog);   // hoisted var, assigned below before any callback can fire
+    if (shipped || finished) return;
+    shipped = true;
+    var bundle;
+    try { bundle = buildBundle(ghosts); }
+    catch (e) { finish({ outcome: 'failed', error: e }); return; }
+    downloadJSON(bundle, 'phantom-full-backup', { cancelIsFinal: true })
+      .then(finish, function(e) { finish({ outcome: 'failed', error: e }); });
+  }
+  function readFailed(why) {
+    if (readFailures.indexOf('GhostEchoDB:ghosts') === -1) readFailures.push('GhostEchoDB:ghosts');
+    try { console.warn('[PHANTOM] backup: GhostEchoDB read failed (' + why + ') - exporting without it, marked partial'); } catch (_) {}
+    ship([]);
+  }
+  // A hung open() OR a hung getAll() would otherwise leave the banner on SAVING and the BACKUP door
+  // refusing taps forever. The watchdog covers the whole read: ship() is the one exit and clears it.
+  var watchdog = setTimeout(function() { readFailed('timed out after 15 s'); }, 15000);
   req.onsuccess = function(e) {
-    const db = e.target.result;
-    if (!db.objectStoreNames.contains(storeName)) {
-      downloadJSON(buildBundle([]), 'phantom-full-backup');
-      return;
-    }
-    const tx = db.transaction(storeName, 'readonly');
-    const getAll = tx.objectStore(storeName).getAll();
-    getAll.onsuccess = function() { downloadJSON(buildBundle(getAll.result || []), 'phantom-full-backup'); };
-    getAll.onerror = function() { downloadJSON(buildBundle([]), 'phantom-full-backup'); };
+    try {
+      var db = e.target.result;
+      // No store yet is a fresh device, not a failure: zero records is the truth.
+      if (!db.objectStoreNames.contains(storeName)) { ship([]); return; }
+      var tx = db.transaction(storeName, 'readonly');
+      var getAll = tx.objectStore(storeName).getAll();
+      getAll.onsuccess = function() { ship(getAll.result || []); };
+      getAll.onerror = function() { readFailed('getAll error'); };
+    } catch (e2) { readFailed((e2 && e2.message) ? e2.message : 'transaction threw'); }
   };
-  req.onerror = function() { downloadJSON(buildBundle([]), 'phantom-full-backup'); };
+  req.onerror = function() { readFailed('open error'); };
+  req.onblocked = function() { readFailed('open blocked'); };
+  } catch (e) {
+    finish({ outcome: 'failed', error: e });
+  }
 }
 
-function downloadJSON(data, prefix) {
-  const dateStr = new Date().toISOString().split('T')[0];
-  const json = JSON.stringify(data, null, 2);
-  const blob = new Blob([json], { type: 'application/json' });
-  const file = new File([blob], prefix + '-' + dateStr + '.json', { type: 'application/json' });
-
-  // iOS Safari: try native share sheet first
-  if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-    navigator.share({ files: [file], title: prefix + ' export' }).catch(function() {
+// v1.14.584: RETURNS A PROMISE THAT ALWAYS RESOLVES with { outcome, error } — 'shared' (the sheet
+// completed), 'downloaded' (handed to the browser's download path), 'cancelled' (the sheet was
+// dismissed), 'failed' (threw). It never rejects: the unhandledrejection hook (:18091) would log a
+// ghost error for every caller that ignores the return, and six of the seven callers do.
+// opts.cancelIsFinal — a dismissed sheet is reported as 'cancelled' instead of falling through to a
+// second download prompt. ONLY the full backup passes it, because only the full backup records the
+// outcome. The six other exports keep the old fall-through until their own honesty pass — a LEAD
+// in the .584 evidence, not fixed here (one visible change per ship).
+function downloadJSON(data, prefix, opts) {
+  opts = opts || {};
+  try {
+    const dateStr = new Date().toISOString().split('T')[0];
+    const json = JSON.stringify(data, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const file = new File([blob], prefix + '-' + dateStr + '.json', { type: 'application/json' });
+    var fallback = function() {
       triggerDownload(URL.createObjectURL(blob), file.name);
-    });
-  } else {
-    triggerDownload(URL.createObjectURL(blob), file.name);
+      return { outcome: 'downloaded', error: null };
+    };
+    // iOS Safari: try native share sheet first
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      return navigator.share({ files: [file], title: prefix + ' export' }).then(
+        function() { return { outcome: 'shared', error: null }; },
+        function(err) {
+          if (opts.cancelIsFinal && err && err.name === 'AbortError') return { outcome: 'cancelled', error: err };
+          try { return fallback(); } catch (e2) { return { outcome: 'failed', error: e2 }; }
+        });
+    }
+    return Promise.resolve(fallback());
+  } catch (e) {
+    return Promise.resolve({ outcome: 'failed', error: e });
   }
 }
 
@@ -55518,7 +55632,32 @@ function triggerDownload(url, filename) {
   var BACKUP_INT_KEY = 'phantom_backup_interval_days';
   var DEFAULT_DAYS = 3;
 
+  // v1.14.584: the banner is the ONE backup surface. While an export is in flight, or after one
+  // failed or came back partial, the hourly reminder must not paint over what it says.
+  var stateKind = null;   // null | 'saving' | 'failed' | 'partial'
+  var PALETTE = {
+    saving:  ['rgba(155,89,255,0.1)',  'rgba(155,89,255,0.25)', '#c084fc'],
+    // failed is the RATIFIED FAULT CHANNEL, magenta #ff2bd6 (:9765) — NOT red. Red is the owner-ruled
+    // EXIT exception only; the sibling banners #storage-warn / #offline-banner predate that ruling.
+    // Caught by phantom-rd-reviewer on the first .584 diff. (--magenta on :root is the legacy #ff006e.)
+    failed:  ['rgba(255,43,214,0.12)', 'rgba(255,43,214,0.30)', '#ff2bd6'],
+    partial: ['rgba(255,214,10,0.10)', 'rgba(255,214,10,0.30)', 'var(--gold,#ffd60a)']
+  };
+  window.phantomBackupState = function(kind, text) {
+    var banner = document.getElementById('backup-remind');
+    if (!banner) { try { console.warn('[PHANTOM] backup: no banner to report ' + kind + ': ' + text); } catch (_) {} return; }
+    stateKind = kind;
+    var p = PALETTE[kind] || PALETTE.saving;
+    banner.style.background = p[0];
+    banner.style.borderBottomColor = p[1];
+    banner.style.color = p[2];
+    banner.textContent = text;   // textContent, not innerHTML: the store names come from data
+    banner.setAttribute('data-backup-state', kind);
+    banner.style.display = 'block';
+  };
+
   function checkBackupReminder() {
+    if (stateKind) return; // v1.14.584: an in-flight, failed or partial backup owns the banner (timer tick, not a tap)
     var days = parseInt(localStorage.getItem(BACKUP_INT_KEY) || DEFAULT_DAYS, 10);
     if (days === 0) return; // disabled
     var last = parseInt(localStorage.getItem(BACKUP_TS_KEY) || '0', 10);
@@ -55537,8 +55676,14 @@ function triggerDownload(url, filename) {
 
   window.phantomMarkBackupDone = function() {
     safeStore(BACKUP_TS_KEY, Date.now().toString());
+    stateKind = null;   // v1.14.584: a full backup completed — the reminder may speak again
     var banner = document.getElementById('backup-remind');
-    if (banner) banner.style.display = 'none';
+    if (banner) {
+      banner.style.display = 'none';
+      banner.removeAttribute('data-backup-state');
+      var p = PALETTE.saving;   // the banner's original violet, for the next reminder
+      banner.style.background = p[0]; banner.style.borderBottomColor = p[1]; banner.style.color = p[2];
+    }
   };
 
   setTimeout(checkBackupReminder, 2000);
