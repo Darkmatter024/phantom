@@ -1,7 +1,7 @@
 # BATCH 1 — EVIDENCE TABLE · `phantom-v1.14.583`
 
 **Written:** 2026-09-08 · **Ship commit:** `aa4d437` · **Baseline:** `.582` VERIFIED (`9a9d6db`), served on `release` (`2758ce9`)
-**Status:** evidence delivered. **Awaiting John, in this order:** `promote.ps1` → one device check → `verify.ps1 583 PASS` (or `FAIL "reason"`). *(Updated 2026-09-08: `tools/verify.ps1` replaces the `stamp.ps1` + `git push` pair — one command, either outcome.)*
+**Status:** ✅ **CLOSED 2026-09-09.** Device PASS (SYS `.583`, strip `LOCAL ACTIVE | ON-DEVICE · SAVED`); owner adjudicated with the first live `verify.ps1 583 PASS` — stamp `b9d7de9`, `release` `944ba1d → b9d7de9`, `SERVED: phantom-v1.14.583`. *(The first PASS report, 2026-09-08, came before the promote and was refused on evidence — the phone was on `.582`. Recorded in `PHANTOM_CURRENT_STATE.md` §1/§8.)*
 
 ---
 
