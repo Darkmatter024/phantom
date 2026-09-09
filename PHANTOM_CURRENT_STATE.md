@@ -1406,17 +1406,26 @@ sustained thermals across a ten-rack aisle walk.
 RESTORE HONESTY — Batch 2 P0 sub-ship 2, owner GO 2026-09-09 (*"GO on .585 restore honesty"*). **Verify
 debt is ONE and the gate is AT its limit** — no `.586` by hook (`phantom-guard.js`) or by `promote.ps1`
 Guard 4 until John promotes `.585`, does the one look in `docs/BATCH2-585-EVIDENCE.md`, and adjudicates
-with `verify.ps1 585 PASS|FAIL`. ⛔ **HELD 2026-09-09 ON THE ORDER, OWNER RULING PENDING.** The owner asked
-for the phone check against `main` before any promote (*verify → stamp → promote*). Measured the same hour:
-Pages serves `release` (`.584`, last-modified 14:26:54 GMT); `main` (`.585`) is not served at any URL, no
-`.github/workflows`. Ruling C (`30f3822`) and the owner's own rev 2 §0 (*serve → device-see → verify*) say
-the reverse, and `.583`/`.584` were adjudicated that way. Reported in `OWNER-RULINGS.md`, not resolved: he
-rules whether to keep serve → see → verify, or fund a served staging surface for `main`. **Nothing moves
-until he rules.** ✅ **The `.585` question is RULED — RESTORE-UNDO** (`OWNER-RULINGS.md` 2026-09-09): neither
+with `verify.ps1 585 PASS|FAIL`. ⭐ **THE PROMOTE ORDER IS RULED (`OWNER-RULINGS.md` 2026-09-09 PROMOTE
+ORDER):** *verify → stamp → promote* is canonical on the principle; on the mechanics it is **not runnable
+until `main` has a served surface** — Pages serves `release` only (measured 14:26:54 GMT), so the owner's
+first statement of the order could not run as written and he said so. The surface is an **infrastructure
+task, not an app ship:** a Cloudflare Pages project pointed at `main` (`docs/INFRA-STAGING-CLOUDFLARE-PAGES.md`,
+steps for the owner; pre-checked: every path is relative, so root-served `main` runs unchanged). **`.585`
+runs serve → see → verify ONE MORE TIME as a NAMED EXCEPTION** (no staging surface existed yet) — not
+precedent. Once staging exists: a script-only ship moves `verify.ps1` to the staging URL and takes the
+promote out of its PASS path, `promote.ps1` Guard 4 goes back to requiring the incoming version adjudicated,
+and `CLAUDE.md`'s ship loop is rewritten; until then nothing after `.585` ships. Ruling C (`30f3822`) and rev 2
+§0's order are superseded for every version after `.585`. ✅ **The `.585` question is RULED — RESTORE-UNDO** (`OWNER-RULINGS.md` 2026-09-09): neither
 *blank is never an erase* nor strict replace; the restore becomes undoable — snapshot before applying, one
 revert. Own ship, evidence first: `docs/RESTORE-UNDO-PHASE0-EVIDENCE.md` + `docs/SHIP-HANDOFF-RESTORE-UNDO.md`
-(Q1–Q3 open). ✅ **The boot-seed finding is CLASSIFIED harness-only by app-path measurement** (evidence table):
-a real restore and its reload on a page with no init script left all 21 restored keys byte-identical. *(`.584` closed 2026-09-09: device PASS on both looks, stamped `d02a081`, `verify.ps1 584
+(Q1 ruled: refuse when the snapshot cannot be taken, one-line reason; Q2: placement options with tap counts
+in the evidence §6, owner picks; Q3 expiry: parked until the storage budget is measured on the phone — the
+harness engine returns `null` for `navigator.storage.estimate()`). ✅ **The boot-seed finding is CLASSIFIED
+harness-only by app-path measurement, accepted by the owner, and PINNED as `test/e2e/53-restore-reload-honesty.spec.js`:**
+a restore driven on a second page with no init script, then its reload, then every restored key compared
+byte-for-byte — 21 same, 0 changed, 0 missing, 0 created by boot. `04-storage`'s round trip (`:461`) reads
+after that reload with its seed armed and would pass even if the restore wrote nothing (lead). *(`.584` closed 2026-09-09: device PASS on both looks, stamped `d02a081`, `verify.ps1 584
 PASS`; `.583` the same way at `b9d7de9`.)*
 ⭐ **Handoff rev 2 is in the repo** (`docs/SHIP-HANDOFF-VERIFY-AND-CLOSEOUT-rev2.md`, 10,269 bytes,
 sha256 `e044f487…`, imported verbatim 2026-09-09). It folded in an external UI review's confirmed,

@@ -37,7 +37,12 @@ Outside `_writes`, two more writes happen after the loop:
 | IndexedDB, a new store (e.g. `phantom-restore-undo` / `slot`, one record) | **Yes.** | Quota is hundreds of MB on iOS; the app already runs three IndexedDB databases; a single-record store with `{ takenAt, fromFile, version, keys: {…}, ghosts: […] \| null, quirks: … }` is the same shape as the bundle. |
 | A downloaded file | No. | Rev 2: a browser download is not proof of a retained copy, and it puts the recovery in the Files app, not in the tool the tech is holding. |
 
-**Not measured here:** real device sizes. `SYS → DIAGNOSTICS` shows storage %; a `.58x` backup on the owner's phone will give the working number. The stress fixture (`4000h/60000c`) compresses to ~6.5 MB, above the localStorage ceiling and far below IndexedDB's.
+**Not measured here, and cannot be (Q3 — the owner rules on the number, parked until it exists):** the harness engine (Playwright WebKit, iOS 15 UA) returns `null` for `navigator.storage.estimate()`, measured 2026-09-09, so no quota number comes from this box. Two numbers, both from the phone, decide the expiry rule:
+
+1. **The size of one snapshot** — its upper bound is the size of a full backup of the same device, because the snapshot holds the same keys. Files → today's `phantom-full-backup-2026-09-09.json` → its size. One look, no console.
+2. **The IndexedDB budget** — `navigator.storage.estimate()` on the phone's Safari. The owner does not read consoles, so this is a **one-line DIAGNOSTICS readout** (`Storage: N MB used of M MB available`, or *not reported by this browser*) — a diagnostics-only slice, no data path, its own GO. The stress fixture (`4000h/60000c`) compresses to ~6.5 MB, above the localStorage ceiling; how far below the IndexedDB budget it sits is what the readout answers.
+
+With those two numbers the expiry question becomes arithmetic: how many slots the budget affords, and therefore whether one slot kept forever is free or needs a cap.
 
 ## 5 · What one revert must capture, exactly
 
@@ -48,9 +53,18 @@ Outside `_writes`, two more writes happen after the loop:
 
 Taken **before the first write**, in one IndexedDB transaction. If it cannot be taken (open error, quota, timeout), the restore must not proceed on the assumption that it can — see Q1.
 
-## 6 · The door
+## 6 · The door — options with tap counts (owner picks before any build; Q2)
 
-A restore ends in a reload, so the completion alert cannot carry the undo. The undo has to be a **persistent band on boot while a slot exists**: `RESTORE APPLIED HH:MM · from <file> · UNDO | KEEP`. UNDO → a confirm built by the same `phantom_restorePreview` machinery (this time device → snapshot), then the snapshot written back through the same atomic loop and rollback, the slot deleted, reload. KEEP → the slot deleted, band gone. **One revert:** a single slot; a second restore before UNDO replaces it, and its confirm says so. 44 px targets; the band is a new surface — one door, no second restore path.
+A restore ends in a reload, so the completion alert cannot carry the undo. Whatever the placement, UNDO → a confirm built by the same `phantom_restorePreview` machinery (this time device → snapshot) → the snapshot written back through the same atomic loop and rollback → the slot deleted → reload. KEEP → the slot deleted. **One revert:** a single slot; a second restore before UNDO replaces it, and its confirm says so. 44 px targets; one door, no second restore path.
+
+| Option | Where | Taps to SEE it | Taps to UNDO | Verdict |
+|---|---|---|---|---|
+| **A · Header band** | The header band cluster with `#storage-warn` / `#backup-remind` (`dct-ios.html:13796–13798`), on **every screen** while a slot exists: `RESTORE APPLIED 09:41 · from phantom-full-backup-2026-09-09.json · UNDO \| KEEP` | **0** — it is on whatever screen the tech is on when they realise | **1** + the confirm | **Recommended.** The moment of realisation happens on a work screen, not on SYS. Same surface family the tech already reads for storage and backup. |
+| **B · Interstitial on the first boot after the restore** | Full-screen card over `#app` once, before anything else | 0 | 1 + the confirm | Blocks the shift until answered, and it is gone after that one boot — a tech who taps past it and realises ten minutes later has nothing. Needs A anyway. |
+| **C · SYS row** | `SYS → MASTER · PROFILE · DIAGNOSTICS` gains a RESTORE row | **2** | **3** + the confirm | Buried. Fails the ruling's own sentence. |
+| **A + C** | Band while a slot exists; the SYS row as the same slot's second door | 0 / 2 | 1 / 3 | Two doors to one action — Contract A2 says no. If A is dismissed by KEEP there is no slot to show anyway. |
+
+**Recommendation: A alone.** Persistent until UNDO or KEEP; no auto-hide; the only other way it leaves the screen is a later restore replacing the slot.
 
 ## 7 · Failure modes that must be loud
 
@@ -59,15 +73,19 @@ A restore ends in a reload, so the completion alert cannot carry the undo. The u
 - Ghost Echo revert fails → report it the way `.585` reports the forward failure; keep the slot.
 - Slot exists but is unreadable at boot → band says so, offers KEEP (delete) only.
 
-## 8 · What a spec must pin (`test/e2e/53-restore-undo.spec.js`)
+## 8 · What a spec must pin (`test/e2e/54-restore-undo.spec.js` — 53 is the honest round-trip pin, below)
 
 Snapshot exists before the first `safeStore` (stub `Storage.prototype.setItem` to observe order) · UNDO returns every `_writes` key and the quirks blob byte-identical, and the ghosts store record-for-record · the slot is gone after one UNDO · KEEP deletes the slot and changes nothing else · a second restore replaces the slot and its confirm says so · a snapshot failure refuses the restore with every key byte-identical · the band renders at 390 with two 44 px targets.
 
-## 9 · Questions for the owner (park, don't guess)
+## 9 · Questions for the owner — answered 2026-09-09 (verbatim in `OWNER-RULINGS.md`)
 
-- **Q1** — snapshot cannot be taken: refuse the restore, or proceed and say there will be no undo? (Recommendation: refuse. The ruling's premise is one copy.)
-- **Q2** — does the band live in the shared header band cluster with `#storage-warn` / `#backup-remind`, or on SYS? (Recommendation: header — it must be seen without navigating.)
-- **Q3** — expiry: never, until UNDO or KEEP? (Recommendation: never; the slot is one record.)
+- **Q1 — RULED: refuse.** *"Refuse the restore when the snapshot cannot be taken: yes, refuse. Tell the tech why in one line."* The refusal line: `Restore not started — could not save an undo point (<reason>). Nothing was changed.`
+- **Q2 — options with tap counts in §6; the owner picks before any build.** Recommendation: A, the header band.
+- **Q3 — PARKED by the owner until the storage budget is measured on the phone** (§4: the backup file size and a DIAGNOSTICS readout of `navigator.storage.estimate()`). Not guessed.
+
+## 9a · The honest round-trip pin (`test/e2e/53-restore-reload-honesty.spec.js`, pinned 2026-09-09)
+
+The measurement that classified the boot-seed finding is now a permanent spec: a restore driven on a second page with **no harness init script**, then the reload the restore ends with, then every restored key read back and compared byte-for-byte to what the restore wrote, plus nothing created by boot. `04-storage`'s round trip (`:461`) reads after that reload with its seed still armed, so it would pass even if the restore wrote nothing; spec 53 is the version that cannot.
 
 ## 10 · Proposed ship
 

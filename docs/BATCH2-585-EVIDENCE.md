@@ -1,7 +1,7 @@
 # BATCH 2 — EVIDENCE TABLE · `phantom-v1.14.585`
 
 **Written:** 2026-09-09 · **Ship commit:** `3edf586` · **Baseline:** `.584` VERIFIED (`d02a081`), served on `release` (`d02a081`), device PASS 2026-09-09 on both looks
-**Status:** evidence delivered; **HELD 2026-09-09 pending an owner ruling on the order.** The owner asked for the phone check against `main` before any promote. Measured the same hour: Pages serves `release` (`.584`, last-modified 14:26:54 GMT); `main` (`.585`) is not served at any URL. Ruling C and rev 2 §0 say serve → see → verify; the owner's message says verify → stamp → promote. Reported in `OWNER-RULINGS.md` (2026-09-09, pending note). **Do nothing until he rules.** The Q row below is answered: RESTORE-UNDO, own spec (`docs/SHIP-HANDOFF-RESTORE-UNDO.md`).
+**Status:** evidence delivered. **Runs serve → see → verify ONE MORE TIME as a NAMED EXCEPTION** (`OWNER-RULINGS.md` 2026-09-09 PROMOTE ORDER): verify → stamp → promote is canonical from here on, but no staging surface for `main` existed when `.585` landed, so `.585` alone goes `promote.ps1` → the look below on the release URL → `verify.ps1 585 PASS|FAIL`. Not precedent. The Q row below is answered: RESTORE-UNDO, own spec (`docs/SHIP-HANDOFF-RESTORE-UNDO.md`).
 
 ---
 

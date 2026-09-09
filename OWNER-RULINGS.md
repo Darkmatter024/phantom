@@ -27,16 +27,63 @@ lacks a deploy section may clear it on the device:**
   writes, what it does not touch, why the snapshot cannot live in `localStorage`, what one revert
   must capture) and `docs/SHIP-HANDOFF-RESTORE-UNDO.md` (the spec). Not folded into `.585` or `.586`.
 
-### Reported in the same message, NOT recorded here as law — owner ruling pending
+### Q1–Q3 answered the same day (verbatim)
 
-The owner stated the canonical order as *verify → stamp → promote, device checks against main's
-live Pages URL*, and asked not to be told to promote `.585` before the phone check. **Measured the
-same hour (2026-09-09 14:26:54 GMT last-modified):** Pages serves `release` (`.584`, `d02a081`);
-`main` (`.585`) is not served at any URL; there is no `.github/workflows`. That is ruling C
-(`30f3822`, 2026-09-08) and rev 2 §0 of the owner's own handoff (*"Order is serve → device-see →
-verify"*), and it is the reason `.583` and `.584` were adjudicated promote → phone → `verify.ps1`.
-The contradiction is reported, not resolved: the owner rules whether to keep serve → see → verify,
-or to fund a served staging surface for `main` so his stated order becomes executable.
+- **Q1, snapshot cannot be taken:** *"Refuse the restore when the snapshot cannot be taken: yes,
+  refuse. Tell the tech why in one line. An un-undoable restore on a device holding the only copy of
+  that data is the exact failure the ruling exists to prevent."*
+- **Q2, band placement:** *"whatever puts the revert in front of the tech at the moment they realize
+  it went wrong, not buried. Show me your options with tap counts before you build."* → options with
+  tap counts in `docs/RESTORE-UNDO-PHASE0-EVIDENCE.md` §6; owner picks before any build.
+- **Q3, expiry:** *"parked, don't guess. Bring me what the storage budget actually allows in
+  IndexedDB and I'll rule from that."* → measurement plan in the same evidence §4; the harness engine
+  returns `null` for `navigator.storage.estimate()`, so the number comes from the phone.
+
+---
+
+## 2026-09-09 · PROMOTE ORDER — RESOLVED. Principle: verify → stamp → promote is canonical. Mechanics: not runnable until `main` has a served surface
+
+**Context.** Earlier the same day the owner stated the canonical order as *verify → stamp →
+promote, device checks against main's live Pages URL*. Measured the same hour (last-modified
+2026-09-09 14:26:54 GMT): Pages serves `release` only; `main` is not served at any URL; there is no
+`.github/workflows`. Reported back as a contradiction with ruling C (`30f3822`) and rev 2 §0.
+
+**Ruling, verbatim:**
+
+> You're right and the error was mine. Pages serves release, so main has no served surface and the
+> order I gave you can't be run as written. Resolve the contradiction in OWNER-RULINGS in my favor on
+> the principle and against me on the mechanics: verify → stamp → promote stays canonical, and it
+> does not become runnable until main has a served surface.
+
+**The surface, verbatim:**
+
+> This is not its own ship in the app — no dct-ios.html change, no version bump. It's a Cloudflare
+> Pages project pointed at main, giving a staging URL alongside the existing GitHub Pages release
+> deployment. I already have Cloudflare. Write it as an infrastructure task with the steps for me to
+> run, not an app ship. Once staging exists: phone check on staging, verify.ps1, stamp, then I
+> promote to release, and release means graduated.
+
+→ `docs/INFRA-STAGING-CLOUDFLARE-PAGES.md`. Pre-checked from the repo: every path is relative
+(`start_url ./dct-ios.html`, `register('./sw.js')`, relative `PRECACHE_URLS`, zero `/phantom/`
+absolutes), so `main` served at the root of a `*.pages.dev` origin runs unchanged.
+
+**Named exception — `.585`, verbatim:**
+
+> .585 runs serve → see → verify one more time as a NAMED EXCEPTION, recorded as such in
+> OWNER-RULINGS with the reason (no staging surface existed yet). It is not precedent.
+
+Reason of record: on 2026-09-09 no staging surface existed and `.585` was already on `main`. Order
+for `.585` only: `promote.ps1` → the RESTORE-confirm look on the release URL → `verify.ps1 585
+PASS|FAIL`. The owner records the stamp against what he actually saw on the phone.
+
+**What this supersedes and what it unlocks.** Ruling C's order (`30f3822`) and the *serve →
+device-see → verify* line in rev 2 §0 are superseded for every version after `.585`. The tools
+follow the surface, in a script-only ship gated on the staging URL existing: `verify.ps1`'s
+NOT-SERVED / SERVED-BYTES guards move from `origin/release` + the release URL to `origin/main` + the
+staging URL; its PASS path stops promoting and prints the promote line instead; `promote.ps1`
+Guard 4 returns to requiring the INCOMING version to be adjudicated — the semantics ruling C relaxed
+only because nothing could serve an unpromoted version. `CLAUDE.md`'s ship loop is rewritten in the
+same ship. Promote remains owner-only, per instance, from the owner's terminal, no exceptions.
 
 ---
 
