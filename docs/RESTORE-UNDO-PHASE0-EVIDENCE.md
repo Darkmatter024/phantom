@@ -40,7 +40,7 @@ Outside `_writes`, two more writes happen after the loop:
 **Not measured here, and cannot be (Q3 — the owner rules on the number, parked until it exists):** the harness engine (Playwright WebKit, iOS 15 UA) returns `null` for `navigator.storage.estimate()`, measured 2026-09-09, so no quota number comes from this box. Two numbers, both from the phone, decide the expiry rule:
 
 1. **The size of one snapshot** — its upper bound is the size of a full backup of the same device, because the snapshot holds the same keys. Files → today's `phantom-full-backup-2026-09-09.json` → its size. One look, no console.
-2. **The IndexedDB budget** — `navigator.storage.estimate()` on the phone's Safari. The owner does not read consoles, so this is a **one-line DIAGNOSTICS readout** (`Storage: N MB used of M MB available`, or *not reported by this browser*) — a diagnostics-only slice, no data path, its own GO. The stress fixture (`4000h/60000c`) compresses to ~6.5 MB, above the localStorage ceiling; how far below the IndexedDB budget it sits is what the readout answers.
+2. **The IndexedDB budget** — `navigator.storage.estimate()` on the phone's Safari. ⭐ **Corrected 2026-09-09: no new readout is needed; the app already prints it.** `phantomStorageCheck` (`dct-ios.html:55885`) renders the gas gauge `#phantom-gas-gauge` inside the Site Profile editor (`siteProfile_showEditor`, `:30600`) as **`N MB / M MB (P%)`**, where **M is `est.quota`** — the origin's whole budget, IndexedDB included. Path on the phone: **SYS → PROFILE** (the SITE PROFILE sheet), two taps, no console. The header health cluster's STORAGE row (`:13585`) shows `N MB/P%` on every screen and re-runs the check on tap. The diagnostics-only slice this line used to propose is **withdrawn** — a door already exists. The stress fixture (`4000h/60000c`) compresses to ~6.5 MB, above the localStorage ceiling; how far below M it sits is the arithmetic.
 
 With those two numbers the expiry question becomes arithmetic: how many slots the budget affords, and therefore whether one slot kept forever is free or needs a cap.
 
@@ -81,7 +81,7 @@ Snapshot exists before the first `safeStore` (stub `Storage.prototype.setItem` t
 
 - **Q1 — RULED: refuse.** *"Refuse the restore when the snapshot cannot be taken: yes, refuse. Tell the tech why in one line."* The refusal line: `Restore not started — could not save an undo point (<reason>). Nothing was changed.`
 - **Q2 — options with tap counts in §6; the owner picks before any build.** Recommendation: A, the header band.
-- **Q3 — PARKED by the owner until the storage budget is measured on the phone** (§4: the backup file size and a DIAGNOSTICS readout of `navigator.storage.estimate()`). Not guessed.
+- **Q3 — PARKED by the owner until the storage budget is measured on the phone** (§4: the backup file size from Files, and `M MB` from the STORAGE gauge on SYS → PROFILE — both already readable, no slice needed). Not guessed.
 
 ## 9a · The honest round-trip pin (`test/e2e/53-restore-reload-honesty.spec.js`, pinned 2026-09-09)
 
