@@ -1,7 +1,7 @@
 # BATCH 2 — EVIDENCE TABLE · `phantom-v1.14.585`
 
 **Written:** 2026-09-09 · **Ship commit:** `3edf586` · **Baseline:** `.584` VERIFIED (`d02a081`), served on `release` (`d02a081`), device PASS 2026-09-09 on both looks
-**Status:** evidence delivered. **Runs serve → see → verify ONE MORE TIME as a NAMED EXCEPTION** (`OWNER-RULINGS.md` 2026-09-09 PROMOTE ORDER): verify → stamp → promote is canonical from here on, but no staging surface for `main` existed when `.585` landed, so `.585` alone goes `promote.ps1` → the look below on the release URL → `verify.ps1 585 PASS|FAIL`. Not precedent. The Q row below is answered: RESTORE-UNDO, own spec (`docs/SHIP-HANDOFF-RESTORE-UNDO.md`).
+**Status:** ✅ **CLOSED 2026-09-09.** Device PASS on the one look (the RESTORE confirm read as designed, Cancel, nothing changed). Owner adjudicated with `verify.ps1 585 PASS` — stamp `f95ece0` (VERIFIED alone, 13:48 local), `release` level with `main`, `SERVED: phantom-v1.14.585` — read back from `origin` and the served stamps before this line was written. Ran under the **NAMED EXCEPTION** (`OWNER-RULINGS.md` 2026-09-09 PROMOTE ORDER): serve → see → verify one more time because no staging surface for `main` existed; not precedent. ⚠ The first two `verify.ps1 585 PASS` attempts ran before the promote and were refused at NOT-SERVED — the guard doing its job; nothing was written either time. The Q row below is answered: RESTORE-UNDO, own spec.
 
 ---
 
