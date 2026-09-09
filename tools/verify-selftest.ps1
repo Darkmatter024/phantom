@@ -4,27 +4,33 @@
 
   THIS REPO IS NEVER TOUCHED: not its branches, not VERIFIED, not origin. The script bare-clones
   the repo into %TEMP%, clones a working copy from THAT, and every push in every fixture lands in
-  the throwaway bare repo. The one thing it reaches on the real network is the Pages URL,
-  read-only, because verify.ps1's last guard and promote.ps1's served-bytes poll both read it, and
-  a fixture that faked it would be testing a script that does not exist.
+  the throwaway bare repo. What it reaches on the real network, read-only: the STAGING URL
+  (verify.ps1's SERVED-BYTES guard reads it) and the Pages URL (promote.ps1's served-bytes poll
+  reads it). A fixture that faked either would be testing a script that does not exist.
 
   It tests the WORKING-TREE tools/ (verify, stamp, promote), copied into the clone and committed
   there, so an edit is tested BEFORE it is committed here. Run it after any edit to those three.
 
-  What it proves:
+  What it proves (the order of record since 2026-09-09: main -> staging -> phone -> verify -> promote):
     T1 VERSION-MISMATCH     HEAD carries a different version than the one named       (no network)
     T2 DIRTY-TREE           a tracked file is modified                                 (no network)
     T3 ALREADY-ADJUDICATED  VERIFIED already rules on the version                      (no network)
-    T4 NOT-SERVED           release has never carried the version - the .581 class     (no network)
+    T4 NOT-SERVED           origin/main has never carried the version - the .581 class (no network)
+    T4b NOT-SERVED          HEAD is not origin/main - a commit the phone cannot have run (no network)
+    T7a promote Guard 4     an unadjudicated incoming version is refused, nothing moves (no network)
     T5 FAIL path            stamps FAILED with the reason, pushes main, release does not move
-    T6 PASS path            stamps VERIFIED, pushes main, fast-forwards release, prints SERVED
+    T7b promote Guard 4     the FAILED version T5 stamped is refused, nothing moves     (no network)
+    T6 PASS path            stamps VERIFIED, pushes main, release does NOT move, prints the promote line
+    T7c promote after PASS  Guard 4 reads the stamp, release fast-forwards to main, SERVED printed
   Each refusal is also checked to have written nothing: HEAD, release, origin/main, origin/release
   and VERIFIED line 1 are compared before and after.
 
-  T5 and T6 pin the fixture to whichever version Pages serves RIGHT NOW (the newest commit on
-  main whose version.json carries it and whose VERIFIED does not yet rule on it), so the
-  SERVED-BYTES guard passes and promote.ps1's poll matches on its first read instead of timing out
-  after five minutes. If the Pages URL cannot be read they are reported SKIPPED - never PASS.
+  T1-T4 run on the ship commit of HEAD's version with VERIFIED not yet ruling on it, so they hold
+  on a repo whose HEAD version is already closed (at HEAD they would hit ALREADY-ADJUDICATED
+  first). T5/T6/T7 pin the fixture to whichever version STAGING serves RIGHT NOW (same rule), so
+  the SERVED-BYTES guard passes. T7c additionally needs the Pages URL to already serve that
+  version, or promote.ps1's poll would wait five minutes for a build a throwaway clone never gets;
+  otherwise it is SKIPPED. Anything that cannot be read is reported SKIPPED - never PASS.
 
   Note on the hook: the clone's pre-commit runs tools/hooks/phantom-guard.js, which is pinned to
   THIS repo's path, so fixture commits are gated against this repo's index and stamps, not the
@@ -39,12 +45,14 @@ param([switch]$KeepScratch)
 
 $ErrorActionPreference = 'Stop'
 $RepoRoot = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
-$PagesVersionUrl = 'https://darkmatter024.github.io/phantom/version.json'
+$StagingVersionUrl = 'https://phantom-staging.wfj6t2fk7w.workers.dev/version.json'   # what verify.ps1 reads
+$PagesVersionUrl = 'https://darkmatter024.github.io/phantom/version.json'             # what promote.ps1 polls
 
 $Scratch = Join-Path $env:TEMP ('phantom-verify-selftest-' + [guid]::NewGuid().ToString('N').Substring(0, 8))
 $Bare = Join-Path $Scratch 'origin.git'
 $Clone = Join-Path $Scratch 'clone'
 $VerifyScript = Join-Path $Clone 'tools\verify.ps1'
+$PromoteScript = Join-Path $Clone 'tools\promote.ps1'
 $Tools = @('verify.ps1', 'stamp.ps1', 'promote.ps1')
 
 $Results = New-Object System.Collections.Generic.List[object]
@@ -85,6 +93,12 @@ function Invoke-Verify { param([string[]]$VerifyArgs)
   # A child process: verify.ps1's own exit ends verify.ps1, not this script, and the exit code
   # comes back as a value. Its stdout is captured whole so the banners can be asserted on.
   $lines = @(& powershell.exe -NoProfile -ExecutionPolicy Bypass -File $VerifyScript @VerifyArgs)
+  $code = $LASTEXITCODE
+  return [pscustomobject]@{ Exit = $code; Text = ($lines -join "`n") }
+}
+function Invoke-Promote {
+  # Same shape: promote.ps1 in the clone, as a child process, stdout captured for the assertions.
+  $lines = @(& powershell.exe -NoProfile -ExecutionPolicy Bypass -File $PromoteScript)
   $code = $LASTEXITCODE
   return [pscustomobject]@{ Exit = $code; Text = ($lines -join "`n") }
 }
@@ -156,6 +170,16 @@ try {
   $headV = $headJson.version
   $prevV = $headJson.prevVersion
   Write-Host "setup: clone main carries $headV (prev $prevV), release carries $((Get-JsonAt $Clone 'release').version)" -ForegroundColor DarkGray
+
+  # T1-T4 run on the ship commit of HEAD's version with VERIFIED not yet ruling on it, so they hold
+  # whatever this repo's VERIFIED says today. At HEAD of a closed ship they would hit
+  # ALREADY-ADJUDICATED before the guard under test.
+  $fixtureSha = Find-ShipCommit $Clone $headV -RequireUnruled
+  if ($fixtureSha) {
+    Set-Fixture $fixtureSha
+    Write-Host "setup: T1-T4 pinned to $($fixtureSha.Substring(0, 7)) - $headV is unruled there" -ForegroundColor DarkGray
+  }
+  else { Write-Host "setup: no commit on main carries $headV unruled - T1-T3 run at HEAD, T4/T4b are skipped" -ForegroundColor Yellow }
   Write-Host ''
 
   # ---- T1: the version named is not the one HEAD carries. ----
@@ -174,36 +198,67 @@ try {
   Test-Refusal 'T3 ALREADY-ADJUDICATED: a version VERIFIED already rules on is refused' @($headV, 'PASS') 'ALREADY-ADJUDICATED'
   Invoke-GitIn $Clone @('reset', '--quiet', '--hard', 'HEAD~1') | Out-Null
 
-  # ---- T4: release has never carried the version. ----
-  $prevSha = Find-ShipCommit $Clone $prevV
-  if (-not $prevSha) { Add-Skip 'T4 NOT-SERVED' "no commit on main carries $prevV" }
+  # ---- T4: origin/main has never carried the version (the .581 class). ----
+  # ---- T4b: HEAD is not origin/main - a local commit origin never received. ----
+  if (-not $fixtureSha) {
+    Add-Skip 'T4 NOT-SERVED (origin/main)' "no commit on main carries $headV unruled"
+    Add-Skip 'T4b NOT-SERVED (HEAD is not origin/main)' "no commit on main carries $headV unruled"
+  }
   else {
-    Invoke-GitIn $Clone @('branch', '-f', 'release', $prevSha) | Out-Null
-    Invoke-GitIn $Clone @('push', '--quiet', '--force', 'origin', 'release') | Out-Null
-    Test-Refusal 'T4 NOT-SERVED: a version release has never carried is refused' @($headV, 'PASS') 'NOT-SERVED'
+    $prevSha = Find-ShipCommit $Clone $prevV
+    if (-not $prevSha) { Add-Skip 'T4 NOT-SERVED (origin/main)' "no commit on main carries $prevV" }
+    else {
+      # origin's main is moved back to the previous ship; local main still carries $headV.
+      Invoke-GitIn $Clone @('push', '--quiet', '--force', 'origin', "${prevSha}:refs/heads/main") | Out-Null
+      Invoke-GitIn $Clone @('fetch', '--quiet', 'origin') | Out-Null
+      Test-Refusal 'T4 NOT-SERVED: a version origin/main has never carried is refused' @($headV, 'PASS') 'NOT-SERVED'
+      Invoke-GitIn $Clone @('push', '--quiet', '--force', 'origin', 'main') | Out-Null
+      Invoke-GitIn $Clone @('fetch', '--quiet', 'origin') | Out-Null
+    }
+    Add-Content -Path (Join-Path $Clone 'CLAUDE.md') -Value 'selftest: a local commit origin never received'
+    Invoke-GitIn $Clone @('commit', '--quiet', '-m', 'selftest: unpushed commit', '--', 'CLAUDE.md') | Out-Null
+    Test-Refusal 'T4b NOT-SERVED: a HEAD that is not origin/main (unpushed commit) is refused' @($headV, 'PASS') 'NOT-SERVED'
+    Invoke-GitIn $Clone @('reset', '--quiet', '--hard', 'origin/main') | Out-Null
   }
 
-  # ---- T5 / T6: the two real paths, pinned to what Pages serves right now. ----
+  # ---- T5 / T6 / T7: the real paths, pinned to what STAGING serves right now. ----
   $live = $null
   $liveErr = 'empty response'
   try {
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-    # ${...} deliberately: '?' is a legal variable-name character, so "$PagesVersionUrl?cb=" is empty.
-    $live = (Invoke-RestMethod -Uri "${PagesVersionUrl}?cb=$([DateTimeOffset]::UtcNow.ToUnixTimeSeconds())" -TimeoutSec 20).version
+    # ${...} deliberately: '?' is a legal variable-name character, so "$StagingVersionUrl?cb=" is empty.
+    $live = (Invoke-RestMethod -Uri "${StagingVersionUrl}?cb=$([DateTimeOffset]::UtcNow.ToUnixTimeSeconds())" -TimeoutSec 20).version
   } catch { $live = $null; $liveErr = $_.Exception.Message }
 
   if (-not $live) {
-    Add-Skip 'T5 FAIL path' "the Pages URL could not be read: $liveErr"
-    Add-Skip 'T6 PASS path' "the Pages URL could not be read: $liveErr"
+    Add-Skip 'T7a promote Guard 4 (unadjudicated)' "the staging URL could not be read: $liveErr"
+    Add-Skip 'T5 FAIL path' "the staging URL could not be read: $liveErr"
+    Add-Skip 'T7b promote Guard 4 (FAILED)' "the staging URL could not be read: $liveErr"
+    Add-Skip 'T6 PASS path' "the staging URL could not be read: $liveErr"
+    Add-Skip 'T7c promote after PASS' "the staging URL could not be read: $liveErr"
   }
   else {
-    Write-Host "setup: Pages serves $live - T5/T6 are pinned to it" -ForegroundColor DarkGray
+    Write-Host "setup: staging serves $live - T5/T6/T7 are pinned to it" -ForegroundColor DarkGray
     $sha = Find-ShipCommit $Clone $live -RequireUnruled
     if (-not $sha) {
+      Add-Skip 'T7a promote Guard 4 (unadjudicated)' "no commit on main carries $live with VERIFIED not yet ruling on it"
       Add-Skip 'T5 FAIL path' "no commit on main carries $live with VERIFIED not yet ruling on it"
+      Add-Skip 'T7b promote Guard 4 (FAILED)' "no commit on main carries $live with VERIFIED not yet ruling on it"
       Add-Skip 'T6 PASS path' "no commit on main carries $live with VERIFIED not yet ruling on it"
+      Add-Skip 'T7c promote after PASS' "no commit on main carries $live with VERIFIED not yet ruling on it"
     }
     else {
+      # T7a: promote.ps1 refuses the unadjudicated incoming version before any stamp exists.
+      # release is parked one commit behind so there is genuinely something to promote.
+      Set-Fixture $sha
+      Invoke-GitIn $Clone @('branch', '-f', 'release', 'HEAD~1') | Out-Null
+      Invoke-GitIn $Clone @('push', '--quiet', '--force', 'origin', 'release') | Out-Null
+      $before = Get-State $Clone
+      $p = Invoke-Promote
+      $after = Get-State $Clone
+      $ok = ($p.Exit -eq 1) -and ($p.Text -match 'IS NOT ADJUDICATED') -and ($after -eq $before)
+      Add-Result 'T7a promote.ps1 Guard 4: an unadjudicated incoming version is refused, nothing moved' $ok "exit=$($p.Exit) unchanged=$($after -eq $before)`n--- promote.ps1 said ---`n$($p.Text)"
+
       # T5
       Set-Fixture $sha
       $fixtureHead = Get-Sha $Clone 'HEAD'
@@ -220,6 +275,14 @@ try {
       $detail = "exit=$($r.Exit) top='$top' headFiles=[$($files -join ',')] stampCommitted=$($head -ne $fixtureHead) mainPushed=$($om -eq $head) releaseUnmoved=$($or -eq $fixtureHead)`n--- verify.ps1 said ---`n$($r.Text)"
       Add-Result 'T5 FAIL path: FAILED stamped with the reason, main pushed, release not moved' $ok $detail
 
+      # T7b: promote.ps1 refuses the FAILED version T5 just stamped. main is one stamp ahead of
+      # release, so the only thing stopping it is Guard 4.
+      $before = Get-State $Clone
+      $p = Invoke-Promote
+      $after = Get-State $Clone
+      $ok = ($p.Exit -eq 1) -and ($p.Text -match 'stamped FAILED') -and ($after -eq $before)
+      Add-Result 'T7b promote.ps1 Guard 4: a FAILED incoming version is refused, nothing moved' $ok "exit=$($p.Exit) unchanged=$($after -eq $before)`n--- promote.ps1 said ---`n$($p.Text)"
+
       # T6
       Set-Fixture $sha
       $fixtureHead = Get-Sha $Clone 'HEAD'
@@ -229,12 +292,29 @@ try {
       $head = Get-Sha $Clone 'HEAD'
       $om = Get-Sha $Clone 'origin/main'
       $or = Get-Sha $Clone 'origin/release'
-      $ok = ($r.Exit -eq 0) -and ($r.Text -match ('PROMOTED ' + [regex]::Escape($live))) -and
+      $ok = ($r.Exit -eq 0) -and ($r.Text -match ('VERIFIED ' + [regex]::Escape($live) + ' - READY TO PROMOTE')) -and
             ($top -eq "$live VERIFIED") -and ($files.Count -eq 1) -and ($files[0] -eq 'VERIFIED') -and
-            ($head -ne $fixtureHead) -and ($om -eq $head) -and ($or -eq $head) -and
-            ($r.Text -match ('SERVED: ' + [regex]::Escape($live)))
-      $detail = "exit=$($r.Exit) top='$top' headFiles=[$($files -join ',')] stampCommitted=$($head -ne $fixtureHead) mainPushed=$($om -eq $head) releaseLevel=$($or -eq $head)`n--- verify.ps1 said ---`n$($r.Text)"
-      Add-Result 'T6 PASS path: VERIFIED stamped, main pushed, release fast-forwarded, SERVED printed' $ok $detail
+            ($head -ne $fixtureHead) -and ($om -eq $head) -and ($or -eq $fixtureHead) -and
+            ($r.Text -match 'promote\.ps1')
+      $detail = "exit=$($r.Exit) top='$top' headFiles=[$($files -join ',')] stampCommitted=$($head -ne $fixtureHead) mainPushed=$($om -eq $head) releaseUnmoved=$($or -eq $fixtureHead)`n--- verify.ps1 said ---`n$($r.Text)"
+      Add-Result 'T6 PASS path: VERIFIED stamped, main pushed, release NOT moved, promote line printed' $ok $detail
+
+      # T7c: the promote the owner runs next. promote.ps1's served-bytes poll reads the RELEASE
+      # URL, so this is provable only while Pages already serves $live; otherwise the poll would
+      # wait five minutes for a build a throwaway clone never gets.
+      $pages = $null
+      try { $pages = (Invoke-RestMethod -Uri "${PagesVersionUrl}?cb=$([DateTimeOffset]::UtcNow.ToUnixTimeSeconds())" -TimeoutSec 20).version } catch { $pages = $null }
+      if ($pages -ne $live) { Add-Skip 'T7c promote after PASS' "Pages serves '$pages', not $live - promote.ps1's poll would wait five minutes for nothing" }
+      else {
+        $mainBefore = Get-Sha $Clone 'HEAD'
+        $p = Invoke-Promote
+        $rel = Get-Sha $Clone 'release'
+        $or = Get-Sha $Clone 'origin/release'
+        $back = (Invoke-GitIn $Clone @('rev-parse', '--abbrev-ref', 'HEAD')).Trim()
+        $ok = ($p.Exit -eq 0) -and ($p.Text -match 'Incoming version adjudicated') -and ($rel -eq $mainBefore) -and
+              ($or -eq $mainBefore) -and ($back -eq 'main') -and ($p.Text -match ('SERVED: ' + [regex]::Escape($live)))
+        Add-Result 'T7c promote after PASS: Guard 4 reads the stamp, release fast-forwards to main, SERVED printed, back on main' $ok "exit=$($p.Exit) release=$($rel -eq $mainBefore) originRelease=$($or -eq $mainBefore) branch=$back`n--- promote.ps1 said ---`n$($p.Text)"
+      }
     }
   }
 }

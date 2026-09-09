@@ -45,3 +45,36 @@
 - **Preview deployments left on** → other branches served; harmless but confusing, and a stale `redesign/*` could be mistaken for `main`.
 - **CORS not updated** → AI features fail on staging only; DIAGNOSTICS shows the refusal. Not a verify blocker; do step 6 before relying on the API dot.
 - **Testing on the wrong icon** → the staging PWA holds different data. The icon name is the guard.
+
+## 5 · Outcome — 2026-09-09, staging is live
+
+**URL of record:** `https://phantom-staging.wfj6t2fk7w.workers.dev` — **workers.dev, not pages.dev.** Cloudflare
+built it as a **Worker with static assets** (the dashboard's current shape for a Git-connected static site),
+production branch `main`, preview branches none. Owner-created. The `phantom-api` Worker's CORS allowlist is at
+**v2.3** with this origin added and deployed; the owner reports the SYS badge normal on staging.
+
+**Measured from this box, 2026-09-09 (D-1: origin → served → then the claim):**
+
+| Check | Result |
+|---|---|
+| `version.json`, `sw.js`, `dct-ios.html`, `manifest.json`, `index.html` on staging vs `origin/main` (f5ab630) | **byte-identical**, all five |
+| `version.json` on staging | `phantom-v1.14.585`, `Cache-Control: public, max-age=0, must-revalidate`, no redirect |
+| GitHub Pages `version.json` vs `origin/release` (f95ece0) | **byte-identical**, still `phantom-v1.14.585` — release untouched |
+| `/dct-ios.html` on staging | **307 → `/dct-ios`** (also `/index.html` → `/`, and `?legacy` survives the redirect). Bytes after the redirect are identical to `main`. |
+
+⚠ **The `.html` → extensionless 307 is a lead, not a defect proven on a phone.** It is Workers static assets'
+default `html_handling: "auto-trailing-slash"`, not anything in the repo. `version.json` is unaffected, so
+`tools/verify.ps1` reads it directly. What it *could* affect, unmeasured: the service worker precaches
+`'dct-ios.html'` via `cache.addAll`, which follows the redirect and stores a response flagged `redirected`; a
+navigation answered offline from that entry is rejected by browsers as a redirected response to a
+non-`follow` request. **So offline boot of the PHANTOM STAGING icon may fail where the PHANTOM icon's does
+not.** Only an offline-behaviour look on staging would hit it; version verifies do not. **Fix, when wanted,
+is infra-side:** `html_handling: "none"` on the Worker's assets config (dashboard, or a `wrangler.jsonc` at the
+repo root — the latter is a repo change and needs a GO). Owner's call; parked here.
+
+**Tools follow the surface — landed the same day** (the script-only ship this doc's §3 promised):
+`tools/verify.ps1` NOT-SERVED reads `origin/main` and requires `HEAD == origin/main`; SERVED-BYTES reads the
+staging `version.json`; the PASS path stamps, pushes `main`, does **not** promote and prints the promote line;
+`tools/promote.ps1` Guard 4 requires the **incoming** version adjudicated and never promotes FAILED;
+`tools/verify-selftest.ps1` proves both in a throwaway clone (T4b, T7a–c added); `CLAUDE.md`'s ship loop reads
+build → check staging on device → verify → promote.

@@ -130,10 +130,15 @@ import. Docs only: no product source touched, so no version bump and no `VERIFIE
 
 ## Branch topology — SHIP-GATE-LOCKDOWN (owner ruling 2026-08-27)
 
-**Two branches, one gate.**
+**Two branches, two served surfaces, one gate.**
 
-- **`main`** — where Claude Code works. All edits, all commits, all merges.
-- **`release`** — what GitHub Pages serves.
+- **`main`** — where Claude Code works. All edits, all commits, all merges. **Served at staging**
+  since 2026-09-09: `https://phantom-staging.wfj6t2fk7w.workers.dev/dct-ios.html`, a Cloudflare
+  Worker serving `main`'s root, rebuilt on every push in about a minute — the **PHANTOM STAGING**
+  icon on the phone (`docs/INFRA-STAGING-CLOUDFLARE-PAGES.md`). Its own origin, its own storage:
+  staging data is not release data.
+- **`release`** — what GitHub Pages serves: `darkmatter024.github.io/phantom/dct-ios.html`, the
+  **PHANTOM** icon. **`release` means graduated.**
 
 ⛔ **REVOKED 2026-09-05 — PROMOTE IS OWNER-ONLY. CLAUDE CODE NEVER MOVES `release`, IN ANY MODE.**
 The 2026-08-30 amendment that permitted Claude Code to fast-forward `release` itself is **struck**.
@@ -144,28 +149,33 @@ John the command to run, never by running it. ⛔ No `merge --ff-only`, no push 
 branch reset, no "it is only a fast-forward".
 
 **The only promote path is `tools/promote.ps1`, run by John from his own terminal.** Claude Code
-ships to `main`, reports, and PARKS. A push to `main` changes nothing on the iPhone; reaching the
-phone is John's step.
+ships to `main`, reports, and PARKS. A push to `main` reaches the PHANTOM STAGING icon within about
+a minute and nothing else; the PHANTOM icon moves only when John promotes.
 
 ⛔ Still forbidden to anyone: any commit on `release`, any non-fast-forward, any `--force`. A promote
 is a fast-forward or it is a STOP.
 
 ⛔ **WHAT DID NOT CHANGE, and is the actual gate:**
 1. **`VERIFIED` is owner-only.** Claude Code never edits it except when John says "stamp it", never
-   commits it, and never stamps a version the served bytes have not carried.
-2. **The device verify is John's, always.** Promoting a version is not verifying it. A promote makes
-   a version *reachable*; only John's phone makes it *real*.
+   commits it, and never stamps a version the served bytes have not carried — and since 2026-09-09
+   "served" means **staging**, which `tools/verify.ps1` reads before it writes anything.
+2. **The device verify is John's, always.** Promoting a version is not verifying it. Staging makes a
+   version *seeable*; only John's phone makes it *real*; the promote makes it *graduated*.
 
 A commit that bumps `version.json` is blocked by hook unless John has verified the old version on device and stamped it in the `VERIFIED` file. The gate is mechanical, not a promise. 
 
-**Live serves from `release` branch.** A push to `main` changes nothing on the iPhone until John promotes.
+**Live serves from `release`; staging serves `main`.** A push to `main` changes nothing on the PHANTOM icon until John promotes.
 
-### The mechanical ship loop
+### The mechanical ship loop — build → check staging on device → verify → promote
 
-1. **OODA against served bytes.** `curl` live `version.json` from `release` branch (what the iPhone has). If it ≠ your baseline, STOP and re-anchor.
-2. **One visible change to `main`.** Edit, test, commit. The hook enforces three-stamp lockstep and VERIFIED gate.
-3. **Report:** what changed, what proves it, what is phone-only (device verify needed). Close the loop: show `git log -1 --oneline` and `git status`.
-4. **PUSH TO `main`, then STOP.** ⛔ Claude Code does NOT promote — revoked 2026-09-05, see `OWNER-RULINGS.md`. Hand John the checklist, name the `tools/promote.ps1` command for him to run, and PARK. Next ship is impossible until John (a) promotes, (b) verifies on device, (c) says to stamp `VERIFIED`. **A version does not exist until John's phone clears it; promoting it does not make it real.**
+*Rewritten 2026-09-09 under `OWNER-RULINGS.md` PROMOTE ORDER. It supersedes ruling C's promote → see →
+verify, which existed only because `main` had no served surface; `.585` was that order's last run, as
+a named exception, not precedent.*
+
+1. **OODA against served bytes.** `curl` staging `version.json` (what `main` serves) and the release `version.json` (what the PHANTOM icon has). Staging must read `HEAD`'s `version.json`; release must read `VERIFIED` line 1. If either does not, STOP and re-anchor.
+2. **One visible change to `main`.** Edit, test, commit. The hook enforces three-stamp lockstep and the VERIFIED gate.
+3. **Report:** what changed, what proves it, and the ONE look on PHANTOM STAGING — exactly what to do, what PASS and FAIL look like. Close the loop: show `git log -1 --oneline` and `git status`.
+4. **PUSH TO `main`, then STOP.** Staging rebuilds in about a minute. Every step from here is John's, from his terminal: **(a)** the look on PHANTOM STAGING; **(b)** `.\tools\verify.ps1 <v> PASS` or `FAIL "what you saw"` — it refuses a version `origin/main` does not carry, a `HEAD` that is not `origin/main`, and a version staging is not serving, then stamps `VERIFIED` and pushes `main`. **It does not promote.** **(c)** On PASS, `.\tools\promote.ps1` — Guard 4 refuses an unstamped or FAILED incoming version; `release` means graduated. ⛔ Claude Code never runs (b) or (c) — revoked 2026-09-05, see `OWNER-RULINGS.md`. The next ship is impossible until (b) has run: the hook refuses a `version.json` bump until `VERIFIED` rules on the old version. **A version does not exist until John's phone clears it on staging; promoting it is graduation, not verification.**
 5. **"Start Phase N" from John means:** ship the **next single slice** of Phase N, then stop. A phase name is never authorization for multiple ships.
 6. **At ≥70% context:** write current state to `PHANTOM_CURRENT_STATE.md`, tell John, recommend `/clear` before the next slice.
 

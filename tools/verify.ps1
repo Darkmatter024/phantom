@@ -2,26 +2,33 @@
 <#
   tools/verify.ps1 - THE ONE-COMMAND ADJUDICATION. Owner-only. Run it from your own terminal.
 
-  What it fuses: stamp.ps1 (the register line) + git push main + promote.ps1 (release level with
-  main, served bytes confirmed). One keystroke where there were two commands and a push between
-  them. What it does NOT fuse: your eyes. The script cannot see the phone. PASS is your attestation
-  that the version named was on the glass and did what its evidence table said; FAIL is the same
-  attestation with the opposite finding. Both are adjudications. Both are recorded. Only a PASS
-  moves anything.
+  What it fuses: stamp.ps1 (the register line) + git push main. One keystroke where there were a
+  command and a push. What it does NOT fuse: your eyes, and the promote. The script cannot see the
+  phone. PASS is your attestation that the version named was on the glass - the PHANTOM STAGING
+  icon - and did what its evidence table said; FAIL is the same attestation with the opposite
+  finding. Both are adjudications. Both are recorded. NEITHER MOVES release: that is
+  .\tools\promote.ps1, your own separate keystroke, and release means graduated.
 
-  THE ORDER IT ENFORCES (owner ruling C, 2026-09-08 - tools/promote.ps1 Guard 4 header):
-      .\tools\promote.ps1   ->   the phone (Pages serves release)   ->   .\tools\verify.ps1 <v> PASS|FAIL
-  So the version you adjudicate is the one release ALREADY carries. The NOT-SERVED guard refuses
-  a version release has never carried, because a stamp on unserved bytes is exactly how .581 was
-  stamped VERIFIED off a dry-run misread on 2026-09-08 with no phone having seen it. That guard is
-  CLAUDE.md's standing rule - "never stamps a version the served bytes have not carried" - made
-  mechanical instead of remembered.
+  THE ORDER IT ENFORCES (owner ruling 2026-09-09 - OWNER-RULINGS.md, PROMOTE ORDER):
+      ship on main  ->  staging serves main  ->  the phone (PHANTOM STAGING)  ->  .\tools\verify.ps1 <v> PASS|FAIL  ->  .\tools\promote.ps1
+  So the version you adjudicate is the one main is parked on and staging is serving. NOT-SERVED
+  refuses a version origin/main has never carried, and a HEAD that is not origin/main, because a
+  stamp on unserved bytes is exactly how .581 was stamped VERIFIED off a dry-run misread on
+  2026-09-08 with no phone having seen it. SERVED-BYTES refuses one staging is not serving right
+  now. Together they are CLAUDE.md's standing rule - "never stamps a version the served bytes have
+  not carried" - made mechanical instead of remembered.
+  HISTORY, so the old order is not re-invented: from 2026-09-08 (ruling C) to 2026-09-09 this
+  script enforced promote -> phone -> verify and ran promote.ps1 itself on PASS, because GitHub
+  Pages serves release and main had no served surface. Staging - a Cloudflare Worker serving
+  main's root, docs/INFRA-STAGING-CLOUDFLARE-PAGES.md - closed that gap on 2026-09-09. The .585
+  stamp was the last run of the old order, as a named exception, not precedent.
 
   THERE IS NO -DryRun IN THIS SCRIPT, BY DESIGN. Two dry-runs in the sibling scripts were read as
   real runs on 2026-09-06 and 2026-09-08 (c6d4931, 14028c8). A gate that can print reassuring text
   without doing the thing is a gate that will one day be believed. Every run of this script is
   real, and every run ends with one of these banners:
-      PROMOTED <version>          stamped VERIFIED, main pushed, release level with main, SERVED
+      VERIFIED <version> - READY TO PROMOTE
+                                  stamped VERIFIED, main pushed, release NOT moved - promote.ps1 is your next command
       RECORDED FAILED <version>   stamped FAILED with your reason, main pushed, release NOT moved
       REFUSED: <GUARD>            nothing written, nothing committed, nothing pushed, nothing moved
       STOPPED AT: <STEP>          a real path broke part-way; the banner says exactly how far it got
@@ -33,8 +40,8 @@
       VERSION-MISMATCH      HEAD's version.json must carry the version you named
       DIRTY-TREE            no modified tracked files (untracked files are fine)
       ALREADY-ADJUDICATED   VERIFIED must not already rule on it
-      NOT-SERVED            origin/release must carry it (fetched now, not remembered)
-      SERVED-BYTES          the Pages URL must serve it right now
+      NOT-SERVED            origin/main must carry it (fetched now, not remembered) and HEAD must BE origin/main
+      SERVED-BYTES          the staging URL must serve it right now
 
   Usage:
       .\tools\verify.ps1 583 PASS
@@ -63,9 +70,13 @@ $RepoRoot = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
 Set-Location $RepoRoot
 $ToolsDir = Join-Path $RepoRoot 'tools'
 $VerifiedFile = Join-Path $RepoRoot 'VERIFIED'
-$PagesVersionUrl = 'https://darkmatter024.github.io/phantom/version.json'
+# Staging: a Cloudflare Worker serving main's root, rebuilt on every push to main (about a minute).
+# Created by the owner 2026-09-09 (docs/INFRA-STAGING-CLOUDFLARE-PAGES.md). version.json is served
+# without redirect; the .html paths answer 307 to their extensionless twin, which is why this reads
+# version.json and nothing else.
+$StagingVersionUrl = 'https://phantom-staging.wfj6t2fk7w.workers.dev/version.json'
 
-# PowerShell 5.1 does not negotiate TLS 1.2 by default; github.io refuses anything older.
+# PowerShell 5.1 does not negotiate TLS 1.2 by default; workers.dev, like github.io, refuses anything older.
 try { [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 } catch {}
 
 function Invoke-Git {
@@ -132,8 +143,8 @@ function Invoke-Primitive {
 function Get-LiveVersion {
   try {
     # ${...} deliberately: '?' is a legal variable-name character in PowerShell, so the bare form
-    # "$PagesVersionUrl?cb=" reads an empty variable named PagesVersionUrl?cb and every read fails.
-    $u = "${PagesVersionUrl}?cb=$([DateTimeOffset]::UtcNow.ToUnixTimeSeconds())"
+    # "$StagingVersionUrl?cb=" reads an empty variable named StagingVersionUrl?cb and every read fails.
+    $u = "${StagingVersionUrl}?cb=$([DateTimeOffset]::UtcNow.ToUnixTimeSeconds())"
     return [pscustomobject]@{ Version = (Invoke-RestMethod -Uri $u -TimeoutSec 20).version; Error = $null }
   }
   catch { return [pscustomobject]@{ Version = $null; Error = $_.Exception.Message } }
@@ -226,7 +237,7 @@ if ($dirty.Count -gt 0) {
   Write-Host ''
   Write-Host 'Modified tracked files:' -ForegroundColor Yellow
   $dirty | ForEach-Object { Write-Host "    $_" -ForegroundColor Yellow }
-  Stop-Refused 'DIRTY-TREE' "$($dirty.Count) tracked file(s) modified. promote.ps1 refuses a dirty tree, and it must not refuse AFTER the stamp has landed." 'Commit or stash, then re-run.'
+  Stop-Refused 'DIRTY-TREE' "$($dirty.Count) tracked file(s) modified. The stamp must land on exactly the tree the phone ran, and promote.ps1 refuses a dirty tree - it must not refuse AFTER the stamp has landed." 'Commit or stash, then re-run.'
 }
 
 # ---- ALREADY-ADJUDICATED ----
@@ -236,37 +247,46 @@ if ($ruling) {
 }
 
 # ---- NOT-SERVED ----
+# What the phone saw is what origin/main carries, built by staging. So origin/main's version.json
+# must carry the version (fetched now, not remembered), AND HEAD must BE origin/main: a local
+# commit ahead of origin was never served, and a HEAD behind origin would put the stamp on a base
+# the push then rejects. Either way the stamp would sit on bytes no phone has run.
 try { Invoke-Git @('fetch', '--quiet', 'origin') | Out-Null }
 catch { Stop-Refused 'NOT-SERVED' "could not fetch origin: $($_.Exception.Message)" 'Check the connection, then re-run.' }
 
-$servedRaw = @(Invoke-Git @('show', 'origin/release:version.json') -AllowFail)
+$servedRaw = @(Invoke-Git @('show', 'origin/main:version.json') -AllowFail)
 $servedOk = ($LASTEXITCODE -eq 0)
 $servedVersion = $null
 if ($servedOk) {
   try { $servedVersion = (($servedRaw -join "`n") | ConvertFrom-Json).version } catch { $servedVersion = $null }
 }
 if ($servedVersion -ne $Version) {
-  $has = 'origin/release has no readable version.json'
-  if ($servedVersion) { $has = "origin/release carries $servedVersion" }
-  Stop-Refused 'NOT-SERVED' "$has, so no phone has ever run $Version. A stamp here would be the .581 mistake: adjudicating bytes nobody served." 'Promote first: .\tools\promote.ps1 - then look at the phone, then re-run this.'
+  $has = 'origin/main has no readable version.json'
+  if ($servedVersion) { $has = "origin/main carries $servedVersion" }
+  Stop-Refused 'NOT-SERVED' "$has, so staging never built $Version and no phone has run it. A stamp here would be the .581 mistake: adjudicating bytes nobody served." 'Push the ship first:  git push origin main  - wait for staging (about a minute), look at PHANTOM STAGING on the phone, then re-run this.'
+}
+$headSha = (Invoke-Git @('rev-parse', 'HEAD')).Trim()
+$originMainSha = (Invoke-Git @('rev-parse', 'origin/main')).Trim()
+if ($headSha -ne $originMainSha) {
+  Stop-Refused 'NOT-SERVED' "HEAD ($($headSha.Substring(0, 7))) is not origin/main ($($originMainSha.Substring(0, 7))). Staging serves origin/main; the stamp must land on exactly the commit the phone ran." 'HEAD ahead of origin: git push origin main, wait for staging, look again, re-run. HEAD behind origin: git pull --ff-only, then re-run.'
 }
 
 # ---- SERVED-BYTES ----
 $live = Get-LiveVersion
 if ($live.Version -ne $Version) {
-  $saw = "the Pages URL could not be read ($($live.Error))"
-  if ($live.Version) { $saw = "Pages serves $($live.Version) right now" }
-  Stop-Refused 'SERVED-BYTES' "$saw, not $Version. origin/release carries it, so this is Pages still building, or a misread of SYS on the phone." 'Wait for the Pages build (a few minutes), confirm SYS on the phone names the version, then re-run.'
+  $saw = "the staging URL could not be read ($($live.Error))"
+  if ($live.Version) { $saw = "staging serves $($live.Version) right now" }
+  Stop-Refused 'SERVED-BYTES' "$saw, not $Version. origin/main carries it, so this is the staging build still running, or a misread of SYS on the phone." 'Wait for the staging build (about a minute after the push), confirm SYS on PHANTOM STAGING names the version, then re-run.'
 }
 
-Write-Host "  guards: main, hooks, $Version at HEAD, tree clean, unruled, on origin/release, served by Pages" -ForegroundColor DarkGray
+Write-Host "  guards: main, hooks, $Version at HEAD, tree clean, unruled, HEAD is origin/main, served by staging" -ForegroundColor DarkGray
 
 # ============================================================================================
 # THE STAMP - both paths
 # ============================================================================================
 
+# Two steps on BOTH paths since 2026-09-09: stamp, push. The promote is not a step of this script.
 $steps = 2
-if ($Outcome -eq 'PASS') { $steps = 4 }
 
 $stampArgs = @($OutcomeWord, '-Version', $Version)
 if ($Reason) { $stampArgs += @('-Note', $Reason) }
@@ -298,63 +318,47 @@ Write-Host ''
 Write-Host "[2/$steps] git push origin main" -ForegroundColor Cyan
 try { Invoke-Git @('push', 'origin', 'main') | Out-Null }
 catch {
-  Stop-Partial 'PUSH' "the stamp is committed locally ($stampSha) but the push failed: $($_.Exception.Message). release was not moved." 'Finish by hand once the push can succeed:  git push origin main   then, for a PASS:  .\tools\promote.ps1'
+  Stop-Partial 'PUSH' "the stamp is committed locally ($stampSha) but the push failed: $($_.Exception.Message). release was not moved." 'Finish by hand once the push can succeed:  git push origin main   then, for a PASS, promote yourself:  .\tools\promote.ps1'
 }
 $originMain = (Invoke-Git @('rev-parse', '--short', 'origin/main')).Trim()
 
+# release is reported from origin, read now - never from a variable. Both paths leave it alone.
+$relSha = (Invoke-Git @('rev-parse', '--short', 'origin/release')).Trim()
+$relVersion = $null
+try {
+  $relRaw = @(Invoke-Git @('show', 'origin/release:version.json') -AllowFail)
+  if ($LASTEXITCODE -eq 0) { $relVersion = (($relRaw -join "`n") | ConvertFrom-Json).version }
+}
+catch { $relVersion = $null }
+$relLine = "NOT MOVED. origin/release is $relSha"
+if ($relVersion) { $relLine = "$relLine and still carries $relVersion" }
+
 # ============================================================================================
-# FAIL path ends here. Nothing is promoted.
+# FAIL path ends here. Nothing is promoted; the FAILED version never reaches release.
 # ============================================================================================
 
 if ($Outcome -eq 'FAIL') {
-  $relSha = (Invoke-Git @('rev-parse', '--short', 'origin/release')).Trim()
   Write-Banner "RECORDED FAILED $Version" 'Yellow'
   Write-Host "  VERIFIED line 1:  $diskLine" -ForegroundColor Yellow
   Write-Host "  stamp commit:     $stampSha - pushed, origin/main is $originMain" -ForegroundColor Yellow
-  Write-Host "  release:          NOT MOVED. origin/release is $relSha and still serves $Version, now on record as FAILED." -ForegroundColor Yellow
-  Write-Host '  Next: the next ship is its fix. When that lands on main, promote it:  .\tools\promote.ps1' -ForegroundColor Yellow
+  Write-Host "  release:          $relLine. The PHANTOM icon never saw $Version; only PHANTOM STAGING did." -ForegroundColor Yellow
+  Write-Host '  Next: the next ship is its fix. It lands on main, staging serves it, you look, then verify.ps1 again. promote.ps1 will refuse a FAILED version.' -ForegroundColor Yellow
   Write-Host ''
   exit 0
 }
 
 # ============================================================================================
-# PASS path: promote, then prove the served bytes.
+# PASS path ends here too. NOTHING IS PROMOTED. release moves only under your own
+# .\tools\promote.ps1 - a separate keystroke, so a stamp and a promote can never again be
+# mistaken for one another. promote.ps1 Guard 4 reads the stamp this script just pushed.
 # ============================================================================================
 
-$relBefore = (Invoke-Git @('rev-parse', '--short', 'origin/release')).Trim()
-Write-Host ''
-Write-Host "[3/$steps] promote.ps1" -ForegroundColor Cyan
-$promoteExit = Invoke-Primitive 'promote.ps1' @()
-if ($promoteExit -ne 0) {
-  Stop-Partial 'PROMOTE' "stamped ($stampSha) and pushed, but promote.ps1 exited $promoteExit - its refusal is printed above. origin/release is still $relBefore." 'Fix what it named, then run  .\tools\promote.ps1  by hand. Do not re-run verify.ps1: the stamp is already on record.'
-}
-
-Write-Host ''
-Write-Host "[4/$steps] served bytes" -ForegroundColor Cyan
-Invoke-Git @('fetch', '--quiet', 'origin') -AllowFail | Out-Null
-$relAfter = (Invoke-Git @('rev-parse', '--short', 'origin/release')).Trim()
-$mainAfter = (Invoke-Git @('rev-parse', '--short', 'origin/main')).Trim()
-$level = ($relAfter -eq $mainAfter)
-$served = Get-LiveVersion
-$servedOkNow = ($served.Version -eq $Version)
-
-$releaseLine = "$relBefore -> $relAfter (level with origin/main)"
-if (-not $level) { $releaseLine = "$relBefore -> $relAfter (origin/main is $mainAfter - NOT level, inspect)" }
-
-if ($servedOkNow) { Write-Banner "PROMOTED $Version" 'Green' }
-else { Write-Banner "PROMOTED $Version - PAGES NOT CONFIRMED" 'Yellow' }
+Write-Banner "VERIFIED $Version - READY TO PROMOTE" 'Green'
 Write-Host "  VERIFIED line 1:  $diskLine" -ForegroundColor Green
 Write-Host "  stamp commit:     $stampSha - pushed, origin/main is $originMain" -ForegroundColor Green
-Write-Host "  release:          $releaseLine" -ForegroundColor Green
-if ($servedOkNow) {
-  Write-Host "  SERVED: $($served.Version)" -ForegroundColor Green
-  Write-Host "  Next: nothing is owed on $Version. The next ship may bump version.json." -ForegroundColor Green
-}
-else {
-  $sv = "unreadable ($($served.Error))"
-  if ($served.Version) { $sv = $served.Version }
-  Write-Host "  SERVED: $sv - expected $Version. The push succeeded; this is Pages lagging or failing to build." -ForegroundColor Yellow
-  Write-Host "  Next: confirm later at $PagesVersionUrl - the stamp and the promote are done and are not re-run." -ForegroundColor Yellow
-}
+Write-Host "  staging:          served $Version when the guards ran  ($StagingVersionUrl)" -ForegroundColor Green
+Write-Host "  release:          $relLine" -ForegroundColor Green
+Write-Host '  Next: promote it yourself, from this terminal:  .\tools\promote.ps1' -ForegroundColor Green
+Write-Host "        Guard 4 reads this stamp and lets $Version through. release means graduated." -ForegroundColor Green
 Write-Host ''
 exit 0
