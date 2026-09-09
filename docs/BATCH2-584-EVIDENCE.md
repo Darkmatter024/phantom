@@ -1,7 +1,7 @@
 # BATCH 2 — EVIDENCE TABLE · `phantom-v1.14.584`
 
 **Written:** 2026-09-09 · **Ship commit:** `6439dbc` · **Baseline:** `.583` VERIFIED (`b9d7de9`), served on `release` (`b9d7de9`), device PASS 2026-09-09
-**Status:** evidence delivered. **Awaiting John, in this order:** `promote.ps1` → one device check → `verify.ps1 584 PASS` (or `FAIL "reason"`).
+**Status:** ✅ **CLOSED 2026-09-09.** Device PASS on both looks (dismissed sheet → magenta NOT SAVED strip stays, no download prompt; retry → Save to Files → strip clears, toast names the time). Owner adjudicated with `verify.ps1 584 PASS` — stamp `d02a081`, `release` fast-forwarded, `SERVED: phantom-v1.14.584` — read back from `origin` and the served `version.json` + `sw.js` before this line was written.
 
 ---
 
