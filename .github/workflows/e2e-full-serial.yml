@@ -1,0 +1,153 @@
+# PHANTOM — the full serial regression run.
+#
+# WHY THIS EXISTS (docs/TEST-SUITE-RECOVERY-PLAN.md, step 3): a full 430-test single-process run
+# does not fit in memory on the build laptop. It was killed three times on 2026-09-10 — twice as a
+# single run and once sharded — and each death put the target tests in a FRESH worker, which is the
+# isolation condition where they already pass. Every attempt destroyed the condition it was trying
+# to verify. This job gives the run a machine of its own.
+#
+# ⛔ ONE WORKER. NO SHARDING. NOT NEGOTIABLE.
+# The defect this run exists to guard against is order- and accumulation-dependent. A shard boundary
+# and a worker restart each destroy the accumulated state, so a sharded or parallel run can neither
+# prove nor disprove it. If this job is ever "sped up" by adding shards, it stops being evidence.
+#
+# ⚠ A GREEN RUN HERE IS NOT THE WINDOWS BASELINE. docs/PLAYWRIGHT-BASELINE.md is pinned on
+# WebKit-on-Windows at commit 5723ac3 (413 passed / 13 skipped / 4 failed). This runs Linux WebKit on
+# different hardware, so its numbers are their own baseline and are NOT comparable row-for-row.
+# Compare a CI run against the previous CI run, and the laptop against the pin.
+#
+# ⚠ AND NEITHER IS THE PHONE. test/playwright.config.js says it plainly: this suite catches none of
+# the iOS-WebKit class that has produced every field bug of the last two months. The physical iPhone
+# gate stays mandatory.
+
+name: e2e full serial (phone-webkit)
+
+on:
+  push:
+    branches:
+      - main
+      - rack-pose-determinism
+    paths:
+      - 'dct-ios.html'
+      - 'sw.js'
+      - 'version.json'
+      - 'manifest.json'
+      - 'index.html'
+      - 'test/**'
+      - '.github/workflows/e2e-full-serial.yml'
+  workflow_dispatch:
+    inputs:
+      project:
+        description: 'Playwright project'
+        default: 'phone-webkit'
+        required: false
+
+# One run per ref. A second run racing the first would compete for the very memory this job exists
+# to guarantee, which is how the laptop attempts died.
+concurrency:
+  group: e2e-full-serial-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  full-serial:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Record the machine we are measuring on
+        run: |
+          echo "commit=${{ github.sha }}"
+          echo "ref=${{ github.ref }}"
+          nproc --all | sed 's/^/cpus=/'
+          free -m | sed 's/^/mem: /'
+          echo "--- app stamps ---"
+          grep -o "PHANTOM_APP_VERSION = '[^']*'" dct-ios.html | head -1
+          grep -o "CACHE_VERSION = '[^']*'" sw.js | head -1
+          node -e "console.log('version.json:', require('./version.json').version)"
+
+      # No lockfile is tracked (.gitignore excludes test/package-lock.json), so `npm ci` cannot run.
+      - name: Install harness deps
+        working-directory: test
+        run: npm install --no-audit --no-fund
+
+      # Only webkit. Installing all three browsers costs minutes and disk for nothing.
+      - name: Install WebKit
+        working-directory: test
+        run: npx playwright install --with-deps webkit
+
+      # Samples the BROWSER processes, not node. The leak lives in the WebKit GPU/web processes, so
+      # process.memoryUsage() inside a fixture would miss it entirely — measured on the laptop:
+      # ~20 MB per test, climbing to a 2 GB peak across 94 tests.
+      - name: Start memory sampler
+        run: |
+          cat > /tmp/memsample.sh <<'SH'
+          #!/bin/bash
+          echo "iso,availMB,webkitRssMB,nProc" > /tmp/mem.csv
+          while true; do
+            AVAIL=$(awk '/MemAvailable/ {print int($2/1024)}' /proc/meminfo)
+            RSS=$(ps -eo rss,comm --no-headers 2>/dev/null | grep -iE 'webkit|playwright' | awk '{s+=$1} END {print int(s/1024)+0}')
+            N=$(ps -eo comm --no-headers 2>/dev/null | grep -icE 'webkit|playwright')
+            echo "$(date -u +%H:%M:%S),${AVAIL:-0},${RSS:-0},${N:-0}" >> /tmp/mem.csv
+            sleep 10
+          done
+          SH
+          chmod +x /tmp/memsample.sh
+          nohup /tmp/memsample.sh > /dev/null 2>&1 &
+          echo "sampler pid $!"
+
+      - name: Full serial run — one worker, no sharding
+        id: run
+        working-directory: test
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          npx playwright test \
+            --project="${{ github.event.inputs.project || 'phone-webkit' }}" \
+            --workers=1 \
+            --reporter=list \
+            2>&1 | tee /tmp/full-serial.log
+
+      - name: Summarise
+        if: always()
+        run: |
+          pkill -f memsample.sh || true
+          echo "### Full serial run" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          grep -E "^ +[0-9]+ (passed|failed|skipped|flaky)" /tmp/full-serial.log >> $GITHUB_STEP_SUMMARY || echo "(no summary line — the run did not reach the end)" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "### Failures, by name" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          grep -E "^\s+[0-9]+\) " /tmp/full-serial.log | cut -c1-160 >> $GITHUB_STEP_SUMMARY || echo "(none)" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "### Memory" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          head -1 /tmp/mem.csv >> $GITHUB_STEP_SUMMARY
+          awk -F, 'NR>1 {if($3>peak){peak=$3;pt=$1} last=$0} END {print "peak webkit RSS: "peak" MB at "pt; print "last sample:    "last}' /tmp/mem.csv >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "### Compare against" >> $GITHUB_STEP_SUMMARY
+          echo "The PREVIOUS CI run, by failure NAME not count. docs/PLAYWRIGHT-BASELINE.md is a WINDOWS pin and is not comparable row-for-row." >> $GITHUB_STEP_SUMMARY
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: full-serial-${{ github.run_number }}
+          path: |
+            /tmp/full-serial.log
+            /tmp/mem.csv
+            test/test-results/
+          retention-days: 14
+          if-no-files-found: warn
+
+      # The run step is continue-on-error so artifacts always upload. The job's verdict is decided
+      # here, from the runner's own exit code, never from a summary that could be misread.
+      - name: Fail the job if the run failed
+        if: steps.run.outcome != 'success'
+        run: |
+          echo "The serial run reported failures. Read the artifact, compare BY NAME against the previous CI run."
+          exit 1
