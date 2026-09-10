@@ -6,6 +6,31 @@ is stale until edited. Newest first.
 
 ---
 
+## 2026-09-10 · DOCK ICON BATCH — G-1 ruled, P-3 framing corrected, the shared subject box set
+
+Ruled in session 2026-09-10 against `docs/INTEL-DOCK-GHOST-ICON-PHASE0-EVIDENCE.md`. Numbers in `docs/DOCK-ICON-BATCH-SPEC.md`.
+
+**G-1 · THE IRISES KEEP THEIR CIRCUIT DETAIL.** Owner, verbatim: *"G-1 ruled: keep the circuit detail in the eyes."* ⛔ **The Phase 0 recommendation was to simplify, and it is overruled.** Do not re-raise it.
+⭐ **What the ruling needs in order to mean anything — the number, not the argument.** Everything in a 256 master is multiplied by **0.2109** on its way to the 54 px dock box. A trace **8 px** in the master renders at **1.7 px**, the thinnest that still reads as a line on a retina phone; a trace **4 px** in the master renders at **0.84 px** and aliases to a smudge. **So: any trace intended to be legible is ≥ 8 px in the 256 master.** Finer traces still ship, but they read as *shading inside the iris* rather than as circuitry, and the acceptance test judges them on that basis. This is not a re-litigation of G-1 — it is the spec that decides whether G-1 got what it asked for.
+
+**P-3 · THE FRAMING CORRECTION IS ACCEPTED, AND SO IS THE CORRECTION TO MY CORRECTION.** Owner: *"P-3 correction accepted — subject box and ink budget first, brightness after. Your measurement stands, my framing was wrong."*
+⚠ **Then my own arithmetic turned out to be wrong, and the owner's original word was right.** Phase 0 first published rendered sizes computed as if `object-fit:contain` fitted the *subject*; it fits the **256 × 256 canvas**, at a flat `54/256 = 0.2109`. Corrected: COMMAND and BUILD render **47.7 px** on the longest side, TOOLS **40.1** (**16 % smaller**), EXIT **38.0** (**20 % smaller**). **The handoff's "the wrench renders smaller" was therefore correct and my pushback on it was not.** What does not hold is *"dimmer"* — TOOLS has the **highest** mean luma of the four (95.2 vs EXIT 54.6). It is **smaller and sparse together** (8.8 % ink vs BUILD 43.5 %). The accepted fix order is unchanged and reinforced: **box → ink → brightness.**
+
+**THE SHARED SUBJECT BOX — the number the ghost re-render is matched to:**
+> **Canvas 256 × 256 · subject longest side 226 px, centred · minimum 15 px margin on all four sides.**
+Chosen because COMMAND and BUILD **already are 226** (so the row's anchor does not move), it is the **largest value in the set** (so nothing shrinks and the two small ones scale up, which is the direction they need), **G-1 argues for the largest defensible box** because kept iris detail needs pixels, and it renders at **47.7 px — 88 % of the 54 px box** without letting a rim-light touch the cell edge. Result: every icon renders with the **same 47.7 px longest side**, and EXIT stops floating (side padding 50/49 → 15/15).
+⚠ Equal longest sides is a **geometric** match, not an optical one. The row gets eyeballed after the geometry lands and any icon still reading heavy or light gets a manual nudge **inside** the 226 box.
+
+**INK BUDGET — second, per the accepted order. Target band 25–45 %.** After the box fix alone: BUILD 43.5 %, EXIT 35.0 %, COMMAND 29.6 %, **TOOLS 12.4 %**. Three of four land in band untouched. **TOOLS is the only real outlier and the box fix does not rescue it** — it needs roughly **double its stroke weight**, not more brightness.
+
+**ACCEPTANCE TEST RUNS AT 54 px, NOT 44.** The ghost-icon handoff §3 specifies 44; that is the **tap-target floor** (`01-nav.spec.js:104`), not the icon box — `#rd-botnav .bicon` is **54 × 54**. Testing at 44 under-tests legibility by 19 %. The row test also **names** whether the irises read as circuitry, as texture, or as two lit ovals, because that is what G-1 was ruling on.
+
+**ON THE RECORD, NOTHING TO DO YET (owner: *"noted and goes on the record"*):** on a five-slot dock, `.blabel` would clip **silently** — `white-space:nowrap; max-width:100%` with **no `text-overflow:ellipsis`** inside `#rd-botnav{overflow:hidden}`, and its `clamp(8px,2.3vw,…)` is **viewport-based**, so the text does not shrink to fit a narrower cell. Same family as `.530`, when width pressure forced COMMAND to be relabelled DECK. **Not a live risk under the four-slot ruling.**
+
+**STATE:** the owner is re-rendering the ghost with true alpha at source, matched to the 226 box above. **INTEL-DOCK stays HELD until that asset lands.**
+
+---
+
 ## 2026-09-10 · INTEL-DOCK — ALL FOUR OPEN QUESTIONS RULED. The ghost takes dock slot 4.
 
 **Ruled in session 2026-09-10**, against `docs/INTEL-DOCK-PHASE0-EVIDENCE.md` §5 and its 2026-09-09 addendum, with the options and tap counts in front of him. This closes every item the Phase 0 listed as blocking, and it re-confirms rather than re-opens the 2026-09-03 ruling.

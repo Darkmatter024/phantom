@@ -20,7 +20,7 @@ Reported, **not silently resolved**, per the standing rule that a proposal reope
 Two smaller mismatches, same class:
 
 - **§3 says the dock renders at 44 px. It renders at 54 px.** `#rd-botnav .bicon{width:54px;height:54px;object-fit:contain}`. 44 px is the *tap-target floor* (`01-nav.spec.js:104`), not the icon box. The acceptance test in §3 should be run at **54 px**, or it under-tests legibility by 19 %.
-- **§2 P-3 says the wrench "renders smaller and dimmer".** Measured below: the wrench is the **brightest** of the four per lit pixel (mean luma 95.2 against EXIT's 54.6). What it actually is, is **sparse** — 8.8 % ink coverage against BUILD's 43.5 %. **Brightening it would be the wrong fix.** See §2.
+- **§2 P-3 says the wrench "renders smaller and dimmer".** ⭐ **Half right, and the half I first disputed was the correct half.** *Smaller* is true and measured: TOOLS renders 40.1 px against COMMAND and BUILD's 47.7, and EXIT 38.0 — see the corrected table in §2. *Dimmer* is not: TOOLS carries the **highest** mean luma of the four (95.2 against EXIT's 54.6). It is **smaller and sparse together** — 8.8 % ink against BUILD's 43.5 %. **Brightening it would still be the wrong fix**, which is why the accepted order is box, then ink, then brightness.
 
 ---
 
@@ -54,18 +54,20 @@ Decoded pixel-by-pixel through a real WebP decoder (headless Chromium canvas; th
 | TOOLS | 10,388 | 256×256 | 190×168 | 74.2 % | 65.6 % | **8.8 %** | yes | 44 / 44 | 33 / 33 | **95.2** |
 | EXIT | 9,326 | 256×256 | 157×180 | 61.3 % | 70.3 % | 22.2 % | yes | 38 / 38 | **50 / 49** | **54.6** |
 
-**P-3 is real, and it is a `object-fit:contain` problem, not a brightness problem.** `contain` scales the *longest* side to 54 px, so the four subjects land at visibly different rendered sizes:
+⛔ **CORRECTED 2026-09-10 — THE RENDERED SIZES FIRST PUBLISHED HERE WERE WRONG, AND SO WAS THE CONCLUSION I DREW FROM THEM.** `object-fit:contain` fits the **256 × 256 canvas** into the 54 px box, not the subject, so the scale is a flat `54 / 256 = 0.2109` for every icon and the subject renders at its own proportion of that. Full correction and the batch numbers: `docs/DOCK-ICON-BATCH-SPEC.md` §0.
 
-| Icon | Longest side | Rendered at 54 px box |
-|---|---|---|
-| COMMAND | 226 | 54 × 31.3 px |
-| BUILD | 226 | 54 × 33.9 px |
-| TOOLS | 190 | 54 × 47.7 px |
-| EXIT | 180 | 47.1 × 54 px |
+| Icon | Subject | **Rendered (corrected)** | Longest side |
+|---|---|---|---|
+| COMMAND | 226 × 131 | **47.7 × 27.6 px** | 47.7 |
+| BUILD | 226 × 142 | **47.7 × 30.0 px** | 47.7 |
+| TOOLS | 190 × 168 | **40.1 × 35.4 px** | **40.1** |
+| EXIT | 157 × 180 | **33.1 × 38.0 px** | **38.0** |
+
+⭐ **THE HANDOFF WAS RIGHT THAT THE WRENCH RENDERS SMALLER, AND THIS DOCUMENT WAS WRONG TO PUSH BACK ON IT.** TOOLS renders 40.1 px against COMMAND and BUILD's 47.7 — **16 % smaller** — and EXIT is **20 % smaller** at 38.0. What does *not* hold is **"dimmer"**: TOOLS still carries the highest mean luma of the four (95.2 against EXIT's 54.6). It reads faint because it is **smaller and sparse at the same time**, not because its pixels are dark. **The accepted fix order — subject box, then ink, then brightness — is unchanged, and this correction reinforces it.**
 
 - **The row has no shared subject box.** Widths run 157–226 px and heights 131–180 px on an identical canvas. Nothing in the set agrees on how much of the frame the subject fills.
-- **EXIT is the one that floats**, and the number says why: 50/49 px of left/right padding against COMMAND and BUILD's 15/15. It renders 47 px wide where its neighbours render 54 — **7 px narrower**, and centred, so it reads as sitting apart from the row.
-- **TOOLS is not dim — it is sparse.** Highest mean luma of the four (95.2) and the lowest ink coverage by a factor of three (8.8 %). It looks faint because there is very little of it, not because what is there is dark. ⛔ **Raising its brightness would blow out the only bright thing in the row and still leave it reading small.** The fix is subject scale and stroke weight.
+- **EXIT is the one that floats**, and the number says why: 50/49 px of left/right padding against COMMAND and BUILD's 15/15, so it renders **33.1 px wide where they render 47.7**.
+- **TOOLS is smaller *and* sparse** — 8.8 % ink coverage against BUILD's 43.5 %, a third of the row median, on top of the 16 % size deficit. ⛔ **Raising its brightness would blow out the brightest thing in the row and still leave it reading small.** The fix is subject scale and stroke weight.
 
 **What the batch re-render must therefore standardise (this is the actionable form of P-3):** one **subject bounding box** shared by all five — pick a target longest side, e.g. 226 px to match the two that already agree — and one **ink budget**, so a sparse outline glyph is not competing with a filled one. Mean luma should be equalised *after* those two, not instead of them.
 
