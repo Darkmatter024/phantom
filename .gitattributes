@@ -18,3 +18,7 @@ tools/githooks/* text eol=lf
 .assetsignore text eol=lf
 
 _redirects text eol=lf
+
+# Workflow YAML embeds bash heredocs, which a stray CR breaks on the Linux runner. Same trap
+# .assetsignore records; pinned for the same reason.
+.github/workflows/* text eol=lf
