@@ -81,7 +81,25 @@ test.describe('ACTIVE_SITE_PROFILE — the contract', () => {
 
 test.describe('ACTIVE_SITE_PROFILE — migration is the thing that protects the operator', () => {
 
-  test('migration seeds siteLead from the one name on record, and keeps that person as the actor', async ({ phantom, page }) => {
+  // ⛔ RE-POINTED v1.14.587. THIS ASSERTED BEHAVIOUR THAT v1.14.538 DELETED ON PURPOSE, and it had
+  // been red ever since — recorded at PHANTOM_CURRENT_STATE.md:1476 as "failing, not pinned, despite
+  // the handoff calling it resolved", and confirmed a STANDING failure by the pinned baseline
+  // (docs/PLAYWRIGHT-BASELINE.md). It was re-pointed, never loosened: the owner ruled the tolerance
+  // question on the sibling defect the same day, and nothing here is relaxed to get green.
+  //
+  // WHAT CHANGED, AND WHY THE OLD ASSERTION WAS WRONG RATHER THAN UNLUCKY. Migration used to read
+  //     if (!p.siteLead && p.operator) { p.siteLead = p.operator; filled.push('siteLead'); }
+  // and dct-ios.html now carries "⛔ Do not restore it" where that line stood. The chain: v1.14.474's
+  // two-field cold open removed Site Lead from Site Setup, so the migration's own escape clause —
+  // "an unconfirmed profile gets nothing, it belongs in Site Setup, where a human states both" —
+  // pointed at a door that no longer asked. The seed then quietly became THE ONLY WRITER OF SITE
+  // AUTHORITY, granting it to whoever happened to set the device up, one boot after setup. v1.14.537
+  // built the SITE/SYSTEM door Contract 9a always named. With somewhere to state it, inferring it is
+  // a guess, and .418 already ruled that guessing here silently grants authority.
+  //
+  // ⭐ THE INTENT IS UNCHANGED — migration protects the operator. It now pins the STRONGER property:
+  // migration completes the profile WITHOUT inventing authority, and the actor is still credited.
+  test('migration completes the profile and does NOT invent site authority', async ({ phantom, page }) => {
     await phantom.boot();
     const confirmedAt = Date.now() - 86400000;
     await seedProfile(page, {
@@ -93,14 +111,18 @@ test.describe('ACTIVE_SITE_PROFILE — migration is the thing that protects the 
     const roles = await page.evaluate(() => ({
       lead: window.PHANTOM_SITE.siteLead(), actor: window.PHANTOM_SITE.currentOperator(),
     }));
-    expect(res.migrated, 'migration did not run on a confirmed profile missing its siteLead').toBe(true);
-    expect(res.filled).toContain('siteLead');
+    expect(res.migrated, 'migration did not run on a confirmed profile that still needs its id').toBe(true);
     expect(res.filled, 'the Event Log cannot bind without a stable profile id').toContain('id');
-    // Under the old single-identity model the one name on record WAS the Site Lead. After the
-    // split that same human occupies BOTH slots — authority and actor — which spec §2 calls the
-    // common case. What must never happen is inventing a second person.
-    expect(after.siteLead).toBe('J. Hamilton');
-    expect(roles.lead).toBe('J. Hamilton');
+    // ⛔ THE ASSERTION THAT MATTERS NOW. Authority is stated by a human in SITE/SYSTEM, never
+    // inferred from whoever set the device up (v1.14.538; .418 on guesses about authority).
+    expect(res.filled, 'migration must not seed siteLead — .538 deleted that and said do not restore it')
+      .not.toContain('siteLead');
+    expect(after.siteLead || '', 'a migrated profile must carry NO site authority until a human states it')
+      .toBe('');
+    expect(roles.lead, 'siteLead() must report the absence honestly rather than borrowing the operator')
+      .toBe('');
+    // The ACTOR is still credited, and that half never changed: work belongs to the person holding
+    // the device (Contract 9a), which is exactly what the old test was right to protect.
     expect(roles.actor).toBe('J. Hamilton');
     expect(after.id, 'profile id must be stable and present').toMatch(/^sp_usspk03_\d+$/);
     expect(after.rootMigratedAt, 'migration must stamp when it ran').toBeTruthy();
