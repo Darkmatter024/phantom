@@ -6,6 +6,24 @@ is stale until edited. Newest first.
 
 ---
 
+## 2026-09-10 · RACK POSE DRIFT — it is a REAL DEFECT and the tolerance STANDS
+
+Owner, verbatim, against the pinned baseline: *"rack pose: it's a real defect, the tolerance stands"*. This settles the question Phase 0 put to him — defect versus over-tight test — in favour of **defect**. ⛔ The five-decimal position tolerance and the `1e-4` yaw floor in `37-locked-rack-pose.spec.js` are **not to be loosened**, and the test is **not to be re-pointed or pinned**.
+
+**Why the ruling is right on the evidence, not merely accepted:** `settle()` does not sample mid-glide — it returns only after **two consecutive identical readings 500 ms apart**, at 5 decimal places. So the camera was seen **at rest** at `-4.69565` where canonical is `-4.7`. A resting pose 0.00435 off canonical is a pose the app actually produced, and the `.455` ruling requires it be solved *"from the SELECTED RACK'S OWN TRANSFORM — never from previous camera state"*.
+
+**Mechanism** (full diagnosis in `docs/RACK-POSE-DRIFT-PHASE0-EVIDENCE.md`): `_ease` (`dct-ios.html:21363`) converges 14 % **per frame** and sets an axis exactly only once the gap falls under `LOCK_SNAP = 0.0009` — roughly **56 frames** from a walk-exit gap, and spec 37's own header records the harness at **~2.7 fps**. So the canonical pose is **approached, not installed**, and whether it arrives depends on the frame budget the machine granted. That is precisely why it passes 4/4 in isolation and fails inside a full 430-run.
+
+⭐ **Two hypotheses were tested and set aside rather than assumed.** The DOM-measured `lockDistance()` cannot move `x`: racks carry no rotation, so the rack normal is `(0,0,1)` and `pos.x = at.x` exactly. And `settle()` returning early under a stalled render loop is **not an alternative** to the frame-dependence — it is the same root cause seen from the harness side.
+
+**Fix directions, none built, owner picks:** a **time-based ease** (recommended) so the same wall-clock duration lands the same pose at 2.7 fps or 60 fps, with a **deadline snap** as the guard; the deadline snap alone; or raising `LOCK_SNAP`, which is **rejected as the dishonest option** — it shrinks the residual while leaving the frame dependence in place, so the spec would go green while the property stayed broken.
+
+⛔ **Acceptance is the pinned baseline:** `37-locked-rack-pose` must pass **inside a full 430-run**, not in isolation. Isolation passes today and proves nothing about this defect.
+
+⚠ **Found in passing, same file, NOT the cause of these two failures:** `lockSync` compares a signature **rounded to whole pixels** to decide whether to rebuild the projection, while `lockDistance()` consumes the **raw floats**. Sub-pixel rect jitter therefore changes the camera distance with no guard watching. It cannot affect `x`, so it is not this defect, but it can move `y` and `z` between two arrivals at the same rack. Reported, not acted on.
+
+---
+
 ## 2026-09-10 · DOCK ICON BATCH — G-1 ruled, P-3 framing corrected, the shared subject box set
 
 Ruled in session 2026-09-10 against `docs/INTEL-DOCK-GHOST-ICON-PHASE0-EVIDENCE.md`. Numbers in `docs/DOCK-ICON-BATCH-SPEC.md`.
