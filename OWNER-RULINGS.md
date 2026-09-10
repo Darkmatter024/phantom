@@ -6,6 +6,38 @@ is stale until edited. Newest first.
 
 ---
 
+## 2026-09-10 · INTEL-DOCK — ALL FOUR OPEN QUESTIONS RULED. The ghost takes dock slot 4.
+
+**Ruled in session 2026-09-10**, against `docs/INTEL-DOCK-PHASE0-EVIDENCE.md` §5 and its 2026-09-09 addendum, with the options and tap counts in front of him. This closes every item the Phase 0 listed as blocking, and it re-confirms rather than re-opens the 2026-09-03 ruling.
+
+**1 · DOCK COUNT — OPTION A. Four slots: `COMMAND · BUILD · TOOLS · GHOST`; EXIT (hold) leaves the dock for the last row of SYS.**
+The 2026-09-03 ruling stands, re-confirmed rather than assumed, exactly as §5 asked. ⛔ **Option B (five slots, SHIFT restored) is REJECTED** — it would restore a pillar while three of SHIFT's nine questions still have no data source, which `PHANTOM_CURRENT_STATE.md` D-1 forbids, and it would change the nav twice for two device verifies. ⛔ **Option C (ghost in the header or as a floating button) is REJECTED** — it leaves the assistant 2+ taps away and re-uses the `.156` medallion that was hidden for being dead.
+**A8 / R-02 is not contradicted:** *removing that slot removes the slot, not the feature*. If M4 later wants a SHIFT slot it collides with the ghost, and **that is ruled then, not now.**
+
+**2 · `#cc-asst` — RETIRED when the dock owns the door.**
+The dock ghost becomes the **single** opener, so Contract A2 (one door per feature) holds and the door ledger is genuinely **net 0**, not +1. The Command card required a Master to be loaded; the dock ghost does not, so reach goes up as the door count stays flat.
+⭐ **This also retires the lying gauge, and the lie is now measured, not suspected.** The card's eyebrow reads a static `AI ASSISTANT · ONLINE` beside a static green dot regardless of `body[data-net]` or the API check. A read-only preflight on 2026-09-09 proved the API can be genuinely unreachable while that gauge still reads ONLINE — a Contract B10 violation that dies with the card rather than needing its own ship.
+
+**3 · GHOST ART — COMMISSION A MATCHING CUT.**
+It must match the pipeline the other four dock icons already use: `icons/phantom-nav-*-vN-256.webp`, **256×256, `loading="eager"`**, plus a dim state that reads at arm's length (*"dim means dim"* — a glyph change if opacity alone fails). ⛔ **Reusing `phantom-ghost-v3.webp` is rejected** — it is sized for a 107×122 card and was never cut as a lit/dim pair. This is a **web-Claude art task and a Phase 1 dependency**: flag it early, the way Addendum A3 flagged SCAN. ⛔ **Do not precache it until a consumer exists** (the `.364` lesson).
+
+**4 · THE HARNESS CORS RED — FIX BY ROUTE INTERCEPT IN THE FIXTURE.**
+`00-boot.spec.js:18` has been failing on three CORS entries because the Worker correctly refuses the `127.0.0.1` harness origin. The fixture will intercept `PHANTOM_PROXY_URL` so the probe never leaves the harness. ⛔ **Not by widening `BENIGN_CONSOLE`** — the standing rule is *"never widen the console allow-list to get green"*, and this ruling honours it. The in-spec filter `.584` used is rejected as the general fix for the same reason: it leaves the probe firing at a Worker that will always refuse it.
+⭐ **It also unblocks the ghost's own tests.** Bound to the SYS aggregate, the ghost renders **dim in every harness run** because the API probe can never succeed there; with the intercept, the lit state becomes drivable and therefore testable.
+**Scope:** harness only, no app source, no version bump. It may land **in parallel** with `.586`'s device verify.
+
+### What is still NOT ruled, and must not be assumed
+
+- **`#cs-nav-ext`** — the desktop side-nav EXIT (`:16561` at `.586`). INTEL-DOCK is silent on it. **Default stands: leave it**, per the `.576` pattern (the phone loses the duplicate, the desktop keeps its door).
+- **SYS's other nine items** — INTEL-DOCK §2 says *"nothing else moves into SYS in this ship"*; whether the four health rows and five actions are later trimmed, and whether MASTER (B-1) joins, are separate ships.
+- **The Next Action card on Build** — recorded open, untouched.
+
+### The gate that is not the owner's
+
+Ship discipline allows **one unverified ship in flight**. `.586` (ICON REFRESH) is built and unadjudicated, so INTEL-DOCK **cannot be built** until `.586` has been on the phone and ruled through `verify.ps1`. Every ruling above is now recorded and waiting; the harness ship in item 4 is the one piece that can proceed in parallel, because it touches no app source.
+
+---
+
 ## 2026-09-09 · RESTORE-UNDO — a restore becomes undoable; neither "blank is never an erase" nor strict replace
 
 **Ruling, verbatim (in session, 2026-09-09), answering the `.585` question of whether a backup that
