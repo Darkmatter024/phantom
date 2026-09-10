@@ -12861,7 +12861,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.586';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.587';
 // Immediate version check: reload if cached HTML is stale. Runs before anything else.
 (function() {
   fetch('./version.json?_=' + Date.now(), { cache: 'no-store' })
@@ -20791,7 +20791,18 @@ function forge3d_render(mount) {
     // or display:none its rect is 0 and the rack would be framed into a sliver; fall back whole.
     if (u.r - u.l < cr.width * 0.4) u.r = cr.width;
     if (u.b - u.t < cr.height * 0.4) u.b = cr.height;
-    return { u: u, w: cr.width || W(), h: cr.height || H() };
+    // ⛔ v1.14.587 — QUANTISE WHERE THE MEASUREMENT ENTERS, not where it is compared. lockSync's
+    // change signature already rounded to whole pixels, but lockDistance() consumed the RAW floats
+    // — so sub-pixel jitter in getBoundingClientRect moved the camera distance while the guard that
+    // exists to notice a change reported that nothing had changed. Rounding once, here, makes
+    // "unchanged" mean unchanged for every consumer.
+    // ⚠ This is NOT the fix for 37-locked-rack-pose: the rack normal is (0,0,1), so pos.x = at.x and
+    // the distance cannot move x, which is where that defect shows. It is the same class, found in
+    // passing, and it could move y and z between two arrivals at the same rack.
+    return {
+      u: { l: Math.round(u.l), t: Math.round(u.t), r: Math.round(u.r), b: Math.round(u.b) },
+      w: Math.round(cr.width || W()), h: Math.round(cr.height || H())
+    };
   }
 
   // ── MEASURED ON CHANGE, NOT EVERY FRAME ─────────────────────────────────────────────────────
@@ -21357,13 +21368,31 @@ function forge3d_render(mount) {
   var R_MIN = 6.5, R_MAX = 22;
   var _lookAt = new THREE.Vector3();
   var lockHeld = false;   // has the canonical pose ever been installed? first one is instant
+  var _lockEaseT = 0;     // seconds of travel spent on the CURRENT glide; 0 once the pose has landed
   // Per-axis ease with an exact landing. Each component converges independently and is SET, not
   // approached, once it is within LOCK_SNAP — so an axis that is already correct stays bit-exact
   // while another is still travelling.
-  function _ease(v, t) {
+  // ⛔ v1.14.587 — THE FACTOR IS NOW TIME-BASED, AND THE FRAME-BASED ONE WAS A REAL DEFECT.
+  // It used a flat 0.14 PER FRAME, so bringing a walk-exit gap under LOCK_SNAP took ~56 frames.
+  // At 60fps that is under a second. In the Playwright harness, which renders at ~2.7fps, it is
+  // ~21 seconds — and every frame the browser did not grant left the camera further from canonical.
+  // The pose was therefore APPROACHED, not INSTALLED, and its RESTING value depended on the frame
+  // budget: 37-locked-rack-pose came to rest at -4.69565 against a canonical -4.7 inside a full
+  // suite run, while passing 4/4 in isolation. Owner ruling 2026-09-10: "it's a real defect, the
+  // tolerance stands" — so the tolerance did not move; this did.
+  // k is derived from elapsed SECONDS, so the same wall-clock glide lands the same pose at 2.7fps
+  // and at 60fps. dt <= 0 yields 0 (no travel) rather than 1, so a zero-delta frame cannot teleport.
+  var LOCK_EASE_PER_FRAME = 0.14;   // the original feel, now defined explicitly AT 60fps
+  var LOCK_EASE_MAX = 1.6;          // seconds. The deadline below; the glide is ~1s at any rate.
+  function _easeK(dt) {
+    if (!(dt > 0)) return 0;
+    var k = 1 - Math.pow(1 - LOCK_EASE_PER_FRAME, dt * 60);
+    return k < 0 ? 0 : (k > 1 ? 1 : k);
+  }
+  function _ease(v, t, k) {
     ['x', 'y', 'z'].forEach(function (a) {
       if (Math.abs(t[a] - v[a]) < LOCK_SNAP) v[a] = t[a];
-      else v[a] += (t[a] - v[a]) * 0.14;
+      else v[a] += (t[a] - v[a]) * k;
     });
   }
 
@@ -21373,7 +21402,7 @@ function forge3d_render(mount) {
   // even at pitch 0 and the rails could never be vertical. Locked mode now sets the eye and the
   // target as vectors solved from the rack, and walk mode keeps the orbit for the one job it does
   // well. The two are seeded from each other at the mode boundary so neither transition jumps.
-  function placeCamera() {
+  function placeCamera(dt) {
     if (walkMode) {
       var p = Math.max(-0.05, Math.min(0.55, pitch));
       var y = Math.max(-0.8, Math.min(0.8, yaw));
@@ -21397,7 +21426,7 @@ function forge3d_render(mount) {
     // ⭐ THE FIRST LOCK IS INSTANT. Forge opening must PRESENT the canonical pose, not glide into it
     // from wherever the camera happened to be constructed — easing in from an arbitrary start is
     // just a slower way of letting a non-canonical pose decide the first frame.
-    if (!lockHeld) { camera.position.copy(lockPos); _lookAt.copy(lockAt); lockHeld = true; }
+    if (!lockHeld) { camera.position.copy(lockPos); _lookAt.copy(lockAt); lockHeld = true; _lockEaseT = 0; }
     else {
       // ⛔ SNAP PER AXIS, NOT ON TOTAL DISTANCE, and this was a real defect in the first cut. Every
       // rack shares the same canonical y and z — only x differs — so a rack change is the same rig
@@ -21405,9 +21434,20 @@ function forge3d_render(mount) {
       // vector above the threshold, so y and z never snapped and crept 1.8869 → 1.8971 → 1.89925
       // across a walk: a camera height that depends on how many racks you visited. Per axis, y and
       // z are exact within a frame or two and STAY exact, and only x is ever in flight.
-      _ease(camera.position, lockPos);
-      _ease(_lookAt, lockAt);
+      // ⭐ v1.14.587 — AND A DEADLINE, so a starved frame budget cannot cost the landing. Past
+      // LOCK_EASE_MAX the pose is SET, however few frames arrived. Belt to the time-based k's braces:
+      // k alone already lands it, and this guarantees it even if dt is reported as 0 forever.
+      _lockEaseT += (dt > 0 ? dt : 0);
+      if (_lockEaseT >= LOCK_EASE_MAX) { camera.position.copy(lockPos); _lookAt.copy(lockAt); }
+      else {
+        var _k = _easeK(dt);
+        _ease(camera.position, lockPos, _k);
+        _ease(_lookAt, lockAt, _k);
+      }
     }
+    // The clock runs only while there is travel left. An arrived pose holds it at zero, so the next
+    // rack change gets a full glide rather than an instant jump.
+    if (camera.position.equals(lockPos) && _lookAt.equals(lockAt)) _lockEaseT = 0;
     // World up with a horizontal axis ⇒ roll 0 and no convergence on the verticals.
     camera.up.set(0, 1, 0);
     camera.lookAt(_lookAt);
@@ -21498,7 +21538,7 @@ function forge3d_render(mount) {
         if (rr.userData.gutMat) rr.userData.gutMat.color.setScalar(v);
       }
     });
-    placeCamera();
+    placeCamera(dt);
     renderer.render(scene, camera);
   }
   frame();
