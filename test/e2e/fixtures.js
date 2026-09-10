@@ -42,9 +42,61 @@ function isBenign(text) {
   return BENIGN_CONSOLE.some((re) => re.test(text));
 }
 
+// ── The AI-proxy health probe, answered locally ──────────────────────────────────
+// Owner ruling 2026-09-10 (OWNER-RULINGS.md, INTEL-DOCK item 4): fix the harness CORS red with
+// a ROUTE INTERCEPT, never by widening BENIGN_CONSOLE above.
+//
+// WHAT IT FIXES. phantomDeferredInit fires phantomCheckApi() on every boot, an OPTIONS probe at
+// PHANTOM_PROXY_URL. That Worker enforces a real Origin allowlist — measured 2026-09-09 with a
+// read-only preflight: https://phantom-staging.wfj6t2fk7w.workers.dev and
+// https://darkmatter024.github.io are echoed and allowed; http://127.0.0.1:4317 is refused, and
+// so is a bogus control origin. The Worker is CORRECT; the harness is simply not one of the two
+// real origins and must not be added as a third. WebKit then emits THREE entries for that one
+// request (two console errors and a stack-less pageerror), which is what has been reddening
+// `00-boot.spec.js:18`.
+//
+// ⚠ IT IS A RACE, NOT A STEADY RED, WHICH IS WHY IT HAD TO BE REMOVED RATHER THAN TOLERATED.
+// The same commit that landed .586 failed that test inside a heavily loaded 430-test run and
+// PASSED it on an idle box. A failure that depends on whether the refusal lands inside the
+// assertion window is the kind that appears on a busy day, gets blamed on whatever shipped that
+// morning, and then vanishes on the re-run meant to confirm it.
+//
+// WHY FULFIL RATHER THAN ABORT. Answering 204 with permissive CORS puts the app on the SAME code
+// path it takes from the allowlisted production origin, so the harness tests what Pages runs. An
+// abort would only trade a CORS error for a network error and would keep the API dot permanently
+// red — and a red API dot pins the SYS aggregate to 'offline', which is exactly what would make
+// INTEL-DOCK's lit ghost untestable.
+//
+// LIFTED, NOT INVENTED: `02-build-forge.spec.js` and `08-forge-layout.spec.js` already carried
+// byte-identical local copies of this stub. Theirs still run and are harmless — a later route
+// wins, and both fulfil identically — but they are now redundant and are candidates for deletion
+// in a cleanup ship, not this one.
+//
+// TO OVERRIDE in a spec that genuinely needs the probe to fail, register your own handler after
+// boot-time setup; the later route takes precedence:
+//     await page.route(PROXY_ROUTE, (r) => r.abort());
+const PROXY_ROUTE = /phantom-api\.[a-z0-9]+\.workers\.dev/;
+
+async function stubHealthProbe(page) {
+  await page.route(PROXY_ROUTE, (route) =>
+    route.fulfill({
+      status: 204,
+      headers: {
+        'access-control-allow-origin': '*',
+        'access-control-allow-methods': 'GET, POST, OPTIONS',
+        'access-control-allow-headers': '*',
+      },
+      body: '',
+    }));
+}
+
 // ── The fixture ──────────────────────────────────────────────────────────────────
 const test = base.test.extend({
   phantom: async ({ page }, use) => {
+    // FIRST, and before anything can navigate: answer the AI-proxy health probe locally so it
+    // never leaves the harness. See stubHealthProbe above for the ruling and the measurements.
+    await stubHealthProbe(page);
+
     /** @type {{type:string, text:string}[]} */
     const errors = [];
 
