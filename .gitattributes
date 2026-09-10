@@ -16,3 +16,5 @@ tools/githooks/* text eol=lf
 # `wrangler deploy --dry-run`. Cloudflare's Linux checkout gets LF from the index either way;
 # this keeps the working tree on this box honest so a local dry-run means what it says.
 .assetsignore text eol=lf
+
+_redirects text eol=lf

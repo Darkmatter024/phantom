@@ -1,0 +1,21 @@
+# Cloudflare static-assets routing for the STAGING Worker. Infrastructure, not app content.
+#
+# GitHub Pages (release) answers the directory root by serving index.html — measured
+# 2026-09-10: https://darkmatter024.github.io/phantom/ returns 200 with the 286-byte redirect
+# shim, which meta-refreshes and location.replace()s into dct-ios.html. That shim is the whole
+# reason index.html exists.
+#
+# Workers static assets does NOT do that mapping under html_handling:"none", which
+# wrangler.jsonc sets so that /dct-ios.html answers 200 instead of 307-ing to /dct-ios (see
+# that file for why the redirect had to go: the service worker precaches 'dct-ios.html', and a
+# response cached through a redirect is rejected for an offline navigation).
+#
+# The result was a bare, empty 404 at "/" — a blank white page for anyone who typed or tapped
+# the origin without the path. This line restores parity with Pages without bringing the 307
+# back: a 200 REWRITE, so the URL stays "/" and the shim is served as its body.
+#
+# GitHub Pages ignores this file, and wrangler excludes it from the uploaded asset set by
+# default (it is a metafile, alongside _headers), so it is config on staging and inert on
+# release. Nothing else is routed here on purpose: every other 404 must stay a real 404, so a
+# genuinely missing asset is never masked by the landing page.
+/    /index.html    200
