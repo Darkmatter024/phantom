@@ -1416,6 +1416,42 @@ sustained thermals across a ten-rack aisle walk.
 
 ## 9 · Next action
 
+⭐ **THE BOARD WAS RE-PRIORITISED BY THE OWNER, 2026-09-10 (field report):** *"It's the only thing left that's a real build, so it's the only thing where a lost week actually costs you October. And it's the panel management sits up for — the ghost in the dock is nice, but nobody in that room cares which slot an icon is in."* **The FIELD REPORT is the priority.** INTEL-DOCK rides along as a small ship on a well-understood surface; rack-pose is decided against the whole picture rather than allowed to eat a day by default.
+
+### The one finding that decides the field report's sequence
+
+⛔ **THE ASSEMBLER'S JOIN KEY DOES NOT EXIST** — `docs/A2-ASSEMBLER-RECON.md`, 2026-09-10, evidence only, read against `.587`. `deploy_seedRacksAndPhases` writes **two live identifiers on the same rack record two lines apart**: a synthetic composite as `id` and the **human name** as `rackId`. Downstream, phases and photos key on the composite, typed discrepancies on the uppercased human name, the reconcile path writes **lowercase Master colon ids into that same array**, the audit log carries **three** rack channels, Master uses `s1:001`, Rack Manager uses base36 `genId()`. The adapter contract's whole signature is `read(siteId, rackId)` — **and no value exists today that returns the same rack from every adapter.** An in-memory normaliser (`_rec_norm`) exists but is never persisted.
+**Consequence:** A.2's first ship **cannot** be "assembler core + four adapters" as scoped. A rack-identity resolver comes first, or the four adapters are each individually correct and collectively unable to describe one rack. ⚠ **That is an owner ruling and the recon deliberately does not propose the design.**
+⛔ **It is already wrong in shipped code:** `photo_persist` derives `siteId` by splitting the rack id on a colon; its caller passes the composite, which has no colon, so `siteId` becomes the entire rack key and the `'unknown'` fallback is unreachable. The `bySite` index is built on that value. Photo grouping by site is wrong today, silently.
+**Adapter readiness:** blockers ✅ READY (field-for-field, two real happened-at stamps; one gap — a description edit touches no timestamp, so re-notes are invisible to a timeline). Phases / identity / photos ⚠ DRIFTED. Notes+audit ⛔ DRIFTED SEVERELY — **the audit entry writes `entityType`/`entityId` while the census documents `resource`/`resourceId`, which read `undefined` today**, so an adapter written to the census and reviewed against the census would PASS review and return empty events forever.
+**Census health:** A.1 is a good document (17 classes against a brief of 11; its prerequisites section already retracted five of its own claims as false) but its header baseline is the placeholder `v1.14.xxx`, **13 storage keys have zero coverage**, and three claims are false against `.587`. Under the adapter-reviewer's own rule a census-undocumented field read is an automatic FAIL, so **a census refresh is owed before adapters can be gated.**
+
+### Where every thread stands, 2026-09-10
+
+| Thread | State |
+|---|---|
+| **`.586` ICON REFRESH** | ✅ **SHIPPED, VERIFIED, PROMOTED** (`e6f5445`). Verify debt ZERO. The canonical order ran end to end for the first time: build → staging → verify → promote. |
+| **`.587` pose determinism** | ⏳ **ON BRANCH `rack-pose-determinism` ONLY** (`988a6dd` + merge `e5cedb8`), pushed. **NOT on main.** main stays `.586` = VERIFIED = release. |
+| **Deterministic repro** | ✅ `test/e2e/54-pose-frame-starvation.spec.js` — **5/5 RED on main, 5/5 GREEN on the branch**, 23 s per run. Four of five buggy runs produced the identical residual (`fwd.x 0.00162`, 78 frames). |
+| **Pinned baseline** | ✅ `docs/PLAYWRIGHT-BASELINE.md` — 413 passed / 13 skipped / 4 failed at `5723ac3`, idle Windows box. Compare **by name**, not count. |
+| **CI** | ✅ `.github/workflows/e2e-full-serial.yml` — one worker, no sharding, memory sampled. **First runs FAILED on both main and the branch**, 45 m against a 120 m cap, all steps reached, artifact produced. ⛔ **Failure names UNREAD** — logs need auth; no token and no `gh` on this box, and the browser profile is signed out. |
+| **A.2 recon** | ✅ `docs/A2-ASSEMBLER-RECON.md` committed `4399965`. |
+| **Ghost icon** | ⛔ **BLOCKED on alpha.** The delivered art is a bare lossy `VP8` at 1092×1117 with **no alpha channel at all** — the checkerboard was the viewer's backdrop, not the file. Owner re-rendering. Spec: `docs/DOCK-ICON-BATCH-SPEC.md` (256 canvas, subject longest side **226**, ink 25–45 %, iris trace ≥ 8 px). |
+| **RESTORE-UNDO** | Q2 ruled (header band). Still waiting on Q3's two numbers from the phone. |
+
+### Next, in order
+
+1. ⛔ **Read the CI failure names.** Everything about rack-pose merging waits on this. Needs one of: sign-in on the automation browser profile, a token with `actions:read`, or the owner pasting the job summary (which prints failures **by name** plus peak memory).
+2. **Owner ruling: rack identity.** The field report cannot start its adapters without it.
+3. **Census refresh** — owed regardless of how 2 is ruled.
+4. Ghost alpha re-render → INTEL-DOCK Ship 1 (already fully specified, `docs/SHIP-HANDOFF-INTEL-DOCK-SHIP1.md`).
+5. RESTORE-UNDO Q3 numbers.
+
+⚠ **The memory leak is real, measured, and unfixed:** the WebKit GPU process climbs ~20 MB per test to a ~2 GB peak across 94 tests, and the failure lands where pressure peaks. It is what manufactures the frame starvation that exposed the pose defect. Closing it would remove the condition; the pose was fixed on its own terms because a pose that only lands when frames are plentiful is broken either way.
+
+
+### Prior next-action record (kept - this file is the log as well as the state)
+
 ✅ **STAGING IS LIVE AND THE TOOLS FOLLOW IT — 2026-09-09.** `main` is served at `https://phantom-staging.wfj6t2fk7w.workers.dev` (owner-created; §7), and **`f7dc691`** landed the script-only ship: `verify.ps1` NOT-SERVED reads `origin/main` and requires `HEAD == origin/main`, SERVED-BYTES reads staging, PASS stamps + pushes `main` and **does not promote**; `promote.ps1` Guard 4 requires the **incoming** version adjudicated and never promotes FAILED; `verify-selftest.ps1` **10/10** in a throwaway clone (T4b, T7a–c new); CLAUDE.md's loop is **build → check staging on device → verify → promote**. Nothing app-side changed, no version bump, no `VERIFIED` change. **The next ship runs the canonical order for the first time:** push → the PHANTOM STAGING look → `.\tools\verify.ps1 <v> PASS|FAIL` → `.\tools\promote.ps1`.
 ✅ **`.585` CLOSED 2026-09-09 — device PASS on the one look, stamped `f95ece0`, promoted, `SERVED` (owner, `verify.ps1 585 PASS`, under the named exception).**
 RESTORE HONESTY — Batch 2 P0 sub-ship 2, owner GO 2026-09-09. **Verify debt is ZERO.** The next things in
