@@ -56950,27 +56950,136 @@ async function photo_handleCapture(input, deployId, rackId) {
   input.value = '';
 }
 
-async function photo_compress(file) {
+// ⭐ PARAMETERISED 2026-09-11 (image-input Phase 2). maxSide and quality were hard-coded; they
+// are now arguments that DEFAULT TO THE OLD VALUES, so photo_handleCapture (:56944) — which
+// passes neither — is served byte-identically. This is deliberately NOT a second compressor:
+// Contract A2 is one canonical engine per concept, and the assistant needs the same canvas work
+// at a different size, not its own copy of it.
+// ⚠ IT ALWAYS EMITS JPEG, SO ALPHA IS FLATTENED. Measured: a 2400x1600 PNG with transparency
+// came back LARGER than it went in (121,959 -> 190,913 bytes) because the transparent ground is
+// re-encoded as noisy pixels. That is why the caller below walks a ladder instead of trusting a
+// single setting.
+// ⛔ DECODE AND ENCODE ARE SEPARATE BECAUSE THE LADDER MUST NOT DECODE FOUR TIMES.
+// The first cut of va_prepareImage called photo_compress once per rung, and each call did its
+// own FileReader + Image decode of the ORIGINAL file — four full decodes of a multi-megapixel
+// photo. It passed in isolation and failed inside the full spec file: a decode returned nothing
+// under accumulated memory pressure and the whole thing came back null for a perfectly good
+// image. On a phone with a 12MP photo that is the normal case, not the edge, and the technician
+// would see "could not prepare image" with nothing wrong. Decode once, re-encode per rung.
+function photo_decodeImage(file) {
   return new Promise(function(resolve, reject) {
     var reader = new FileReader();
     reader.onload = function(e) {
       var img = new Image();
-      img.onload = function() {
-        var canvas = document.createElement('canvas');
-        var ctx = canvas.getContext('2d');
-        var maxSide = 1280;
-        var scale = Math.min(maxSide / img.width, maxSide / img.height, 1);
-        canvas.width = img.width * scale;
-        canvas.height = img.height * scale;
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        canvas.toBlob(function(blob) { resolve(blob); }, 'image/jpeg', 0.70);
-      };
+      img.onload = function() { resolve(img); };
       img.onerror = function() { reject(new Error('Image load failed')); };
       img.src = e.target.result;
     };
     reader.onerror = function() { reject(new Error('File read failed')); };
     reader.readAsDataURL(file);
   });
+}
+
+/** Re-encode an already-decoded image. Never upscales: the scale is capped at 1. */
+function photo_encodeImage(img, maxSide, quality) {
+  return new Promise(function(resolve, reject) {
+    try {
+      var canvas = document.createElement('canvas');
+      var ctx = canvas.getContext('2d');
+      var scale = Math.min(maxSide / img.width, maxSide / img.height, 1);
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob(function(blob) {
+        // ⚠ toBlob HANDS BACK null WHEN IT CANNOT ALLOCATE, and the old code resolved with it.
+        // A null blob then reached the caller as a success and died later on .size.
+        if (!blob) { reject(new Error('Canvas encode failed')); return; }
+        resolve(blob);
+      }, 'image/jpeg', quality);
+    } catch (e) { reject(e); }
+  });
+}
+
+// ⭐ PARAMETERISED 2026-09-11 (image-input Phase 2). maxSide and quality were hard-coded; they
+// are now arguments DEFAULTING TO THE OLD VALUES, so photo_handleCapture (:56944) — which passes
+// neither — is served byte-identically. Deliberately NOT a second compressor: Contract A2 is one
+// canonical engine per concept, and the assistant needs the same canvas work at a different size.
+// ⚠ IT ALWAYS EMITS JPEG, SO ALPHA IS FLATTENED. Measured: a 2400x1600 transparent PNG came back
+// LARGER than it went in (121,959 -> 190,913) because the transparent ground re-encodes as noise.
+async function photo_compress(file, maxSide, quality) {
+  var img = await photo_decodeImage(file);
+  return photo_encodeImage(img, maxSide || 1280, quality || 0.70);
+}
+
+// ━━━ ASSISTANT IMAGE INPUT — Phase 2. NOTHING CALLS THIS YET; Phase 3 wires it. ━━━
+//
+// ⛔ THE CEILING IS THE DESIGN, NOT THE PIXEL SIZE. phantomAPI refuses a body over
+// PHANTOM_API_MAX_BODY (300,000, :18252) BEFORE it reaches the network, and base64 inflates a
+// blob by 4/3. Measured on this harness: a request with no image is 4,535 bytes, of which the
+// system prompt is 4,300 — leaving ~221,000 raw image bytes. In the field that shrinks: the
+// system prompt also carries buildContext, brief_buildLiveContext, hwMatrix_queryContext and an
+// attached ticket capped at 12,000 chars. 180,000 leaves room for all of it.
+//
+// ⛔ A FIXED SETTING CANNOT MEET A BYTE BUDGET, WHICH IS WHY THIS WALKS A LADDER. The existing
+// 1280/0.70 default produced 271,259 bytes from a noisy 3000x2000 JPEG — over the ceiling on its
+// own, before any prompt. The plan this implements asked for 1600/0.80 targeting 400 KB, which
+// is 533 KB once base64'd: nearly twice a limit that already existed. Reported rather than built.
+var VA_IMAGE_BUDGET_BYTES = 180000;
+var VA_IMAGE_LADDER = [[1280, 0.70], [1024, 0.65], [800, 0.60], [640, 0.55]];
+
+/** Decode a blob just far enough to report its real dimensions. */
+function va_imageDims(blob) {
+  return new Promise(function(resolve) {
+    var url = URL.createObjectURL(blob);
+    var img = new Image();
+    img.onload = function() { resolve({ w: img.width, h: img.height }); URL.revokeObjectURL(url); };
+    img.onerror = function() { resolve({ w: 0, h: 0 }); URL.revokeObjectURL(url); };
+    img.src = url;
+  });
+}
+
+/**
+ * Prepare an image for the assistant, or return null.
+ * -> { blob, mediaType, width, height, bytes }  within budget
+ * -> null                                        not an image, undecodable, or cannot fit
+ *
+ * ⛔ NULL, NEVER A THROW. photo_compress REJECTS on a non-image (measured: "Image load failed"),
+ * and the existing photo path gets away with that only because photo_handleCapture type-checks
+ * first (:56942). The assistant branch must not throw into the text import path it sits beside,
+ * so every failure here becomes null — and every null is logged, because a silent null would be
+ * the Contract 14 violation this whole session has been deleting.
+ */
+async function va_prepareImage(file, budgetBytes) {
+  var budget = (typeof budgetBytes === 'number' && budgetBytes > 0) ? budgetBytes : VA_IMAGE_BUDGET_BYTES;
+  if (!file || typeof file.type !== 'string' || file.type.indexOf('image/') !== 0) {
+    try { console.warn('[va] not an image: ' + (file && file.type ? file.type : 'no type')); } catch (_) {}
+    return null;
+  }
+  var img;
+  try {
+    img = await photo_decodeImage(file);   // ONCE. The rungs below re-encode this, they do not re-read.
+  } catch (e) {
+    try { console.warn('[va] image could not be decoded: ' + (e && e.message ? e.message : e)); } catch (_) {}
+    return null;
+  }
+  for (var i = 0; i < VA_IMAGE_LADDER.length; i++) {
+    var rung = VA_IMAGE_LADDER[i];
+    var blob;
+    try {
+      blob = await photo_encodeImage(img, rung[0], rung[1]);
+    } catch (e) {
+      try { console.warn('[va] image could not be encoded: ' + (e && e.message ? e.message : e)); } catch (_) {}
+      return null;
+    }
+    if (blob && blob.size <= budget) {
+      var d = await va_imageDims(blob);
+      return { blob: blob, mediaType: blob.type || 'image/jpeg', width: d.w, height: d.h, bytes: blob.size };
+    }
+  }
+  try {
+    console.warn('[va] image will not fit the ' + budget + '-byte budget even at the smallest setting');
+  } catch (_) {}
+  return null;
 }
 
 async function photo_persist(deployId, rackId, blob) {
