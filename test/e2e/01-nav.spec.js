@@ -76,7 +76,16 @@ test.describe('bottom nav — structure', () => {
   // Scan and Shift are BOTH absent today; the nav is two pillars short, not one.
   // Full reasoning: PHANTOM_CURRENT_STATE.md, defect D-1.
   // ────────────────────────────────────────────────────────────────────────────────
-  test('the nav pins the pre-M4 shape: three slots plus EXIT (R-02 replaces this at M4)', async ({ phantom, page }) => {
+  // ⛔ REWRITTEN v1.14.588, WHICH IS WHAT THIS BLOCK'S OWN HEADER INSTRUCTED. It said the shape
+  // must be "rewritten, not deleted" when the nav changes. INTEL-DOCK Ship 1 changed it — but NOT
+  // to the M4 five-pillar shape the header anticipated. Owner ruling 2026-09-10 chose Option A:
+  // FOUR slots, COMMAND / BUILD / TOOLS / GHOST, with EXIT (hold) re-homed to the last row of SYS.
+  // Option B (five slots, SHIFT restored) was REJECTED because three of SHIFT's nine questions
+  // still have no data source — D-1 stands, and the nav is still short of the approved M4 IA.
+  // ⭐ So this remains a CHECKPOINT, NOT A SPECIFICATION, exactly as before: it catches drift
+  // between here and M4, and at M4 it gets rewritten again. A8's own words cover the change —
+  // "removing that slot removes the slot, not the feature".
+  test('the nav pins the post-INTEL-DOCK shape: four slots ending in the ghost, EXIT re-homed', async ({ phantom, page }) => {
     await phantom.boot();
 
     const census = await page.evaluate(() => ({
@@ -86,18 +95,20 @@ test.describe('bottom nav — structure', () => {
         onclick: el.getAttribute('onclick') || '',
       })),
       exit: !!document.getElementById('rd-exit'),
-      exitIsBotitem: !!document.querySelector('#rd-botnav #rd-exit.botitem'),
+      exitInDock: !!document.querySelector('#rd-botnav #rd-exit'),
+      exitIsBotitem: !!document.querySelector('#rd-exit.botitem'),
     }));
 
-    expect(census.items.map((i) => i.id)).toEqual(['bn-command', 'bn-work', 'bn-ref']);
-    // v1.14.525: slot 1 relabelled Home -> Command. The SLOT COUNT is still the pre-M4
-    // checkpoint (3 + EXIT) — only the label moved, not the IA. See Contract A8 / D-1.
-    expect(census.items.map((i) => i.label)).toEqual(['Command', 'Build', 'Tools']);
+    expect(census.items.map((i) => i.id)).toEqual(['bn-command', 'bn-work', 'bn-ref', 'bn-ghost']);
+    expect(census.items.map((i) => i.label)).toEqual(['Command', 'Build', 'Tools', 'Assist']);
     expect(census.items.map((i) => i.onclick)).toEqual([
-      "showMode('command')", "showMode('work')", "showMode('ref')",
+      "showMode('command')", "showMode('work')", "showMode('ref')", "openVaSheet('intent')",
     ]);
-    expect(census.exit, '#rd-exit missing from the nav').toBe(true);
-    // #rd-exit is a sibling of the rail, deliberately NOT a landable tab (:9584).
+    // EXIT MOVED — it must still EXIST. Deleting it would remove hold-to-freeze entirely, which is
+    // a feature, not a slot. Its new home is pinned in 55-intel-dock.spec.js.
+    expect(census.exit, '#rd-exit vanished — the control must move, never be deleted').toBe(true);
+    expect(census.exitInDock, '#rd-exit is still in the dock — the ghost cannot have its cell').toBe(false);
+    // Still never a landable tab, wherever it lives.
     expect(census.exitIsBotitem, '#rd-exit must never be a .botitem').toBe(false);
   });
 
@@ -105,8 +116,11 @@ test.describe('bottom nav — structure', () => {
     await phantom.boot();
     await needsBottomNav(page);
 
+    // ⛔ v1.14.588 — 'rd-exit' LEFT THIS LIST because it left the dock, not because its floor
+    // stopped mattering. It is now a SYS row, measured inside an open panel by
+    // 55-intel-dock.spec.js; measuring it here would measure a closed popover and report 0x0.
     const rects = await page.evaluate(() =>
-      ['bn-command', 'bn-work', 'bn-ref', 'rd-exit'].map((id) => {
+      ['bn-command', 'bn-work', 'bn-ref', 'bn-ghost'].map((id) => {
         const el = document.getElementById(id);
         const r = el.getBoundingClientRect();
         return { id, w: Math.round(r.width), h: Math.round(r.height) };
@@ -395,12 +409,27 @@ test.describe('house selection', () => {
   });
 });
 
+// ⛔ v1.14.588 — EXIT MOVED OUT OF THE DOCK INTO SYS (INTEL-DOCK Ship 1, owner ruling 2026-09-10),
+// so these two tests have to OPEN the panel before they can reach it. Nothing about what they
+// assert changed: the gesture is still hold-only and the hold still freezes. Only the reach moved.
+// The real user path is the SYS pill; hdr_aggToggle is its handler, so it is called directly rather
+// than hunting a pill whose label changes with health state (SYS / OFFLINE / STORAGE n%).
+async function openSysPanel(page) {
+  await page.evaluate(() => {
+    try { if (typeof hdr_aggToggle === 'function') hdr_aggToggle(); } catch (_) { /* fall through */ }
+    const p = document.getElementById('hdr-agg-panel');
+    if (p && getComputedStyle(p).display === 'none') p.style.display = 'block';
+  });
+  await page.locator('#rd-exit').waitFor({ state: 'visible', timeout: 5_000 });
+}
+
 test.describe('#rd-exit is hold-only', () => {
   test('a plain tap on EXIT does not navigate and does not freeze', async ({ phantom, page }) => {
     await phantom.boot();
     await needsBottomNav(page);
     await tapSlot(page, 'work');
     await expect.poll(() => activePages(page)).toEqual(['work']);
+    await openSysPanel(page);
 
     await page.locator('#rd-exit').click();
 
@@ -421,6 +450,7 @@ test.describe('#rd-exit is hold-only', () => {
   test('holding EXIT past RD_HOLD_MS freezes to the sleep curtain', async ({ phantom, page }) => {
     await phantom.boot();
     await needsBottomNav(page);
+    await openSysPanel(page);
 
     // rd_holdGesture (:18721) arms on mousedown/touchstart and fires after RD_HOLD_MS
     // (850ms, :18720). No sleep: press, then poll the observable end state.

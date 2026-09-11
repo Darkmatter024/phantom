@@ -499,17 +499,22 @@ test.describe('touch-target floor', () => {
     // has nothing on screen to measure; the rail has its own floor check in 08-forge-layout.
     test.skip(await railIsUp(page), 'the desktop shell composes a left rail at this width; there is no bottom nav to measure');
     const nav = await page.evaluate(() =>
-      Array.from(document.querySelectorAll('#rd-botnav .botitem, #rd-botnav #rd-exit')).map((el) => {
+      Array.from(document.querySelectorAll('#rd-botnav .botitem')).map((el) => {
         const r = el.getBoundingClientRect();
         return { id: el.id, w: Math.round(r.width), h: Math.round(r.height) };
       })
     );
-    // 3 destinations + EXIT. No Scan slot, no Shift slot — measured, not assumed.
-    expect(nav.map((n) => n.id), 'the redesign bottom nav should expose exactly 3 destinations + EXIT').toEqual([
+    // ⛔ v1.14.588 — WAS "3 destinations + EXIT". INTEL-DOCK Ship 1 (owner ruling 2026-09-10,
+    // Option A) moved EXIT (hold) to the last row of SYS and gave the ghost the cell it vacated,
+    // so the dock is now FOUR destinations and #rd-botnav #rd-exit matches nothing. EXIT's own
+    // floor is measured inside the open SYS panel by 55-intel-dock.spec.js — it did not stop
+    // mattering, it moved. Still no Scan slot and no Shift slot: measured, not assumed, and D-1
+    // still stands (three of SHIFT's nine questions have no data source).
+    expect(nav.map((n) => n.id), 'the redesign bottom nav should expose exactly 4 destinations').toEqual([
       'bn-command',
       'bn-work',
       'bn-ref',
-      'rd-exit',
+      'bn-ghost',
     ]);
     nav.forEach((n) => {
       expect(n.w, `#${n.id} is ${n.w}px wide`).toBeGreaterThanOrEqual(TAP_FLOOR);

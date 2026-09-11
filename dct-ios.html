@@ -10016,7 +10016,22 @@ body.rd{--rd-cardfill:linear-gradient(158deg,#050506 0%,#010102 46%,#000000 76%,
    the nav items — reuses the nav's .blabel/.btick (dim slate Orbitron, no gold pill), lighting gold only
    as it arms. Curtain + wake-ring authored (no prototype). */
 /* v1.14.321: body.rd #bn-rail flex rule removed — Option C uses #bn-rail{display:contents}, so its 3 tabs are direct grid cells of #rd-botnav. Leaving this rule would out-specify display:contents and collapse the 4-cell grid to 2. */
-body.rd #rd-exit{position:relative;min-width:56px;min-height:56px;margin-left:6px;margin-right:48px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:3px;padding:4px 4px;border:none;background:none;border-radius:0;overflow:hidden;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;cursor:pointer}
+/* ⛔ v1.14.588 — RE-SCOPED TO THE DOCK, and the scoping is the whole point. EXIT moved into the SYS
+   panel keeping its id (so rd_initExit wires it unchanged). This rule was body.rd #rd-exit, which is
+   NOT dock-scoped, so it would have followed the element into SYS and forced a 56px flex-column box
+   with a 48px right margin inside a list row. #rd-botnav no longer contains #rd-exit, so this rule
+   now matches nothing and is kept only as the record of what the dock cell was. */
+body.rd #rd-botnav #rd-exit{position:relative;min-width:56px;min-height:56px;margin-left:6px;margin-right:48px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:3px;padding:4px 4px;border:none;background:none;border-radius:0;overflow:hidden;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;cursor:pointer}
+/* v1.14.588 — the ghost's offline state. Dim enough to read as OFF at arm's length ("dim means
+   dim"), and NOT pointer-events:none: a tappable control that does nothing is a Contract B14
+   violation, so the tap still lands and the sheet explains. The label dims with it so the whole
+   cell reads unavailable rather than just its picture. */
+body[data-net="offline"] #bn-ghost .bicon{opacity:.30}
+body[data-net="offline"] #bn-ghost .blabel{color:#39424b;text-shadow:none}
+/* v1.14.588 — EXIT as a SYS row: the hold needs visible feedback now that it has no dock cell.
+   The charge bar is inherited; these give the row itself the arming state the dock cell had. */
+body.rd #hdr-agg-panel #rd-exit.arming .hdr-agg-row-name{color:var(--gold);letter-spacing:2px}
+body.rd #hdr-agg-panel #rd-exit.arming .hdr-agg-row-val{color:var(--gold)}
 /* At rest the .blabel/.btick inside #rd-exit inherit the exact nav-item look (#rd-botnav .blabel/.btick) — dim slate Orbitron, matching COMMAND/WORK/CRASH CART. The HOLD action shows only on touch: label + tick light GOLD (gold = exit/attention, distinct from the cyan tab-active) and a bottom charge bar fills over .85s. */
 body.rd #rd-exit .blabel{color:#ff5a4d;text-shadow:0 0 7px rgba(255,69,58,.85),0 0 16px rgba(255,69,58,.5)}   /* v1.14.317 — red glow on the EXIT letters (owner request). NOTE: red is off the ratified rd palette (the house danger channel is magenta #ff2bd6); kept as an explicit owner exception for the exit control. The .arming gold override still wins on hold. */
 body.rd #rd-exit.arming .blabel{color:var(--gold);letter-spacing:4.2px;text-shadow:0 0 14px rgba(244,196,48,.55)}
@@ -12861,7 +12876,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.586';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.588';
 // Immediate version check: reload if cached HTML is stale. Runs before anything else.
 (function() {
   fetch('./version.json?_=' + Date.now(), { cache: 'no-store' })
@@ -13605,6 +13620,22 @@ if (typeof window !== 'undefined') {
               <span class="hdr-agg-row-dot" style="background:var(--cyan)"></span>
               <span class="hdr-agg-row-name">SITE PROFILE</span>
               <span class="hdr-agg-row-val" style="color:var(--cyan)">EDIT &rarr;</span>
+            </div>
+            <!-- v1.14.588 — EXIT (hold) MOVED HERE FROM THE DOCK, last row of SYS (owner ruling
+                 2026-09-10). ⭐ THE id IS DELIBERATELY UNCHANGED: rd_initExit() looks #rd-exit up
+                 BY ID, not by position, so the hold gesture, rd_freeze and the freeze curtain are
+                 wired by the existing code with ZERO JS change. Moving the element moves the
+                 control; the semantics are byte-identical.
+                 The charge bar stays — body.rd #rd-exit .rd-exit-charge is position:absolute, so
+                 this row carries position:relative and overflow:hidden to host it. The dock
+                 geometry rule that used to style this element was re-scoped to #rd-botnav in the
+                 same ship, or it would have followed the element in here and forced a 56px
+                 flex-column box with a 48px right margin inside a SYS row. -->
+            <div class="hdr-agg-row" id="rd-exit" role="button" tabindex="0" aria-label="Hold to exit and freeze the app" style="--tc:#ff4d4d;position:relative;overflow:hidden">
+              <span class="rd-exit-charge"></span>
+              <span class="hdr-agg-row-dot" style="background:#ff4d4d"></span>
+              <span class="hdr-agg-row-name">EXIT</span>
+              <span class="hdr-agg-row-val" style="color:#ff4d4d">HOLD &rarr;</span>
             </div>
           </div>
           <!-- Legacy label reference kept for phantomUpdateNetPill() backward compat -->
@@ -16606,11 +16637,21 @@ if (typeof window !== 'undefined') {
         <img class="bicon" src="icons/phantom-nav-tools-v4-256.webp" width="256" height="256" alt="" loading="eager">
         <span class="blabel">Tools</span><span class="btick"></span>
       </div>
-    </div>
-    <div id="rd-exit" role="button" aria-label="Hold to exit and freeze the app" tabindex="0" style="--tc:#ff4d4d">
-      <span class="rd-exit-charge"></span>
-      <img class="bicon" src="icons/phantom-nav-exit-v3-256.webp" width="256" height="256" alt="" loading="eager">
-      <span class="blabel">Exit</span><span style="order:4;font-size:9px;color:rgba(255,255,255,0.5);margin-top:-2px">hold</span><span class="btick"></span>
+      <!-- v1.14.588 — INTEL-DOCK Ship 1. The ghost takes the slot EXIT vacated (owner ruling
+           2026-09-10, Option A: four slots COMMAND / BUILD / TOOLS / GHOST; Option B's fifth slot
+           was rejected). It does NOT add a slot — #rd-botnav is grid-template-columns:repeat(4,1fr),
+           so the ghost could only occupy cell 4 if EXIT left in the same edit. That is why this is
+           one atomic change and not two ships.
+           ⛔ NO data-requires-net HERE, deliberately. That generic hook sets pointer-events:none and
+           stamps an "OFFLINE" pill via ::after — cramped in a ~94px cell, and it would make this a
+           tappable control that does nothing, which Contract B14 forbids. The ghost DIMS (see the
+           #bn-ghost offline rule in CSS) and STAYS TAPPABLE; the sheet says why, exactly as the
+           Command assistant card does today.
+           --tc is the violet secondary; the red channel EXIT held is freed by its move. -->
+      <div class="botitem" id="bn-ghost" role="button" tabindex="0" onclick="openVaSheet('intent')" aria-label="DCT Assistant" style="--tc:#8a4bff">
+        <img class="bicon" src="icons/phantom-nav-ghost-v1-256.webp" width="256" height="256" alt="" loading="eager">
+        <span class="blabel">Assist</span><span class="btick"></span>
+      </div>
     </div>
   </div>
   <!-- v1.14.315 Hold-to-Exit freeze curtain (redesign-only; hidden until rd_freeze raises .up) -->

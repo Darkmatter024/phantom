@@ -34,7 +34,7 @@
 // a clean v1.13.3 — dropping the prior -N cache-iteration suffix — so this real
 // version bump busts every client's cache and the three stamps (app const /
 // version.json / this key) line up again. Patch bumps continue from here.
-const CACHE_VERSION = 'phantom-v1.14.586';
+const CACHE_VERSION = 'phantom-v1.14.588';
 
 // Assets to precache on install. Keep this minimal — single-file PWA means
 // most of PHANTOM is in dct-ios.html itself.
@@ -89,6 +89,10 @@ const PRECACHE_URLS = [
   // rendered it half again as tall as BUILD. 180 brings it to 38px against BUILD's 30px at a 54px
   // box. (.526 noted exit-v2 stayed for #cs-side; .528 moved that surface across, so it went.)
   'icons/phantom-nav-exit-v3-256.webp',
+  // v1.14.588 — INTEL-DOCK Ship 1. Precached in the SAME commit that references it, never before:
+  // the .364 cleanup purged 20 entries that were exactly that mistake. EXIT's own entry STAYS —
+  // the control moved to SYS but the desktop side nav (#cs-nav-ext) still draws that art.
+  'icons/phantom-nav-ghost-v1-256.webp',
   // v1.14.462 — HOME CARD ART (owner directive 2026-08-14). Both feature heroes replaced with the
   // approved photographic direction: a real technician, a real datacenter, rugged field hardware.
   // ⛔ NEITHER CARRIES READABLE TEXT. The handoff art they replace shipped baked SOURCE_SYNC 88% /
