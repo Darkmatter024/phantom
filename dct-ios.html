@@ -12877,39 +12877,37 @@ body.rd .pql-ctl-on{color:var(--gold)}
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
 const PHANTOM_APP_VERSION = 'phantom-v1.14.588';
-// Immediate version check: reload if cached HTML is stale. Runs before anything else.
-(function() {
-  fetch('./version.json?_=' + Date.now(), { cache: 'no-store' })
-    .then(function(r) { return r.json(); })
-    .then(function(d) {
-      var serverVer = d && d.version;
-      if (serverVer && serverVer !== PHANTOM_APP_VERSION) {
-        window.location.reload(true);
-      }
-    })
-    .catch(function() {});
-})();
+// ⛔ STABILIZATION 2026-09-11 — THE TWO PARSE-TIME RELOADERS ARE DELETED (this one, and its
+// twin that sat just below the #ver-stamp binding). Both fetched version.json at parse time and
+// both reacted to a mismatch on their own: the first called location.reload(true), the second
+// called reg.unregister() and THEN reloaded. With phantom_versionFileBackstop() below that was
+// three reactions to one signal, and the two here were ungated.
+//
+// WHAT THEY BYPASSED. v1.14.458 built ONE coordinated path on purpose: detection in the backstop,
+// application in phantom_swApplyUpdate(), and a controllerchange reload gated on _swUpdating so
+// the page reloads only for an update the TECHNICIAN asked for. The note on that listener says an
+// ungated reload is "an app that reboots itself under a technician's hands for no reason they can
+// see" — which is exactly what these two did, on a version mismatch alone, the very condition the
+// same code calls NOT an actionable update.
+//
+// AND THEY LOOPED. A reloader cannot fix the condition it fires on: if the shell keeps arriving
+// stale, the next load compares stale-against-fresh again and reloads again. Measured in the
+// harness — a routed version mismatch left the app unable to finish booting at all.
+//
+// WHY THE SELF-HEAL TWIN WENT TOO. unregister() destroys the registration, so the reload behind it
+// has no controller and no cached shell. On the marginal signal of a cold aisle that turns a
+// working offline app into one that cannot boot — the opposite of the guarantee it claimed to
+// protect. A stale shell is already handled correctly in sw.js: navigations are network-first with
+// cache:'reload', so it is not reachable while online.
+//
+// NOTHING REPLACES THEM, and that is the fix — one detector, one applier. Pinned by
+// test/e2e/56-update-coordination.spec.js.
 // v1.14.226 — persistent build badge (§10): mirror the canonical running-version const into the
 // top-right #ver-stamp (redesign-only via CSS) so device-verify always shows the ACTUAL loaded build.
 // Reusing the const (not a version.json fetch) is deliberate: a stale SW → stale const → stale badge,
 // which is exactly the "am I on the latest?" signal — a fresh version.json behind stale HTML would lie.
 document.addEventListener('DOMContentLoaded', function(){ try { var vs = document.getElementById('ver-stamp'); if (vs) vs.textContent = PHANTOM_APP_VERSION.replace('phantom-', ''); } catch(_){} });
-// Self-heal: SW serving stale HTML detected via network-fresh version.json
-(function() {
-  if (!('serviceWorker' in navigator)) return;
-  fetch('./version.json?_=' + Date.now(), { cache: 'no-store' })
-    .then(function(r) { return r.json(); })
-    .then(function(d) {
-      var serverVer = d && d.version;
-      var myVer = (typeof PHANTOM_APP_VERSION !== 'undefined') ? PHANTOM_APP_VERSION : null;
-      if (serverVer && myVer && serverVer !== myVer) {
-        navigator.serviceWorker.getRegistration()
-          .then(function(reg) { return reg ? reg.unregister() : Promise.resolve(); })
-          .then(function() { window.location.reload(true); });
-      }
-    })
-    .catch(function() {});
-})();
+// (The self-heal unregister+reload IIFE stood here. Deleted 2026-09-11 — see the tombstone above.)
 // v1.6.31: bind the boot-screen subtitle to PHANTOM_APP_VERSION so
 // future version bumps update it automatically. Prior to this, the
 // subtitle was hardcoded as "CoreWeave · AUS-01 · v1.4.2" and had
