@@ -74,16 +74,21 @@ jobs:
         working-directory: test
         run: npx playwright install --with-deps chromium
 
+      # list for a human-readable artifact, json because the gate below must read OUTCOMES as data
+      # and not scrape a reporter's cosmetics. PLAYWRIGHT_JSON_OUTPUT_NAME is what keeps the json
+      # reporter out of stdout and in a file.
       - name: Run the sw-https project
         id: run
         working-directory: test
         continue-on-error: true
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: /tmp/sw-https.json
         run: |
           set -o pipefail
           npx playwright test \
             --project=sw-https-chromium \
             --workers=1 \
-            --reporter=list \
+            --reporter=list,json \
             2>&1 | tee /tmp/sw-https.log
 
       # ⛔ THE ANTI-VACUOUS-GREEN CHECK, AND IT IS THE POINT OF THE JOB.
@@ -92,29 +97,19 @@ jobs:
       # job would certify that the service-worker path works while having never executed it. That
       # is the exact failure mode this whole change exists to end, so it is asserted mechanically
       # rather than trusted. 56-update-coordination.spec.js carries a matching in-test guard.
+      # ⛔ THE GATE READS OUTCOMES AS DATA. Two earlier cuts of this step grepped the list
+      # reporter's human output and were wrong both times — the second passed locally and failed
+      # here while every test passed, because that reporter prints "ok" on win32 and "✓"
+      # everywhere else. test/ci-assert-ran.js reads the JSON report's status field instead;
+      # its header records the whole story. Skipped, absent, ambiguous, failed and
+      # report-missing are ALL failures.
       - name: Prove the secure-origin tests actually PASSED
         if: always()
+        working-directory: test
         run: |
-          # ⛔ POSITIVE ASSERTIONS, AND THE FIRST CUT OF THIS STEP WAS NOT.
-          # It asked "did the registration test avoid appearing as skipped" and "does the string
-          # 'secure origin' appear anywhere in the log". The second was worthless: a SKIPPED test
-          # still prints its own title, so a guard that never ran satisfied it. Proven against a
-          # synthetic log before this rewrite. Both checks now demand the test appear as a PASS.
-          # POSIX classes, not \s: this must not depend on a GNU grep extension.
-          fail=0
-          check_ok () {   # $1 = human label, $2 = ERE matching the test title
-            if grep -qE "^[[:space:]]+ok[[:space:]]+[0-9]+ .*$2" /tmp/sw-https.log; then
-              echo "PASSED: $1"
-            else
-              echo "::error::$1 did not PASS. It was skipped, absent, or failed — so this run proves nothing about the service-worker path."
-              grep -nE "$2" /tmp/sw-https.log || echo "  (no line in the log matches: $2)"
-              fail=1
-            fi
-          }
-          # The app registering its OWN worker is the thing this whole job exists to keep honest.
-          check_ok "the app registers its own service worker" "registers a service worker on first load"
-          check_ok "the secure-origin guard"                  "secure origin with a live worker"
-          exit $fail
+          node ci-assert-ran.js /tmp/sw-https.json \
+            "registers a service worker on first load" \
+            "secure origin with a live worker"
 
       - name: Summarise
         if: always()
