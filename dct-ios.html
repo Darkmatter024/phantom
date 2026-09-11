@@ -51064,7 +51064,7 @@ function renderPmvError(e, cls, el) {
 // pass with the flag OFF **and** ON, and a const cannot be flipped from a test. Every read is at
 // call time — the accept attribute at setVaBody('intent'), the branch at import, the content
 // shape at ask — so flipping it at runtime exercises the same code the shipped flag would.
-var FEATURE_IMAGE_INPUT = false;
+var FEATURE_IMAGE_INPUT = true;   // ⭐ FLIPPED 2026-09-11 (Phase 5) — owner cleared the site camera-use question.
 
 const VA = {
   recognition: null,
@@ -51263,7 +51263,7 @@ function va_intentHtml() {
     '<span class="va-it"><b>TYPE OR PASTE</b><span>Write it — or paste ticket text straight in</span></span><span class="va-iarw">›</span></span></button>' +
     '<button class="va-icard va-i-imp" onclick="document.getElementById(\'vaTicketFile\').click()" aria-label="Import ticket file"><span class="va-iwell">' +
     '<span class="va-iico"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round"><path d="M12 3v11m0 0 4-4m-4 4-4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg></span>' +
-    '<span class="va-it"><b>IMPORT FILE</b><span>.txt · .log · .json · .eml · .csv</span></span><span class="va-iarw">›</span></span></button>' +
+    '<span class="va-it"><b>IMPORT FILE</b><span>' + (FEATURE_IMAGE_INPUT ? '.txt · .log · .json · .csv · PHOTO' : '.txt · .log · .json · .eml · .csv') + '</span></span><span class="va-iarw">›</span></span></button>' +
     '</div>' +
     '<input type="file" id="vaTicketFile" accept=".txt,.log,.json,.eml,.csv,.md' + (FEATURE_IMAGE_INPUT ? ',image/*' : '') + '" style="display:none" onchange="va_importTicket(this)">' +
     '<div id="vaTicketFallback" style="display:none;margin-top:12px">' +
@@ -51347,6 +51347,7 @@ async function va_importImage(file) {
     return;
   }
   VA.image = {
+    file: file,   // kept so the send-time budget can re-prepare it; memory only, dies with the sheet
     name: file.name || 'photo',
     b64: b64,
     mediaType: prepared.mediaType,
@@ -51361,8 +51362,49 @@ async function va_importImage(file) {
 // ARRAY produces the API's content-block form and handing it a string produces exactly what it
 // produced before. A text import therefore still sends a bare string, which 58-assistant-import
 // -file.spec.js pins, and the shared API layer that every other feature uses is untouched.
-function va_userContent(question) {
+var VA_ERR_IMAGE_TOO_BIG = 'IMAGE_TOO_BIG';
+var VA_IMAGE_SAFETY_MARGIN = 1024;   // slack for JSON punctuation the envelope measure cannot see
+
+// ⛔ THE REAL REMAINING BUDGET, MEASURED AT SEND TIME — NOT A CONSTANT GUESSED AT IMPORT TIME.
+// VA_IMAGE_BUDGET_BYTES (180,000) is a conservative figure used when the photo is first attached,
+// because the question and the context do not exist yet. By the time we send, they do: the system
+// prompt carries buildContext, brief_buildLiveContext, hwMatrix_queryContext and a ticket capped at
+// 12,000 chars, and with a loaded Master that is far larger than the harness's measured 4,300.
+// So the envelope is built for real with an EMPTY data field and measured, and what is left under
+// PHANTOM_API_MAX_BODY is the budget. base64 is 4/3 of raw, hence the 3/4.
+function va_imageBudgetFor(question, system) {
+  var envelope = JSON.stringify({
+    model: PHANTOM_MODEL,
+    max_tokens: AI_TOKENS['va'] || 1000,
+    system: system,
+    messages: [{ role: 'user', content: [
+      { type: 'image', source: { type: 'base64', media_type: VA.image.mediaType, data: '' } },
+      { type: 'text', text: question }
+    ] }]
+  }).length;
+  var room = PHANTOM_API_MAX_BODY - envelope - VA_IMAGE_SAFETY_MARGIN;
+  return Math.max(0, Math.floor(room * 3 / 4));
+}
+
+async function va_userContent(question, system) {
   if (!(FEATURE_IMAGE_INPUT && VA.image && VA.image.b64)) return question;
+
+  var budget = va_imageBudgetFor(question, system);
+  if (VA.image.bytes > budget) {
+    // The photo was prepared against the conservative import-time figure and the real context is
+    // bigger than that allowed for. Re-prepare from the ORIGINAL file, not from the already-lossy
+    // copy: re-encoding a JPEG of a JPEG throws away quality for nothing.
+    try { console.warn('[va] re-preparing photo for the real budget: ' + VA.image.bytes + ' > ' + budget); } catch (_) {}
+    var tighter = VA.image.file ? await va_prepareImage(VA.image.file, budget) : null;
+    if (!tighter) throw new Error(VA_ERR_IMAGE_TOO_BIG);
+    var b64 = await va_blobToBase64(tighter.blob);
+    VA.image.b64 = b64;
+    VA.image.bytes = tighter.bytes;
+    VA.image.width = tighter.width;
+    VA.image.height = tighter.height;
+    VA.image.mediaType = tighter.mediaType;
+  }
+
   return [
     { type: 'image', source: { type: 'base64', media_type: VA.image.mediaType, data: VA.image.b64 } },
     { type: 'text', text: question }
@@ -51438,7 +51480,10 @@ async function vaAsk(question) {
     // feature-authored blocks, and `extra` is capped at 500 tokens — routing them through it would
     // silently truncate the assistant's own working context to satisfy a budget meant for the
     // context ENGINE's output. VA_SYSTEM is the system prompt and is never context at all.
-    const resp = await phantomAI('va', buildContext({ surface: 'va' }) + liveCtx + '\n\n' + hwCtx + va_ticketContext() + VA_SYSTEM, va_userContent(question));
+    // The system prompt is hoisted because the image budget is measured AGAINST it. Building it
+    // inline would have meant guessing at its size, which is the thing this ship removes.
+    var _system = buildContext({ surface: 'va' }) + liveCtx + '\n\n' + hwCtx + va_ticketContext() + VA_SYSTEM;
+    const resp = await phantomAI('va', _system, await va_userContent(question, _system));
 
     if (!resp.ok) throw new Error('API ' + resp.status);
     const data = await resp.json();
@@ -51452,6 +51497,14 @@ async function vaAsk(question) {
     if (intent) va_showLogButton(intent);
 
   } catch(e) {
+    // ⛔ A SIZE REFUSAL IS NOT A NETWORK FAILURE, AND MUST NOT READ AS ONE. Without this branch
+    // a photo that cannot fit alongside the attached context would surface as "Could not reach
+    // assistant", sending a technician to check their signal over a problem they can actually fix.
+    if (e && e.message === VA_ERR_IMAGE_TOO_BIG) {
+      vaShowError('That photo will not fit alongside the attached context.\n\nClear the attached '
+        + 'ticket, or ask a shorter question, then try again. The photo is still attached.');
+      return;
+    }
     vaShowError('Could not reach assistant: ' + e.message);
   }
 }
@@ -57081,6 +57134,11 @@ function photo_encodeImage(img, maxSide, quality) {
       canvas.toBlob(function(blob) {
         // ⚠ toBlob HANDS BACK null WHEN IT CANNOT ALLOCATE, and the old code resolved with it.
         // A null blob then reached the caller as a success and died later on .size.
+        // ⭐ AND THE BACKING STORE IS RELEASED HERE, WIN OR LOSE. A 12MP photo’s canvas is tens of
+        // megabytes and the ladder can build four of them; on a phone that is the difference
+        // between a decode that succeeds and one that comes back empty. Measured in the harness:
+        // five image-heavy spec files together started failing decodes that all passed alone.
+        try { canvas.width = 0; canvas.height = 0; } catch (_) {}
         if (!blob) { reject(new Error('Canvas encode failed')); return; }
         resolve(blob);
       }, 'image/jpeg', quality);
@@ -57138,7 +57196,13 @@ function va_imageDims(blob) {
  * the Contract 14 violation this whole session has been deleting.
  */
 async function va_prepareImage(file, budgetBytes) {
-  var budget = (typeof budgetBytes === 'number' && budgetBytes > 0) ? budgetBytes : VA_IMAGE_BUDGET_BYTES;
+  // ⛔ A BUDGET OF 0 MEANS 0, NOT "use the default". The first cut guarded on `budgetBytes > 0`,
+  // so a caller computing a real remaining budget that came out at or below zero — the request is
+  // already full — silently got the generous 180,000 default and a photo that could never be sent.
+  // Caught by 62-image-send-budget: an impossible budget refused to refuse. A number is honoured
+  // as given; only an absent or non-finite argument falls back.
+  var budget = (typeof budgetBytes === 'number' && isFinite(budgetBytes) && budgetBytes >= 0)
+    ? budgetBytes : VA_IMAGE_BUDGET_BYTES;
   if (!file || typeof file.type !== 'string' || file.type.indexOf('image/') !== 0) {
     try { console.warn('[va] not an image: ' + (file && file.type ? file.type : 'no type')); } catch (_) {}
     return null;

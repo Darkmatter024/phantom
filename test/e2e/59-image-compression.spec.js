@@ -39,7 +39,7 @@ const MAKE_FIXTURES = `
         x.fillStyle = 'rgba(' + ((i*7)%255) + ',' + ((i*13)%255) + ',' + ((i*29)%255) + ',' + (alpha ? 0.5 : 1) + ')';
         x.fillRect((i*37)%w, (i*53)%h, 24, 24);
       }
-      c.toBlob(function (b) { res(b); }, type, type === 'image/jpeg' ? 0.92 : undefined);
+      c.toBlob(function (b) { try { c.width = 0; c.height = 0; } catch (e) {} res(b); }, type, type === 'image/jpeg' ? 0.92 : undefined);
     });
   };
 `;

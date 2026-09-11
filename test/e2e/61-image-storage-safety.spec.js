@@ -40,7 +40,7 @@ const MAKE = `
         x.fillStyle = 'rgba(' + ((i*7)%255) + ',' + ((i*13)%255) + ',' + ((i*29)%255) + ',1)';
         x.fillRect((i*37)%w, (i*53)%h, 24, 24);
       }
-      c.toBlob(function (b) { res(b); }, 'image/jpeg', 0.92);
+      c.toBlob(function (b) { try { c.width = 0; c.height = 0; } catch (e) {} res(b); }, 'image/jpeg', 0.92);
     });
   };
   window.__attach = async function (name) {
@@ -187,8 +187,21 @@ test.describe('image storage safety', () => {
 
     expect(after.image, '⛔ a photo survived a reload — something persisted it').toBeNull();
     expect(after.ticket, 'a ticket survived a reload').toBeNull();
-    // And the flag is back to its shipped value: the test flipped a runtime var, not the file.
-    expect(after.flag, 'the feature flag survived a reload — it is not shipping off').toBe(false);
+
+    // ⭐ THE FLAG COMES FROM THE FILE, NOT FROM TEST STATE — asserted against the SERVED SOURCE
+    // rather than a literal. A first cut hardcoded `false`, which was right until Phase 5 flipped
+    // the flag on and then failed for a reason that had nothing to do with storage. A test that
+    // has to be edited every time an unrelated default moves is a test that will eventually be
+    // edited carelessly; this one reads the truth instead of restating it.
+    const declared = await page.evaluate(async () => {
+      const src = await (await fetch('./dct-ios.html')).text();
+      const m = src.match(/var FEATURE_IMAGE_INPUT = (true|false);/);
+      return m ? m[1] === 'true' : null;
+    });
+    expect(declared, 'could not find the flag declaration in the served source').not.toBeNull();
+    expect(after.flag,
+      `the runtime flag is ${after.flag} but the served file declares ${declared} — a reload did ` +
+      `not restore the shipped value, so something is persisting it`).toBe(declared);
   });
 
   test('⭐ the guard has teeth: a base64 photo written to localStorage IS caught', async ({ phantom, page }) => {

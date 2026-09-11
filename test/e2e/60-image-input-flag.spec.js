@@ -40,7 +40,7 @@ const MAKE = `
         x.fillStyle = 'rgba(' + ((i*7)%255) + ',' + ((i*13)%255) + ',' + ((i*29)%255) + ',1)';
         x.fillRect((i*37)%w, (i*53)%h, 24, 24);
       }
-      c.toBlob(function (b) { res(b); }, type, 0.92);
+      c.toBlob(function (b) { try { c.width = 0; c.height = 0; } catch (e) {} res(b); }, type, 0.92);
     });
   };
 `;
@@ -74,19 +74,21 @@ async function ask(page, question) {
   await page.waitForFunction(() => !!document.querySelector('#vaBody .va-answer'), undefined, { timeout: 15_000 });
 }
 
-test.describe('image input — flag OFF (what ships)', () => {
+// ⭐ PHASE 5 FLIPPED THE FLAG ON. This describe used to be "flag OFF (what ships)"; the flag now
+// ships ON, so what it guards is the ROLLBACK PATH — the state the app returns to if the feature
+// has to be switched off in a hurry. That path stops being exercised by the shipped default the
+// moment the flag flips, which is exactly when it becomes worth a test.
+test.describe('image input — flag OFF (the rollback path)', () => {
 
   // ⚠ THE FLAG-OFF PROPERTIES SHARE ONE BOOT ON PURPOSE. Each boot of this 3.6 MB document costs
   // ~6s, and the plan caps this file at 60 seconds; seven boots measured 61s. These assertions are
   // about one state, not one behaviour each, so they belong together rather than being split for
   // cosmetic granularity and blowing the budget.
-  test('⛔ the flag is off, the filter offers no images, and a forced image is still refused', async ({ phantom, page }) => {
+  test('⛔ switched off, the filter offers no images and a forced image is still refused', async ({ phantom, page }) => {
     await page.addInitScript(MAKE);
     await phantom.boot();
-    await page.evaluate(() => openVaSheet('intent'));
+    await page.evaluate(() => { FEATURE_IMAGE_INPUT = false; openVaSheet('intent'); });
 
-    expect(await page.evaluate(() => FEATURE_IMAGE_INPUT),
-      '⛔ the feature flag is ON in the served file — this ships dark').toBe(false);
     expect(await page.locator('#vaTicketFile').getAttribute('accept')).toBe('.txt,.log,.json,.eml,.csv,.md');
 
     // Bypass the accept filter entirely — the branch itself must refuse while the flag is off.

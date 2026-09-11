@@ -168,16 +168,34 @@ test.describe('DCT assistant — Import File, as it behaves today', () => {
       'the file text has moved into user content — a real change worth a ruling, not a silent one').toBe(false);
   });
 
-  test('the accept filter is text-only today — no image types', async ({ phantom, page }) => {
+  // ⭐ REWRITTEN AT PHASE 5, AND THE REASON MATTERS. This test read "the accept filter is text-only
+  // today — no image types". Phase 5 flipped FEATURE_IMAGE_INPUT on after the owner cleared the
+  // site camera-use question, so the shipped filter now also offers image/*. That is a deliberate,
+  // approved behaviour change, NOT a regression — and the distinction is provable rather than
+  // asserted: the five text types are byte-identical, image/* is purely APPENDED, and switching the
+  // flag back off restores the original string exactly. The other four tests in this file, which
+  // characterise the import PATH, were not touched by the flip and stayed green through it.
+  test('the accept filter gained image/* additively — the text types are untouched', async ({ phantom, page }) => {
     await phantom.boot();
     await page.evaluate(() => openVaSheet('intent'));
 
-    const accept = await page.locator('#vaTicketFile').getAttribute('accept');
-    // ⭐ Phase 3 appends image/* behind FEATURE_IMAGE_INPUT. With the flag OFF this attribute must
-    // stay byte-identical to this string, which is the anti-breakage contract in one assertion.
-    expect(accept).toBe('.txt,.log,.json,.eml,.csv,.md');
-    expect(/image/.test(accept || ''),
-      'image types are accepted with no feature flag in evidence').toBe(false);
+    const TEXT_ONLY = '.txt,.log,.json,.eml,.csv,.md';
+
+    expect(await page.evaluate(() => FEATURE_IMAGE_INPUT),
+      'the feature flag is off — this file expects the Phase 5 state').toBe(true);
+    expect(await page.locator('#vaTicketFile').getAttribute('accept')).toBe(TEXT_ONLY + ',image/*');
+
+    // ⛔ THE ANTI-BREAKAGE CONTRACT, STILL ENFORCED. Turn the flag off and the attribute must be
+    // byte-identical to what it was before image input existed. If this ever drifts, the image
+    // work has edited the text path rather than branching around it.
+    const off = await page.evaluate(() => {
+      FEATURE_IMAGE_INPUT = false;
+      setVaBody('intent');
+      return document.getElementById('vaTicketFile').getAttribute('accept');
+    });
+    expect(off,
+      '⛔ with image input switched OFF the accept filter is not what it was before the feature ' +
+      'existed — the branch has leaked into the text path').toBe(TEXT_ONLY);
   });
 
   test('⛔ an oversized file is REFUSED loudly and nothing is attached', async ({ phantom, page }) => {
