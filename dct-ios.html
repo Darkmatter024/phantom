@@ -24707,6 +24707,36 @@ function showPage(id, tnEl, opsTab) {
   }
   if (typeof nowDot_update === 'function') { try { nowDot_update(); } catch(_){} }
 
+  // ⛔ STABILIZATION 2026-09-11 — VALIDATE THE DESTINATION BEFORE DEACTIVATING ANYTHING.
+  // The order was inverted: every .page and every .tn-item was cleared first, and only then did
+  // the code look for #pg-<id>. A missing target therefore could not merely fail to navigate — it
+  // left the app on NO ACTIVE PAGE AT ALL. v1.14.548 saw that and added a recovery branch, but a
+  // recovery branch is a second mechanism papering over the ordering; the ordering is the defect.
+  //
+  // ⛔ AND THE RECOVERY WAS ITSELF BROKEN IN THE LEGACY HOUSE. It targeted 'pg-triage', which
+  // v1.14.555 DELETED. getElementById returned null, the guarded assignment did nothing, and
+  // ?legacy=1 landed on exactly the blank screen the branch existed to prevent. The obsolete
+  // reference is deleted here rather than satisfied — pg-triage is not coming back, and only five
+  // pages still exist (pg-cmd, pg-master, pg-ref, pg-sop, pg-work).
+  //
+  // ⭐ THREE SYMPTOMS, ONE CAUSE. Returning before the swap also fixes the other two:
+  //   · the nav indicator no longer lights the tab of a page that is not showing (the old path
+  //     cleared every .tn-item, then activated tnEl for the destination that did not exist);
+  //   · nav_push() at the end of this function no longer records a dead id, which a later back
+  //     gesture or session restore would replay into the same failure.
+  //
+  // The failure still SURFACES (Contract 14): console.warn plus a toast. What it no longer does is
+  // change what the technician is looking at. Pinned by test/e2e/57-nav-recovery.spec.js.
+  var _target = document.getElementById('pg-' + id);
+  if (!_target) {
+    try {
+      console.warn('[nav] showPage("' + id + '"): #pg-' + id + ' does not exist. Nothing has been '
+        + 'deactivated, so the app stays on the page it was already showing.');
+    } catch (_) {}
+    if (typeof phantomToast === 'function') phantomToast('That surface is not available in this UI', 'warn');
+    return;
+  }
+
   var _pageSwitch = function() {
     wakeLock_release();
     PhantomScanner.close();
@@ -24717,31 +24747,8 @@ function showPage(id, tnEl, opsTab) {
 
     document.querySelectorAll('.tn-item').forEach(t => t.classList.remove('active'));
 
-    const target = document.getElementById('pg-' + id);
-    if (target) {
-      target.classList.add('active');
-      target.scrollTop = 0;
-    } else {
-      // ⛔ v1.14.548 — NO SILENT BLANK PAGE. This was a bare `if (target)` with no else, and it is
-      // the worst shape of silent failure in the file: every .page was ALREADY deactivated six
-      // lines above, and every .tn-item too, so a missing target does not merely fail to navigate —
-      // it leaves the app on NO ACTIVE PAGE AT ALL. A blank screen, no warning, no toast, nothing
-      // thrown. Contract 14, and the exact class .461 and .544 were written to end.
-      // ⭐ LEGACY-RETIRE made this reachable rather than theoretical. Stage 6 deletes a legacy page
-      // per ship, and doors to those pages still exist in legacy chrome and in the search index,
-      // which routes by page id when redesign_isOn() is false (:49067). Every organ still to come
-      // strands more of them. Fixing it HERE covers all of them at once, which is why this shipped
-      // as its own change rather than as a patch per door inside an organ decouple.
-      try {
-        console.warn('[nav] showPage("' + id + '"): #pg-' + id + ' does not exist. Every page was '
-          + 'deactivated before this point, so returning silently would strand the app on a blank screen.');
-      } catch (_) {}
-      if (typeof phantomToast === 'function') phantomToast('That surface is not available in this UI', 'warn');
-      // Land somewhere real rather than nowhere. House-correct: the redesign never wants pg-triage.
-      var _homeId = (typeof redesign_isOn === 'function' && redesign_isOn()) ? 'pg-cmd' : 'pg-triage';
-      var _home = document.getElementById(_homeId);
-      if (_home && _homeId !== ('pg-' + id)) { _home.classList.add('active'); _home.scrollTop = 0; }
-    }
+    _target.classList.add('active');
+    _target.scrollTop = 0;
 
     if (tnEl) tnEl.classList.add('active');
     document.getElementById('srch').value = '';
