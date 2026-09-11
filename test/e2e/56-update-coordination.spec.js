@@ -29,9 +29,13 @@
 // ⚠ AND THEY RAN WHERE THE REAL MACHINERY DOES NOT. The canonical registration block is gated
 // `location.protocol === 'https:'`. (1) had no guard at all and (2) guarded only on
 // 'serviceWorker' in navigator — so on any non-https origin the two reloaders ran while the path
-// they were shadowing was switched off. That is also why this harness (http on 127.0.0.1)
-// reproduces the defect cleanly, and why the backstop is exercised here by DIRECT CALL: it is a
-// top-level function, so it is reachable even though its https-gated caller is not.
+// they were shadowing was switched off. On the http projects that is still the case, which is why
+// the backstop is exercised there by DIRECT CALL: it is a top-level function, so it is reachable
+// even when its https-gated caller is not.
+//
+// ⭐ ON sw-https-chromium THE CALLER ITSELF RUNS. That project serves a real secure origin, so the
+// app registers its own worker and the whole path — register → updatefound → backstop → badge —
+// executes for real. The same tests then mean strictly more there. Run both.
 //
 // THE FIX IS SUBTRACTION, NOT ANOTHER GUARD. (1) and (2) are deleted. Detection stays in one place
 // (the backstop); application stays in one place (phantom_swApplyUpdate → SKIP_WAITING →
@@ -39,6 +43,7 @@
 //
 // RUN STANDALONE:
 //   cd test && npx playwright test e2e/56-update-coordination.spec.js --project=phone-webkit
+//   cd test && npx playwright test e2e/56-update-coordination.spec.js --project=sw-https-chromium
 // ─────────────────────────────────────────────────────────────────────────────
 const fs = require('fs');
 const path = require('path');
@@ -83,14 +88,39 @@ async function readLoads(page) {
   return -1; // -1 means "could not be read at all", which is itself a reload-loop symptom.
 }
 
-/** Serve a version.json that can never match the running shell. */
-async function routeVersion(page, version) {
-  await page.route('**/version.json*', (route) =>
-    route.fulfill({
-      status: 200,
-      headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' },
-      body: JSON.stringify({ version, released: '2099-01-01', notes: 'harness fixture' }),
-    }));
+/**
+ * Answer the app's version.json probe with a chosen version — or with a failure.
+ *
+ * ⛔ THIS USED TO BE page.route('**‍/version.json*'), AND ON A REAL SERVICE WORKER THAT SILENTLY
+ * DID NOTHING. When a worker controls the page, the app's fetch goes to the worker first and the
+ * worker's own outbound fetch is not a page request, so page.route never sees it. Caught the day
+ * the sw-https-chromium project was added: the detector test failed with "the detector saw a
+ * mismatch and said nothing" because it had been handed the REAL version.json, which of course
+ * matched. The three sibling tests did not fail — they had quietly degraded into tautologies,
+ * asserting "no reload happened" in a run where no mismatch was ever presented.
+ *
+ * ⭐ A FIXTURE THAT PASSES BY NOT APPLYING IS WORSE THAN ONE THAT SKIPS. Overriding window.fetch
+ * in an init script intercepts the app's own call site directly, so it behaves identically with a
+ * worker and without one — the same fixture on all projects, one mechanism, no silent hole. The
+ * network layer is not what these tests are about; the app's reaction to a version is.
+ */
+async function stubVersion(page, version) {
+  await page.addInitScript((v) => {
+    const orig = window.fetch.bind(window);
+    window.fetch = function (input, init) {
+      let url = '';
+      try { url = typeof input === 'string' ? input : (input && input.url) || ''; } catch (_) {}
+      if (/version\.json/.test(url)) {
+        // v === null means "the probe is unanswerable" — the offline shape.
+        if (v === null) return Promise.reject(new TypeError('Failed to fetch'));
+        return Promise.resolve(new Response(
+          JSON.stringify({ version: v, released: '2099-01-01', notes: 'harness fixture' }),
+          { status: 200, headers: { 'content-type': 'application/json' } },
+        ));
+      }
+      return orig(input, init);
+    };
+  }, version);
 }
 
 // ═══ STRUCTURE ═══════════════════════════════════════════════════════════════════
@@ -165,7 +195,7 @@ test.describe('update coordination — behaviour', () => {
 
   test('⛔ a version MISMATCH alone does not reload the app', async ({ phantom, page }) => {
     await armLoadCounter(page);
-    await routeVersion(page, MISMATCH);
+    await stubVersion(page, MISMATCH);
 
     // Against the unfixed file this threw (the reload loop tore down every boot). Catch it so the
     // load count below is what reports the failure, rather than an opaque boot timeout.
@@ -190,7 +220,7 @@ test.describe('update coordination — behaviour', () => {
 
   test('⛔ a version mismatch alone does not destroy saved technician data', async ({ phantom, page }) => {
     await armLoadCounter(page);
-    await routeVersion(page, MISMATCH);
+    await stubVersion(page, MISMATCH);
 
     await phantom.boot({
       seed: {
@@ -212,11 +242,14 @@ test.describe('update coordination — behaviour', () => {
 
   test('⭐ the canonical detector REPORTS a mismatch and does not act on it', async ({ phantom, page }) => {
     await armLoadCounter(page);
+    // ⚠ BEFORE boot(), not after. addInitScript applies to the NEXT navigation, so stubbing a
+    // page that has already loaded installs nothing — which is exactly what happened when this
+    // was converted from page.route (immediate) and the test went red on both projects.
+    await stubVersion(page, MISMATCH);
     await phantom.boot();
-    await routeVersion(page, MISMATCH);
 
-    // Direct call: the backstop is a top-level function, so it is reachable here even though its
-    // https-gated caller is not. This is the coordinated path's detection half under test.
+    // Direct call, so the assertion does not depend on whether this project's origin lets the
+    // https-gated caller run. On sw-https-chromium it also runs on its own during boot.
     const warns = await page.evaluate(async () => {
       const seen = [];
       const orig = console.warn;
@@ -241,7 +274,7 @@ test.describe('update coordination — behaviour', () => {
 
   test('a MATCHING version is silent — no reload, no noise', async ({ phantom, page }) => {
     await armLoadCounter(page);
-    await routeVersion(page, LIVE_VERSION);
+    await stubVersion(page, LIVE_VERSION);
 
     await phantom.boot();
     await page.waitForTimeout(1200);
@@ -254,7 +287,7 @@ test.describe('update coordination — behaviour', () => {
   test('offline startup: the app boots when version.json cannot be reached', async ({ phantom, page }) => {
     await armLoadCounter(page);
     // The offline shape: the document is served, the version probe is not answerable.
-    await page.route('**/version.json*', (route) => route.abort());
+    await stubVersion(page, null);
 
     await phantom.boot();
     await page.waitForTimeout(1200);
