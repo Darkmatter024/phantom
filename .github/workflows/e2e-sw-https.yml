@@ -1,0 +1,136 @@
+# PHANTOM — the service-worker path, on a real secure origin.
+#
+# WHY THIS IS ITS OWN WORKFLOW AND NOT A STEP IN e2e-full-serial.yml.
+# That job exists to reproduce an order- and accumulation-dependent defect in ONE WebKit process,
+# and its own header says the worker count and sharding are not negotiable. Adding ~36 Chromium
+# tests to that run would change the accumulated state it exists to measure, and installing a
+# second browser there costs minutes and disk on every full-serial run for nothing. So: separate
+# workflow, separate browser, separate verdict. The full serial run is untouched.
+#
+# WHAT IT GUARDS. dct-ios.html gates its own register() call on `location.protocol === 'https:'`,
+# which is narrower than the platform rule — 127.0.0.1 is a secure context and will accept a
+# registration, but the app never asks. Measured on the http harness with the app booted, on every
+# project: registrations 0, controller false, PHANTOM_SW_REG false. The app's registration,
+# updatefound, version-backstop and update-coordination paths therefore ran in NO test, which is
+# how two ungated page reloaders lived at the top of the file for 130 versions under a green
+# 430-test suite. test/server.js now also listens on https and the sw-https-chromium project points
+# at it, so that code finally executes. This job is what keeps it executing.
+#
+# ⚠ A GREEN RUN HERE IS STILL NOT THE PHONE. Chromium-on-Linux is not iOS Safari, and
+# test/playwright.config.js says plainly that this suite catches none of the iOS-WebKit class that
+# produced every field bug of the last two months. The physical iPhone gate stays mandatory.
+
+name: e2e sw-https (chromium)
+
+on:
+  push:
+    branches:
+      - main
+      - rack-pose-determinism
+      # Stabilization branches get this check too: it is ~2 minutes, and the defects it guards
+      # against are exactly the kind that land in a stabilization pass.
+      - 'stabilize/**'
+    paths:
+      - 'dct-ios.html'
+      - 'sw.js'
+      - 'version.json'
+      - 'index.html'
+      - 'test/**'
+      - '.github/workflows/e2e-sw-https.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: e2e-sw-https-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sw-https:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # ⛔ FAIL HERE, LOUDLY, RATHER THAN LATER AND CONFUSINGLY. test/server.js generates its
+      # self-signed certificate with openssl and deliberately refuses to start the https listener
+      # without it. If openssl were ever missing from the runner image, every test below would die
+      # on ERR_CONNECTION_REFUSED and look like an app defect instead of a missing tool.
+      - name: Prove openssl is present
+        run: openssl version
+
+      # No lockfile is tracked (.gitignore excludes test/package-lock.json), so `npm ci` cannot run.
+      - name: Install harness deps
+        working-directory: test
+        run: npm install --no-audit --no-fund
+
+      # Chromium ONLY. WebKit-on-Linux is not wanted here: 39-sw-update-path records that WebKit
+      # does not install service workers in this harness, and 05-offline harness truth #2 records
+      # that it cannot serve a navigation from one while emulated-offline.
+      - name: Install Chromium
+        working-directory: test
+        run: npx playwright install --with-deps chromium
+
+      - name: Run the sw-https project
+        id: run
+        working-directory: test
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          npx playwright test \
+            --project=sw-https-chromium \
+            --workers=1 \
+            --reporter=list \
+            2>&1 | tee /tmp/sw-https.log
+
+      # ⛔ THE ANTI-VACUOUS-GREEN CHECK, AND IT IS THE POINT OF THE JOB.
+      # 05-offline's registration test self-skips when the origin is not https. If the https
+      # listener ever stopped coming up, that test would SKIP, the suite would be green, and this
+      # job would certify that the service-worker path works while having never executed it. That
+      # is the exact failure mode this whole change exists to end, so it is asserted mechanically
+      # rather than trusted. 56-update-coordination.spec.js carries a matching in-test guard.
+      - name: Prove the secure-origin tests actually RAN
+        if: always()
+        run: |
+          if grep -qiE '^\s+-\s+[0-9]+ .*registers a service worker on first load' /tmp/sw-https.log; then
+            echo "::error::The SW registration test SKIPPED. The https origin did not come up, so this run proves nothing."
+            exit 1
+          fi
+          if ! grep -qE 'secure origin' /tmp/sw-https.log; then
+            echo "::error::The secure-origin guard test did not appear in the run. Check the project's testMatch."
+            exit 1
+          fi
+          echo "Secure-origin tests ran."
+
+      - name: Summarise
+        if: always()
+        run: |
+          echo "### sw-https (chromium) — the app's own service-worker path" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          grep -E "^ +[0-9]+ (passed|failed|skipped|flaky)" /tmp/sw-https.log >> $GITHUB_STEP_SUMMARY || echo "(no summary line — the run did not reach the end)" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "### Failures, by name" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          grep -E "^\s+[0-9]+\) " /tmp/sw-https.log | cut -c1-160 >> $GITHUB_STEP_SUMMARY || echo "(none)" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sw-https-${{ github.run_number }}
+          path: |
+            /tmp/sw-https.log
+            test/test-results/
+          retention-days: 14
+          if-no-files-found: warn
+
+      # The run step is continue-on-error so artifacts always upload. The verdict is decided here,
+      # from the runner's own exit code, never from a summary that could be misread.
+      - name: Fail the job if the run failed
+        if: steps.run.outcome != 'success'
+        run: |
+          echo "The sw-https run reported failures. Read the artifact."
+          exit 1

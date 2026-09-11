@@ -193,6 +193,42 @@ test.describe('update coordination — structure', () => {
 // reloaders are isolated here with nothing in front of them.
 test.describe('update coordination — behaviour', () => {
 
+  test('⛔ sw-https-chromium really is a secure origin with a live worker', async ({ phantom, page }, testInfo) => {
+    // Other projects serve http on purpose and have nothing to prove here.
+    test.skip(testInfo.project.name !== 'sw-https-chromium',
+      'this guard belongs to the secure-origin project only');
+
+    // ⛔ THIS TEST EXISTS TO MAKE A VACUOUS GREEN IMPOSSIBLE. 05-offline's registration test
+    // self-skips when the origin is not https — correct there, but it means a dead https listener
+    // would turn this whole project into a suite that SKIPS the thing it exists to check and
+    // reports success. Everything below is a hard assertion: no skip, no poll-and-shrug.
+    await phantom.boot();
+
+    const state = await page.evaluate(async () => {
+      // The registration is async off window 'load'; give it a bounded chance to appear.
+      for (let i = 0; i < 40 && !navigator.serviceWorker.controller; i++) {
+        await new Promise((r) => setTimeout(r, 100));
+      }
+      return {
+        protocol: location.protocol,
+        secure: window.isSecureContext,
+        controller: !!navigator.serviceWorker.controller,
+        regs: (await navigator.serviceWorker.getRegistrations()).length,
+        appHandle: typeof PHANTOM_SW_REG !== 'undefined' ? !!PHANTOM_SW_REG : false,
+      };
+    });
+
+    expect(state.protocol, 'this project is not on https — server.js did not start its TLS listener').toBe('https:');
+    expect(state.secure, 'the origin is not a secure context').toBe(true);
+    expect(state.regs, 'no service worker registration exists').toBeGreaterThan(0);
+    // ⭐ THE ONE THAT MATTERS: the APP registered it, not the test harness by hand.
+    expect(state.appHandle,
+      '⛔ PHANTOM_SW_REG is unset — the app did not register its own worker. Either the https gate ' +
+      'is failing or the SW script fetch was rejected (ignoreHTTPSErrors does NOT cover that fetch; ' +
+      'the project passes --ignore-certificate-errors for exactly this reason).').toBe(true);
+    expect(state.controller, 'the worker never took control of the page').toBe(true);
+  });
+
   test('⛔ a version MISMATCH alone does not reload the app', async ({ phantom, page }) => {
     await armLoadCounter(page);
     await stubVersion(page, MISMATCH);
