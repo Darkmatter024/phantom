@@ -51057,6 +51057,15 @@ function renderPmvError(e, cls, el) {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // VOICE ASSISTANT ENGINE
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ━━━ IMAGE INPUT — Phase 3. SHIPPED DARK: the flag is OFF and every branch below is gated
+// on it, so the app is byte-identical to before this commit until someone flips it.
+//
+// ⚠ `var`, NOT `const`, AND THAT IS DELIBERATE. The plan requires the characterization test to
+// pass with the flag OFF **and** ON, and a const cannot be flipped from a test. Every read is at
+// call time — the accept attribute at setVaBody('intent'), the branch at import, the content
+// shape at ask — so flipping it at runtime exercises the same code the shipped flag would.
+var FEATURE_IMAGE_INPUT = false;
+
 const VA = {
   recognition: null,
   muted: false,
@@ -51064,6 +51073,7 @@ const VA = {
   transcript: '',
   speechSynth: null,
   ticket: null,   // A-1 (v1.14.193): {name, text} — attached evidence for the next ask; never persisted, cleared on sheet close
+  image: null,    // Phase 3: {name, b64, mediaType, bytes, width, height} — same contract as ticket. Memory only.
 };
 
 // Safely get speechSynthesis
@@ -51228,11 +51238,18 @@ function setVaBody(state) {
 // A-2 (v1.14.194): the intake row grew into the intent menu — four machined doors, mic cold.
 function va_intentHtml() {
   var t = VA.ticket;
+  // Phase 3: an attached photo has to be VISIBLE, or the technician cannot tell it is riding
+  // along with the next question. '' when the flag is off, so the returned string is unchanged.
+  var vaImg = (FEATURE_IMAGE_INPUT && VA.image) ? VA.image : null;
+  var ichip = vaImg ? ('<div class="va-tchip"><span class="va-tn">PHOTO ATTACHED · ' + escHtml(vaImg.name) +
+    '</span><span class="va-tk">' + (vaImg.bytes / 1024).toFixed(0) + ' KB' +
+    (vaImg.width ? ' · ' + vaImg.width + '×' + vaImg.height : '') + '</span>' +
+    '<button class="va-tx" onclick="va_clearImage()" aria-label="Clear attached photo">✕</button></div>') : '';
   var chip = t ? ('<div class="va-tchip"><span class="va-tn">TICKET ATTACHED · ' + escHtml(t.name) + '</span>' +
     '<span class="va-tk">' + (t.text.length / 1024).toFixed(1) + ' KB</span>' +
     '<button class="va-tx" onclick="va_clearTicket()" aria-label="Clear attached ticket">✕</button></div>') : '';
   var speakSub = t ? 'Ask about the attached ticket' : 'Ask by voice — mic starts when you tap';
-  return chip +
+  return chip + ichip +
     '<p class="va-iask">' + (t ? 'NOW — HOW DO YOU WANT TO ASK?' : 'HOW DO YOU WANT TO ASK?') + '</p>' +
     '<div class="va-igrid">' +
     '<button class="va-icard va-i-speak" onclick="vaStart()" aria-label="Ask by voice"><span class="va-iwell">' +
@@ -51248,7 +51265,7 @@ function va_intentHtml() {
     '<span class="va-iico"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round"><path d="M12 3v11m0 0 4-4m-4 4-4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg></span>' +
     '<span class="va-it"><b>IMPORT FILE</b><span>.txt · .log · .json · .eml · .csv</span></span><span class="va-iarw">›</span></span></button>' +
     '</div>' +
-    '<input type="file" id="vaTicketFile" accept=".txt,.log,.json,.eml,.csv,.md" style="display:none" onchange="va_importTicket(this)">' +
+    '<input type="file" id="vaTicketFile" accept=".txt,.log,.json,.eml,.csv,.md' + (FEATURE_IMAGE_INPUT ? ',image/*' : '') + '" style="display:none" onchange="va_importTicket(this)">' +
     '<div id="vaTicketFallback" style="display:none;margin-top:12px">' +
     '<textarea class="va-ticket-ta" id="vaTicketTa" rows="4" placeholder="PASTE TICKET TEXT HERE"></textarea>' +
     '<button class="va-intake-chip" style="margin-top:8px" onclick="va_attachFallback()">ATTACH</button>' +
@@ -51290,6 +51307,67 @@ function va_clearTicket() {
   VA.ticket = null;
   setVaBody('intent');
 }
+function va_clearImage() {
+  VA.image = null;
+  setVaBody('intent');
+}
+/** Blob -> raw base64 (no data: prefix), which is what the API's image block wants. */
+function va_blobToBase64(blob) {
+  return new Promise(function(resolve, reject) {
+    var fr = new FileReader();
+    fr.onload = function() {
+      var str = String(fr.result || '');
+      var comma = str.indexOf(',');
+      if (comma < 0) { reject(new Error('Unexpected data URL')); return; }
+      resolve(str.slice(comma + 1));
+    };
+    fr.onerror = function() { reject(new Error('Base64 encode failed')); };
+    fr.readAsDataURL(blob);
+  });
+}
+// Phase 3 image import. va_prepareImage returns null for anything it cannot fit or decode, and
+// null here is a REFUSAL WITH A REASON — never a silent return (Contract 14).
+async function va_importImage(file) {
+  var prepared = null;
+  try {
+    prepared = await va_prepareImage(file);
+  } catch (e) {
+    try { console.warn('[va] image prepare threw', e); } catch (_) {}
+  }
+  if (!prepared) {
+    if (typeof phantomToast === 'function') phantomToast('Could not attach that photo — try a smaller one', 'warn');
+    return;
+  }
+  var b64;
+  try {
+    b64 = await va_blobToBase64(prepared.blob);
+  } catch (e) {
+    try { console.warn('[va] base64 failed', e); } catch (_) {}
+    if (typeof phantomToast === 'function') phantomToast('Could not attach that photo — encoding failed', 'warn');
+    return;
+  }
+  VA.image = {
+    name: file.name || 'photo',
+    b64: b64,
+    mediaType: prepared.mediaType,
+    bytes: prepared.bytes,
+    width: prepared.width,
+    height: prepared.height
+  };
+  setVaBody('intent');   // same landing as a ticket: evidence on board, back to the menu
+}
+// ⭐ THE ONLY PLACE THE REQUEST SHAPE CHANGES, AND phantomAI NEEDED NO EDIT AT ALL.
+// It already does `messages: [{ role: 'user', content: userContent }]` (:18417), so handing it an
+// ARRAY produces the API's content-block form and handing it a string produces exactly what it
+// produced before. A text import therefore still sends a bare string, which 58-assistant-import
+// -file.spec.js pins, and the shared API layer that every other feature uses is untouched.
+function va_userContent(question) {
+  if (!(FEATURE_IMAGE_INPUT && VA.image && VA.image.b64)) return question;
+  return [
+    { type: 'image', source: { type: 'base64', media_type: VA.image.mediaType, data: VA.image.b64 } },
+    { type: 'text', text: question }
+  ];
+}
 // Paste path — readText MUST run directly in the tap handler (iOS gesture requirement).
 // Denied/empty/unsupported → machined textarea fallback; a permission prompt on first
 // use is expected. The fallback is mandatory: clipboard denial cannot dead-end the aisle.
@@ -51311,10 +51389,19 @@ function va_attachFallback() {
   if (!t) { if (typeof phantomToast === 'function') phantomToast('Nothing to attach — paste ticket text first', 'warn'); return; }
   va_attachTicket('pasted text', t);
 }
+// ⛔ THE BRANCH, AND IT IS THE WHOLE OF THE INTEGRATION RISK. It sits at the TOP and returns,
+// so the text path below is reached by exactly the inputs that reached it before and runs
+// exactly the code it ran before. Nothing under this line was edited, reordered or "cleaned up".
+// With FEATURE_IMAGE_INPUT off the condition is dead and an image cannot even be selected,
+// because the accept filter never offers image/*.
 function va_importTicket(input) {
   var file = input && input.files && input.files[0];
   if (!file) return;
   input.value = '';
+  if (FEATURE_IMAGE_INPUT && typeof file.type === 'string' && file.type.indexOf('image/') === 0) {
+    va_importImage(file);
+    return;
+  }
   if (file.size > 262144) {
     if (typeof phantomToast === 'function') phantomToast('Ticket too large — paste the relevant section instead', 'warn');
     return;
@@ -51351,7 +51438,7 @@ async function vaAsk(question) {
     // feature-authored blocks, and `extra` is capped at 500 tokens — routing them through it would
     // silently truncate the assistant's own working context to satisfy a budget meant for the
     // context ENGINE's output. VA_SYSTEM is the system prompt and is never context at all.
-    const resp = await phantomAI('va', buildContext({ surface: 'va' }) + liveCtx + '\n\n' + hwCtx + va_ticketContext() + VA_SYSTEM, question);
+    const resp = await phantomAI('va', buildContext({ surface: 'va' }) + liveCtx + '\n\n' + hwCtx + va_ticketContext() + VA_SYSTEM, va_userContent(question));
 
     if (!resp.ok) throw new Error('API ' + resp.status);
     const data = await resp.json();
@@ -51545,6 +51632,7 @@ function vaClose() {
     try { if (VA.speechSynth) VA.speechSynth.cancel(); } catch(e) {}
     VA.listening = false;
     VA.ticket = null;   // A-1: attach-per-ask — the ticket dies with the sheet
+    VA.image = null;    // Phase 3: same contract. An image must never outlive the sheet.
 
     if (VA.recognition) {
       try { VA.recognition.abort(); } catch(e) {}
