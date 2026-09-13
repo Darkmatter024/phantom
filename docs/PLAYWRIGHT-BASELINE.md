@@ -2,6 +2,8 @@
 
 **This is the reference every subsequent suite run compares against.** Owner ruling 2026-09-10: *"Schedule the full 430-run on an idle box as its own task, and its result becomes the pinned baseline every subsequent run compares against. Not folded into another ship."*
 
+⛔ **THIS IS A CI-ONLY PIN (owner ruling 2026-09-13).** The ruling's intent stands — one scheduled full run, its own task, nothing folded in — but *"on an idle box"* has been overtaken by the machine: the build laptop OOM-kills a full run and cannot produce a comparable one. **There is exactly one pin and it is the CI run.** No Windows pin is maintained, a laptop result is not comparable to this one, and a second pin is not to be re-introduced — two references is how a baseline stops being a reference.
+
 > **A run is clean if its FAILING SET is a subset of the entries below that are still open. Anything else is new and belongs to whatever changed.** ⛔ Entry 2 is FIXED, so a healthy run now shows **at most one** failure, not two — read the names, never the total.
 
 ---
@@ -87,7 +89,9 @@ entire reason it looked like test ORDER. Fix: ease from elapsed **seconds** plus
 Proven `5/5 RED → 5/5 GREEN` by `54-pose-frame-starvation.spec.js`, which starves the frame budget
 deterministically instead of waiting for the machine to do it. **Parked, not merged.**
 
-### The evidence behind each class
+### APPENDIX — the retired Windows pin's evidence (HISTORICAL, and three of its conclusions were WRONG)
+
+⛔ **NOTHING BELOW IS EVIDENCE FOR THE CURRENT PIN.** It is kept because the measurements were expensive to obtain and remain useful, and because anyone who meets this analysis quoted elsewhere should be able to find where it was corrected. **The numbers held; the conclusions did not.** Read it as history, never as current state.
 
 | Test | Contended full run | Clean full run | Isolated |
 |---|---|---|---|
@@ -96,12 +100,14 @@ deterministically instead of waiting for the machine to do it. **Parked, not mer
 | `37-…:179` | fail | fail | **pass** (4/4) |
 | `39-…:64` | **pass** | fail | — |
 
-**1 · siteLead — standing, and already diagnosed.** `res.filled` returns `["id"]` where the test wants `siteLead`. The seed was **deliberately deleted at `v1.14.538`**, and `dct-ios.html` carries the deletion verbatim with *"⛔ Do not restore it."* The chain: `.474` removed Site Lead from Site Setup → the migration's escape clause pointed at a door that no longer asked → the seed quietly became the only writer of site authority → `.537` built the SITE/SYSTEM door → `.538` removed the seed. **The test asserts deliberately removed behaviour.** Already on record at `PHANTOM_CURRENT_STATE.md:1476` as *"failing, not pinned, despite the handoff calling it resolved."* ⛔ Not fixed, not re-pointed, not pinned — that is a harness ship needing its own GO.
+**1 · siteLead — the chain is still worth reading; the verdict is not.** `res.filled` returned `["id"]` where the test wanted `siteLead`. The seed was **deliberately deleted at `v1.14.538`**, and `dct-ios.html` carries the deletion verbatim with *"⛔ Do not restore it."* The chain: `.474` removed Site Lead from Site Setup → the migration's escape clause pointed at a door that no longer asked → the seed quietly became the only writer of site authority → `.537` built the SITE/SYSTEM door → `.538` removed the seed. **The test asserted deliberately removed behaviour.**
+❌ **ITS VERDICT — *"Not fixed, not re-pointed, not pinned — that is a harness ship needing its own GO"* — IS FALSE AS OF 2026-09-10.** It WAS re-pointed, at `92f6d37`, to the contract `.538` actually shipped; 18/18 green. ⛔ **That stale verdict is exactly what let a later run be reported as "same names as the baseline" when only three of the four could still fail.**
 
-**2 and 3 · rack pose — order-dependent, and this is the finding worth having.** Both reproduce in **two independent full runs**, and both **pass 4/4 when spec 37 runs alone**. So something earlier in the suite leaves camera state behind. They are also **not deterministic**: the yaw test failed at `fwd.x 0.00048` in the first run and `0.00023` in the clean one, against a `< 0.0001` floor — same direction, different magnitude, which is accumulated drift rather than a fixed miscalculation. The position test wants `-4.7` to five decimals and gets `-4.69565`, off by `0.00435`.
-⚠ **Two readings, and choosing between them is a product call, not mine.** Either the pose lock genuinely fails to restore exactly after a walk — a real defect under RACK SCENE LOCK, where *"every rack lands on the SAME pose"* is the contract — or a five-decimal tolerance on a 3D camera round trip is tighter than the product needs and the test should assert a visible threshold instead. **Nothing was changed either way.**
+**2 and 3 · rack pose — the numbers were right and the diagnosis was wrong.** Both reproduced in two independent full runs and both passed 4/4 with spec 37 alone. The yaw test failed at `fwd.x 0.00048` in one run and `0.00023` in another against a `< 0.0001` floor — same direction, different magnitude. The position test wanted `-4.7` to five decimals and got `-4.69565`, off by `0.00435`.
+❌ **THE CONCLUSION DRAWN FROM THIS — *"something earlier in the suite leaves camera state behind"* — IS WRONG.** Nothing leaks state between specs. `_ease` converged a flat **0.14 per frame** and set an axis exactly only under `LOCK_SNAP`, so a walk-exit gap needed ~56 frames: under a second at 60fps, **~21 seconds** at the ~2.7fps a harness renders. The pose was **approached, not installed**, and its resting value depended on the **frame budget** — which earlier specs starve. The varying magnitudes the old note read as *"accumulated drift"* were varying frame counts.
+❌ **AND ITS OPEN QUESTION — *"two readings, and choosing between them is a product call"* — WAS ANSWERED the same day.** Owner ruling 2026-09-10: *"it's a real defect, the tolerance stands."* Fixed, proven `5/5 RED → 5/5 GREEN` by `54-pose-frame-starvation.spec.js`, and **parked** at `955608a` by owner ruling 2026-09-13.
 
-**4 · SW update path — flake.** A 45-second timeout **while setting up the page**, not an assertion, and it **passed in the other full run**. The six tests immediately after it in the same file all passed, which is what a setup flake looks like rather than a broken spec. If it recurs in consecutive runs it stops being a flake and gets investigated.
+**4 · SW update path — this one held up.** A 45-second timeout **while setting up the page**, not an assertion, and it **passed in the other full run**; the six tests immediately after it in the same file all passed. Classified a flake, and it **passed in CI run #6** — consistent.
 
 ---
 
