@@ -101,17 +101,35 @@ jobs:
           nohup /tmp/memsample.sh > /dev/null 2>&1 &
           echo "sampler pid $!"
 
+      # list still feeds the artifact and the human summary; json exists so the failure NAMES can
+      # leave this machine — see the step below and test/ci-report-failures.js for why that matters.
       - name: Full serial run — one worker, no sharding
         id: run
         working-directory: test
         continue-on-error: true
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: /tmp/full-serial.json
         run: |
           set -o pipefail
           npx playwright test \
             --project="${{ github.event.inputs.project || 'phone-webkit' }}" \
             --workers=1 \
-            --reporter=list \
+            --reporter=list,json \
             2>&1 | tee /tmp/full-serial.log
+
+      # ⛔ THE FAILING SET MUST LEAVE THIS MACHINE, BY NAME. It was written to $GITHUB_STEP_SUMMARY
+      # and to the uploaded artifact, and NEITHER is readable without authentication — the artifact
+      # download returns 401 and the job log needs admin rights. So the one question this job exists
+      # to answer, WHICH tests failed, could not be answered from outside a browser session.
+      # docs/PLAYWRIGHT-BASELINE.md compares BY NAME, not by count: "4 failed matching this list is
+      # clean; 4 failed with a different member is a regression wearing the right number." A count
+      # cannot tell those apart, and a count was all this job emitted anywhere a tool could read.
+      # ::error:: annotations ARE publicly readable, so the names go there. Reporting only — it
+      # always exits 0, because a reporting bug must never turn a red run green or a green run red.
+      - name: Report the failing set by name
+        if: always()
+        working-directory: test
+        run: node ci-report-failures.js /tmp/full-serial.json
 
       - name: Summarise
         if: always()
@@ -139,6 +157,7 @@ jobs:
           name: full-serial-${{ github.run_number }}
           path: |
             /tmp/full-serial.log
+            /tmp/full-serial.json
             /tmp/mem.csv
             test/test-results/
           retention-days: 14
