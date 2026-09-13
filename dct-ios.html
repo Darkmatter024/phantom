@@ -51435,7 +51435,7 @@ function va_attachFallback() {
 // so the text path below is reached by exactly the inputs that reached it before and runs
 // exactly the code it ran before. Nothing under this line was edited, reordered or "cleaned up".
 // With FEATURE_IMAGE_INPUT off the condition is dead and an image cannot even be selected,
-// because the accept filter never offers image/*.
+// because the accept filter never offers an image type at all.
 function va_importTicket(input) {
   var file = input && input.files && input.files[0];
   if (!file) return;
