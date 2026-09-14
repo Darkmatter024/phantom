@@ -12876,7 +12876,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.589';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.590';
 // ⛔ STABILIZATION 2026-09-11 — THE TWO PARSE-TIME RELOADERS ARE DELETED (this one, and its
 // twin that sat just below the #ver-stamp binding). Both fetched version.json at parse time and
 // both reacted to a mismatch on their own: the first called location.reload(true), the second
@@ -23709,7 +23709,15 @@ function cs_renderReady(rackCount, blockerCount, confirmed, masterLoaded, handof
     ['Site profile', !!confirmed],
     ['Master loaded', !!masterLoaded],
     ['No open blockers', hasDeployment ? !(blockerCount > 0) : null],
-    ['Handoff started', !!handoffDraft]
+    // ⛔ v1.14.590 — THIS GATE DELIBERATELY DOES NOT USE THE handoffDraft PARAMETER, and the
+    // parameter is left in place rather than removed so no call site moves. handoffDraft is
+    // cmd_render's `!!(hraw && JSON.parse(hraw))` over the raw key — true for `[]`, for another
+    // deployment's handoff, and for one from months ago. The gate asks a narrower question and
+    // must answer it from the store: is there a handoff for THIS deployment, from the current
+    // work window? See handoff_isCurrentFor. ⛔ Do not re-wire this row back to the parameter.
+    // ⚠ FALSE WITH NO DEPLOYMENT IS CORRECT AND UNCHANGED — .577 ruled on exactly that above:
+    // the shift genuinely has not been handed off, so false is honest here where null is not.
+    ['Handoff started', (typeof handoff_isCurrentFor === 'function') && handoff_isCurrentFor(activeDep && activeDep.id)]
   ];
   // ⛔ THE DENOMINATOR IS THE ANSWERABLE GATES, NOT ALL OF THEM. Scoring an unanswerable gate as a
   // miss would be the opposite lie — the app reporting a shortfall against a question it never
@@ -25287,6 +25295,11 @@ const DEPLOY_OPTICS_KEY = 'phantom_deploy_optics_v1';
 const DEPLOY_AUDIT_KEY  = 'phantom_deploy_audit_v1';
 const SITE_PROFILE_KEY  = 'phantom_site_profile_v1';
 const HANDOFF_KEY       = 'phantom_handoff_v1';
+// v1.14.590 — ONE NUMBER, TWO READERS. handoff_generate built its summary from the last 12 hours
+// using a function-local SHIFT_WINDOW_MS; the readiness gate now asks "is there a handoff from the
+// current work period", which must be the SAME window or the gate and the artifact it gates
+// disagree. Lifted here so there is one declaration, not two constants that must be kept equal.
+const HANDOFF_WINDOW_MS = 12 * 60 * 60 * 1000; // 12 hours
 const ISOLATE_KEY = 'phantom_isolate_v1';
 
 // Permission tiers — Ground Game §3 (reference). Displayed on the gate and the tier chip row.
@@ -31220,13 +31233,57 @@ function handoff_purge(deploymentId) {
   handoff_save(all);
 }
 
+// ━━━ v1.14.590 — THE READINESS GATE ASKED A QUESTION IT COULD NOT ANSWER ━━━━━━━━━━━━━━━━━━━━━
+// ⛔ THE DEFECT. Command's `Handoff started` gate read `!!(hraw && JSON.parse(hraw))` over the raw
+// key. ANY parseable JSON is truthy there, INCLUDING `[]` — so an empty list, a handoff for a
+// DIFFERENT deployment, and a handoff from months ago all read as a PASS, and with the other gates
+// met the card printed "clear to hand off" with no handoff work done for this deployment at all.
+// Third confirmed member of the displayed-state-stronger-than-measured-state family, after the
+// blockers cell (.579) and the ungated cs-kpi-pct (queued).
+//
+// ⚠ WHAT THE STORE ACTUALLY HOLDS, because the gate's LABEL implies otherwise. handoff_generate
+// returns a draft into the in-memory _handoffDraft and writes NOTHING; the only writer of a record
+// is handoff_saveRecord, which sets status='saved' and savedAt before it unshifts. So this key
+// contains COMPLETED handoffs only — never drafts — and it is global and append-forever: nothing
+// purges it at shift end and it has no cap.
+//
+// ⭐ PREFER savedAt, FALL BACK TO generatedAt, AND TREAT NEITHER AS NOT-FRESH. savedAt is the
+// moment the technician committed the handoff, which is what the gate claims happened; but it
+// exists only on records this app wrote, and a restored or hand-seeded record may carry only
+// generatedAt. An absent stamp must never read as fresh — absence is not a pass (Contract B10).
+// ⛔ Checked with typeof/isFinite rather than `a || b`: a legitimate 0 is falsy and would fall
+// through to the wrong field.
+function handoff_stampOf(h) {
+  if (!h) return null;
+  if (typeof h.savedAt     === 'number' && isFinite(h.savedAt))     return h.savedAt;
+  if (typeof h.generatedAt === 'number' && isFinite(h.generatedAt)) return h.generatedAt;
+  return null;
+}
+// Does a handoff exist for THIS deployment, from the current work window?
+// Reads through handoff_loadAll → safeGet, so malformed JSON is quarantined and returns [] — the
+// gate stays OPEN and never throws. Empty list = false. A record for another deployment never
+// satisfies it. A record with no usable stamp never satisfies it.
+function handoff_isCurrentFor(deploymentId) {
+  if (!deploymentId) return false;
+  var all;
+  try { all = handoff_loadAll(); } catch (_) { return false; }
+  if (!Array.isArray(all) || !all.length) return false;
+  var cutoff = Date.now() - HANDOFF_WINDOW_MS;
+  for (var i = 0; i < all.length; i++) {
+    var h = all[i];
+    if (!h || h.deploymentId !== deploymentId) continue;
+    var t = handoff_stampOf(h);
+    if (t !== null && t >= cutoff) return true;
+  }
+  return false;
+}
+
 // Build a handoff record from current deployment state + last 12h of audit events.
 function handoff_generate(deploymentId) {
   var dep = deploy_getById(deploymentId);
   if (!dep) return null;
 
-  var SHIFT_WINDOW_MS = 12 * 60 * 60 * 1000; // 12 hours
-  var cutoff = Date.now() - SHIFT_WINDOW_MS;
+  var cutoff = Date.now() - HANDOFF_WINDOW_MS;   // v1.14.590: the shared window, was a local const here
 
   var roll   = deploy_computeDeployRollup(deploymentId);
   var optics = deploy_loadOpticsFor(deploymentId);
