@@ -6,6 +6,24 @@ is stale until edited. Newest first.
 
 ---
 
+## 2026-09-15 · A.2 SHIP 1 — Q-1 … Q-9 RULED AS RECOMMENDED. Ruling 2 of 2026-09-14 is AMENDED: the assembler does NOT extend `deploy_generateReport`
+
+Owner, verbatim, against the Q table of `docs/A2-SHIP1-PHASE0-EVIDENCE.md`: ***"Q-1 through Q-9 approved as recommended"***. Recorded on first statement. Each line below is that table's recommendation, now law for the A.2 slice (`docs/SHIP-HANDOFF-A2-ASSEMBLER.md`); the evidence for each is in that document, not repeated here.
+
+- **Q-1 — ENGINE PLACEMENT. ⛔ RULING 2 (2026-09-14) IS AMENDED.** A.2 builds the assembler core and registry **as the handoff specifies**, beside `deploy_generateReport`, and **does not touch it** (handoff §1, §8). The words *"A.2 EXTENDS deploy_generateReport"* are **struck**. ⭐ **What survives from Ruling 2 unchanged:** that engine's output must not change, and `test/e2e/64-report-engine-characterization.spec.js` staying green is the proof (handoff acceptance #3). ⚠ **The cost, accepted knowingly:** two code paths fold phases and audit until **A.3** decides whether the report engine renders from Rack Records. That is the point at which Contract A2's one-engine question is settled — not before, and not by A.2.
+- **Q-2 — `rack.platform` and `rack.masterPresent` emit `null`**, each with a coverage `detail` saying why. Never `true`, never a guess. **No racks adapter in A.2.**
+- **Q-3 — identity and phases are TWO adapters**, both in Ship 1. Ship 1 stays one visible change: the dev readout.
+- **Q-4 — `status.phase.of` is derived** from the rack's phase records; `null` when there are none. Never a literal.
+- **Q-5 — the adapter layer owns ONE raw storage reader:** `getItem` + `JSON.parse` in a `try`, returning a state and a value, never quarantining, never toasting. ⛔ **`safeGet` is NOT modified** — it is shared by the whole file, and its quarantine behaviour is correct for the app's own readers.
+- **Q-6 — `tech.identity` is the ACTOR:** `currentOperator`, strict, empty allowed. `siteLead` appears only inside `site.profile`, as stored. Neither is inferred from the other (Contract 9a).
+- **Q-7 — `site.siteId` is the site profile's `id`**; `null` when absent. `facilityId` is never substituted.
+- **Q-8 — the dev readout is verified in a Safari tab on the staging URL**, using `MASTER-US-TST99-TORTURE-TEST` through MASTER SCOPE → CREATE DEPLOYMENT, all in that same tab. `MASTER-US-EAST-ATL03-CRUCIBLE` is used only if the owner has it on the phone.
+- **Q-9 — recorded, no Ship 1 change.** Ruling 1's *"no Master linkage is persisted anywhere"* holds for EDP deployments only: a MASTER SCOPE deployment stores the Master cab id as `rack.rackId` (`dct-ios.html:36365` at `.590`) and in `scope.selectedCabIds` (`:36413`). Whoever builds the Master bridge starts there.
+
+⛔ **WHAT THESE RULINGS DO NOT DO.** They do not GO the handoff — its header still reads `HELD — gate is John's GO on this document`. And they do not let Ship 1 cut a version: `.590` is on `main` unstamped, and the guard refuses a `version.json` bump while `HEAD` and `VERIFIED` disagree.
+
+---
+
 ## 2026-09-14 · FIELD REPORT / A.2 — the COMPOSITE is the canonical rack key, and the assembler EXTENDS `deploy_generateReport`
 
 Owner, verbatim, against the two questions Phase 0 and the A.2 recon put to him: ***"composite is the key, extend deploy_generateReport"***. Both were named as owner rulings by the recon that raised them, and both are recorded here on first statement.
@@ -16,6 +34,8 @@ Owner, verbatim, against the two questions Phase 0 and the A.2 recon put to him:
 - **The Master bridge.** The Master keys `racksByCab` by `s1:001`; the composite is derived from the **vendor EDP parse** (`:32243` seeded from `deployment.edpParsed.racks`, `:32234`), so no Master linkage is persisted anywhere. The composite being canonical makes this a **mapping** problem rather than an identity problem — but the mapping still does not exist.
 - **The photo `siteId` defect.** `:57301` derives `siteId` by splitting the rack key on a colon; a composite has no colon, so `siteId` becomes the whole key. ⛔ **Under this ruling that derivation is definitionally wrong, not merely odd.** Both readers recompute the identical split, so it is SELF-CONSISTENT and photos retrieve correctly today — **which means correcting it without a migration orphans every stored photo** against the `byRack` compound index. Contract B11. It is its own ship, with its own migration, and it is not a line change.
 - **Notes/audit remains unscopable to a rack by field.** Two of 24 `deploy_logAudit` call sites pass `meta.rack`. The only contract-legal recovery is parsing the composite back out of `phase.id`, which embeds it by construction (`:32258`).
+
+⛔ **AMENDED 2026-09-15 (entry above, Q-1): the assembler is built BESIDE `deploy_generateReport` and does not touch it. The "EXTENDS" below is struck; the compatibility constraint below it stands.**
 
 **RULING 2 — A.2 EXTENDS `deploy_generateReport` (`dct-ios.html:43230` at `.589`; re-anchor at `.590`), it does not supersede it.** Contract A2, one canonical engine per concept. That engine already folds racks + phases + optics + audit + rollup into one structure, already sorts the audit by `ts`, already emits an `auditTrail` in the plan's own event shape (`{ts, time, actor, action, entityType, summary}`) with true ISO beside epoch ms, and already has **three** renderers — JSON export, print HTML, and close-out.
 

@@ -154,6 +154,8 @@ Owned by the harness, per CLAUDE.md Ship discipline 4:
 
 ## Q · Rulings owed before Ship 1 builds
 
+✅ **ALL NINE RULED AS RECOMMENDED, 2026-09-15** — owner, verbatim: *"Q-1 through Q-9 approved as recommended"*. The ruling of record is `OWNER-RULINGS.md` 2026-09-15; this table is left as written.
+
 | # | Question | Evidence | Recommendation |
 |---|---|---|---|
 | **Q-1** | **Engine placement.** Handoff §1/§8: *"deploy_generateReport is untouched this slice"*, *"Do not touch… deploy_generateReport"*. Ruling 2 (2026-09-14): *"A.2 EXTENDS deploy_generateReport… Contract A2, one canonical engine per concept."* | `OWNER-RULINGS.md` 2026-09-14; handoff §1, §8 | **Build per the handoff, and amend Ruling 2 in writing.** Zero blast radius on the three consumers behind four buttons. Cost: two folds over phases and audit until A.3 decides whether the report engine renders from Records |
