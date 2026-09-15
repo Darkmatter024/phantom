@@ -31607,6 +31607,231 @@ var PHANTOM_PHASE_MODEL = {
 };
 window.PHANTOM_PHASE_MODEL = PHANTOM_PHASE_MODEL;
 
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+// A.2 RACK RECORD ASSEMBLER — SHIP 1: core, registry, identity + phases adapters
+// (docs/SHIP-HANDOFF-A2-ASSEMBLER.md · rulings OWNER-RULINGS.md 2026-09-15 · evidence
+// docs/A2-SHIP1-PHASE0-EVIDENCE.md · pinned by test/e2e/65-rack-record-assembler.spec.js)
+//
+// A Rack Record (schema rr-1) is assembled ON DEMAND from live storage by a fold over an ordered
+// adapter registry, then thrown away: never cached, never persisted, no AI call (P4, P5). Derived
+// state — the current phase — is computed from the merged timeline in ONE place, assemble() (P6).
+//
+// ⛔ BUILT BESIDE deploy_generateReport, NOT INSIDE IT (ruling Q-1). That engine's output is pinned
+// by spec 64; nothing here calls or changes it.
+// ⛔ ADAPTERS DO NOT READ THROUGH safeGet (ruling Q-5). safeGet returns one fallback for absent,
+// unreadable AND malformed storage, and on malformed JSON it writes a quarantine record and toasts.
+// An adapter on it could not report error apart from empty (P3) and would not be a pure read.
+// _rr_readKey is the one raw reader the adapter layer owns. safeGet is untouched and still
+// quarantines damaged keys for the app's own readers.
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+function _rr_readKey(key) {
+  var raw;
+  try { raw = localStorage.getItem(key); }
+  catch (e) { return { state: 'error', detail: 'storage unreadable for "' + key + '": ' + String((e && e.message) || e) }; }
+  if (raw === null || raw === '') return { state: 'absent' };
+  try { return { state: 'ok', value: JSON.parse(raw) }; }
+  catch (e2) { return { state: 'error', detail: 'malformed JSON in "' + key + '" (' + raw.length + ' bytes)' }; }
+}
+
+var RR_ADAPTER_IDENTITY = {
+  name: 'identity',
+  schemaHandled: 'phantom_site_profile_v1 (docs/A1-CENSUS-REFRESH-TIER-A.md §1)',
+  // Facts are the STORED profile, as stored. siteProfile_load merges SITE_PROFILE_DEFAULTS over it,
+  // backfills confirmedAt and applies the v1→v2 migration — none of those is a stored fact.
+  read: function(siteId, rackId) {
+    var r = _rr_readKey(SITE_PROFILE_KEY);
+    if (r.state === 'absent') return { events: [], facts: {}, status: 'empty' };
+    if (r.state === 'error') return { events: [], facts: {}, status: 'error', detail: r.detail };
+    var p = r.value;
+    if (!p || typeof p !== 'object' || Array.isArray(p)) {
+      return { events: [], facts: {}, status: 'error', detail: 'site profile is not an object' };
+    }
+    return {
+      events: [],   // nothing in this class is a happened-at: confirmedAt is synthesized at read time
+      facts: {
+        siteId: (p.id === undefined || p.id === null || p.id === '') ? null : String(p.id),   // Q-7: never facilityId
+        profile: p,
+        identity: String(p.operator == null ? '' : p.operator).trim()   // Q-6: the ACTOR, strict — never siteLead
+      },
+      status: 'ok'
+    };
+  }
+};
+
+var RR_ADAPTER_PHASES = {
+  name: 'phases',
+  schemaHandled: 'phantom_deploy_phases_v1 (docs/A1-CENSUS-REFRESH-TIER-A.md §2)',
+  read: function(siteId, rackId) {
+    var r = _rr_readKey(DEPLOY_PHASES_KEY);
+    if (r.state === 'absent') return { events: [], facts: {}, status: 'empty' };
+    if (r.state === 'error') return { events: [], facts: {}, status: 'error', detail: r.detail };
+    if (!Array.isArray(r.value)) return { events: [], facts: {}, status: 'error', detail: 'phase store is not an array' };
+    // phase.rackId holds the COMPOSITE, the ruled key — a straight match, no parsing of the id.
+    var mine = r.value.filter(function(p) { return p && typeof p === 'object' && p.rackId === rackId; });
+    if (!mine.length) return { events: [], facts: {}, status: 'empty' };
+    mine.sort(function(a, b) { return (Number(a.seqOrder) || 0) - (Number(b.seqOrder) || 0); });
+    var events = [];
+    mine.forEach(function(p) {
+      // ⛔ A COMPLETION NEEDS BOTH. deploy_advancePhase stamps signedOffAt on 'complete' and never
+      // clears it, so a phase that left complete still carries a stamp. Start, block, unblock and
+      // gate override have no happened-at on this record at all — they live in the audit log.
+      if (p.status === 'complete' && typeof p.signedOffAt === 'number' && isFinite(p.signedOffAt)) {
+        events.push({ t: p.signedOffAt, type: 'phase.completed', source: 'phases',
+          data: { phaseId: p.id, phaseType: p.type, signedOffBy: (p.signedOffBy == null ? null : p.signedOffBy) } });
+      }
+    });
+    // phaseOrder is structure (which phases this rack has, in sequence), not state.
+    return { events: events, facts: { phaseOrder: mine.map(function(p) { return p.type; }) }, status: 'ok' };
+  }
+};
+
+var PHANTOM_RR = {
+  SCHEMA: 'rr-1',
+  // ORDER MATTERS: identity runs first so its siteId is handed to every adapter after it.
+  registry: [RR_ADAPTER_IDENTITY, RR_ADAPTER_PHASES],
+
+  assemble: function(rackId) {
+    var coverage = [], merged = [], facts = {}, siteId = null;
+    this.registry.forEach(function(ad, order) {
+      var res;
+      try { res = ad.read(siteId, rackId); }
+      catch (e) { res = { events: [], facts: {}, status: 'error', detail: 'adapter threw: ' + String((e && e.message) || e) }; }
+      if (!res || (res.status !== 'ok' && res.status !== 'empty' && res.status !== 'error')) {
+        res = { events: [], facts: {}, status: 'error', detail: 'adapter returned no valid status' };
+      }
+      // Only an ok read contributes events or facts; empty and error never do.
+      var evs = (res.status === 'ok' && Array.isArray(res.events)) ? res.events : [];
+      evs.forEach(function(ev, i) { merged.push({ ev: ev, order: order, i: i }); });
+      facts[ad.name] = (res.status === 'ok' && res.facts) ? res.facts : {};
+      var row = { adapter: ad.name, status: res.status, events: evs.length };
+      if (res.status === 'error') row.detail = String(res.detail || 'unknown error');
+      coverage.push(row);
+      if (res.status === 'ok' && res.facts && res.facts.siteId !== undefined) siteId = res.facts.siteId;
+    });
+    // Q-2: no adapter reads a source for these in A.2. Say so in the manifest rather than leave a
+    // bare null that a renderer could print as "no".
+    coverage.push({ adapter: 'rack', status: 'empty', events: 0,
+      detail: 'no rack adapter in A.2: platform and masterPresent are not read, so both are null (ruling Q-2)' });
+
+    // One merge: by time, then registry order, then the order the adapter emitted.
+    merged.sort(function(a, b) { return (a.ev.t - b.ev.t) || (a.order - b.order) || (a.i - b.i); });
+    var timeline = merged.map(function(m) { return m.ev; });
+
+    // P6 — the current phase, derived from events here and nowhere else.
+    var seq = (facts.phases && Array.isArray(facts.phases.phaseOrder)) ? facts.phases.phaseOrder : [];
+    var phase = { index: null, of: null, name: null };   // Q-4: no phases, no count
+    if (seq.length) {
+      var done = {};
+      timeline.forEach(function(ev) { if (ev.type === 'phase.completed' && ev.data) done[ev.data.phaseType] = true; });
+      phase = { index: seq.length, of: seq.length, name: null };   // every phase complete
+      for (var k = 0; k < seq.length; k++) {
+        if (!done[seq[k]]) { phase = { index: k, of: seq.length, name: seq[k] }; break; }
+      }
+    }
+
+    var ident = facts.identity || {};
+    return {
+      schema: 'rr-1',
+      assembledAt: Date.now(),
+      site: { siteId: ident.siteId === undefined ? null : ident.siteId, profile: ident.profile === undefined ? null : ident.profile },
+      rack: { rackId: rackId, platform: null, masterPresent: null },
+      tech: { identity: ident.identity === undefined ? null : ident.identity },
+      // No blockers or photos adapter is registered yet: null, not 0 — a 0 claims a count nobody took.
+      status: { phase: phase, openBlockers: null, photoCount: null, photoBytes: null },
+      timeline: timeline,
+      evidence: { photoIds: [] },
+      coverage: coverage
+    };
+  }
+};
+window.PHANTOM_RR = PHANTOM_RR;
+
+// ── A.2 DEV READOUT · rrdev · TEMPORARY ─────────────────────────────────────────────────────────
+// Reachable ONLY with ?rrdev=1: no nav entry, no dock change, no trace without the param (handoff
+// §6). DELETED WHOLE in A.2 Ship 4 — everything from this marker to "END rrdev" goes, and a grep
+// for rrdev must then return nothing. Deliberately plain: it is a verification surface, not UI.
+(function rr_devReadout() {
+  var search = (window.location && window.location.search) || '';
+  if (!/[?&]rrdev=1(&|$)/.test(search)) return;
+
+  function el(tag, css, text) {
+    var n = document.createElement(tag);
+    if (css) n.style.cssText = css;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+
+  function mount() {
+    if (document.getElementById('rr-dev')) return;
+    var root = el('div', 'position:fixed;inset:0;z-index:2147483000;background:#04060a;color:#e8f6ff;overflow:auto;-webkit-overflow-scrolling:touch;padding:calc(env(safe-area-inset-top, 0px) + 12px) 16px calc(env(safe-area-inset-bottom, 0px) + 16px);font-size:14px');
+    root.id = 'rr-dev';
+
+    var head = el('div', 'display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px');
+    head.appendChild(el('div', 'color:#ffcb45;font-weight:700;letter-spacing:.08em', 'RR-1 DEV READOUT · TEMPORARY'));
+    var close = el('button', 'min-width:44px;min-height:44px;padding:0 14px;background:transparent;color:#28e0ff;border:1px solid #28e0ff;border-radius:8px;font-size:15px', 'CLOSE');
+    close.id = 'rr-dev-close';
+    close.type = 'button';
+    close.addEventListener('click', function() { root.remove(); });
+    head.appendChild(close);
+    root.appendChild(head);
+
+    // The picker lists deployment racks through the canonical loader; picking is not assembly.
+    var racks = deploy_loadAllRacks();
+    if (!racks.length) {
+      root.appendChild(el('div', 'color:#ff2bd6;font-weight:700;line-height:1.5',
+        'NO RACKS IN DEPLOYMENT STORAGE — a Rack Record needs a deployment rack. Build → ＋ NEW → LOAD MASTER → STAGE SCOPE SNAPSHOT → CREATE DEPLOYMENT.'));
+      document.body.appendChild(root);
+      return;
+    }
+
+    var pick = el('select', 'width:100%;min-height:44px;font-size:16px;background:#0e1822;color:#e8f6ff;border:1px solid #28e0ff;border-radius:8px;padding:0 10px;margin-bottom:12px');
+    pick.id = 'rr-dev-pick';
+    var none = el('option', null, 'Pick a rack (' + racks.length + ')');
+    none.value = '';
+    pick.appendChild(none);
+    racks.forEach(function(rk) {
+      var o = el('option', null, (rk.rackId || '(no name)') + ' · ' + rk.id);
+      o.value = rk.id;
+      pick.appendChild(o);
+    });
+
+    var cov = el('div', 'color:#28e0ff;margin-bottom:10px;line-height:1.5');
+    cov.id = 'rr-dev-cov';
+    var out = el('pre', 'margin:0;white-space:pre-wrap;word-break:break-all;font-size:12px;line-height:1.35;font-family:ui-monospace,Menlo,monospace;color:#cfe9f5');
+    out.id = 'rr-dev-json';
+
+    pick.addEventListener('change', function() {
+      cov.textContent = '';
+      out.textContent = '';
+      if (!pick.value) return;   // back on the placeholder: the cleared panel IS the feedback
+      var rec = PHANTOM_RR.assemble(pick.value);
+      cov.textContent = rec.coverage.map(function(c) {
+        return c.adapter + ' ' + c.status + (c.status === 'ok' ? ' (' + c.events + ')' : '') + (c.detail ? ' — ' + c.detail : '');
+      }).join(' · ');
+      out.textContent = JSON.stringify(rec, null, 2);
+    });
+
+    root.appendChild(pick);
+    root.appendChild(cov);
+    root.appendChild(out);
+    document.body.appendChild(root);
+  }
+
+  // Mount once the app is revealed (launch() adds .visible to #app) — never over the splash.
+  function whenAppVisible() {
+    var app = document.getElementById('app');
+    if (!app) { console.warn('[rrdev] #app not found — readout not mounted'); return; }
+    if (app.classList.contains('visible')) { mount(); return; }
+    var mo = new MutationObserver(function() {
+      if (app.classList.contains('visible')) { mo.disconnect(); mount(); }
+    });
+    mo.observe(app, { attributes: true, attributeFilter: ['class'] });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', whenAppVisible);
+  else whenAppVisible();
+})();
+// ── END rrdev ───────────────────────────────────────────────────────────────────────────────────
+
 // ─────────────────────────────────────────────────────────────────────
 // GHOST ECHO — Tribal Knowledge Cache (Phase 1: capture + retrieval)
 // ─────────────────────────────────────────────────────────────────────
