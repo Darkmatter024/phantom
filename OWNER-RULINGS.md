@@ -6,6 +6,21 @@ is stale until edited. Newest first.
 
 ---
 
+## 2026-09-15 · FORGE DETAIL PAGER — PREV/NEXT WALK THE ROW. Supersedes the unrecorded 2026-09-14 "label the counts". The pager fix ships before A.2 Ship 1.
+
+Owner, verbatim, reporting the defect on staging: ***"Fix it, add a quick check that NEXT enables on c1:005, and tell me what the root cause was."*** Then, on the fix and the ship order: ***"pager fix ships first, record the ruling"***. Recorded on first statement.
+
+**THE DEFECT.** The Forge detail panel read `ROW C1 · POS 5/18 · 0/9 RACKED` with NEXT disabled. POS counts the row (`rowOf()` → `ROWS[row]`); PREV/NEXT indexed `LOADOUT`, the five-rack 3D bench (`setLoadout`'s `.slice(0, 5)`, Contract A6). The default bench is the Master's first five racks, so `c1:005` was the last bench slot and NEXT dimmed. Not a racked-count gate, not a sort mismatch. Evidence: `docs/RACK-PAGER-NEXT-PHASE0-EVIDENCE.md` §1–§2 and §10.
+
+**RULING 1 — PREV/NEXT walk the row the header counts.** At `POS n/18`, NEXT is disabled only at 18/18 and PREV only at 1/18. When the neighbour is not on the bench, the bench moves to a five-rack window of that row and lands on it — still five live racks (A6), never an enabled control that does nothing (Contract 14).
+⛔ **This SUPERSEDES the "OWNER RULING 2026-09-14: A — label the counts" in that Phase 0 document's §9.** That ruling was never entered in this register; it existed only in an untracked evidence file. Its A1 `BENCH 5/5` meta-string ship is not built. With the pager walking the row, POS and NEXT describe one list.
+
+**RULING 2 — SHIP ORDER.** The pager fix takes the next version (`.591`). A.2 Ship 1 (`a2/ship1-assembler` @ `f0466da`) follows it and is re-based onto `main` when it ships.
+
+⚠ **NOT AN OWNER RULING — an implementation choice under Contract 11, recorded so it can be struck.** `setLoadout` saves the bench to `deploy_forge_loadout_v1`, the backup registry's *"hand-built rack layout"*. `phantom-rd-reviewer` returned CHANGES-REQUESTED because the first cut of the walk overwrote it on an ordinary NEXT tap. The shipped behaviour: **a bench moved by walking is NOT saved**; only an explicit bench build (the picker's Apply, the boot restore) saves. ⭐ **And the loadout picker opens on the SAVED bench, not the walked one** — the re-review found that seeding it from the live bench let an untouched APPLY save the walked window over the hand-built one, one screen later. Both are pinned by `test/e2e/66-forge-pager-row-walk.spec.js`. Consequence the tech can see: reopening the aisle after walking restores the hand-picked bench, not the row window last walked to. If the owner wants the walked window remembered instead, that is a one-line change and a new ruling.
+
+---
+
 ## 2026-09-15 · A.2 SHIP 1 — Q-1 … Q-9 RULED AS RECOMMENDED. Ruling 2 of 2026-09-14 is AMENDED: the assembler does NOT extend `deploy_generateReport`
 
 Owner, verbatim, against the Q table of `docs/A2-SHIP1-PHASE0-EVIDENCE.md`: ***"Q-1 through Q-9 approved as recommended"***. Recorded on first statement. Each line below is that table's recommendation, now law for the A.2 slice (`docs/SHIP-HANDOFF-A2-ASSEMBLER.md`); the evidence for each is in that document, not repeated here.

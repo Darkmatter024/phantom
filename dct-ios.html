@@ -12876,7 +12876,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.590';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.591';
 // ⛔ STABILIZATION 2026-09-11 — THE TWO PARSE-TIME RELOADERS ARE DELETED (this one, and its
 // twin that sat just below the #ver-stamp binding). Both fetched version.json at parse time and
 // both reacted to a mismatch on their own: the first called location.reload(true), the second
@@ -20934,13 +20934,22 @@ function forge3d_render(mount) {
     } else slot.userData.gutPlane.visible = false;
   }
   var LOADOUT = [];
-  function setLoadout(ids) {
+  // RACK-PAGER ROW WALK — two options, both used only by walk(); every other caller passes none and
+  // behaves exactly as before.
+  //   opts.focus          land on this rack if it is on the new bench. Without it, the keep-or-first-slot
+  //                       focus below opened the WRONG rack first and walk had to correct it.
+  //   opts.persist:false  do not save the bench. deploy_forge_loadout_v1 is the tech's hand-built layout
+  //                       (backup registry); a bench moved because they paged past it is navigation,
+  //                       not a build, and must not overwrite what they built (Contract 11).
+  function setLoadout(ids, opts) {
+    opts = opts || {};
     LOADOUT = ids.filter(function (id) { return deploy_forge_slots(id).length || RUN.indexOf(id) >= 0; }).slice(0, 5);
     WINDOW = []; for (var k = 0; k < 5; k++) WINDOW.push(LOADOUT[k] || null);
-    var keep = focused && LOADOUT.indexOf(focused.userData.label) >= 0 ? focused.userData.label : null;
+    var keep = (opts.focus && LOADOUT.indexOf(opts.focus) >= 0) ? opts.focus
+      : (focused && LOADOUT.indexOf(focused.userData.label) >= 0 ? focused.userData.label : null);
     focusables.forEach(function (s, idx) { assignSlot(s, WINDOW[idx]); });
     buildChips();
-    store.set('deploy_forge_loadout_v1', LOADOUT);
+    if (opts.persist !== false) store.set('deploy_forge_loadout_v1', LOADOUT);
     focused = null;
     var target = keep ? focusables.find(function (s) { return s.userData.label === keep; })
                       : focusables.find(function (s) { return !s.userData.pad; });
@@ -21151,18 +21160,35 @@ function forge3d_render(mount) {
     D.panel.classList.add('open');
   }
   function closeDetail() { D.panel.classList.remove('open'); }
+  // RACK-PAGER ROW WALK — PREV/NEXT WALK THE ROW THE HEADER COUNTS. They used to index LOADOUT, the
+  // five-rack bench, while refreshCounts prints POS from ROWS[row]: at c1:005 ("POS 5/18") the rack
+  // was the last bench slot and NEXT dimmed with thirteen racks still to go. Both now read rowOf(),
+  // the same list as POS. A neighbour that is OFF the bench re-windows the bench through setLoadout
+  // — still exactly five live racks (Contract A6) — so an enabled NEXT always lands (Contract 14).
+  // Pinned by test/e2e/66-forge-pager-row-walk.spec.js.
   function walk(dir) {
     if (!focused) return;
-    var idx = LOADOUT.indexOf(focused.userData.label), n = idx + dir;
-    if (n < 0 || n >= LOADOUT.length) return;
-    var slot = focusables.find(function (s) { return s.userData.label === LOADOUT[n]; });
-    if (slot) setFocus(slot, true);
+    var info = rowOf(focused.userData.label), n = info.idx + dir;
+    if (info.idx < 0 || n < 0 || n >= info.arr.length) return;
+    var target = info.arr[n];
+    var slot = focusables.find(function (s) { return s.userData.label === target; });
+    if (!slot) {
+      // A five-rack window of this row containing the target, leaning the way the tech is walking
+      // so the next taps stay on the bench instead of rebuilding it every time.
+      var start = dir > 0 ? Math.min(n, Math.max(0, info.arr.length - 5)) : Math.max(0, n - 4);
+      // Focus the target directly, and do not save: paging past the bench is not building one.
+      setLoadout(info.arr.slice(start, start + 5), { focus: target, persist: false });
+      slot = focusables.find(function (s) { return s.userData.label === target; });
+    }
+    if (slot) { setFocus(slot, true); return; }
+    console.warn('[forge] walk: ' + target + ' has no bench slot after re-windowing — nothing to focus');
+    showToast(target.toUpperCase() + ' COULD NOT BE BROUGHT ONTO THE BENCH', null);
   }
   function updateNav() {
     if (!focused) return;
-    var idx = LOADOUT.indexOf(focused.userData.label);
-    document.getElementById('navPrev').classList.toggle('disabled', idx <= 0);
-    document.getElementById('navNext').classList.toggle('disabled', idx >= LOADOUT.length - 1);
+    var info = rowOf(focused.userData.label);
+    document.getElementById('navPrev').classList.toggle('disabled', info.idx <= 0);
+    document.getElementById('navNext').classList.toggle('disabled', info.idx < 0 || info.idx >= info.arr.length - 1);
   }
   on(D.close, 'click', closeDetail);
   on(document.getElementById('navExit'), 'click', closeDetail);
@@ -21318,7 +21344,13 @@ function forge3d_render(mount) {
     });
   }
   function openPicker(precheck) {
-    PICK = LOADOUT.slice();
+    // RACK-PAGER ROW WALK — seed from the SAVED bench, not the live one. A walk moves LOADOUT without
+    // saving it, so seeding from LOADOUT let an untouched APPLY save the walked row window over the
+    // tech's hand-built bench (Contract 11). Filtered to this Master like the boot restore; with nothing
+    // saved it falls back to the live bench exactly as before.
+    var savedBench = store.get('deploy_forge_loadout_v1');
+    var built = Array.isArray(savedBench) ? savedBench.filter(function (id) { return RUN.indexOf(id) >= 0; }).slice(0, 5) : [];
+    PICK = built.length ? built : LOADOUT.slice();
     if (precheck && PICK.indexOf(precheck) < 0) {
       if (PICK.length >= 5) PICK.pop();
       PICK.push(precheck);
