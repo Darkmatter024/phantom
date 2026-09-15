@@ -1,6 +1,7 @@
 # A.2 SHIP 1 — EVIDENCE · Rack Record assembler core, registry, identity + phases adapters, `?rrdev=1` readout
 
-**Written:** 2026-09-15 · **Status:** ⏳ **BUILT, TESTED, REVIEWED — HELD ON BRANCH `a2/ship1-assembler`. NOT ON `main`. NO VERSION.**
+**Written:** 2026-09-15 · **Status:** ⏳ **SHIPPED AS `v1.14.592` — device verify owed (§6).** Cherry-picked from `f0466da` onto the verified `.591` with an identical `git patch-id`. *It was held on branch `a2/ship1-assembler` until `.590`, then `.591`, was adjudicated; the "held" notes below are that history.*
+**Re-run on `.591` code before shipping, each spec alone on `phone-webkit`:** `65` 10/10 · `64-report-engine-characterization` 8/8 · `00-boot` 4/4 · `63-handoff-readiness-gate` 5/5 · `98-cmd-census` 27/27 · `04-storage` 20 passed, 1 skipped (its baseline). `phantom-ship-gate` PASS on the cherry-picked branch; the `phantom-rd-reviewer` PASS below applies unchanged because the change is byte-identical.
 **Handoff:** `docs/SHIP-HANDOFF-A2-ASSEMBLER.md` — owner GO 2026-09-15. **Rulings:** `OWNER-RULINGS.md` 2026-09-15, Q-1…Q-9. **Phase 0:** `docs/A2-SHIP1-PHASE0-EVIDENCE.md`.
 **Baseline:** `main` @ `b7493ed`, `dct-ios.html` at `v1.14.590`.
 
