@@ -6,6 +6,25 @@ is stale until edited. Newest first.
 
 ---
 
+## 2026-09-14 · FIELD REPORT / A.2 — the COMPOSITE is the canonical rack key, and the assembler EXTENDS `deploy_generateReport`
+
+Owner, verbatim, against the two questions Phase 0 and the A.2 recon put to him: ***"composite is the key, extend deploy_generateReport"***. Both were named as owner rulings by the recon that raised them, and both are recorded here on first statement.
+
+**RULING 1 — the canonical rack key is the synthetic composite** (`'rack_' + deployment.id + '_' + idx`, written at `dct-ios.html:32243`, stored as the rack record's `id` field). This settles the finding `docs/A2-ASSEMBLER-RECON.md` §0 called *"the single most valuable output of this recon"*: one rack carried two live identifiers, written by the same function two lines apart, and nothing joined them.
+
+⭐ **The ruling is cheap to honour because three of the four A.2 adapters already use it**, measured at `.590` in `docs/FIELD-REPORT-PHASE0-EVIDENCE.md` §2: phases (`:32259`), blockers (via `ctx.rack.id` → `create({rack:…})`), and photos (via `photo_handleCapture(…, c.rack.id)`). The `read(siteId, rackId)` contract can now be satisfied. ⛔ **What it does NOT settle, and nobody should read it as settling:**
+- **The Master bridge.** The Master keys `racksByCab` by `s1:001`; the composite is derived from the **vendor EDP parse** (`:32243` seeded from `deployment.edpParsed.racks`, `:32234`), so no Master linkage is persisted anywhere. The composite being canonical makes this a **mapping** problem rather than an identity problem — but the mapping still does not exist.
+- **The photo `siteId` defect.** `:57301` derives `siteId` by splitting the rack key on a colon; a composite has no colon, so `siteId` becomes the whole key. ⛔ **Under this ruling that derivation is definitionally wrong, not merely odd.** Both readers recompute the identical split, so it is SELF-CONSISTENT and photos retrieve correctly today — **which means correcting it without a migration orphans every stored photo** against the `byRack` compound index. Contract B11. It is its own ship, with its own migration, and it is not a line change.
+- **Notes/audit remains unscopable to a rack by field.** Two of 24 `deploy_logAudit` call sites pass `meta.rack`. The only contract-legal recovery is parsing the composite back out of `phase.id`, which embeds it by construction (`:32258`).
+
+**RULING 2 — A.2 EXTENDS `deploy_generateReport` (`dct-ios.html:43230` at `.589`; re-anchor at `.590`), it does not supersede it.** Contract A2, one canonical engine per concept. That engine already folds racks + phases + optics + audit + rollup into one structure, already sorts the audit by `ts`, already emits an `auditTrail` in the plan's own event shape (`{ts, time, actor, action, entityType, summary}`) with true ISO beside epoch ms, and already has **three** renderers — JSON export, print HTML, and close-out.
+
+⛔ **THE COMPATIBILITY CONSTRAINT THIS CREATES, STATED NOW SO IT IS NOT DISCOVERED LATE:** those three consumers are live and reachable from four buttons. **Extending must not change what they emit.** The Rack Record is rack-scoped and the existing engine is deployment-scoped, so the extension adds a rack-scoped path beside the existing fold — it does not re-shape the existing return value. ⚠ **No spec pins any of the three today**, so nothing would catch a regression in them: a characterization test over the current JSON output is owed before the first extending edit, on the `.589`-image-input precedent where a tripwire went in before the feature.
+
+⛔ **Neither ruling authorises a ship.** `.590` is on `main` unstamped, and the guard refuses any `version.json` bump while `HEAD` and `VERIFIED` disagree, so A.2 cannot cut a version until `.590` is adjudicated. The handoff itself is extracted by the owner from `PHANTOM-INTELLIGENCE-CORE.md`, one at a time — not written by Claude Code.
+
+---
+
 ## 2026-09-10 · RACK POSE DRIFT — it is a REAL DEFECT and the tolerance STANDS
 
 Owner, verbatim, against the pinned baseline: *"rack pose: it's a real defect, the tolerance stands"*. This settles the question Phase 0 put to him — defect versus over-tight test — in favour of **defect**. ⛔ The five-decimal position tolerance and the `1e-4` yaw floor in `37-locked-rack-pose.spec.js` are **not to be loosened**, and the test is **not to be re-pointed or pinned**.
