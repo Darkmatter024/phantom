@@ -250,6 +250,9 @@ html.ph-js #section-14 .concept-notice{display:none}
 @media print{#section-14 .concept-notice{display:none!important}}
 /* the how-to line points at a frame that is not shown without scripts (screen only, so print stays as it was) */
 @media screen{html:not(.ph-js) #section-14 .concept-howto{display:none}}
+/* the way in from anywhere (phone preview included): the hosted demo. Visible with or without scripts, and printed. */
+#section-14 .concept-link{margin-top:10px;font:12px/1.6 var(--mono);color:var(--dim);overflow-wrap:anywhere}
+#section-14 .concept-link a{color:var(--cyan);text-decoration:underline;text-underline-offset:3px}
 /* Same footing for the boot: a document that runs no script never shows it, whether or not <noscript> is honoured. */
 html:not(.ph-js) #boot,html:not(.ph-js) #pe-flash{display:none!important}
 @media screen{html:not(.ph-js){overflow:visible!important}}
@@ -1196,6 +1199,7 @@ draw('welcome');
 <p class="concept-print">Interactive concept — available in the HTML version.</p>
 </div>
 <p class="concept-howto">Tap through the screens with the CONCEPT selector at the top of the frame or the buttons inside it. Nothing is sent, stored, or connected; a reload starts it over.</p>
+<p class="concept-link">Open the concept on its own: <a href="https://darkmatter024.github.io/phantom/docs/phantom-forge.html" target="_blank" rel="noopener">darkmatter024.github.io/phantom/docs/phantom-forge.html</a></p>
 <div class="ftr"><span>THE CONCEPT, HANDS ON</span><span>PHANTOM // 2026 // README // 14 / 15</span></div>
 </section>
 <!-- ============================ PAGE 12 — MANIFEST CLOSER ============================ -->
