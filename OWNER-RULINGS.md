@@ -6,6 +6,23 @@ is stale until edited. Newest first.
 
 ---
 
+## 2026-09-17 · A.2 SHIP 2 — Q-10 … Q-17 RULED AS RECOMMENDED. The readout reports the blockers store's truth; the writer defects are leads, not A.2 work.
+
+Owner, verbatim, against the Q table of `docs/A2-SHIP2-PHASE0-EVIDENCE.md`: ***"Q-10 to Q-17 as recommended"***. Recorded on first statement. Each line below is that table's recommendation, now law for Ship 2; the evidence for each is in that document, not repeated here.
+
+- **Q-10 — the readout shows what the store holds.** UNBLOCK and "THIS FIXED IT" change only the phase status; the only `clearedAt` writer (`PHANTOM_BLOCKERS.clear`, `dct-ios.html:31586`) is reachable only from `PHANTOM_PHASE_MODEL.transition` (`:31565`), which nothing calls. So after an UNBLOCK the readout's `openBlockers` stays up while the Build card drops, **by construction**. That disagreement is **recorded, not a FAIL**, and the look passes when the readout matches the store. ⛔ The writer defect (UNBLOCK never closes the record) is the owner's to schedule as its own ship; it is **not** fixed inside A.2 (handoff §8). Whoever fixes it must also null `phase.blockerId` on clear (lead L-6).
+- **Q-11 — records with no trustworthy open time** (`migrated: true`, or a non-numeric `openedAt`) emit **no timeline event**. They are counted in `openBlockers` through `facts.undated`, and the blockers coverage row carries a `detail` saying so; the assembler passes `detail` through on `ok` rows. ⚠ Accepted cost: `openBlockers` is derived from events **plus one declared fact**, a stated exception to P6.
+- **Q-12 — event names are `blocker.opened` / `blocker.cleared`**, the store's own vocabulary. "Resolved" is not used.
+- **Q-13 — `status.openBlockers` is `0` when the blockers adapter reads `empty`, and `null` when it reads `error`.**
+- **Q-14 — Q-A rides in Ship 2.** A top-level `gaps` list follows `coverage`, with one entry `{ field: 'rack', detail: <Ship 1's existing string> }`. `schema` stays `'rr-1'`.
+- **Q-15 — the phase card BLOCK button (`:42206`) writes the invalid "blocked, no record" state.** In A.2 it is **report only**, and it is carried as its own lead. The Ship 2 look uses **Log blocker**, never BLOCK.
+- **Q-16 — the look compares the readout with the Build workspace and the phase badge.** The dock badge, Command, the readiness gate and the report count AI Review issues (`deploy_countBlockers`), a different quantity; the dock badge staying hidden is **not** a FAIL. The name clash goes to A.3: no renderer may print rr-1 `openBlockers` beside `summary.openBlockers` under one word.
+- **Q-17 — no A.2 adapter emits the phase record's `blockedAt`, `blockerNote` or `blockerId`.** Ship 3 may emit `PHASE_BLOCKED` / `PHASE_UNBLOCKED` as phase events, **must not** emit `BLOCKER_OPENED` as `blocker.opened`, and nothing from Ship 3 enters `openBlockers`.
+
+⛔ **WHAT THESE RULINGS DO NOT DO.** They do not authorise any edit to a storage writer or renderer (`blocker_save`, `deploy_advancePhase`, `PHANTOM_BLOCKERS`, the BLOCK/UNBLOCK buttons, `deploy_countBlockers`). The evidence document's STOP list (S-1 … S-6) and stop conditions stand.
+
+---
+
 ## 2026-09-17 · A.2 SHIPS 2–4 — Q-A RULED: data gaps move to their own list. Ships 2, 3 and 4 verify one at a time.
 
 The owner answered in session, choosing between the options put to him: Q-A → ***"Separate gaps list"***; verify plan → ***"One at a time"***. Both were the recommended options. Recorded on first statement.
