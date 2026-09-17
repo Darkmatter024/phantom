@@ -1,6 +1,6 @@
 # A.2 SHIP 2 — EVIDENCE · blockers adapter, derived `status.openBlockers`, the Q-A `gaps` list
 
-**Written:** 2026-09-17 · **Status:** ⏳ **SHIPPED TO `main` AS `phantom-v1.14.593` — both reviews PASS (§4); device verify owed (§6).** Not stamped, not promoted: `verify.ps1` and `promote.ps1` are John's.
+**Written:** 2026-09-17 · **Status:** ✅ **SHIPPED AS `phantom-v1.14.593` (`f2f2cec`) — both reviews PASS (§4); the owner's §6 look PASSED, stamped `d73a0bb` and promoted 2026-09-17.** John ran `verify.ps1` and `promote.ps1` himself.
 **Handoff:** `docs/SHIP-HANDOFF-A2-ASSEMBLER.md` §5 — *"Ship 2: blockers adapter (readout gains blocker events + derived openBlockers)."* **Phase 0:** `docs/A2-SHIP2-PHASE0-EVIDENCE.md` (the build spec).
 **Rulings:** `OWNER-RULINGS.md` 2026-09-17 **Q-10…Q-17** (as recommended) · 2026-09-17 **Q-A** (separate `gaps` list; Ships 2–4 verify one at a time) · 2026-09-17 **Ship 2 gated on Chromium** (§G) · 2026-09-15 Q-1…Q-9 · 2026-09-14 (the composite is the rack key).
 **Baseline:** `main` @ `d48fc0c`, `dct-ios.html` at **`phantom-v1.14.592`** (verified and promoted), 60,896 lines, CRLF.
