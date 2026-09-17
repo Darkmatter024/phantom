@@ -6,6 +6,37 @@ is stale until edited. Newest first.
 
 ---
 
+## 2026-09-17 · A.2 SHIP 3 — Q-18 … Q-27 RULED AS RECOMMENDED. The notes adapter reads rack notes only, and says when the log has lost entries.
+
+The owner was asked what *"next"* meant against the Q table of `docs/A2-SHIP3-PHASE0-EVIDENCE.md`, and chose ***"Build it as recommended"*** over waiting to rule them himself and over parking Ship 3. Recorded on first statement. Each line below is that table's recommendation, now law for Ship 3; the evidence for each is in that document, not repeated here.
+
+- **Q-18 — scope: `RACK_NOTE` only.** The filter is `action === 'RACK_NOTE'` and `entityType === 'rack'` and `entityId === rackId`, whole-string. ⛔ Never match on `e.rack`, on `summary` text, on a prefix, or on a deployment parsed out of the composite. Phase and blocker audit entries stay with their own adapters, so nothing double-counts.
+- **Q-19 — deployment FIELD NOTES stay out.** `OMNI_NOTE` (Command's `LOG` → `SEND`) names no rack; copying one onto every rack of a deployment would fabricate attribution (Contract 10).
+- **Q-20 — checklist item notes stay out of Ship 3 and out of A.2.** Wrong data class, no census row (an automatic adapter-reviewer FAIL), no timestamp. A census pass comes first if they are ever wanted.
+- **Q-21 — the event is `note.logged`**, the app's own verb, carrying `{ auditId, text, actor }` with the stored values verbatim. The adapter never interprets note text.
+- **Q-22 — no new `status` field.** rr-1's shape is the one the handoff fixed. The note count is the notes coverage row's `events`, which the readout already prints.
+- **Q-23 — truncation and restore are surfaced as a notes-row `detail`**, and the assembler's fold passes `detail` on `empty` rows too — a one-line change, since today it passes `detail` on `error` and `ok` rows only (`dct-ios.html:31761-31762`). ⛔ The wording never states a number of lost entries: `truncatedCount` does not accumulate (lead L-7).
+- **Q-24 — the hash chain is not verified and not emitted in A.2.** Verification is not a pure read, and it is already wrong after an ordinary purge (lead L-8). HISTORY shows the chain.
+- **Q-25 — the actor is carried verbatim**, including `'System'` and the Build-Lead fallback. The adapter cannot detect the fallback and substituting the current operator would fabricate. ⛔ The writer question against Contract 9a (lead L-9) is the owner's to schedule outside A.2.
+- **Q-26 — the device look compares the readout with HISTORY's `RACK_NOTE` rows in a one-rack deployment.** NERVE's *RECENT ACTIVITY* shows a text-matched subset, the shift report's *Field Notes* counts `OMNI_NOTE` only, and the HISTORY header counts every action: **none of those disagreements is a FAIL.** The *Field Notes* / rack-notes name clash goes to A.3 with Q-16.
+- **Q-27 — issue notes, discrepancy notes and voice notes stay out of A.2.** Issue notes have no census row at all; the other two never carry the composite. Whether the Record should hold them is an A.3 question, after a census pass.
+
+⚠ **What this ruling does not do.** It authorises Ship 3 as that document specifies it and nothing more. The leads L-7…L-16 are reported, not fixed (handoff §8), and the fenced surfaces stay fenced: `stripeRack_logNote`, `deploy_logAudit`, `deploy_purgeAudit`, the FIFO block, the chain functions, HISTORY, NERVE, the shift report, the handoff generator and `deploy_generateReport`.
+
+---
+
+## 2026-09-17 · A.2 SHIP 3 IS GATED ON CHROMIUM TOO — WebKit is still blocked
+
+The Ship 2 ruling below sent the gate question back for Ship 3. The owner chose ***"Chromium again"*** from the options put to him; the other options were Chromium for Ships 3 and 4, turning off Smart App Control, and holding until WebKit clears. Recorded on first statement.
+
+**THE PROBE, before any Ship 3 test ran.** A direct launch script using this tree's `@playwright/test` gave: WebKit `browserType.launch: Host system is missing dependencies!`, and Chromium `151.0.7922.34` launched. `Get-MpComputerStatus` reports `SmartAppControlState: On`.
+
+**RULING — for A.2 Ship 3 only.** The terms are the same as Ship 2's: RED, GREEN, the mutation checks and the regression specs run on **`laptop-chromium`**. The Ship 3 evidence records the deviation, and **the owner's Safari look on staging is the only WebKit gate.**
+
+⛔ **It does not carry forward.** Ship 4 (the photos adapter and the readout's removal) probes `phone-webkit` first and comes back to the owner if WebKit is still blocked. Nothing else changes: not the test config, not `phone-webkit`'s standing, and not Smart App Control.
+
+---
+
 ## 2026-09-17 · A.2 SHIP 2 IS GATED ON CHROMIUM — Windows Smart App Control blocks Playwright's WebKit on this machine
 
 The owner chose between the options put to him: first ***"Reinstall WebKit, then decide"***, and after the reinstall failed, ***"Gate this ship on Chromium"***. Recorded on first statement.
