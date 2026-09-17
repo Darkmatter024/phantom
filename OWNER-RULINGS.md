@@ -6,6 +6,25 @@ is stale until edited. Newest first.
 
 ---
 
+## 2026-09-17 · A.2 SHIPS 2–4 — Q-A RULED: data gaps move to their own list. Ships 2, 3 and 4 verify one at a time.
+
+The owner answered in session, choosing between the options put to him: Q-A → ***"Separate gaps list"***; verify plan → ***"One at a time"***. Both were the recommended options. Recorded on first statement.
+
+**RULING 1 — Q-A (owed before Ship 2, `docs/A2-SHIP1-EVIDENCE.md` §Q).** The readout's coverage carries **exactly one row per registered adapter**. A data gap that belongs to no adapter — Ship 1's synthetic `rack` row, which reads `rack empty — …` — moves to a separate **`gaps: [{ field, detail }]`** list. The shape as it was shown to the owner (the detail text there was illustrative; the real strings are the ones Ship 1 already emits):
+
+```
+coverage: identity ok (0) · phases ok (0) · blockers ok (2)
+gaps:     [{ field: "rack", detail: "empty — no devices" }]
+```
+
+⚠ This changes a shape Ship 1 already shipped, so spec `65`'s coverage assertions change with it. Whether it rides in Ship 2 with the blockers adapter, or needs its own ship to keep one visible change per ship, is Ship 2's Phase 0 call, and is reported before any patch.
+
+**RULING 2 — VERIFY PLAN.** Ships 2, 3 and 4 ship and are verified **one at a time**: Ship 2 → device look in the readout → stamp → Ship 3 → look → stamp → Ship 4 → look → stamp. The handoff (§5) allowed BATCH-OODA for Ships 2–4 only on the owner's GO; this is the answer, and batching does not apply to this slice. The reason given with the question: Ship 4 removes the `?rrdev=1` readout, which is the surface every adapter is verified on.
+
+⛔ **WHAT THESE RULINGS DO NOT DO.** They answer the two questions Ship 2 was waiting on; they do not cut a version. Ship 2 starts with its Phase 0 recon against the verified `.592` source, per the handoff.
+
+---
+
 ## 2026-09-15 · FORGE DETAIL PAGER — PREV/NEXT WALK THE ROW. Supersedes the unrecorded 2026-09-14 "label the counts". The pager fix ships before A.2 Ship 1.
 
 Owner, verbatim, reporting the defect on staging: ***"Fix it, add a quick check that NEXT enables on c1:005, and tell me what the root cause was."*** Then, on the fix and the ship order: ***"pager fix ships first, record the ruling"***. Recorded on first statement.

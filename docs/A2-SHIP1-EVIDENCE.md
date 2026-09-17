@@ -107,5 +107,5 @@ M1–M4 left every other test green, so each break is caught where it belongs. �
 
 ## Q · Found, not worked
 
-- **Q-A (before Ship 2).** Keep the synthetic `rack` coverage row, or carry Q-2-style gaps in a separate `gaps: [{ field, detail }]` list so coverage stays exactly one row per registered adapter? Reviewer's suggestion; no Ship 1 change.
+- **Q-A (before Ship 2).** Keep the synthetic `rack` coverage row, or carry Q-2-style gaps in a separate `gaps: [{ field, detail }]` list so coverage stays exactly one row per registered adapter? Reviewer's suggestion; no Ship 1 change. ✅ **RULED 2026-09-17: the separate `gaps` list** (`OWNER-RULINGS.md`); Ships 2–4 verify one at a time.
 - `test/e2e/64-report-engine-characterization.spec.js`'s header still says Ruling 2 *"extends"* — stale since the Q-1 amendment; test-only fix on request.
