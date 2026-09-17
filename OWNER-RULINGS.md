@@ -6,6 +6,18 @@ is stale until edited. Newest first.
 
 ---
 
+## 2026-09-17 · A.2 SHIP 2 IS GATED ON CHROMIUM — Windows Smart App Control blocks Playwright's WebKit on this machine
+
+The owner chose between the options put to him: first ***"Reinstall WebKit, then decide"***, and after the reinstall failed, ***"Gate this ship on Chromium"***. Recorded on first statement.
+
+**THE BLOCK.** `phone-webkit` could not launch a browser: the process exits `0xC0E90002`, and the CodeIntegrity log shows Smart App Control refusing `ms-playwright\webkit-2336\icuin77.dll` and `sqlite3.dll`. A forced reinstall (`npx playwright install --force webkit`, folder rewritten 2026-09-17 09:51) did not clear it. Playwright then reports `Host system is missing dependencies!` for `icuin77.dll`, `libxml2.dll`, `libxslt.dll`, `libegl.dll` and `sqlite3.dll`, although all five are present on disk. Windows is refusing to load them. Chromium launches normally. The block has come and gone before (08-28, 08-31, 09-04, 09-17; clear 09-05 to 09-16, when Ship 1 ran green on `phone-webkit`).
+
+**RULING — for A.2 Ship 2 only.** RED, GREEN, the mutation checks and the regression specs run on the existing **`laptop-chromium`** project. The Ship 2 evidence records the deviation. **WebKit coverage for this ship is the owner's Safari look on staging** (ruling Q-8), which was always the real iOS gate: the config's own header says WebKit-on-Windows is not iOS Safari.
+
+⛔ **WHAT THIS DOES NOT DO.** It does not change `phone-webkit`'s standing as the primary project, and it does not carry forward to Ships 3 and 4. Each later ship tries `phone-webkit` first and returns to the owner if it is still blocked. It does not change the test config, and it does not turn Smart App Control off.
+
+---
+
 ## 2026-09-17 · A.2 SHIP 2 — Q-10 … Q-17 RULED AS RECOMMENDED. The readout reports the blockers store's truth; the writer defects are leads, not A.2 work.
 
 Owner, verbatim, against the Q table of `docs/A2-SHIP2-PHASE0-EVIDENCE.md`: ***"Q-10 to Q-17 as recommended"***. Recorded on first statement. Each line below is that table's recommendation, now law for Ship 2; the evidence for each is in that document, not repeated here.

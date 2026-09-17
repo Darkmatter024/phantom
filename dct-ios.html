@@ -12876,7 +12876,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.592';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.593';
 // ⛔ STABILIZATION 2026-09-11 — THE TWO PARSE-TIME RELOADERS ARE DELETED (this one, and its
 // twin that sat just below the #ver-stamp binding). Both fetched version.json at parse time and
 // both reacted to a mismatch on their own: the first called location.reload(true), the second
@@ -31611,6 +31611,8 @@ window.PHANTOM_PHASE_MODEL = PHANTOM_PHASE_MODEL;
 // A.2 RACK RECORD ASSEMBLER — SHIP 1: core, registry, identity + phases adapters
 // (docs/SHIP-HANDOFF-A2-ASSEMBLER.md · rulings OWNER-RULINGS.md 2026-09-15 · evidence
 // docs/A2-SHIP1-PHASE0-EVIDENCE.md · pinned by test/e2e/65-rack-record-assembler.spec.js)
+// SHIP 2: blockers adapter, derived status.openBlockers, and the gaps list (rulings OWNER-RULINGS.md
+// 2026-09-17 Q-10…Q-17 and Q-A · evidence docs/A2-SHIP2-PHASE0-EVIDENCE.md)
 //
 // A Rack Record (schema rr-1) is assembled ON DEMAND from live storage by a fold over an ordered
 // adapter registry, then thrown away: never cached, never persisted, no AI call (P4, P5). Derived
@@ -31685,13 +31687,65 @@ var RR_ADAPTER_PHASES = {
   }
 };
 
+// ⛔ DECLARED ABOVE PHANTOM_RR ON PURPOSE. The registry array is built when PHANTOM_RR executes; a var
+// declared below it is still undefined there, and assemble() would then throw (Phase 0 E-8).
+var RR_ADAPTER_BLOCKERS = {
+  name: 'blockers',
+  schemaHandled: 'phantom_blockers_v1 (docs/A1-CENSUS-REFRESH-TIER-A.md §3)',
+  // ⛔ RAW STORE ONLY, through _rr_readKey — never PHANTOM_BLOCKERS.*: every getter there reads through
+  // safeGet, which quarantines and toasts on malformed JSON (ruling Q-5). No phases or audit read
+  // either (handoff §4): the store's truth is reported as it is, even where the phase card disagrees
+  // (Q-10 — UNBLOCK never writes clearedAt). siteId is ignored: a blocker record has no site field.
+  read: function(siteId, rackId) {
+    // '' is what create() stores for "no rack" — it names no rack, so it is never a match target.
+    if (typeof rackId !== 'string' || !rackId) return { events: [], facts: {}, status: 'empty' };
+    var r = _rr_readKey(PHANTOM_BLOCKERS_KEY);
+    if (r.state === 'absent') return { events: [], facts: {}, status: 'empty' };
+    if (r.state === 'error') return { events: [], facts: {}, status: 'error', detail: r.detail };
+    if (!Array.isArray(r.value)) return { events: [], facts: {}, status: 'error', detail: 'blocker store is not an array' };
+    // b.rack holds the COMPOSITE (census refresh §3). Whole-string equality, never a prefix or a
+    // parse: deployment ids contain underscores, and rack_<dep>_1 is a prefix of rack_<dep>_10.
+    var mine = r.value.filter(function(b) { return b && typeof b === 'object' && b.rack === rackId; });
+    if (!mine.length) return { events: [], facts: {}, status: 'empty' };
+    function num(v) { return typeof v === 'number' && isFinite(v); }
+    function orNull(v) { return v == null ? null : v; }
+    var events = [], undated = [];
+    mine.forEach(function(b) {
+      var id = (typeof b.blockerId === 'string' && b.blockerId) ? b.blockerId : null;
+      var open = !b.clearedAt;                       // the module's own predicate (PHANTOM_BLOCKERS.open)
+      var clearOk = num(b.clearedAt) && !!b.clearedAt;
+      // Q-11: a record with no trustworthy open time is COUNTED (facts.undated), never timed.
+      function undatedAs(reason) { undated.push({ blockerId: id, open: open, reason: reason }); }
+      // No id: an opening and its clearing cannot be paired. An unreadable clearedAt: the record's
+      // state has no time at all. Neither puts anything on the timeline.
+      if (!id) { undatedAs('no blockerId'); return; }
+      if (b.clearedAt != null && !clearOk) { undatedAs('clearedAt is not a number'); return; }
+      // migrate() may stamp openedAt with the boot time, and nothing stored says when it did (S-1).
+      if (b.migrated === true) undatedAs('migrated — open time not trustworthy');
+      else if (!num(b.openedAt)) undatedAs('openedAt is not a number');
+      else {
+        // desc is the description NOW — a re-save rewrites it with no stamp (I-2). openedBy verbatim (I-6).
+        events.push({ t: b.openedAt, type: 'blocker.opened', source: 'blockers',
+          data: { blockerId: id, phaseId: orNull(b.phaseId), desc: orNull(b.desc), openedBy: orNull(b.openedBy) } });
+      }
+      if (clearOk) {
+        events.push({ t: b.clearedAt, type: 'blocker.cleared', source: 'blockers',
+          data: { blockerId: id, clearedBy: orNull(b.clearedBy) } });
+      }
+    });
+    var res = { events: events, facts: { undated: undated }, status: 'ok' };
+    if (undated.length) res.detail = undated.length + ' blocker(s) have no trustworthy time — counted, not on the timeline';
+    return res;
+  }
+};
+
 var PHANTOM_RR = {
   SCHEMA: 'rr-1',
   // ORDER MATTERS: identity runs first so its siteId is handed to every adapter after it.
-  registry: [RR_ADAPTER_IDENTITY, RR_ADAPTER_PHASES],
+  registry: [RR_ADAPTER_IDENTITY, RR_ADAPTER_PHASES, RR_ADAPTER_BLOCKERS],
 
   assemble: function(rackId) {
-    var coverage = [], merged = [], facts = {}, siteId = null;
+    var coverage = [], gaps = [], merged = [], facts = {}, siteId = null;
     this.registry.forEach(function(ad, order) {
       var res;
       try { res = ad.read(siteId, rackId); }
@@ -31705,12 +31759,14 @@ var PHANTOM_RR = {
       facts[ad.name] = (res.status === 'ok' && res.facts) ? res.facts : {};
       var row = { adapter: ad.name, status: res.status, events: evs.length };
       if (res.status === 'error') row.detail = String(res.detail || 'unknown error');
+      else if (res.status === 'ok' && res.detail) row.detail = String(res.detail);   // Q-11: an ok read may carry a caveat
       coverage.push(row);
       if (res.status === 'ok' && res.facts && res.facts.siteId !== undefined) siteId = res.facts.siteId;
     });
-    // Q-2: no adapter reads a source for these in A.2. Say so in the manifest rather than leave a
-    // bare null that a renderer could print as "no".
-    coverage.push({ adapter: 'rack', status: 'empty', events: 0,
+    // Q-2: no adapter reads a source for these in A.2. Say so rather than leave a bare null that a
+    // renderer could print as "no" — as a GAP, not a coverage row: coverage is exactly one row per
+    // registered adapter (Q-A, ruled 2026-09-17).
+    gaps.push({ field: 'rack',
       detail: 'no rack adapter in A.2: platform and masterPresent are not read, so both are null (ruling Q-2)' });
 
     // One merge: by time, then registry order, then the order the adapter emitted.
@@ -31729,6 +31785,24 @@ var PHANTOM_RR = {
       }
     }
 
+    // P6 — open blockers, derived here and nowhere else, from the blockers adapter's events alone
+    // (no phase status, no audit action: S-2, S-3, Q-17) PLUS its declared undated fact (Q-11, the
+    // stated exception). error → null: no count was taken. empty → 0: it was taken (Q-13).
+    var openBlockers = null, blkRow = null;
+    coverage.forEach(function(c) { if (c.adapter === 'blockers') blkRow = c; });
+    if (blkRow && blkRow.status === 'empty') openBlockers = 0;
+    else if (blkRow && blkRow.status === 'ok') {
+      var opened = Object.create(null), cleared = Object.create(null);
+      timeline.forEach(function(ev) {
+        if (!ev || ev.source !== 'blockers' || !ev.data) return;
+        if (ev.type === 'blocker.opened') opened[ev.data.blockerId] = true;
+        else if (ev.type === 'blocker.cleared') cleared[ev.data.blockerId] = true;
+      });
+      openBlockers = Object.keys(opened).filter(function(id) { return !cleared[id]; }).length;
+      var undated = (facts.blockers && Array.isArray(facts.blockers.undated)) ? facts.blockers.undated : [];
+      undated.forEach(function(u) { if (u && u.open) openBlockers++; });
+    }
+
     var ident = facts.identity || {};
     return {
       schema: 'rr-1',
@@ -31736,11 +31810,12 @@ var PHANTOM_RR = {
       site: { siteId: ident.siteId === undefined ? null : ident.siteId, profile: ident.profile === undefined ? null : ident.profile },
       rack: { rackId: rackId, platform: null, masterPresent: null },
       tech: { identity: ident.identity === undefined ? null : ident.identity },
-      // No blockers or photos adapter is registered yet: null, not 0 — a 0 claims a count nobody took.
-      status: { phase: phase, openBlockers: null, photoCount: null, photoBytes: null },
+      // No photos adapter is registered yet: null, not 0 — a 0 claims a count nobody took.
+      status: { phase: phase, openBlockers: openBlockers, photoCount: null, photoBytes: null },
       timeline: timeline,
       evidence: { photoIds: [] },
-      coverage: coverage
+      coverage: coverage,
+      gaps: gaps
     };
   }
 };
@@ -31797,22 +31872,30 @@ window.PHANTOM_RR = PHANTOM_RR;
 
     var cov = el('div', 'color:#28e0ff;margin-bottom:10px;line-height:1.5');
     cov.id = 'rr-dev-cov';
+    // Q-A: data gaps that belong to no adapter get their own line, so a FAIL on either is attributable.
+    var gapLine = el('div', 'color:#ffcb45;margin-bottom:10px;line-height:1.5');
+    gapLine.id = 'rr-dev-gaps';
     var out = el('pre', 'margin:0;white-space:pre-wrap;word-break:break-all;font-size:12px;line-height:1.35;font-family:ui-monospace,Menlo,monospace;color:#cfe9f5');
     out.id = 'rr-dev-json';
 
     pick.addEventListener('change', function() {
       cov.textContent = '';
+      gapLine.textContent = '';
       out.textContent = '';
       if (!pick.value) return;   // back on the placeholder: the cleared panel IS the feedback
       var rec = PHANTOM_RR.assemble(pick.value);
       cov.textContent = rec.coverage.map(function(c) {
         return c.adapter + ' ' + c.status + (c.status === 'ok' ? ' (' + c.events + ')' : '') + (c.detail ? ' — ' + c.detail : '');
       }).join(' · ');
+      gapLine.textContent = 'gaps: ' + (rec.gaps.length ? rec.gaps.map(function(g) {
+        return g.field + ' — ' + g.detail;
+      }).join(' · ') : 'none');
       out.textContent = JSON.stringify(rec, null, 2);
     });
 
     root.appendChild(pick);
     root.appendChild(cov);
+    root.appendChild(gapLine);
     root.appendChild(out);
     document.body.appendChild(root);
   }
