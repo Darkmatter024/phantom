@@ -30,6 +30,22 @@
 //     match would claim it), an empty rack, and an opening that ties two phase completions to the ms;
 //   · coverage is exactly one row per registered adapter; Ship 1's synthetic rack row lives in the
 //     top-level gaps list, with its detail string unchanged (Q-A, Q-14).
+//
+// SHIP 3 (docs/A2-SHIP3-PHASE0-EVIDENCE.md E-10; rulings OWNER-RULINGS.md 2026-09-17 Q-18…Q-27)
+// adds the notes adapter over the audit log:
+//   · a note is RACK_NOTE + entityType 'rack' + entityId === rackId, all three (Q-18). The audit
+//     log is ONE flat device-wide array, so the seed carries the other rack channels beside the
+//     notes: RACK_ASSIGNED and a rack-typed voice note share entityType 'rack', BLOCKER_OPENED and
+//     STEP_STATE_CHANGE carry the composite in their `rack` field, PHASE_COMPLETE and A_TEXT name
+//     the rack in free text, and OMNI_NOTE is the deployment's own field note. None is this rack's
+//     note, and each would be admitted by a filter that dropped one of the three tests;
+//   · entityId matching is whole-string: rack_<dep>_1, rack_<dep>_10 and a rack of another
+//     deployment each keep their own, and deploymentId is never compared or parsed (I-2);
+//   · a ts that is not a finite number is COUNTED and never timed (I-6), like Ship 2's undated;
+//   · a chainReset entry anywhere in the log — the 2,000-entry cap or a restore — is surfaced as a
+//     notes-row detail, on an `empty` row as well as an `ok` one (Q-23), and the wording never
+//     states how many entries were lost, because truncatedCount does not accumulate (lead L-7);
+//   · status gains NO key: the note count is the notes coverage row's `events` (Q-22).
 // ─────────────────────────────────────────────────────────────────────────────
 const { test, expect } = require('./fixtures');
 
@@ -128,6 +144,57 @@ const phaseDone = (type, t) => ({ t, type: 'phase.completed', source: 'phases',
   data: { phaseId: 'phase_' + RACK + '_' + type, phaseType: type, signedOffBy: 'E2E' } });
 const blockerEvents = (rec) => rec.timeline.filter((e) => e.source === 'blockers');
 
+// ── Ship 3: the audit log (docs/A2-SHIP3-PHASE0-EVIDENCE.md E-2b, E-10) ─────────────────────────
+const AUDIT_KEY = 'phantom_deploy_audit_v1';
+const FOREIGN = 'rack_dep_1750000009999_zz99zz_0';   // a composite from another deployment entirely
+const NOTE_UNDATED_DETAIL = (n) => n + ' note(s) have no usable time — counted, not on the timeline';
+const NOTE_RESET_DETAIL = 'the audit log carries a reset marker (2,000-entry cap or a restore) — notes older than its oldest surviving entry may be missing';
+
+// Every entry carries all 16 fields deploy_logAudit writes, with rack: '' as the live RACK_NOTE
+// writers store it. ⚠ Spec 64's fixture puts the composite in `rack` (64-…:76-77), a shape no live
+// writer produces (lead L-16) — it is not copied here.
+function aud(id, ts, action, entityType, entityId, summary, over) {
+  return Object.assign({
+    id, deploymentId: DEP, ts, actor: 'E2E', action, entityType, entityId, summary,
+    hashV: 2, siteProfileId: 'site_e2e_01', masterId: '', rack: '', stepId: '',
+    evidence: [], prevHash: '', hash: '',
+  }, over);
+}
+
+// Stored order is deliberately NOT time order (the log is append-order, and a restore can carry
+// anything). Numbering follows E-10's table.
+const A_LATE = aud('audit_1750000000500_lat1', T0 + 500, 'RACK_NOTE', 'rack', RACK, 'cage nut short');
+const A_ASSIGN = aud('audit_1750000000010_asgn', T0 + 10, 'RACK_ASSIGNED', 'rack', RACK, 'Assigned to: E2E');
+const A_OTHER = aud('audit_1750000000030_othr', T0 + 30, 'RACK_NOTE', 'rack', OTHER, 'other rack note');
+// BLOCKER_OPENED is the one live action that names the composite in `rack` — the blockers adapter's
+// moment (Q-17). Matching on `rack` would admit it and double-show the blocker's own text.
+const A_BLK = aud('audit_1750000000200_blk0', T0 + 200, 'BLOCKER_OPENED', 'phase', 'phase_' + RACK + '_network', 'missing optic', { rack: RACK });
+const A_EARLY = aud('audit_1750000000020_earl', T0 + 20, 'RACK_NOTE', 'rack', RACK, 'rail kit missing', { actor: 'System' });
+const A_TEN = aud('audit_1750000000040_ten0', T0 + 40, 'RACK_NOTE', 'rack', TEN, 'ten rack note');
+const A_PHASE = aud('audit_1750000000101_phas', T0 + 101, 'PHASE_COMPLETE', 'phase', 'phase_' + RACK + '_power', 'Power: in_progress → complete (s1:001)');
+// A chip label that reads like a state change, and a Build-Lead actor fallback: both verbatim (Q-25).
+const A_TIE = aud('audit_1750000000300_tie0', T0 + 300, 'RACK_NOTE', 'rack', RACK, 'IN PROGRESS', { actor: 'LEAD-B' });
+const A_OMNI = aud('audit_1750000000060_omni', T0 + 60, 'OMNI_NOTE', 'deployment', DEP, 'shift start');
+const A_VA = aud('audit_1750000000070_va00', T0 + 70, 'VA_PHASE_NOTE', 'rack', 'S1:001', 'mechanical done on s1:001');
+const A_STEP = aud('audit_1750000000090_step', T0 + 90, 'STEP_STATE_CHANGE', 'step', 'step_1', 'pending -> in_progress', { rack: RACK });
+const A_TEXT = aud('audit_1750000000095_text', T0 + 95, 'RACK_NOTE', 'rack', OTHER, 'see s1:001 too');
+const A_LATE2 = aud('audit_1750000000500_lat2', T0 + 500, 'RACK_NOTE', 'rack', RACK, 'cage nut replaced');
+// JSON cannot carry NaN, so a string ts stands for "not a number". deploy_logAudit always writes
+// Date.now(), so only a restore or a hand edit gets here.
+const A_UNDATED = aud('audit_1750000000600_und0', '1750000000600', 'RACK_NOTE', 'rack', RACK, 'string time');
+const A_FOREIGN = aud('audit_1750000000015_frgn', T0 + 15, 'RACK_NOTE', 'rack', FOREIGN, 'another deployment', { deploymentId: 'dep_1750000009999_zz99zz' });
+
+const AUDIT = [A_LATE, A_ASSIGN, A_OTHER, A_BLK, A_EARLY, A_TEN, A_PHASE, A_TIE, A_OMNI, A_VA,
+  A_STEP, A_TEXT, A_LATE2, A_UNDATED, A_FOREIGN, null, 7, 'RACK_NOTE'];
+
+function seedWithNotes() {
+  return { ...seedWithBlockers(), [AUDIT_KEY]: JSON.stringify(AUDIT) };
+}
+
+const logged = (e) => ({ t: e.ts, type: 'note.logged', source: 'notes',
+  data: { auditId: e.id, text: e.summary, actor: e.actor } });
+const noteEvents = (rec) => rec.timeline.filter((e) => e.source === 'notes');
+
 // confirmProfile:false — the fixture would otherwise overwrite PROFILE with its own SEEDED_PROFILE.
 async function boot(phantom, opts = {}) {
   await phantom.boot({ confirmProfile: false, seed: seed(), ...opts });
@@ -147,7 +214,7 @@ function present(r) {
 
 const cov = (rec, name) => (rec.coverage || []).find((c) => c.adapter === name);
 
-test.describe('65 — the Rack Record assembler (Ships 1–2)', () => {
+test.describe('65 — the Rack Record assembler (Ships 1–3)', () => {
   test('RECORD · rr-1 shape, identity facts exactly as stored, and no number for an unregistered adapter', async ({ phantom, page }) => {
     test.setTimeout(180000);
     await boot(phantom);
@@ -176,6 +243,9 @@ test.describe('65 — the Rack Record assembler (Ships 1–2)', () => {
       { adapter: 'identity', status: 'ok', events: 0 },
       { adapter: 'phases', status: 'ok', events: 3 },
       { adapter: 'blockers', status: 'empty', events: 0 },
+      // The seed has no audit key either: read, and nothing there — and no detail, because an
+      // absent log carries no reset marker to report (Q-23).
+      { adapter: 'notes', status: 'empty', events: 0 },
     ]);
     // Q-2: platform and masterPresent are null "with a detail saying why". No rack adapter exists
     // in A.2, so the reason is a GAP, not a coverage row (Q-A), with Ship 1's string unchanged.
@@ -328,7 +398,7 @@ test.describe('65 — the Rack Record assembler (Ships 1–2)', () => {
       let rec;
       let threw = null;
       try {
-        // Every registered adapter after the fault still runs — phases AND blockers.
+        // Every registered adapter after the fault still runs — phases, blockers AND notes.
         PHANTOM_RR.registry = [saved[0], { name: 'boom', schemaHandled: 'test fault', read() { throw new Error('kaboom'); } }, ...saved.slice(1)];
         rec = PHANTOM_RR.assemble(rack);
       } catch (e) {
@@ -341,10 +411,12 @@ test.describe('65 — the Rack Record assembler (Ships 1–2)', () => {
     expect(out.__missing, 'PHANTOM_RR is not defined').toBe(false);
     expect(out.threw, 'a throwing adapter escaped assemble()').toBeNull();
     expect(out.rec.coverage.map((c) => [c.adapter, c.status, c.events]))
-      .toEqual([['identity', 'ok', 0], ['boom', 'error', 0], ['phases', 'ok', 3], ['blockers', 'empty', 0]]);
+      .toEqual([['identity', 'ok', 0], ['boom', 'error', 0], ['phases', 'ok', 3], ['blockers', 'empty', 0], ['notes', 'empty', 0]]);
     expect(out.rec.coverage[1].detail).toMatch(/kaboom/);
     expect(out.rec.timeline.length, 'the phases adapter after the fault still contributed').toBe(3);
     expect(out.rec.status.openBlockers, 'the blockers adapter after the fault still counted (Q-13)').toBe(0);
+    expect(cov(out.rec, 'notes'), 'the notes adapter, last in the registry, still ran after the fault')
+      .toEqual({ adapter: 'notes', status: 'empty', events: 0 });
   });
 
   // ── SHIP 2 — the blockers adapter, derived openBlockers, and the gaps list ─────────────────────
@@ -541,13 +613,320 @@ test.describe('65 — the Rack Record assembler (Ships 1–2)', () => {
     }, RACK);
     const rec = present(out);
 
-    expect(out.names, 'the registry, in order').toEqual(['identity', 'phases', 'blockers']);
+    expect(out.names, 'the registry, in order').toEqual(['identity', 'phases', 'blockers', 'notes']);
     expect(rec.coverage.map((c) => c.adapter), 'one coverage row per registered adapter, nothing else').toEqual(out.names);
     expect(rec.gaps).toEqual([{ field: 'rack', detail: RACK_GAP }]);
     const keys = Object.keys(rec);
     expect(keys[keys.length - 1]).toBe('gaps');
     expect(keys.indexOf('gaps'), 'gaps follows coverage').toBe(keys.indexOf('coverage') + 1);
     expect(rec.schema, 'the schema name does not move (Q-14)').toBe('rr-1');
+  });
+
+  // ── SHIP 3 — the notes adapter ────────────────────────────────────────────────────────────────
+  // Every expected value is derived by hand from AUDIT above and docs/A2-SHIP3-PHASE0-EVIDENCE.md
+  // E-7 / E-10, never from the adapter. The four RACK notes and the one undated entry were counted
+  // row by row before the code was written (Ship 2's D-1 lesson: the previous Phase 0 miscounted).
+  test('NOTES · TIMELINE · note.logged merges by time with the phases and blockers, payload verbatim, and nothing in status moves', async ({ phantom, page }) => {
+    test.setTimeout(180000);
+    await boot(phantom, { seed: seedWithNotes() });
+    const rec = present(await assemble(page, RACK));
+
+    // 3 phase + 4 blocker + 4 note = 11. Ties at T0+300 sort by registry position: phases (1)
+    // before blockers (2) before notes (3). A_LATE and A_LATE2 share T0+500 and keep stored order
+    // (indexes 0 and 12). A_UNDATED is counted, never here.
+    expect(rec.timeline).toEqual([
+      logged(A_EARLY),                   // T0+20  · actor 'System' carried verbatim (Q-25)
+      opened(B_CLOSED),                  // T0+50
+      phaseDone('power', T0 + 100),
+      opened(B_OPEN),                    // T0+200 · A_BLK shares this ms and is never emitted (Q-18)
+      phaseDone('mechanical', T0 + 300),
+      phaseDone('compute', T0 + 300),
+      opened(B_TIE),                     // T0+300
+      logged(A_TIE),                     // T0+300 · last of the tie; actor 'LEAD-B' verbatim
+      cleared(B_CLOSED),                 // T0+400
+      logged(A_LATE),                    // T0+500 · stored index 0
+      logged(A_LATE2),                   // T0+500 · stored index 12
+    ]);
+    for (const ev of rec.timeline) expect(typeof ev.t === 'number' && isFinite(ev.t), 'every event has a numeric t').toBe(true);
+    for (const ev of noteEvents(rec)) {
+      expect(Object.keys(ev.data), 'the payload is exactly { auditId, text, actor } (Q-21)').toEqual(['auditId', 'text', 'actor']);
+    }
+    expect(cov(rec, 'notes'), 'four notes, and the undated one says so').toEqual(
+      { adapter: 'notes', status: 'ok', events: 4, detail: NOTE_UNDATED_DETAIL(1) });
+
+    // Q-22: no new status key, and a note moves neither the phase nor the blocker count.
+    expect(Object.keys(rec.status), 'rr-1 status keeps the shape the handoff fixed (Q-22)')
+      .toEqual(['phase', 'openBlockers', 'photoCount', 'photoBytes']);
+    expect(rec.status.phase).toEqual({ index: 2, of: 5, name: 'network' });
+    expect(rec.status.openBlockers, 'a note never reaches the blocker derivation').toBe(3);
+    expect(rec.status.photoCount).toBeNull();
+    expect(rec.status.photoBytes).toBeNull();
+    // Ship 1's and Ship 2's rows are byte-for-byte what they were.
+    expect(cov(rec, 'identity')).toEqual({ adapter: 'identity', status: 'ok', events: 0 });
+    expect(cov(rec, 'phases')).toEqual({ adapter: 'phases', status: 'ok', events: 3 });
+    expect(cov(rec, 'blockers')).toEqual({ adapter: 'blockers', status: 'ok', events: 4, detail: UNDATED_DETAIL(1) });
+  });
+
+  test('NOTES · SCOPING · whole-string equality on entityId: another rack, a prefix, another deployment and \'\' each keep their own', async ({ phantom, page }) => {
+    test.setTimeout(180000);
+    await boot(phantom, { seed: seedWithNotes() });
+
+    const other = present(await assemble(page, OTHER));
+    // A_TEXT's text names RACK; it stays OTHER's note, because summary is never a match key.
+    expect(noteEvents(other), 'rack_<dep>_1 never claims rack_<dep>_10\'s note').toEqual([logged(A_OTHER), logged(A_TEXT)]);
+    expect(cov(other, 'notes'), 'an ok read with nothing to caveat carries no detail (I-11)')
+      .toEqual({ adapter: 'notes', status: 'ok', events: 2 });
+
+    const ten = present(await assemble(page, TEN));
+    expect(noteEvents(ten)).toEqual([logged(A_TEN)]);
+    expect(cov(ten, 'notes')).toEqual({ adapter: 'notes', status: 'ok', events: 1 });
+
+    // deploymentId is neither compared nor parsed out of the composite (I-2): the entityId is the key.
+    const foreign = present(await assemble(page, FOREIGN));
+    expect(noteEvents(foreign)).toEqual([logged(A_FOREIGN)]);
+    expect(cov(foreign, 'notes')).toEqual({ adapter: 'notes', status: 'ok', events: 1 });
+
+    const blank = present(await assemble(page, ''));
+    expect(cov(blank, 'notes'), "rack '' is not a rack (I-3)").toEqual({ adapter: 'notes', status: 'empty', events: 0 });
+    expect(noteEvents(blank)).toEqual([]);
+  });
+
+  test('NOTES · EMPTY · absent, \'\', [] and a log where nothing is this rack\'s note each read empty with no events', async ({ phantom, page }) => {
+    test.setTimeout(180000);
+    await boot(phantom);
+
+    const out = await page.evaluate(({ key, rack, nonMatching }) => {
+      if (typeof PHANTOM_RR !== 'object' || !PHANTOM_RR) return { __missing: true };
+      localStorage.removeItem(key);
+      const absent = PHANTOM_RR.assemble(rack);
+      localStorage.setItem(key, '');
+      const blankKey = PHANTOM_RR.assemble(rack);
+      localStorage.setItem(key, '[]');
+      const emptyArray = PHANTOM_RR.assemble(rack);
+      localStorage.setItem(key, nonMatching);
+      const noneMine = PHANTOM_RR.assemble(rack);
+      return { __missing: false, absent, blankKey, emptyArray, noneMine };
+    }, {
+      key: AUDIT_KEY,
+      rack: RACK,
+      // E-10 store 4: this rack's non-note actions (RACK_ASSIGNED, BLOCKER_OPENED, PHASE_COMPLETE,
+      // STEP_STATE_CHANGE), other racks' notes, the deployment's field note, a voice note, and
+      // members that are not objects. Dropping any one of the three filter tests admits one of these.
+      nonMatching: JSON.stringify([A_ASSIGN, A_OTHER, A_BLK, A_TEN, A_PHASE, A_OMNI, A_VA, A_STEP, A_TEXT, A_FOREIGN, null, 7, 'RACK_NOTE']),
+    });
+    expect(out.__missing, 'PHANTOM_RR is not defined').toBe(false);
+
+    for (const [label, rec] of [['key absent', out.absent], ["key is ''", out.blankKey], ['[]', out.emptyArray], ['no entry is this rack\'s note', out.noneMine]]) {
+      expect(cov(rec, 'notes'), label).toEqual({ adapter: 'notes', status: 'empty', events: 0 });
+      expect(noteEvents(rec), label).toEqual([]);
+      expect(cov(rec, 'phases'), label).toEqual({ adapter: 'phases', status: 'ok', events: 3 });
+      expect(rec.status.openBlockers, label + ' — the blocker count is untouched').toBe(0);
+    }
+  });
+
+  test('NOTES · ERROR · malformed, wrong-shape and unreadable audit storage report error with detail and leave the other adapters alone', async ({ phantom, page }) => {
+    test.setTimeout(180000);
+    await boot(phantom, { seed: seedWithNotes() });
+
+    const out = await page.evaluate(({ key, rack }) => {
+      if (typeof PHANTOM_RR !== 'object' || !PHANTOM_RR) return { __missing: true };
+      const good = localStorage.getItem(key);
+
+      localStorage.setItem(key, '{not json');
+      const malformed = PHANTOM_RR.assemble(rack);
+
+      localStorage.setItem(key, JSON.stringify({ entityId: rack }));
+      const wrongShape = PHANTOM_RR.assemble(rack);
+
+      localStorage.setItem(key, good);
+      const orig = Storage.prototype.getItem;
+      let unreadable;
+      try {
+        Storage.prototype.getItem = function (k) {
+          if (k === key) throw new Error('SecurityError: simulated unreadable storage');
+          return orig.call(this, k);
+        };
+        unreadable = PHANTOM_RR.assemble(rack);
+      } finally {
+        Storage.prototype.getItem = orig;
+      }
+      return { __missing: false, malformed, wrongShape, unreadable };
+    }, { key: AUDIT_KEY, rack: RACK });
+    expect(out.__missing, 'PHANTOM_RR is not defined').toBe(false);
+
+    for (const [label, rec] of [['malformed JSON', out.malformed], ['not an array', out.wrongShape], ['getItem throws', out.unreadable]]) {
+      const c = cov(rec, 'notes');
+      expect(c && c.status, label + ' must be error, never empty (P3)').toBe('error');
+      expect(c.events, label).toBe(0);
+      expect(typeof c.detail === 'string' && c.detail.length > 0, label + ' carries a detail').toBe(true);
+      expect(noteEvents(rec), label).toEqual([]);
+      expect(cov(rec, 'identity'), label).toEqual({ adapter: 'identity', status: 'ok', events: 0 });
+      expect(cov(rec, 'phases'), label).toEqual({ adapter: 'phases', status: 'ok', events: 3 });
+      expect(cov(rec, 'blockers'), label).toEqual({ adapter: 'blockers', status: 'ok', events: 4, detail: UNDATED_DETAIL(1) });
+      expect(rec.status.openBlockers, label + ' — a notes failure never moves the blocker count').toBe(3);
+      expect(rec.timeline.length, label + ' — the phase and blocker events survive').toBe(7);
+    }
+    expect(cov(out.wrongShape, 'notes').detail).toBe('audit store is not an array');
+  });
+
+  test('NOTES · PURE READ · assembling over a malformed audit store writes nothing — no quarantine, no crash log — and raises no toast', async ({ phantom, page }) => {
+    test.setTimeout(180000);
+    await boot(phantom, { seed: seedWithNotes() });
+
+    const out = await page.evaluate(({ key, rack }) => {
+      if (typeof PHANTOM_RR !== 'object' || !PHANTOM_RR) return { __missing: true };
+      const snap = () => {
+        const o = {};
+        for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); o[k] = localStorage.getItem(k); }
+        return o;
+      };
+      const toasts = () => (document.getElementById('toast-container') || { children: [] }).children.length;
+      // All synchronous in one evaluate: nothing in the app can write between the two snapshots.
+      localStorage.setItem(key, '{not json');
+      const before = snap();
+      const toastsBefore = toasts();
+      const rec = PHANTOM_RR.assemble(rack);
+      const row = (rec.coverage || []).find((c) => c.adapter === 'notes');
+      return { __missing: false, before, after: snap(), toastsBefore, toastsAfter: toasts(), status: row ? row.status : null };
+    }, { key: AUDIT_KEY, rack: RACK });
+    expect(out.__missing, 'PHANTOM_RR is not defined').toBe(false);
+
+    // ⛔ ORDER MATTERS HERE, and it is not the obvious one. The two write assertions run FIRST so
+    // that a reader-regression is reported as the write it is: swap _rr_readKey for
+    // deploy_loadAllAudit and the quarantine record shows up here, named. If the status check ran
+    // first it would fail on 'empty' and the write would never be looked at — which is exactly
+    // what happened under mutation M4 before this reorder (docs/A2-SHIP3-EVIDENCE.md D-3).
+    expect(out.after, 'assembly wrote to storage (a quarantine record is a write)').toEqual(out.before);
+    expect(out.toastsAfter, 'assembly raised a toast').toBe(out.toastsBefore);
+    // ⛔ AND THE PRECONDITION IS STILL THE TEST. Without it the two assertions above pass vacuously
+    // wherever no adapter reads the audit key at all — which is precisely the state on .593.
+    expect(out.status, 'the fixture really is malformed and the notes adapter really read it').toBe('error');
+  });
+
+  test('NOTES · UNDATED · an unusable ts is counted and never timed, absent values are null, and notes with no usable time at all still read ok', async ({ phantom, page }) => {
+    test.setTimeout(180000);
+    await boot(phantom);
+
+    const U_TS_STR = aud('audit_u1', '1750000000600', 'RACK_NOTE', 'rack', RACK, 'string time');
+    const U_TS_NULL = aud('audit_u2', null, 'RACK_NOTE', 'rack', RACK, 'null time');
+    const U_TS_GONE = aud('audit_u3', 0, 'RACK_NOTE', 'rack', RACK, 'no time at all');
+    delete U_TS_GONE.ts;
+    const U_NO_ID = aud('audit_u4', T0 + 800, 'RACK_NOTE', 'rack', RACK, 'no id');
+    delete U_NO_ID.id;
+    const U_NO_SUM = aud('audit_u5', T0 + 810, 'RACK_NOTE', 'rack', RACK, 'replaced below');
+    delete U_NO_SUM.summary;
+    const U_NO_ACTOR = aud('audit_u6', T0 + 820, 'RACK_NOTE', 'rack', RACK, 'no actor');
+    delete U_NO_ACTOR.actor;
+    const store = [U_TS_STR, U_TS_NULL, U_TS_GONE, U_NO_ID, U_NO_SUM, U_NO_ACTOR, null, 7, 'x'];
+
+    const out = await page.evaluate(({ key, rack, value, undatedOnly }) => {
+      if (typeof PHANTOM_RR !== 'object' || !PHANTOM_RR) return { __missing: true };
+      localStorage.setItem(key, value);
+      const mixed = PHANTOM_RR.assemble(rack);
+      localStorage.setItem(key, undatedOnly);
+      const allUndated = PHANTOM_RR.assemble(rack);
+      return { __missing: false, mixed, allUndated };
+    }, {
+      key: AUDIT_KEY, rack: RACK, value: JSON.stringify(store),
+      undatedOnly: JSON.stringify([U_TS_STR, U_TS_NULL]),
+    });
+    expect(out.__missing, 'PHANTOM_RR is not defined').toBe(false);
+
+    // Three usable times; three unusable. An absent id, summary or actor is null, never omitted (I-8).
+    expect(noteEvents(out.mixed)).toEqual([
+      { t: T0 + 800, type: 'note.logged', source: 'notes', data: { auditId: null, text: 'no id', actor: 'E2E' } },
+      { t: T0 + 810, type: 'note.logged', source: 'notes', data: { auditId: 'audit_u5', text: null, actor: 'E2E' } },
+      { t: T0 + 820, type: 'note.logged', source: 'notes', data: { auditId: 'audit_u6', text: 'no actor', actor: null } },
+    ]);
+    for (const ev of out.mixed.timeline) expect(typeof ev.t === 'number' && isFinite(ev.t), 'every event has a numeric t').toBe(true);
+    expect(cov(out.mixed, 'notes')).toEqual({ adapter: 'notes', status: 'ok', events: 3, detail: NOTE_UNDATED_DETAIL(3) });
+
+    // A rack whose every note is undated HAS notes: ok with 0 events and a detail saying so is
+    // honest; empty would deny them. Ship 2's blockers adapter draws the line the same way.
+    expect(noteEvents(out.allUndated)).toEqual([]);
+    expect(cov(out.allUndated, 'notes')).toEqual({ adapter: 'notes', status: 'ok', events: 0, detail: NOTE_UNDATED_DETAIL(2) });
+  });
+
+  test('NOTES · TRUNCATION · a reset marker anywhere in the log is reported, on an empty row too, and never as a count (Q-23)', async ({ phantom, page }) => {
+    test.setTimeout(180000);
+    await boot(phantom);
+
+    // The FIFO eviction marker, as deploy_logAudit writes it onto the new head. It belongs to
+    // another deployment: the cap is device-wide, so the marker need not be this rack's entry.
+    const HEAD = aud('audit_head', T0 + 5, 'OMNI_NOTE', 'deployment', 'dep_old', 'evicted head', {
+      deploymentId: 'dep_old', chainReset: true, truncatedCount: 1, truncatedAt: T0 + 6, truncatedLastHash: 'h0',
+    });
+    // The restore marker: chainReset and truncatedAt, no count at all (:56975).
+    const R_HEAD = aud('audit_rhead', T0 + 7, 'OMNI_NOTE', 'deployment', 'dep_old', 'restored head', {
+      deploymentId: 'dep_old', chainReset: true, truncatedAt: T0 + 8,
+    });
+
+    const out = await page.evaluate(({ key, rack, stores }) => {
+      if (typeof PHANTOM_RR !== 'object' || !PHANTOM_RR) return { __missing: true };
+      const res = {};
+      Object.keys(stores).forEach((name) => {
+        localStorage.setItem(key, stores[name]);
+        res[name] = PHANTOM_RR.assemble(rack);
+      });
+      return { __missing: false, res };
+    }, {
+      key: AUDIT_KEY, rack: RACK,
+      stores: {
+        truncated: JSON.stringify([HEAD, A_EARLY]),
+        truncatedNoneLeft: JSON.stringify([HEAD]),
+        restored: JSON.stringify([R_HEAD, A_EARLY]),
+        clean: JSON.stringify([A_EARLY]),
+        both: JSON.stringify([HEAD, A_EARLY, A_UNDATED]),
+      },
+    });
+    expect(out.__missing, 'PHANTOM_RR is not defined').toBe(false);
+
+    expect(cov(out.res.truncated, 'notes'), 'an ok read of a truncated log says entries may be missing')
+      .toEqual({ adapter: 'notes', status: 'ok', events: 1, detail: NOTE_RESET_DETAIL });
+    // Q-23 is exactly this case: no surviving note for the rack, and a log that lost entries. The
+    // fold has to pass detail on an empty row, or P3's "empty" is silently a lie.
+    expect(cov(out.res.truncatedNoneLeft, 'notes'), 'an empty read of a truncated log still says so (Q-23)')
+      .toEqual({ adapter: 'notes', status: 'empty', events: 0, detail: NOTE_RESET_DETAIL });
+    expect(noteEvents(out.res.truncatedNoneLeft)).toEqual([]);
+    expect(cov(out.res.restored, 'notes'), 'a restore marker carries no count and reads the same')
+      .toEqual({ adapter: 'notes', status: 'ok', events: 1, detail: NOTE_RESET_DETAIL });
+    // No marker, nothing to say: the row keeps Ship 1's exact three-key shape.
+    expect(cov(out.res.clean, 'notes')).toEqual({ adapter: 'notes', status: 'ok', events: 1 });
+    expect(Object.prototype.hasOwnProperty.call(cov(out.res.clean, 'notes'), 'detail'), 'no detail key at all on a clean read').toBe(false);
+    // Both caveats, undated first, joined with '; '.
+    expect(cov(out.res.both, 'notes')).toEqual(
+      { adapter: 'notes', status: 'ok', events: 1, detail: NOTE_UNDATED_DETAIL(1) + '; ' + NOTE_RESET_DETAIL });
+    // ⛔ L-7: truncatedCount reads 1 after every steady-state eviction, so it is not a loss count.
+    // HEAD carries truncatedCount 1 and R_HEAD carries none, and the two produce the IDENTICAL
+    // sentence — that identity is the proof the wording does not depend on the field.
+    expect(cov(out.res.restored, 'notes').detail, 'a count-less marker and a counted one read alike (L-7)')
+      .toBe(cov(out.res.truncated, 'notes').detail);
+    for (const name of ['truncated', 'truncatedNoneLeft', 'restored', 'both']) {
+      const d = cov(out.res[name], 'notes').detail;
+      expect(d.endsWith(NOTE_RESET_DETAIL), name + ' — the reset sentence is the last thing said').toBe(true);
+      expect(d, name + ' — truncatedCount is never surfaced').not.toMatch(/truncat/);
+    }
+  });
+
+  test('NOTES · REGISTRY · notes is the fourth adapter, coverage is exactly the registry, and the gaps list does not move', async ({ phantom, page }) => {
+    test.setTimeout(180000);
+    await boot(phantom, { seed: seedWithNotes() });
+    const out = await page.evaluate((rack) => {
+      if (typeof PHANTOM_RR !== 'object' || !PHANTOM_RR) return { __missing: true };
+      return {
+        __missing: false, value: PHANTOM_RR.assemble(rack),
+        names: PHANTOM_RR.registry.map((a) => a && a.name),
+        schemas: PHANTOM_RR.registry.map((a) => a && a.schemaHandled),
+      };
+    }, RACK);
+    const rec = present(out);
+
+    expect(out.names, 'notes is registered fourth, after blockers (E-8b: the tie order)').toEqual(['identity', 'phases', 'blockers', 'notes']);
+    expect(out.schemas[3], 'the notes adapter declares the one key it handles').toMatch(/phantom_deploy_audit_v1/);
+    expect(rec.coverage.map((c) => c.adapter), 'one coverage row per registered adapter, nothing else').toEqual(out.names);
+    expect(rec.gaps, 'a fourth adapter does not change the gaps list').toEqual([{ field: 'rack', detail: RACK_GAP }]);
+    expect(Object.keys(rec), 'rr-1 keys do not move').toEqual(['schema', 'assembledAt', 'site', 'rack', 'tech', 'status', 'timeline', 'evidence', 'coverage', 'gaps']);
+    expect(rec.schema, 'the schema name does not move (Q-22)').toBe('rr-1');
   });
 
   test('READOUT · without ?rrdev=1 there is no trace of it', async ({ phantom, page }) => {
@@ -571,6 +950,7 @@ test.describe('65 — the Rack Record assembler (Ships 1–2)', () => {
     await expect(page.locator('#rr-dev-cov')).toContainText('identity ok');
     await expect(page.locator('#rr-dev-cov')).toContainText('phases ok');
     await expect(page.locator('#rr-dev-cov')).toContainText('blockers empty');
+    await expect(page.locator('#rr-dev-cov')).toContainText('notes empty');
     // Q-A: the rack gap is on its own line, never in the coverage line.
     await expect(page.locator('#rr-dev-cov')).not.toContainText('rack empty');
     await expect(page.locator('#rr-dev-gaps')).toContainText('rack — ' + RACK_GAP);
@@ -594,7 +974,7 @@ test.describe('65 — the Rack Record assembler (Ships 1–2)', () => {
     await page.locator('#rr-dev-pick').selectOption(RACK);
 
     const covLine = page.locator('#rr-dev-cov');
-    await expect(covLine).toHaveText('identity ok (0) · phases ok (3) · blockers ok (4) — ' + UNDATED_DETAIL(1));
+    await expect(covLine).toHaveText('identity ok (0) · phases ok (3) · blockers ok (4) — ' + UNDATED_DETAIL(1) + ' · notes empty');
     await expect(page.locator('#rr-dev-gaps')).toHaveText('gaps: rack — ' + RACK_GAP);
     const json = JSON.parse(await page.locator('#rr-dev-json').textContent());
     expect(typeof json.status.openBlockers, 'openBlockers is a number once the store is read').toBe('number');
@@ -607,6 +987,32 @@ test.describe('65 — the Rack Record assembler (Ships 1–2)', () => {
     await expect(covLine).toHaveText('');
     await expect(page.locator('#rr-dev-gaps')).toHaveText('');
     await expect(page.locator('#rr-dev-json')).toHaveText('');
+
+    expect(phantom.hardErrors()).toEqual([]);
+  });
+
+  test('READOUT · with ?rrdev=1 and an audit store, the coverage line ends with the notes row and the JSON carries the note texts', async ({ phantom, page }) => {
+    test.setTimeout(180000);
+    await boot(phantom, { query: '?rrdev=1', seed: seedWithNotes() });
+
+    await expect(page.locator('#rr-dev')).toBeVisible();
+    await page.locator('#rr-dev-pick').selectOption(RACK);
+
+    // Exact text: the whole line, including Ship 2's blockers caveat, unchanged before the notes row.
+    await expect(page.locator('#rr-dev-cov')).toHaveText(
+      'identity ok (0) · phases ok (3) · blockers ok (4) — ' + UNDATED_DETAIL(1)
+      + ' · notes ok (4) — ' + NOTE_UNDATED_DETAIL(1));
+    await expect(page.locator('#rr-dev-gaps')).toHaveText('gaps: rack — ' + RACK_GAP);
+
+    const json = JSON.parse(await page.locator('#rr-dev-json').textContent());
+    const notes = json.timeline.filter((e) => e.type === 'note.logged');
+    expect(notes.map((e) => e.data.text), 'text is the stored summary, in timeline order')
+      .toEqual(['rail kit missing', 'IN PROGRESS', 'cage nut short', 'cage nut replaced']);
+    expect(notes.map((e) => e.data.actor), 'actor verbatim, fallbacks included (Q-25)')
+      .toEqual(['System', 'LEAD-B', 'E2E', 'E2E']);
+    expect(notes.every((e) => typeof e.t === 'number' && isFinite(e.t)), 'every note event has a numeric t').toBe(true);
+    expect(json.status.openBlockers, 'a note never reaches the blocker derivation').toBe(3);
+    expect(Object.keys(json.status), 'no noteCount key (Q-22)').toEqual(['phase', 'openBlockers', 'photoCount', 'photoBytes']);
 
     expect(phantom.hardErrors()).toEqual([]);
   });

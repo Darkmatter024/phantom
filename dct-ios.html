@@ -12876,7 +12876,7 @@ body.rd .pql-ctl-on{color:var(--gold)}
 <script>
 // ━━━ PHANTOM Ghost Update — Service Worker registration ━━━
 // Embedded version sentinel — must match sw.js CACHE_VERSION. Bumped together.
-const PHANTOM_APP_VERSION = 'phantom-v1.14.593';
+const PHANTOM_APP_VERSION = 'phantom-v1.14.594';
 // ⛔ STABILIZATION 2026-09-11 — THE TWO PARSE-TIME RELOADERS ARE DELETED (this one, and its
 // twin that sat just below the #ver-stamp binding). Both fetched version.json at parse time and
 // both reacted to a mismatch on their own: the first called location.reload(true), the second
@@ -31613,6 +31613,8 @@ window.PHANTOM_PHASE_MODEL = PHANTOM_PHASE_MODEL;
 // docs/A2-SHIP1-PHASE0-EVIDENCE.md · pinned by test/e2e/65-rack-record-assembler.spec.js)
 // SHIP 2: blockers adapter, derived status.openBlockers, and the gaps list (rulings OWNER-RULINGS.md
 // 2026-09-17 Q-10…Q-17 and Q-A · evidence docs/A2-SHIP2-PHASE0-EVIDENCE.md)
+// SHIP 3: notes adapter over the audit log, and a coverage detail on empty rows (rulings
+// OWNER-RULINGS.md 2026-09-17 Q-18…Q-27 · evidence docs/A2-SHIP3-PHASE0-EVIDENCE.md)
 //
 // A Rack Record (schema rr-1) is assembled ON DEMAND from live storage by a fold over an ordered
 // adapter registry, then thrown away: never cached, never persisted, no AI call (P4, P5). Derived
@@ -31739,10 +31741,68 @@ var RR_ADAPTER_BLOCKERS = {
   }
 };
 
+// ⛔ DECLARED ABOVE PHANTOM_RR ON PURPOSE — the same trap as RR_ADAPTER_BLOCKERS. A var declared
+// below the registry literal is undefined when it is built, and assemble() then throws at
+// facts[ad.name], outside the fold's try (Phase 0 E-8b; mutation M7 turned 17 of 18 tests red).
+var RR_ADAPTER_NOTES = {
+  name: 'notes',
+  schemaHandled: 'phantom_deploy_audit_v1 (docs/A1-CENSUS-REFRESH-TIER-A.md §4)',
+  // ⛔ RAW STORE ONLY, through _rr_readKey — never deploy_loadAllAudit, deploy_loadAuditFor or
+  // deploy_verifyAuditChain: all three read through safeGet, which QUARANTINES the key and toasts on
+  // malformed JSON, the second also writes the crash log on an empty id, and the third needs sha256
+  // over the whole device log (ruling Q-5; Phase 0 E-8a).
+  // ⛔ RACK_NOTE ONLY (ruling Q-18). entityType 'rack' alone is NOT "a note": RACK_ASSIGNED, the
+  // voice notes and a rack-typed scan_collect share it, so the action is tested too. And e.rack is
+  // never a match key — its one live writer is BLOCKER_OPENED, which is the blockers adapter's
+  // moment (Q-17), so matching it would double-count and re-print the blocker's own text. summary
+  // is free text and never a key. Whole-string equality on entityId, no prefix and no parse:
+  // deployment ids contain underscores and rack_<dep>_1 is a prefix of rack_<dep>_10.
+  // The log is one flat device-wide array, so deploymentId is neither compared nor derived (I-2):
+  // the composite is globally unique by construction, and parsing one is a STOP field (S-18).
+  read: function(siteId, rackId) {
+    // '' names no rack, so it is never a match target (I-3, the Ship 2 guard).
+    if (typeof rackId !== 'string' || !rackId) return { events: [], facts: {}, status: 'empty' };
+    var r = _rr_readKey(DEPLOY_AUDIT_KEY);
+    if (r.state === 'absent') return { events: [], facts: {}, status: 'empty' };
+    if (r.state === 'error') return { events: [], facts: {}, status: 'error', detail: r.detail };
+    if (!Array.isArray(r.value)) return { events: [], facts: {}, status: 'error', detail: 'audit store is not an array' };
+    var events = [], undated = [], matched = 0, reset = false;
+    r.value.forEach(function(e) {
+      if (!e || typeof e !== 'object') return;   // a member that is not an object is skipped, never an error (I-10)
+      // The FIFO cap is DEVICE-WIDE and the marker lands on the new head, which may belong to
+      // another deployment — so the whole array is scanned for it, not just this rack's entries.
+      if (e.chainReset === true) reset = true;
+      if (e.action !== 'RACK_NOTE' || e.entityType !== 'rack' || e.entityId !== rackId) return;
+      matched++;
+      var id = (typeof e.id === 'string' && e.id) ? e.id : null;   // never parsed for a time (S-18)
+      // Q-11's rule, one ship on: no trustworthy happened-at, no timeline entry. deploy_logAudit
+      // always writes Date.now(), so only a restore or a hand edit reaches this.
+      if (typeof e.ts !== 'number' || !isFinite(e.ts)) { undated.push({ auditId: id, reason: 'ts is not a number' }); return; }
+      // Values VERBATIM (Q-21, Q-25). A chip hold stores a label that reads like a state change
+      // ('BLOCKED — see ticket'), and actor may be the deployment's Build Lead rather than the
+      // operator (lead L-9). The adapter interprets neither, and substituting would fabricate.
+      events.push({ t: e.ts, type: 'note.logged', source: 'notes',
+        data: { auditId: id, text: (e.summary == null ? null : e.summary), actor: (e.actor == null ? null : e.actor) } });
+    });
+    var caveats = [];
+    if (undated.length) caveats.push(undated.length + ' note(s) have no usable time — counted, not on the timeline');
+    // Q-23: an empty read of a lossy log is exactly the case P3 exists for, so this detail rides an
+    // empty row too. ⛔ It never states how many entries were lost: truncatedCount is reset to 1 by
+    // every steady-state eviction and is not a loss count (lead L-7). A restore writes the same
+    // marker with no count at all, and the adapter cannot tell whether any lost entry was this rack's.
+    if (reset) caveats.push('the audit log carries a reset marker (2,000-entry cap or a restore) — notes older than its oldest surviving entry may be missing');
+    // A rack whose every note is undated HAS notes: matched drives ok/empty, not the event count,
+    // exactly as mine.length does for the blockers adapter. Saying 'empty' would deny them.
+    var res = { events: events, facts: matched ? { undated: undated } : {}, status: matched ? 'ok' : 'empty' };
+    if (caveats.length) res.detail = caveats.join('; ');
+    return res;
+  }
+};
+
 var PHANTOM_RR = {
   SCHEMA: 'rr-1',
   // ORDER MATTERS: identity runs first so its siteId is handed to every adapter after it.
-  registry: [RR_ADAPTER_IDENTITY, RR_ADAPTER_PHASES, RR_ADAPTER_BLOCKERS],
+  registry: [RR_ADAPTER_IDENTITY, RR_ADAPTER_PHASES, RR_ADAPTER_BLOCKERS, RR_ADAPTER_NOTES],
 
   assemble: function(rackId) {
     var coverage = [], gaps = [], merged = [], facts = {}, siteId = null;
@@ -31759,7 +31819,9 @@ var PHANTOM_RR = {
       facts[ad.name] = (res.status === 'ok' && res.facts) ? res.facts : {};
       var row = { adapter: ad.name, status: res.status, events: evs.length };
       if (res.status === 'error') row.detail = String(res.detail || 'unknown error');
-      else if (res.status === 'ok' && res.detail) row.detail = String(res.detail);   // Q-11: an ok read may carry a caveat
+      // Q-11: an ok read may carry a caveat. Q-23: so may an EMPTY one — a truncated log that left
+      // this rack no surviving note is the case coverage honesty (P3) exists for.
+      else if (res.status !== 'error' && res.detail) row.detail = String(res.detail);
       coverage.push(row);
       if (res.status === 'ok' && res.facts && res.facts.siteId !== undefined) siteId = res.facts.siteId;
     });
