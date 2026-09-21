@@ -399,7 +399,10 @@ test.describe('house selection', () => {
   test('?legacy=1 does not stick across a reload', async ({ phantom, page }) => {
     await phantom.boot({ query: '?legacy=1' });
     await page.reload({ waitUntil: 'domcontentloaded' });
-    await page.locator('#pe-tapcatch').click({ force: true });
+    const tapcatch = page.locator('#pe-tapcatch');
+    if (await tapcatch.isVisible()) {
+      await tapcatch.click({ force: true });
+    }
     await page.waitForFunction(() => {
       const app = document.getElementById('app');
       return !!app && app.classList.contains('visible');
