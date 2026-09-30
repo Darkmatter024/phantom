@@ -16,6 +16,8 @@
  *   3. Inline <script> compile + CSS brace balance — a syntax error ships a blank app
  *   4. No backticks in a git commit body           — they run as a subshell and eat the message
  *   5. VERIFIED token gate                        — version.json bumps blocked until VERIFIED is stamped
+ *   6. Stamp / promote approval gate              — verify.ps1 / promote.ps1 only on the owner's
+ *                                                   exact approval message (ruling 2026-09-30)
  *
  * DESIGN NOTES, so a later reader does not "simplify" this into a footgun:
  *   - Scoped to the PHANTOM repo. Any other project passes straight through untouched.
@@ -280,6 +282,116 @@ function checkVerifiedGate(cmd) {
   return null;
 }
 
+/** Stamp / promote approval gate — owner ruling 2026-09-30 (OWNER-RULINGS.md).
+ *  The agent may run tools/verify.ps1 and tools/promote.ps1 ONLY right after the owner's latest
+ *  human-typed chat message is, in its entirety, one of:
+ *      PASS <version> — stamp and promote      → verify.ps1 <version> PASS, then promote.ps1
+ *      FAIL <version> [— what you saw]          → verify.ps1 <version> FAIL "<what you saw>"
+ *  <version> is a build number (594) or phantom-v1.14.594; one version per message. The dash may be
+ *  an em dash, en dash or hyphen. Anything else ("check", "looks good", a ruling that merely quotes
+ *  the form) is not an approval.
+ *  - The approval lapses when the owner sends any other message: only the LATEST human message counts.
+ *  - promote.ps1 takes no version, so it is allowed only when HEAD's version.json IS the approved one.
+ *  - promote.ps1 -DryRun changes nothing and is always allowed. stamp.ps1 is never run by the agent.
+ *  - Raw release moves (push to release, checkout/switch release, branch -f / update-ref release)
+ *    are always blocked on the agent path: promote.ps1 is the only promote path.
+ *  ⛔ FAILS CLOSED. Unlike the other gates, an unreadable transcript blocks: a gate that opens on its
+ *  own error would let the agent move release with no approval at all.
+ *  "Human message" = a transcript entry of type "user" whose origin.kind is "human". Tool results,
+ *  hook output and injected reminders carry no human origin, so they can never approve. */
+function normVersion(v) {
+  const m = String(v || '').trim().match(/^(?:phantom-v\d+\.\d+\.)?(\d+)$/i);
+  return m ? 'phantom-v1.14.' + m[1] : null;
+}
+function latestHumanMessage(transcriptPath) {
+  const lines = read(transcriptPath).split('\n');
+  for (let i = lines.length - 1; i >= 0; i--) {
+    const l = lines[i].trim();
+    if (!l) continue;
+    let e;
+    try { e = JSON.parse(l); } catch (_) { continue; }
+    if (!e || e.type !== 'user' || e.isMeta || e.isSidechain) continue;
+    if (!e.origin || e.origin.kind !== 'human') continue;
+    const c = e.message && e.message.content;
+    if (typeof c === 'string') return c;
+    if (Array.isArray(c)) return c.filter((b) => b && b.type === 'text').map((b) => b.text).join('\n');
+    return '';
+  }
+  return null;
+}
+function parseApproval(text) {
+  const t = String(text || '').replace(/<system-reminder>[\s\S]*?<\/system-reminder>/g, '').trim();
+  const V = '((?:phantom-v\\d+\\.\\d+\\.)?\\d+)';
+  const D = '\\s*(?:\\u2014|\\u2013|-{1,2})\\s*';
+  let m = t.match(new RegExp('^PASS\\s+' + V + D + 'stamp and promote\\.?$', 'i'));
+  if (m) return { outcome: 'PASS', version: normVersion(m[1]) };
+  m = t.match(new RegExp('^FAIL\\s+' + V + '(?:(?:' + D + '|:\\s*|\\s+)([\\s\\S]+))?$', 'i'));
+  if (m) return { outcome: 'FAIL', version: normVersion(m[1]), reason: (m[2] || '').trim() };
+  return null;
+}
+function checkReleaseGate(cmd, transcriptPath) {
+  const RAW = [
+    /\bgit\b[^\n;&|]*\bpush\b[^\n;&|]*\brelease\b/i,
+    /\bgit\s+(?:checkout|switch)\s+(?:-\S+\s+)*release\b/i,
+    /\bgit\s+branch\s+(?:-\S+\s+)*-[fFmM]\s+(?:\S+\s+)*release\b/i,
+    /\bgit\s+update-ref\s+(?:\S+\s+)*refs\/heads\/release\b/i,
+  ];
+  if (RAW.some((re) => re.test(cmd))) {
+    return 'GATE: the agent never moves release by hand. The only promote path is tools/promote.ps1, '
+      + 'run on the owner\'s exact approval message (OWNER-RULINGS.md 2026-09-30).';
+  }
+  // INVOCATIONS only, never mentions: heredoc / here-string bodies (commit messages) are removed,
+  // and the script must sit in COMMAND position — start of a line or after ; & | — optionally behind
+  // the call operator, a dot-source, or a pwsh/powershell launcher with its flags. So a commit message,
+  // an echo or a grep that names verify.ps1 is not a run of it.
+  const stripped = cmd
+    .replace(/<<-?\s*['"]?(\w+)['"]?[^\n]*\n[\s\S]*?\n\s*\1\s*(?=\n|$)/g, '\n')
+    .replace(/@'[\s\S]*?\n'@/g, '\n')
+    .replace(/@"[\s\S]*?\n"@/g, '\n');
+  const INVOKE = /(?:^|[;&|\n])\s*(?:&\s*|\.\s+)?(?:(?:pwsh|powershell)(?:\.exe)?\s+(?:-\S+\s+(?:[^-\s]\S*\s+)?)*?)?['"]?(?:[^\s'";&|]*[\\\/])?(verify|promote|stamp)\.ps1['"]?([^\n;&|]*)/gi;
+  const calls = [...stripped.matchAll(INVOKE)];
+  if (!calls.length) return null;
+  const blocked = [];
+  let approval;
+  try {
+    approval = parseApproval(latestHumanMessage(transcriptPath));
+  } catch (e) {
+    return 'GATE (fails closed): could not read the owner\'s latest message (' + e.message + '). '
+      + 'verify.ps1 / promote.ps1 do not run without a readable approval.';
+  }
+  const need = 'Send exactly "PASS <version> — stamp and promote" or "FAIL <version> — what you saw" '
+    + 'as your whole message, then re-run.';
+  for (const c of calls) {
+    const script = c[1].toLowerCase();
+    const args = c[2].trim();
+    if (script === 'stamp') { blocked.push('GATE: stamp.ps1 is owner-only; the agent path is verify.ps1.'); continue; }
+    if (script === 'promote' && /(^|\s)-DryRun\b/i.test(args)) continue;
+    if (!approval || !approval.version) {
+      blocked.push(`GATE: ${script}.ps1 needs the owner's approval as his latest message. ${need}`);
+      continue;
+    }
+    if (script === 'verify') {
+      const a = args.split(/\s+/);
+      const v = normVersion(a[0]);
+      const outcome = String(a[1] || '').toUpperCase();
+      if (v !== approval.version || outcome !== approval.outcome) {
+        blocked.push(`GATE: the latest approval is "${approval.outcome} ${approval.version}"; this call is `
+          + `verify.ps1 ${args}. Only the named version and outcome may run.`);
+      }
+      continue;
+    }
+    if (script === 'promote') {
+      if (approval.outcome !== 'PASS') { blocked.push(`GATE: the latest approval is FAIL ${approval.version}; nothing is promoted on a FAIL.`); continue; }
+      let head = null;
+      try { head = JSON.parse(read(VER)).version; } catch (_) { head = null; }
+      if (head !== approval.version) {
+        blocked.push(`GATE: promote.ps1 would promote ${head || 'an unreadable version.json'}, but the approval names ${approval.version}.`);
+      }
+    }
+  }
+  return blocked.length ? blocked.join('\n   ') : null;
+}
+
 /** Backticks inside a commit body run as a subshell and silently eat the snippet. */
 function checkCommitMessage(cmd) {
   if (!/git\s+commit/.test(cmd)) return null;
@@ -315,6 +427,13 @@ process.stdin.on('end', () => {
       }
     } else if (tool === 'Bash' || tool === 'PowerShell') {
       const cmd = String(ti.command || '');
+      // Stamp / promote approval gate. It FAILS CLOSED, so an internal error here must block,
+      // not fall through to the fail-open catch below.
+      let releaseGate;
+      try { releaseGate = checkReleaseGate(cmd, payload.transcript_path); }
+      catch (e) { releaseGate = 'GATE (fails closed): stamp/promote approval check errored: ' + e.message; }
+      if (releaseGate) problems.push(releaseGate);
+
       const msg = checkCommitMessage(cmd);
       if (msg) problems.push(msg);
 

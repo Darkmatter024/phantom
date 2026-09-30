@@ -140,25 +140,44 @@ import. Docs only: no product source touched, so no version bump and no `VERIFIE
 - **`release`** — what GitHub Pages serves: `darkmatter024.github.io/phantom/dct-ios.html`, the
   **PHANTOM** icon. **`release` means graduated.**
 
-⛔ **REVOKED 2026-09-05 — PROMOTE IS OWNER-ONLY. CLAUDE CODE NEVER MOVES `release`, IN ANY MODE.**
-The 2026-08-30 amendment that permitted Claude Code to fast-forward `release` itself is **struck**.
-⭐ **The ruling of record is `OWNER-RULINGS.md`, 2026-09-05 — read it, not this summary.**
+⭐ **STAMP AND PROMOTE ON JOHN'S EXACT APPROVAL — owner ruling 2026-09-30.** It replaces the
+2026-09-05 terminal-only rule and its struck in-session exception. **The ruling of record is
+`OWNER-RULINGS.md`, 2026-09-30 — read it, not this summary.**
 
-There is **no session-order exception**. An in-session instruction to promote is answered by handing
-John the command to run, never by running it. ⛔ No `merge --ff-only`, no push to `release`, no
-branch reset, no "it is only a fast-forward".
+**Claude Code runs `tools/verify.ps1` and `tools/promote.ps1` itself, and only right after John's
+latest chat message is, in its entirety, one of:**
+- `PASS <version> — stamp and promote` → run `verify.ps1 <version> PASS`, then `promote.ps1`.
+- `FAIL <version>`, optionally followed by what he saw → run `verify.ps1 <version> FAIL "<what he saw>"`.
+  Nothing is promoted. If he gave no reason, ask for one: the script refuses a FAIL without one.
 
-**The only promote path is `tools/promote.ps1`, run by John from his own terminal.** Claude Code
-ships to `main`, reports, and PARKS. A push to `main` reaches the PHANTOM STAGING icon within about
-a minute and nothing else; the PHANTOM icon moves only when John promotes.
+⛔ **The limits:**
+- One version per message.
+- Never on your own initiative.
+- Never inferred from "check", "ok", "looks good", or a message that only quotes the form.
+- Never for a version he did not name.
+- Any later message from John lapses the approval.
+- **Show John the full, unedited script output every time.**
+
+⛔ **Enforced by hook** (`tools/hooks/phantom-guard.js` gate 6, fails closed):
+- it reads John's latest human-typed message from the session transcript and allows only the
+  named version and outcome;
+- it allows `promote.ps1` only when HEAD's `version.json` is that version;
+- it always blocks `stamp.ps1` on the agent path, and always blocks a raw move of `release`.
+  No `merge --ff-only`, no push to `release`, no branch reset, no "it is only a fast-forward".
+
+**The only promote path is still `tools/promote.ps1`.** Claude Code ships to `main`, reports, and
+PARKS until the approval message arrives. John can still run both scripts from his own terminal.
+A push to `main` reaches the PHANTOM STAGING icon within about a minute and nothing else; the
+PHANTOM icon moves only on a promote.
 
 ⛔ Still forbidden to anyone: any commit on `release`, any non-fast-forward, any `--force`. A promote
 is a fast-forward or it is a STOP.
 
 ⛔ **WHAT DID NOT CHANGE, and is the actual gate:**
-1. **`VERIFIED` is owner-only.** Claude Code never edits it except when John says "stamp it", never
-   commits it, and never stamps a version the served bytes have not carried — and since 2026-09-09
-   "served" means **staging**, which `tools/verify.ps1` reads before it writes anything.
+1. **`VERIFIED` is the owner's ruling.** The only agent path that writes it is `verify.ps1`, on John's
+   exact approval message (2026-09-30). Claude Code never hand-edits or hand-commits it, and never
+   stamps a version the served bytes have not carried — and since 2026-09-09 "served" means
+   **staging**, which `tools/verify.ps1` reads before it writes anything.
 2. **The device verify is John's, always.** Promoting a version is not verifying it. Staging makes a
    version *seeable*; only John's phone makes it *real*; the promote makes it *graduated*.
 
@@ -175,7 +194,22 @@ a named exception, not precedent.*
 1. **OODA against served bytes.** `curl` staging `version.json` (what `main` serves) and the release `version.json` (what the PHANTOM icon has). Staging must read `HEAD`'s `version.json`; release must read `VERIFIED` line 1. If either does not, STOP and re-anchor.
 2. **One visible change to `main`.** Edit, test, commit. The hook enforces three-stamp lockstep and the VERIFIED gate.
 3. **Report:** what changed, what proves it, and the ONE look on PHANTOM STAGING — exactly what to do, what PASS and FAIL look like. Close the loop: show `git log -1 --oneline` and `git status`.
-4. **PUSH TO `main`, then STOP.** Staging rebuilds in about a minute. Every step from here is John's, from his terminal: **(a)** the look on PHANTOM STAGING; **(b)** `.\tools\verify.ps1 <v> PASS` or `FAIL "what you saw"` — it refuses a version `origin/main` does not carry, a `HEAD` that is not `origin/main`, and a version staging is not serving, then stamps `VERIFIED` and pushes `main`. **It does not promote.** **(c)** On PASS, `.\tools\promote.ps1` — Guard 4 refuses an unstamped or FAILED incoming version; `release` means graduated. ⛔ Claude Code never runs (b) or (c) — revoked 2026-09-05, see `OWNER-RULINGS.md`. The next ship is impossible until (b) has run: the hook refuses a `version.json` bump until `VERIFIED` rules on the old version. **A version does not exist until John's phone clears it on staging; promoting it is graduation, not verification.**
+4. **PUSH TO `main`, then STOP.** Staging rebuilds in about a minute.
+   - **(a) The look on PHANTOM STAGING is John's, always.**
+   - **(b)** `.\tools\verify.ps1 <v> PASS` or `FAIL "what you saw"`. It refuses a version `origin/main`
+     does not carry, a `HEAD` that is not `origin/main`, and a version staging is not serving; then it
+     stamps `VERIFIED` and pushes `main`. **It does not promote.**
+   - **(c)** On PASS, `.\tools\promote.ps1`. Guard 4 refuses an unstamped or FAILED incoming version;
+     `release` means graduated.
+   - ⭐ **Who runs (b) and (c)** (ruling 2026-09-30): Claude Code runs them **only** right after
+     John's exact message `PASS <v> — stamp and promote` (both) or `FAIL <v>` (b only), and shows
+     him the full script output. Otherwise John runs them from his terminal. Never on inference or
+     initiative; the hook enforces this.
+   - The next ship is impossible until (b) has run: the hook refuses a `version.json` bump until
+     `VERIFIED` rules on the old version.
+
+   **A version does not exist until John's phone clears it on staging; promoting it is graduation,
+   not verification.**
 5. **"Start Phase N" from John means:** ship the **next single slice** of Phase N, then stop. A phase name is never authorization for multiple ships.
 6. **At ≥70% context:** write current state to `PHANTOM_CURRENT_STATE.md`, tell John, recommend `/clear` before the next slice.
 

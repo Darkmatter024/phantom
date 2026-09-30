@@ -6,6 +6,86 @@ is stale until edited. Newest first.
 
 ---
 
+## 2026-09-30 · STAMP AND PROMOTE ON THE OWNER'S EXACT APPROVAL MESSAGE. Replaces the 2026-09-05 terminal-only rule.
+
+**Ruling, verbatim:**
+
+> New owner ruling, replacing the terminal-only stamp and promote rule: from now on you run verify.ps1
+> and promote.ps1 yourself, but only right after I send an exact approval message in this chat in the
+> form "PASS <version> — stamp and promote" (or "FAIL <version>"). One version per message. Never on
+> your own initiative, never inferred from a "check" or "looks good," never for a version I didn't
+> name. Amend the guard hook to allow the agent path only for the version in my latest approval
+> message. Write the ruling into OWNER-RULINGS.md and CLAUDE.md. Show me the full script output every
+> time. First use: PASS 594 — stamp and promote.
+
+### What this replaces
+
+- The 2026-09-05 ruling below, **PROMOTE IS OWNER-ONLY**, including its same-day strike (*"you never move
+  release, full stop, no session-order exception"*).
+- That ruling is preserved as the record. **This one governs.** The discretion that 09-05 removed is not
+  restored: the agent still decides nothing. It runs the two scripts only on an exact owner message
+  that names one version, and the hook enforces that.
+
+### The standing rule
+
+1. **Approval forms.** John's latest human-typed chat message must be, in its entirety:
+   - `PASS <version> — stamp and promote` → `verify.ps1 <version> PASS`, then `promote.ps1`;
+   - or `FAIL <version>`, optionally followed by what he saw → `verify.ps1 <version> FAIL "<what he saw>"`,
+     and nothing is promoted. `verify.ps1` refuses a FAIL without a reason, so if none was given, ask.
+
+   `<version>` is a build number (`594`) or `phantom-v1.14.594`. The dash may be an em dash, en dash
+   or hyphen.
+2. **One version per message.** Never on initiative. Never inferred from "check", "ok", "looks good",
+   or a message that quotes the form inside other text. Never for a version John did not name.
+   **Any later message from John lapses the approval.**
+3. **Full, unedited script output is shown to John every time.**
+4. **The scripts are the only path.** `promote.ps1` remains the only promote path. `stamp.ps1` is not
+   run by the agent (`verify.ps1` fuses it). A raw move of `release` (push to it, checkout or switch
+   to it, `branch -f`, `update-ref`) stays forbidden to the agent in every case.
+5. **Unchanged:**
+   - the device look on staging is John's, always;
+   - `verify.ps1`'s own guards and `promote.ps1` Guard 4 still apply;
+   - John may still run both scripts from his own terminal.
+
+### How it is enforced
+
+`tools/hooks/phantom-guard.js`, **gate 6**:
+- It reads the session transcript the PreToolUse hook is handed. It takes the latest entry of type
+  `user` with `origin.kind: "human"`, which tool results, hook output and injected reminders never
+  carry.
+- It allows a `verify.ps1` invocation only for the version and outcome that message names.
+- It allows `promote.ps1` only on a PASS approval, and only when HEAD's `version.json` is the approved
+  version. `promote.ps1` takes no version argument, so this is what ties it to the named version.
+- `promote.ps1 -DryRun` changes nothing and always runs.
+- It matches invocations only, never mentions. Heredoc and here-string bodies are stripped, and the
+  script must sit in command position, so a commit message, `echo` or `grep` that names a script is
+  not a run of it.
+- **It fails closed:** an unreadable transcript blocks the scripts. The guard's other gates still fail
+  open.
+
+**Tested 2026-09-30:** 27 cases through the real hook with synthetic transcripts, all pass. They cover:
+- no approval, a lapsed approval, a quoted form, two versions in one message, and an injected
+  (non-human) approval — all blocked;
+- the wrong version, the wrong outcome, and promote after a FAIL — all blocked;
+- promote while HEAD is another version, and `stamp.ps1` — both blocked;
+- raw pushes to and checkouts of `release` — blocked;
+- `grep`, `echo` and commit-message mentions — allowed;
+- the unreadable transcript (fails closed), the launcher forms, and `-DryRun` (always allowed).
+
+### Line items, not acted on
+
+- `tools/githooks/pre-commit` has a comment saying *"an agent never reaches this line"*. After this
+  ruling, an agent-run `verify.ps1` does reach it, legitimately: its `VERIFIED` commit goes through the
+  githook path. The behaviour is right and only the comment is stale.
+
+### ⚠ Caveat — enforcement depends on the agent-side hook being present
+
+Gate 6 is wired through `~/.claude/settings.json` (PreToolUse, `Bash|PowerShell`). A session on a
+machine or profile without that wiring would not be gated. The rule still binds; only the
+mechanical check would be missing.
+
+---
+
 ## 2026-09-30 · GRAPHIFY — `dct-ios.html` IS READ FROM SOURCE, NOT FROM THE GRAPH. No `--update`, no full rebuild.
 
 The owner ruled on the Step 2 diagnosis in `SHIP-HANDOFF-SESSION-2026-09-30.md` (options A, B, C). He chose **A and B together**. Recorded on first statement.
