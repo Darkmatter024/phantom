@@ -6,6 +6,48 @@ is stale until edited. Newest first.
 
 ---
 
+## 2026-09-30 · GRAPHIFY — `dct-ios.html` IS READ FROM SOURCE, NOT FROM THE GRAPH. No `--update`, no full rebuild.
+
+The owner ruled on the Step 2 diagnosis in `SHIP-HANDOFF-SESSION-2026-09-30.md` (options A, B, C). He chose **A and B together**. Recorded on first statement.
+
+**THE FINDING THIS RESTS ON.** Graphify can't cover `dct-ios.html`, and no rebuild of any size changes that:
+- `detect.py:31` of `graphifyy` 0.9.15 files `.html` under `DOC_EXTENSIONS`, so the file never goes through the free code (AST) parser. It only goes through LLM extraction.
+- `llm.py:28` caps every file sent to the LLM at `_FILE_CHAR_CAP = 20_000` characters. `dct-ios.html` is 3,792,860 characters, so the model sees about 0.5% of it.
+- Measured on the 09-17 graph: 119 nodes carry `source_file: dct-ios.html`, all concept-level (doctrine, token blocks). The nodes named `forge3d_render`, `master_rackToElevation`, `RackEngine` and `deploy_forge` come from `.md` files that describe the code, not from the code.
+- A full rebuild (~2.5M–3.5M tokens by `graphify-out/cost.json`) or an `--update` (~0.35M–1.3M) would pay for that same 20k-character slice again.
+
+**Also found:**
+- The graph is not corrupt: `graph.json` loads and its manifest is consistent.
+- The blocker was Smart App Control refusing the unsigned `uv` launcher: `Program 'graphify.exe' failed to run: An Application Control policy has blocked this file`. The package runs through its pinned interpreter, `%APPDATA%\uv\tools\graphifyy\Scripts\python.exe -m graphify …`.
+- `graphify-out/wiki/` was last generated 2026-09-02, two graph refreshes ago.
+
+**RULING A — the code-only refresh runs.** `python -m graphify update .` through the pinned interpreter: 0 LLM tokens.
+- Done 2026-09-30: 5,352 → 5,442 nodes, 1,636 communities.
+- `cost.json` is unchanged, so the run was not billed.
+- `dct-ios.html` stays at 119 nodes, as predicted.
+- The prior graph was backed up to `graphify-out/2026-09-30/`.
+
+**RULING B — for `dct-ios.html`, verified source reads are the required authority.** This covers read-only work (Phase 0 censuses) **and patches**:
+- Every claim about the file, and every anchor in every patch, comes from reading the source.
+- Evidence is cited as `dct-ios.html:<line>` with the verbatim identifier. The identifier is the anchor; the line number is a hint.
+- The graph may still give context (the rulings, specs and audits it indexes), but it is **never** the authority for this file.
+- A session that has not rebuilt the graph is **not** blocked from patching `dct-ios.html`.
+
+**Graphify-first still applies to every file graphify can actually cover:** `.js`, `.json`, `.ps1`, `.sh`, `.py`, and the `.md` docs within the cap.
+
+⛔ **WHAT THIS RULING DOES NOT DO.**
+- It does not authorise `--update` or a full rebuild. Neither runs without a new owner ruling.
+- It does not lift the requirement to read the source before a patch. It makes that the requirement.
+
+**PARKED — the full rebuild** goes to SITE-SYNC Phase 0, and **only if graphify gains a way to chunk large files.** Without chunking, a rebuild cannot see past the first 20k characters of `dct-ios.html`, and it stays off the table.
+
+**Line items, not acted on:**
+- `graphify install` would clear the 0.9.10 skill / 0.9.15 package warning.
+- The SessionStart hook calls the blocked launcher.
+- The wiki needs regenerating.
+
+---
+
 ## 2026-09-17 · A.2 SHIP 3 — Q-18 … Q-27 RULED AS RECOMMENDED. The notes adapter reads rack notes only, and says when the log has lost entries.
 
 The owner was asked what *"next"* meant against the Q table of `docs/A2-SHIP3-PHASE0-EVIDENCE.md`, and chose ***"Build it as recommended"*** over waiting to rule them himself and over parking Ship 3. Recorded on first statement. Each line below is that table's recommendation, now law for Ship 3; the evidence for each is in that document, not repeated here.

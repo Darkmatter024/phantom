@@ -255,12 +255,26 @@ a named exception, not precedent.*
 
 ## Working rules
 
-- **Read the graph before any patch.** Run `/graphify . --update`, then read
-  `graphify-out/wiki/index.md` — community article first, then the god nodes for the surface you
-  are about to touch. The wiki is generated into a gitignored folder, so it never travels with the
-  repo: the REBUILD is the requirement, not the file. If graphify is not installed, say so in the
-  report and proceed — never skip this silently.
-  graphify-first is harness-enforced via SessionStart hook in `.claude/settings.json`.
+- ⭐ **`dct-ios.html` is read from SOURCE, never from the graph** (owner ruling 2026-09-30,
+  `OWNER-RULINGS.md`). Graphify can't cover it:
+  - graphify files `.html` as a document, so the file never goes through the free code parser;
+  - its LLM path reads only the first 20,000 characters of any file, and `dct-ios.html` is ~3.8M.
+
+  **No rebuild of any size fixes that, so a rebuild is NOT required before reading or patching
+  it.** For this file the required authority is a verified source read:
+  - every claim and every patch anchor is cited as `dct-ios.html:<line>` with the verbatim identifier;
+  - the identifier is truth, and the line number is a hint.
+  - ⛔ Do not run `/graphify . --update` or a full rebuild to "unlock" a `dct-ios.html` patch.
+    Both need a new owner ruling; the full rebuild is parked with SITE-SYNC Phase 0, and only
+    if graphify learns to chunk large files.
+- **Graphify-first still applies to every file graphify can cover**: `.js`, `.json`, `.ps1`,
+  `.sh`, `.py`, and `.md` docs within the cap. Read the graph before patching those.
+  - **Query it:** `graphify query/path/explain`.
+  - **Refresh it:** the code-only `graphify update .` is free (AST, no LLM).
+  - ⚠ **The `graphify.exe` launcher is blocked by Smart App Control.** Run it through the
+    pinned interpreter instead: `%APPDATA%\uv\tools\graphifyy\Scripts\python.exe -m graphify <cmd>`.
+  - `graphify-out/wiki/` is stale (last generated 2026-09-02); prefer `query` over the wiki.
+  - If graphify is unavailable, say so in the report and proceed. Never skip this silently.
 - **Match process to task size.** Localized UI/CSS is your own work: inspect → implement →
   verify → finish. Reach for specialists only at architecture boundaries, data safety, WebGL
   lifecycle, offline/storage, or independent release verification.
@@ -341,7 +355,11 @@ Rules:
 - For codebase questions, first run `graphify query "<question>"` when graphify-out/graph.json exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
 - If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
 - Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
-- After modifying code, run `graphify update .` to keep the graph current. ⛔ **It is NOT free.**
+- ⭐ **None of this covers `dct-ios.html`.** It is read from source (see Working rules, owner
+  ruling 2026-09-30).
+- After modifying code, `graphify update .` (the code-only AST refresh, run through the pinned
+  Python) is free. ⛔ **`/graphify --update` and full rebuilds are NOT free, and they are NOT
+  authorised** without an owner ruling.
   Corrected 2026-09-04 — this line previously read *"AST-only, no API cost"*, which is true only of
   a pure-code corpus. PHANTOM is not one: **175 of the 256 graphed files are markdown**, and only 80
   are code. Code goes down the AST path and genuinely costs nothing; docs and images go through LLM
