@@ -6,6 +6,159 @@ is stale until edited. Newest first.
 
 ---
 
+## 2026-09-30 · STAMP AND PROMOTE ON THE OWNER'S EXACT APPROVAL MESSAGE. Replaces the 2026-09-05 terminal-only rule.
+
+**Ruling, verbatim:**
+
+> New owner ruling, replacing the terminal-only stamp and promote rule: from now on you run verify.ps1
+> and promote.ps1 yourself, but only right after I send an exact approval message in this chat in the
+> form "PASS <version> — stamp and promote" (or "FAIL <version>"). One version per message. Never on
+> your own initiative, never inferred from a "check" or "looks good," never for a version I didn't
+> name. Amend the guard hook to allow the agent path only for the version in my latest approval
+> message. Write the ruling into OWNER-RULINGS.md and CLAUDE.md. Show me the full script output every
+> time. First use: PASS 594 — stamp and promote.
+
+### What this replaces
+
+- The 2026-09-05 ruling below, **PROMOTE IS OWNER-ONLY**, including its same-day strike (*"you never move
+  release, full stop, no session-order exception"*).
+- That ruling is preserved as the record. **This one governs.** The discretion that 09-05 removed is not
+  restored: the agent still decides nothing. It runs the two scripts only on an exact owner message
+  that names one version, and the hook enforces that.
+
+### The standing rule
+
+1. **Approval forms.** John's latest human-typed chat message must be, in its entirety:
+   - `PASS <version> — stamp and promote` → `verify.ps1 <version> PASS`, then `promote.ps1`;
+   - or `FAIL <version>`, optionally followed by what he saw → `verify.ps1 <version> FAIL "<what he saw>"`,
+     and nothing is promoted. `verify.ps1` refuses a FAIL without a reason, so if none was given, ask.
+
+   `<version>` is a build number (`594`) or `phantom-v1.14.594`. The dash may be an em dash, en dash
+   or hyphen.
+2. **One version per message.** Never on initiative. Never inferred from "check", "ok", "looks good",
+   or a message that quotes the form inside other text. Never for a version John did not name.
+   **Any later message from John lapses the approval.**
+3. **Full, unedited script output is shown to John every time.**
+4. **The scripts are the only path.** `promote.ps1` remains the only promote path. `stamp.ps1` is not
+   run by the agent (`verify.ps1` fuses it). A raw move of `release` (push to it, checkout or switch
+   to it, `branch -f`, `update-ref`) stays forbidden to the agent in every case.
+5. **Unchanged:**
+   - the device look on staging is John's, always;
+   - `verify.ps1`'s own guards and `promote.ps1` Guard 4 still apply;
+   - John may still run both scripts from his own terminal.
+
+### How it is enforced
+
+`tools/hooks/phantom-guard.js`, **gate 6**:
+- It reads the session transcript the PreToolUse hook is handed. It takes the latest entry of type
+  `user` with `origin.kind: "human"`, which tool results, hook output and injected reminders never
+  carry.
+- It allows a `verify.ps1` invocation only for the version and outcome that message names.
+- It allows `promote.ps1` only on a PASS approval, and only when HEAD's `version.json` is the approved
+  version. `promote.ps1` takes no version argument, so this is what ties it to the named version.
+- `promote.ps1 -DryRun` changes nothing and always runs.
+- It matches invocations only, never mentions. Heredoc and here-string bodies are stripped, and the
+  script must sit in command position, so a commit message, `echo` or `grep` that names a script is
+  not a run of it.
+- **It fails closed:** an unreadable transcript blocks the scripts. The guard's other gates still fail
+  open.
+
+**Tested 2026-09-30:** 27 cases through the real hook with synthetic transcripts, all pass. They cover:
+- no approval, a lapsed approval, a quoted form, two versions in one message, and an injected
+  (non-human) approval — all blocked;
+- the wrong version, the wrong outcome, and promote after a FAIL — all blocked;
+- promote while HEAD is another version, and `stamp.ps1` — both blocked;
+- raw pushes to and checkouts of `release` — blocked;
+- `grep`, `echo` and commit-message mentions — allowed;
+- the unreadable transcript (fails closed), the launcher forms, and `-DryRun` (always allowed).
+
+### Line items, not acted on
+
+- `tools/githooks/pre-commit` has a comment saying *"an agent never reaches this line"*. After this
+  ruling, an agent-run `verify.ps1` does reach it, legitimately: its `VERIFIED` commit goes through the
+  githook path. The behaviour is right and only the comment is stale.
+
+### ⚠ Caveat — enforcement depends on the agent-side hook being present
+
+Gate 6 is wired through `~/.claude/settings.json` (PreToolUse, `Bash|PowerShell`). A session on a
+machine or profile without that wiring would not be gated. The rule still binds; only the
+mechanical check would be missing.
+
+---
+
+## 2026-09-30 · GRAPHIFY — `dct-ios.html` IS READ FROM SOURCE, NOT FROM THE GRAPH. No `--update`, no full rebuild.
+
+The owner ruled on the Step 2 diagnosis in `SHIP-HANDOFF-SESSION-2026-09-30.md` (options A, B, C). He chose **A and B together**. Recorded on first statement.
+
+**THE FINDING THIS RESTS ON.** Graphify can't cover `dct-ios.html`, and no rebuild of any size changes that:
+- `detect.py:31` of `graphifyy` 0.9.15 files `.html` under `DOC_EXTENSIONS`, so the file never goes through the free code (AST) parser. It only goes through LLM extraction.
+- `llm.py:28` caps every file sent to the LLM at `_FILE_CHAR_CAP = 20_000` characters. `dct-ios.html` is 3,792,860 characters, so the model sees about 0.5% of it.
+- Measured on the 09-17 graph: 119 nodes carry `source_file: dct-ios.html`, all concept-level (doctrine, token blocks). The nodes named `forge3d_render`, `master_rackToElevation`, `RackEngine` and `deploy_forge` come from `.md` files that describe the code, not from the code.
+- A full rebuild (~2.5M–3.5M tokens by `graphify-out/cost.json`) or an `--update` (~0.35M–1.3M) would pay for that same 20k-character slice again.
+
+**Also found:**
+- The graph is not corrupt: `graph.json` loads and its manifest is consistent.
+- The blocker was Smart App Control refusing the unsigned `uv` launcher: `Program 'graphify.exe' failed to run: An Application Control policy has blocked this file`. The package runs through its pinned interpreter, `%APPDATA%\uv\tools\graphifyy\Scripts\python.exe -m graphify …`.
+- `graphify-out/wiki/` was last generated 2026-09-02, two graph refreshes ago.
+
+**RULING A — the code-only refresh runs.** `python -m graphify update .` through the pinned interpreter: 0 LLM tokens.
+- Done 2026-09-30: 5,352 → 5,442 nodes, 1,636 communities.
+- `cost.json` is unchanged, so the run was not billed.
+- `dct-ios.html` stays at 119 nodes, as predicted.
+- The prior graph was backed up to `graphify-out/2026-09-30/`.
+
+**RULING B — for `dct-ios.html`, verified source reads are the required authority.** This covers read-only work (Phase 0 censuses) **and patches**:
+- Every claim about the file, and every anchor in every patch, comes from reading the source.
+- Evidence is cited as `dct-ios.html:<line>` with the verbatim identifier. The identifier is the anchor; the line number is a hint.
+- The graph may still give context (the rulings, specs and audits it indexes), but it is **never** the authority for this file.
+- A session that has not rebuilt the graph is **not** blocked from patching `dct-ios.html`.
+
+**Graphify-first still applies to every file graphify can actually cover:** `.js`, `.json`, `.ps1`, `.sh`, `.py`, and the `.md` docs within the cap.
+
+⛔ **WHAT THIS RULING DOES NOT DO.**
+- It does not authorise `--update` or a full rebuild. Neither runs without a new owner ruling.
+- It does not lift the requirement to read the source before a patch. It makes that the requirement.
+
+**PARKED — the full rebuild** goes to SITE-SYNC Phase 0, and **only if graphify gains a way to chunk large files.** Without chunking, a rebuild cannot see past the first 20k characters of `dct-ios.html`, and it stays off the table.
+
+**Line items, not acted on:**
+- `graphify install` would clear the 0.9.10 skill / 0.9.15 package warning.
+- The SessionStart hook calls the blocked launcher.
+- The wiki needs regenerating.
+
+---
+
+## 2026-09-17 · A.2 SHIP 3 — Q-18 … Q-27 RULED AS RECOMMENDED. The notes adapter reads rack notes only, and says when the log has lost entries.
+
+The owner was asked what *"next"* meant against the Q table of `docs/A2-SHIP3-PHASE0-EVIDENCE.md`, and chose ***"Build it as recommended"*** over waiting to rule them himself and over parking Ship 3. Recorded on first statement. Each line below is that table's recommendation, now law for Ship 3; the evidence for each is in that document, not repeated here.
+
+- **Q-18 — scope: `RACK_NOTE` only.** The filter is `action === 'RACK_NOTE'` and `entityType === 'rack'` and `entityId === rackId`, whole-string. ⛔ Never match on `e.rack`, on `summary` text, on a prefix, or on a deployment parsed out of the composite. Phase and blocker audit entries stay with their own adapters, so nothing double-counts.
+- **Q-19 — deployment FIELD NOTES stay out.** `OMNI_NOTE` (Command's `LOG` → `SEND`) names no rack; copying one onto every rack of a deployment would fabricate attribution (Contract 10).
+- **Q-20 — checklist item notes stay out of Ship 3 and out of A.2.** Wrong data class, no census row (an automatic adapter-reviewer FAIL), no timestamp. A census pass comes first if they are ever wanted.
+- **Q-21 — the event is `note.logged`**, the app's own verb, carrying `{ auditId, text, actor }` with the stored values verbatim. The adapter never interprets note text.
+- **Q-22 — no new `status` field.** rr-1's shape is the one the handoff fixed. The note count is the notes coverage row's `events`, which the readout already prints.
+- **Q-23 — truncation and restore are surfaced as a notes-row `detail`**, and the assembler's fold passes `detail` on `empty` rows too — a one-line change, since today it passes `detail` on `error` and `ok` rows only (`dct-ios.html:31761-31762`). ⛔ The wording never states a number of lost entries: `truncatedCount` does not accumulate (lead L-7).
+- **Q-24 — the hash chain is not verified and not emitted in A.2.** Verification is not a pure read, and it is already wrong after an ordinary purge (lead L-8). HISTORY shows the chain.
+- **Q-25 — the actor is carried verbatim**, including `'System'` and the Build-Lead fallback. The adapter cannot detect the fallback and substituting the current operator would fabricate. ⛔ The writer question against Contract 9a (lead L-9) is the owner's to schedule outside A.2.
+- **Q-26 — the device look compares the readout with HISTORY's `RACK_NOTE` rows in a one-rack deployment.** NERVE's *RECENT ACTIVITY* shows a text-matched subset, the shift report's *Field Notes* counts `OMNI_NOTE` only, and the HISTORY header counts every action: **none of those disagreements is a FAIL.** The *Field Notes* / rack-notes name clash goes to A.3 with Q-16.
+- **Q-27 — issue notes, discrepancy notes and voice notes stay out of A.2.** Issue notes have no census row at all; the other two never carry the composite. Whether the Record should hold them is an A.3 question, after a census pass.
+
+⚠ **What this ruling does not do.** It authorises Ship 3 as that document specifies it and nothing more. The leads L-7…L-16 are reported, not fixed (handoff §8), and the fenced surfaces stay fenced: `stripeRack_logNote`, `deploy_logAudit`, `deploy_purgeAudit`, the FIFO block, the chain functions, HISTORY, NERVE, the shift report, the handoff generator and `deploy_generateReport`.
+
+---
+
+## 2026-09-17 · A.2 SHIP 3 IS GATED ON CHROMIUM TOO — WebKit is still blocked
+
+The Ship 2 ruling below sent the gate question back for Ship 3. The owner chose ***"Chromium again"*** from the options put to him; the other options were Chromium for Ships 3 and 4, turning off Smart App Control, and holding until WebKit clears. Recorded on first statement.
+
+**THE PROBE, before any Ship 3 test ran.** A direct launch script using this tree's `@playwright/test` gave: WebKit `browserType.launch: Host system is missing dependencies!`, and Chromium `151.0.7922.34` launched. `Get-MpComputerStatus` reports `SmartAppControlState: On`.
+
+**RULING — for A.2 Ship 3 only.** The terms are the same as Ship 2's: RED, GREEN, the mutation checks and the regression specs run on **`laptop-chromium`**. The Ship 3 evidence records the deviation, and **the owner's Safari look on staging is the only WebKit gate.**
+
+⛔ **It does not carry forward.** Ship 4 (the photos adapter and the readout's removal) probes `phone-webkit` first and comes back to the owner if WebKit is still blocked. Nothing else changes: not the test config, not `phone-webkit`'s standing, and not Smart App Control.
+
+---
+
 ## 2026-09-17 · A.2 SHIP 2 IS GATED ON CHROMIUM — Windows Smart App Control blocks Playwright's WebKit on this machine
 
 The owner chose between the options put to him: first ***"Reinstall WebKit, then decide"***, and after the reinstall failed, ***"Gate this ship on Chromium"***. Recorded on first statement.

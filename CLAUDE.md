@@ -140,25 +140,44 @@ import. Docs only: no product source touched, so no version bump and no `VERIFIE
 - **`release`** — what GitHub Pages serves: `darkmatter024.github.io/phantom/dct-ios.html`, the
   **PHANTOM** icon. **`release` means graduated.**
 
-⛔ **REVOKED 2026-09-05 — PROMOTE IS OWNER-ONLY. CLAUDE CODE NEVER MOVES `release`, IN ANY MODE.**
-The 2026-08-30 amendment that permitted Claude Code to fast-forward `release` itself is **struck**.
-⭐ **The ruling of record is `OWNER-RULINGS.md`, 2026-09-05 — read it, not this summary.**
+⭐ **STAMP AND PROMOTE ON JOHN'S EXACT APPROVAL — owner ruling 2026-09-30.** It replaces the
+2026-09-05 terminal-only rule and its struck in-session exception. **The ruling of record is
+`OWNER-RULINGS.md`, 2026-09-30 — read it, not this summary.**
 
-There is **no session-order exception**. An in-session instruction to promote is answered by handing
-John the command to run, never by running it. ⛔ No `merge --ff-only`, no push to `release`, no
-branch reset, no "it is only a fast-forward".
+**Claude Code runs `tools/verify.ps1` and `tools/promote.ps1` itself, and only right after John's
+latest chat message is, in its entirety, one of:**
+- `PASS <version> — stamp and promote` → run `verify.ps1 <version> PASS`, then `promote.ps1`.
+- `FAIL <version>`, optionally followed by what he saw → run `verify.ps1 <version> FAIL "<what he saw>"`.
+  Nothing is promoted. If he gave no reason, ask for one: the script refuses a FAIL without one.
 
-**The only promote path is `tools/promote.ps1`, run by John from his own terminal.** Claude Code
-ships to `main`, reports, and PARKS. A push to `main` reaches the PHANTOM STAGING icon within about
-a minute and nothing else; the PHANTOM icon moves only when John promotes.
+⛔ **The limits:**
+- One version per message.
+- Never on your own initiative.
+- Never inferred from "check", "ok", "looks good", or a message that only quotes the form.
+- Never for a version he did not name.
+- Any later message from John lapses the approval.
+- **Show John the full, unedited script output every time.**
+
+⛔ **Enforced by hook** (`tools/hooks/phantom-guard.js` gate 6, fails closed):
+- it reads John's latest human-typed message from the session transcript and allows only the
+  named version and outcome;
+- it allows `promote.ps1` only when HEAD's `version.json` is that version;
+- it always blocks `stamp.ps1` on the agent path, and always blocks a raw move of `release`.
+  No `merge --ff-only`, no push to `release`, no branch reset, no "it is only a fast-forward".
+
+**The only promote path is still `tools/promote.ps1`.** Claude Code ships to `main`, reports, and
+PARKS until the approval message arrives. John can still run both scripts from his own terminal.
+A push to `main` reaches the PHANTOM STAGING icon within about a minute and nothing else; the
+PHANTOM icon moves only on a promote.
 
 ⛔ Still forbidden to anyone: any commit on `release`, any non-fast-forward, any `--force`. A promote
 is a fast-forward or it is a STOP.
 
 ⛔ **WHAT DID NOT CHANGE, and is the actual gate:**
-1. **`VERIFIED` is owner-only.** Claude Code never edits it except when John says "stamp it", never
-   commits it, and never stamps a version the served bytes have not carried — and since 2026-09-09
-   "served" means **staging**, which `tools/verify.ps1` reads before it writes anything.
+1. **`VERIFIED` is the owner's ruling.** The only agent path that writes it is `verify.ps1`, on John's
+   exact approval message (2026-09-30). Claude Code never hand-edits or hand-commits it, and never
+   stamps a version the served bytes have not carried — and since 2026-09-09 "served" means
+   **staging**, which `tools/verify.ps1` reads before it writes anything.
 2. **The device verify is John's, always.** Promoting a version is not verifying it. Staging makes a
    version *seeable*; only John's phone makes it *real*; the promote makes it *graduated*.
 
@@ -175,7 +194,22 @@ a named exception, not precedent.*
 1. **OODA against served bytes.** `curl` staging `version.json` (what `main` serves) and the release `version.json` (what the PHANTOM icon has). Staging must read `HEAD`'s `version.json`; release must read `VERIFIED` line 1. If either does not, STOP and re-anchor.
 2. **One visible change to `main`.** Edit, test, commit. The hook enforces three-stamp lockstep and the VERIFIED gate.
 3. **Report:** what changed, what proves it, and the ONE look on PHANTOM STAGING — exactly what to do, what PASS and FAIL look like. Close the loop: show `git log -1 --oneline` and `git status`.
-4. **PUSH TO `main`, then STOP.** Staging rebuilds in about a minute. Every step from here is John's, from his terminal: **(a)** the look on PHANTOM STAGING; **(b)** `.\tools\verify.ps1 <v> PASS` or `FAIL "what you saw"` — it refuses a version `origin/main` does not carry, a `HEAD` that is not `origin/main`, and a version staging is not serving, then stamps `VERIFIED` and pushes `main`. **It does not promote.** **(c)** On PASS, `.\tools\promote.ps1` — Guard 4 refuses an unstamped or FAILED incoming version; `release` means graduated. ⛔ Claude Code never runs (b) or (c) — revoked 2026-09-05, see `OWNER-RULINGS.md`. The next ship is impossible until (b) has run: the hook refuses a `version.json` bump until `VERIFIED` rules on the old version. **A version does not exist until John's phone clears it on staging; promoting it is graduation, not verification.**
+4. **PUSH TO `main`, then STOP.** Staging rebuilds in about a minute.
+   - **(a) The look on PHANTOM STAGING is John's, always.**
+   - **(b)** `.\tools\verify.ps1 <v> PASS` or `FAIL "what you saw"`. It refuses a version `origin/main`
+     does not carry, a `HEAD` that is not `origin/main`, and a version staging is not serving; then it
+     stamps `VERIFIED` and pushes `main`. **It does not promote.**
+   - **(c)** On PASS, `.\tools\promote.ps1`. Guard 4 refuses an unstamped or FAILED incoming version;
+     `release` means graduated.
+   - ⭐ **Who runs (b) and (c)** (ruling 2026-09-30): Claude Code runs them **only** right after
+     John's exact message `PASS <v> — stamp and promote` (both) or `FAIL <v>` (b only), and shows
+     him the full script output. Otherwise John runs them from his terminal. Never on inference or
+     initiative; the hook enforces this.
+   - The next ship is impossible until (b) has run: the hook refuses a `version.json` bump until
+     `VERIFIED` rules on the old version.
+
+   **A version does not exist until John's phone clears it on staging; promoting it is graduation,
+   not verification.**
 5. **"Start Phase N" from John means:** ship the **next single slice** of Phase N, then stop. A phase name is never authorization for multiple ships.
 6. **At ≥70% context:** write current state to `PHANTOM_CURRENT_STATE.md`, tell John, recommend `/clear` before the next slice.
 
@@ -255,12 +289,26 @@ a named exception, not precedent.*
 
 ## Working rules
 
-- **Read the graph before any patch.** Run `/graphify . --update`, then read
-  `graphify-out/wiki/index.md` — community article first, then the god nodes for the surface you
-  are about to touch. The wiki is generated into a gitignored folder, so it never travels with the
-  repo: the REBUILD is the requirement, not the file. If graphify is not installed, say so in the
-  report and proceed — never skip this silently.
-  graphify-first is harness-enforced via SessionStart hook in `.claude/settings.json`.
+- ⭐ **`dct-ios.html` is read from SOURCE, never from the graph** (owner ruling 2026-09-30,
+  `OWNER-RULINGS.md`). Graphify can't cover it:
+  - graphify files `.html` as a document, so the file never goes through the free code parser;
+  - its LLM path reads only the first 20,000 characters of any file, and `dct-ios.html` is ~3.8M.
+
+  **No rebuild of any size fixes that, so a rebuild is NOT required before reading or patching
+  it.** For this file the required authority is a verified source read:
+  - every claim and every patch anchor is cited as `dct-ios.html:<line>` with the verbatim identifier;
+  - the identifier is truth, and the line number is a hint.
+  - ⛔ Do not run `/graphify . --update` or a full rebuild to "unlock" a `dct-ios.html` patch.
+    Both need a new owner ruling; the full rebuild is parked with SITE-SYNC Phase 0, and only
+    if graphify learns to chunk large files.
+- **Graphify-first still applies to every file graphify can cover**: `.js`, `.json`, `.ps1`,
+  `.sh`, `.py`, and `.md` docs within the cap. Read the graph before patching those.
+  - **Query it:** `graphify query/path/explain`.
+  - **Refresh it:** the code-only `graphify update .` is free (AST, no LLM).
+  - ⚠ **The `graphify.exe` launcher is blocked by Smart App Control.** Run it through the
+    pinned interpreter instead: `%APPDATA%\uv\tools\graphifyy\Scripts\python.exe -m graphify <cmd>`.
+  - `graphify-out/wiki/` is stale (last generated 2026-09-02); prefer `query` over the wiki.
+  - If graphify is unavailable, say so in the report and proceed. Never skip this silently.
 - **Match process to task size.** Localized UI/CSS is your own work: inspect → implement →
   verify → finish. Reach for specialists only at architecture boundaries, data safety, WebGL
   lifecycle, offline/storage, or independent release verification.
@@ -339,9 +387,14 @@ This project has a knowledge graph at graphify-out/ with god nodes, community st
 
 Rules:
 - For codebase questions, first run `graphify query "<question>"` when graphify-out/graph.json exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
-- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
+- ⚠ `graphify-out/wiki/` is STALE (last generated 2026-09-02, behind the 09-17 and 09-30 graphs).
+  Do not rely on `wiki/index.md` for navigation until it is regenerated; use `query`/`path`/`explain`.
 - Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
-- After modifying code, run `graphify update .` to keep the graph current. ⛔ **It is NOT free.**
+- ⭐ **None of this covers `dct-ios.html`.** It is read from source (see Working rules, owner
+  ruling 2026-09-30).
+- After modifying code, `graphify update .` (the code-only AST refresh, run through the pinned
+  Python) is free. ⛔ **`/graphify --update` and full rebuilds are NOT free, and they are NOT
+  authorised** without an owner ruling.
   Corrected 2026-09-04 — this line previously read *"AST-only, no API cost"*, which is true only of
   a pure-code corpus. PHANTOM is not one: **175 of the 256 graphed files are markdown**, and only 80
   are code. Code goes down the AST path and genuinely costs nothing; docs and images go through LLM
