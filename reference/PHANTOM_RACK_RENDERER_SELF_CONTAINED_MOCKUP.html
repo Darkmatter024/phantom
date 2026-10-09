@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>PHANTOM Rack Renderer Concept</title>
+<style>
+:root{
+  --bg:#03070b;
+  --panel:rgba(9,18,26,.76);
+  --panel2:rgba(4,10,16,.86);
+  --line:rgba(150,214,255,.16);
+  --line2:rgba(150,214,255,.08);
+  --cyan:#59e9ff;
+  --cyan2:#1eb8d4;
+  --violet:#9a78ff;
+  --green:#49f3a5;
+  --amber:#ffc56a;
+  --red:#ff5a7d;
+  --text:#ecf8ff;
+  --muted:#7792a4;
+  --rackW:230px;
+  --rackH:560px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:
+  radial-gradient(circle at 50% 16%,rgba(34,135,175,.11),transparent 32%),
+  radial-gradient(circle at 50% 90%,rgba(79,45,160,.10),transparent 28%),
+  linear-gradient(#020609,#04080d 55%,#020407);
+color:var(--text);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+body{min-height:100vh;overflow-x:hidden}
+button{font:inherit}
+.app{width:min(100%,480px);min-height:100vh;margin:auto;padding:
+  calc(env(safe-area-inset-top) + 14px) 14px
+  calc(env(safe-area-inset-bottom) + 18px);
+position:relative}
+.topbar{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
+.eyebrow{font:700 10px/1.2 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.22em;color:var(--cyan);opacity:.86}
+h1{font-size:24px;line-height:1;margin:6px 0 0;letter-spacing:.02em}
+.context{margin-top:5px;color:var(--muted);font:600 11px/1.3 ui-monospace,SFMono-Regular,Menlo,monospace}
+.status{
+  min-height:44px;padding:8px 11px;border:1px solid rgba(73,243,165,.2);
+  border-radius:14px;background:linear-gradient(180deg,rgba(16,45,41,.50),rgba(5,20,20,.42));
+  box-shadow:inset 0 1px rgba(255,255,255,.05),0 10px 30px rgba(0,0,0,.25)
+}
+.status b{display:block;font-size:10px;letter-spacing:.14em;color:var(--green)}
+.status span{display:block;margin-top:4px;color:#a8c0c9;font:600 9px ui-monospace,monospace}
+
+.hero{
+  margin-top:14px;border:1px solid var(--line);border-radius:22px;overflow:hidden;
+  background:
+    linear-gradient(180deg,rgba(11,25,34,.72),rgba(3,8,13,.88)),
+    radial-gradient(circle at 50% 15%,rgba(70,214,255,.07),transparent 35%);
+  box-shadow:inset 0 1px rgba(255,255,255,.05),0 18px 60px rgba(0,0,0,.35);
+}
+.hero-head{display:flex;justify-content:space-between;align-items:center;padding:12px 13px 8px;border-bottom:1px solid var(--line2)}
+.rack-title{display:flex;gap:9px;align-items:center}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--cyan);box-shadow:0 0 12px var(--cyan)}
+.rack-title strong{font-size:14px;letter-spacing:.06em}
+.rack-title small{display:block;color:var(--muted);font:600 9px ui-monospace,monospace;margin-top:2px}
+.open-aisle{
+  min-height:44px;padding:0 12px;border:1px solid rgba(89,233,255,.3);border-radius:13px;
+  background:linear-gradient(180deg,rgba(27,80,100,.42),rgba(7,24,35,.54));
+  color:#d9fbff;font-weight:800;font-size:10px;letter-spacing:.1em
+}
+.stage{
+  position:relative;height:610px;overflow:hidden;perspective:1200px;
+  background:
+    linear-gradient(90deg,transparent 0 12%,rgba(89,233,255,.03) 12.2% 12.5%,transparent 12.7% 87%,rgba(89,233,255,.03) 87.2% 87.5%,transparent 87.7%),
+    radial-gradient(ellipse at 50% 88%,rgba(64,182,232,.10),transparent 38%),
+    linear-gradient(180deg,#02070b,#040a10 62%,#020509)
+}
+.ceiling{
+  position:absolute;left:-10%;right:-10%;top:20px;height:150px;opacity:.23;
+  background:
+    repeating-linear-gradient(90deg,transparent 0 42px,rgba(120,170,190,.17) 43px 45px),
+    linear-gradient(180deg,rgba(255,255,255,.03),transparent);
+  transform:perspective(600px) rotateX(64deg);transform-origin:top
+}
+.floor{
+  position:absolute;left:-20%;right:-20%;bottom:-15px;height:210px;
+  background:
+    linear-gradient(180deg,transparent,rgba(49,134,172,.03)),
+    repeating-linear-gradient(90deg,transparent 0 54px,rgba(115,190,225,.035) 55px 56px),
+    repeating-linear-gradient(0deg,transparent 0 36px,rgba(115,190,225,.028) 37px 38px);
+  transform:perspective(620px) rotateX(62deg);transform-origin:bottom;
+  border-top:1px solid rgba(130,220,255,.06)
+}
+.rack-wrap{
+  position:absolute;left:50%;top:22px;width:var(--rackW);height:var(--rackH);
+  transform:translateX(-50%) rotateY(0deg);
+  transform-style:preserve-3d;transition:transform .45s cubic-bezier(.2,.8,.2,1)
+}
+.stage.iso .rack-wrap{transform:translateX(-50%) rotateY(-17deg) translateZ(14px)}
+.rack-shadow{
+  position:absolute;left:50%;bottom:8px;width:250px;height:48px;transform:translateX(-50%);
+  background:radial-gradient(ellipse,rgba(0,0,0,.82),transparent 68%);filter:blur(5px)
+}
+.rack-shell{
+  position:absolute;inset:0;border-radius:10px;
+  background:
+    linear-gradient(90deg,#05080b 0 6%,#121820 6.5% 8%,#060a0e 9% 91%,#151c23 92% 94%,#05080b 94.5%),
+    linear-gradient(#10171e,#05080d);
+  border:1px solid rgba(155,210,230,.22);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.025),
+    inset 0 0 28px rgba(0,0,0,.9),
+    0 0 0 1px rgba(0,0,0,.75),
+    0 30px 70px rgba(0,0,0,.72),
+    0 0 45px rgba(35,181,220,.08)
+}
+.rack-shell:before,.rack-shell:after{
+  content:"";position:absolute;top:10px;bottom:10px;width:8px;
+  background:
+    repeating-linear-gradient(180deg,rgba(118,155,170,.55) 0 1px,transparent 1px 12px);
+  opacity:.55
+}
+.rack-shell:before{left:14px}.rack-shell:after{right:14px}
+.top-cap{
+  position:absolute;left:5px;right:5px;top:4px;height:15px;border-radius:6px 6px 2px 2px;
+  background:linear-gradient(180deg,#1b242c,#070b0f 74%);
+  border-bottom:1px solid rgba(103,217,255,.12)
+}
+.top-cap:after{
+  content:"S4:099  •  RACK ENGINE";position:absolute;left:12px;top:3px;
+  color:#7194a4;font:700 7px ui-monospace,monospace;letter-spacing:.09em
+}
+.ru-labels{position:absolute;left:-27px;top:24px;bottom:20px;width:22px}
+.ru{
+  position:absolute;right:0;color:#496372;font:700 7px ui-monospace,monospace;
+  transform:translateY(50%)
+}
+.device{
+  position:absolute;left:24px;right:24px;border-radius:3px;
+  border:1px solid rgba(135,185,205,.16);
+  background:
+    linear-gradient(180deg,rgba(35,44,51,.98),rgba(10,14,18,.98)),
+    repeating-linear-gradient(90deg,transparent 0 5px,rgba(255,255,255,.025) 5px 6px);
+  box-shadow:inset 0 1px rgba(255,255,255,.05),inset 0 -7px rgba(0,0,0,.22),0 2px 5px rgba(0,0,0,.7);
+  overflow:hidden
+}
+.device:before{
+  content:"";position:absolute;left:5px;right:5px;top:4px;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent)
+}
+.device .name{
+  position:absolute;left:7px;top:50%;transform:translateY(-50%);
+  max-width:70%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  font:700 6.5px ui-monospace,monospace;color:#a8bbc5;letter-spacing:.04em
+}
+.device .leds{position:absolute;right:6px;top:50%;transform:translateY(-50%);display:flex;gap:3px}
+.device .led{width:3px;height:3px;border-radius:50%;background:#4cf5b2;box-shadow:0 0 5px rgba(76,245,178,.8)}
+.device.gpu{
+  border-color:rgba(89,233,255,.24);
+  background:
+    linear-gradient(90deg,rgba(18,36,45,.98),rgba(8,14,18,.98)),
+    repeating-linear-gradient(90deg,rgba(89,233,255,.025) 0 2px,transparent 2px 5px);
+}
+.device.gpu:after{
+  content:"";position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:linear-gradient(#65efff,#256c80);box-shadow:0 0 8px rgba(89,233,255,.45)
+}
+.device.switch{border-color:rgba(154,120,255,.28)}
+.device.switch:after{
+  content:"";position:absolute;left:49%;right:8px;top:50%;height:7px;transform:translateY(-50%);
+  background:repeating-linear-gradient(90deg,rgba(156,213,235,.28) 0 3px,transparent 3px 5px);
+}
+.device.power{border-color:rgba(255,197,106,.20)}
+.device.power .led{background:var(--amber);box-shadow:0 0 5px rgba(255,197,106,.75)}
+.device.cdu{border-color:rgba(73,243,165,.26);background:linear-gradient(180deg,#17252a,#071012)}
+.device.cdu:after{
+  content:"";position:absolute;right:9px;top:7px;width:28px;height:12px;border:1px solid rgba(73,243,165,.25);
+  background:radial-gradient(circle at 24% 50%,var(--green) 0 1px,transparent 2px),#07100e
+}
+.empty-slot{
+  position:absolute;left:24px;right:24px;height:1px;background:rgba(140,200,220,.025)
+}
+.side-depth{
+  position:absolute;top:10px;right:-18px;width:18px;height:540px;
+  background:linear-gradient(90deg,#12181d,#030608);
+  transform:rotateY(90deg);transform-origin:left;
+  border:1px solid rgba(170,215,230,.10)
+}
+.rim{
+  position:absolute;inset:-1px;border-radius:11px;pointer-events:none;
+  box-shadow:inset 0 0 0 1px rgba(89,233,255,.05),0 0 28px rgba(89,233,255,.07)
+}
+.scanline{
+  position:absolute;left:25px;right:25px;height:1px;top:28%;
+  background:linear-gradient(90deg,transparent,var(--cyan),transparent);
+  opacity:.0;box-shadow:0 0 10px var(--cyan)
+}
+.stage.scan .scanline{animation:scan 2.2s ease-in-out}
+@keyframes scan{0%{top:9%;opacity:0}15%{opacity:.75}85%{opacity:.75}100%{top:91%;opacity:0}}
+.hud{
+  position:absolute;left:11px;bottom:12px;padding:9px 10px;border-radius:12px;
+  border:1px solid rgba(89,233,255,.13);background:rgba(3,11,16,.76);backdrop-filter:blur(10px);
+  box-shadow:inset 0 1px rgba(255,255,255,.03)
+}
+.hud b{display:block;color:var(--cyan);font:800 9px ui-monospace,monospace;letter-spacing:.1em}
+.hud span{display:block;color:#7796a4;font:600 8px ui-monospace,monospace;margin-top:4px}
+.controls{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:10px;border-top:1px solid var(--line2);
+  background:linear-gradient(180deg,rgba(6,13,19,.85),rgba(3,8,12,.96))
+}
+.ctrl{
+  min-height:44px;border:1px solid var(--line);border-radius:12px;
+  background:linear-gradient(180deg,rgba(18,33,43,.76),rgba(6,14,20,.86));
+  color:#8ca5b4;font-weight:800;font-size:9px;letter-spacing:.08em
+}
+.ctrl.active{color:#e6fcff;border-color:rgba(89,233,255,.34);
+  box-shadow:inset 0 0 20px rgba(89,233,255,.07),0 0 16px rgba(89,233,255,.05)}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+.metric{
+  min-height:72px;padding:11px 8px;border-radius:16px;border:1px solid var(--line2);
+  background:linear-gradient(180deg,rgba(10,21,29,.73),rgba(4,10,15,.78));
+  text-align:center
+}
+.metric strong{display:block;font-size:18px;letter-spacing:.02em}
+.metric span{display:block;margin-top:5px;color:#668494;font:700 8px ui-monospace,monospace;letter-spacing:.1em}
+.metric:nth-child(1) strong{color:var(--cyan)}
+.metric:nth-child(2) strong{color:#b5c8d2}
+.metric:nth-child(3) strong{color:var(--green)}
+.metric:nth-child(4) strong{color:var(--amber)}
+.note{
+  margin-top:10px;padding:11px 13px;border:1px solid rgba(154,120,255,.12);border-radius:15px;
+  background:linear-gradient(180deg,rgba(22,16,43,.46),rgba(7,8,16,.72));
+  color:#8499a7;font:600 9px/1.5 ui-monospace,monospace
+}
+.note b{color:#c8b8ff}
+@media(max-width:380px){
+  :root{--rackW:210px;--rackH:535px}
+  .stage{height:585px}
+  .metric strong{font-size:16px}
+}
+</style>
+</head>
+<body>
+<main class="app">
+  <div class="topbar">
+    <div>
+      <div class="eyebrow">PHANTOM · RACK ENGINE</div>
+      <h1>S4:099</h1>
+      <div class="context">QRS03 · ACTIVE MASTER · 19 COMPONENTS</div>
+    </div>
+    <div class="status"><b>CANONICAL</b><span>MASTER → RACK ENGINE</span></div>
+  </div>
+
+  <section class="hero">
+    <div class="hero-head">
+      <div class="rack-title">
+        <i class="dot"></i>
+        <div><strong>RACK PREVIEW</strong><small>REAL INVENTORY · FRONT ELEVATION</small></div>
+      </div>
+      <button class="open-aisle" onclick="document.querySelector('.stage').classList.toggle('iso')">OPEN AISLE</button>
+    </div>
+
+    <div class="stage" id="stage">
+      <div class="ceiling"></div>
+      <div class="floor"></div>
+      <div class="rack-shadow"></div>
+      <div class="rack-wrap">
+        <div class="side-depth"></div>
+        <div class="rack-shell" id="rack">
+          <div class="top-cap"></div>
+          <div class="ru-labels" id="labels"></div>
+          <div class="scanline"></div>
+          <div class="rim"></div>
+        </div>
+      </div>
+      <div class="hud"><b>RACK DETAIL · LIVE</b><span>19 components · 68 cable refs · 0 blockers</span></div>
+    </div>
+
+    <div class="controls">
+      <button class="ctrl active" data-view="front">FRONT</button>
+      <button class="ctrl" data-view="iso">ISO</button>
+      <button class="ctrl" onclick="document.querySelector('.stage').classList.add('scan');setTimeout(()=>document.querySelector('.stage').classList.remove('scan'),2300)">SCAN</button>
+      <button class="ctrl" onclick="toggleLights(this)">LIGHTS</button>
+    </div>
+  </section>
+
+  <section class="metrics">
+    <div class="metric"><strong>19</strong><span>COMPONENTS</span></div>
+    <div class="metric"><strong>68</strong><span>CABLE REFS</span></div>
+    <div class="metric"><strong>100%</strong><span>PLACED</span></div>
+    <div class="metric"><strong>0</strong><span>BLOCKERS</span></div>
+  </section>
+
+  <div class="note"><b>CONCEPT:</b> high-detail selected rack, medium-detail neighbors, cheap background shells. Real Master RU placement drives geometry. No fake components and no second WebGL truth.</div>
+</main>
+
+<script>
+const rack = document.getElementById('rack');
+const labels = document.getElementById('labels');
+const RU_TOP = 46, RU_BOTTOM = 1;
+const innerTop = 26, innerBottom = 18;
+const usable = 560 - innerTop - innerBottom;
+const unit = usable / 46;
+
+function yForRu(ru, heightU){
+  return innerTop + (RU_TOP - ru) * unit;
+}
+function addDevice({ru,u=1,type,name}){
+  const el=document.createElement('div');
+  el.className='device '+type;
+  el.style.top=yForRu(ru,u)+'px';
+  el.style.height=Math.max(7,u*unit-1.5)+'px';
+  el.innerHTML='<span class="name">'+name+'</span><span class="leds"><i class="led"></i><i class="led"></i></span>';
+  rack.appendChild(el);
+}
+for(let ru=46;ru>=1;ru--){
+  if([46,42,40,38,36,34,32,30,28,26,24,22,20,18,16,14,12,10,8,6,4,2].includes(ru)){
+    const l=document.createElement('span');
+    l.className='ru';l.textContent='U'+String(ru).padStart(2,'0');
+    l.style.top=(innerTop+(46-ru)*unit)+'px';
+    labels.appendChild(l);
+  }
+  const line=document.createElement('i');line.className='empty-slot';
+  line.style.top=(innerTop+(46-ru+1)*unit)+'px';rack.appendChild(line);
+}
+
+[
+ {ru:46,u:1,type:'switch',name:'SN2201 · INFRA SWITCH'},
+ {ru:42,u:1,type:'power',name:'PS-1RU-06 · POWER SHELF'},
+ {ru:41,u:1,type:'power',name:'PS-1RU-06 · POWER SHELF'},
+ {ru:40,u:1,type:'power',name:'PS-1RU-06 · POWER SHELF'},
+ {ru:39,u:1,type:'power',name:'PS-1RU-06 · POWER SHELF'},
+ {ru:35,u:3,type:'gpu',name:'GPU-B300-01 · NODE 01'},
+ {ru:32,u:3,type:'gpu',name:'GPU-B300-01 · NODE 02'},
+ {ru:29,u:3,type:'gpu',name:'GPU-B300-01 · NODE 03'},
+ {ru:26,u:3,type:'gpu',name:'GPU-B300-01 · NODE 04'},
+ {ru:23,u:3,type:'gpu',name:'GPU-B300-01 · NODE 05'},
+ {ru:20,u:3,type:'gpu',name:'GPU-B300-01 · NODE 06'},
+ {ru:17,u:3,type:'gpu',name:'GPU-B300-01 · NODE 07'},
+ {ru:14,u:3,type:'gpu',name:'GPU-B300-01 · NODE 08'},
+ {ru:11,u:3,type:'gpu',name:'GPU-B300-01 · NODE 09'},
+ {ru:9,u:1,type:'power',name:'PS-1RU-06 · POWER SHELF'},
+ {ru:8,u:1,type:'power',name:'PS-1RU-06 · POWER SHELF'},
+ {ru:7,u:1,type:'power',name:'PS-1RU-06 · POWER SHELF'},
+ {ru:6,u:1,type:'power',name:'PS-1RU-06 · POWER SHELF'},
+ {ru:2,u:4,type:'cdu',name:'CDU-4RU-03 · COOLING'}
+].forEach(addDevice);
+
+document.querySelectorAll('[data-view]').forEach(btn=>{
+ btn.addEventListener('click',()=>{
+   document.querySelectorAll('[data-view]').forEach(b=>b.classList.remove('active'));
+   btn.classList.add('active');
+   document.querySelector('.stage').classList.toggle('iso',btn.dataset.view==='iso');
+ });
+});
+
+function toggleLights(btn){
+  btn.classList.toggle('active');
+  const on=btn.classList.contains('active');
+  document.documentElement.style.setProperty('--cyan',on?'#78f3ff':'#59e9ff');
+  document.querySelector('.rim').style.boxShadow=on
+    ? 'inset 0 0 0 1px rgba(89,233,255,.09),0 0 55px rgba(89,233,255,.14)'
+    : 'inset 0 0 0 1px rgba(89,233,255,.05),0 0 28px rgba(89,233,255,.07)';
+}
+</script>
+</body>
+</html>

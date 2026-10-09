@@ -1,0 +1,15 @@
+{
+  "name": "phantom-e2e",
+  "private": true,
+  "version": "0.1.0",
+  "description": "PHANTOM regression harness. Test-only. The application remains a single toolchain-free file; nothing here is served, precached, or shipped.",
+  "scripts": {
+    "test": "playwright test",
+    "test:phone": "playwright test --project=phone-webkit",
+    "test:desktop": "playwright test --project=desktop-chromium",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.1"
+  }
+}

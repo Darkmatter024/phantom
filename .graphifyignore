@@ -1,0 +1,17 @@
+node_modules/
+dist/
+build/
+.git/
+graphify-out/
+
+# icon/favicon raster variants - no graph value at vision cost
+icons/
+apple-touch-icon.png
+favicon-16.png
+favicon-32.png
+icon-192.png
+icon-512.png
+icon-512-maskable.png
+
+# minified third-party bundles - AST noise, dominated god nodes at 81% of graph
+vendor/

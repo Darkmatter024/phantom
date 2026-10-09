@@ -1,0 +1,54 @@
+#!/bin/sh
+#
+# PHANTOM native pre-commit gate.
+#
+# WHY THIS EXISTS, ALONGSIDE the Claude Code hook that runs the same checks:
+# tools/hooks/phantom-guard.js is wired into ~/.claude/settings.json as a
+# PreToolUse hook. That only ever sees tool calls made by an agent session. A
+# commit typed into a normal terminal never reaches it — which is how
+# v1.14.520 through .523 were committed straight onto the release branch and
+# then orphaned by a reset. This hook closes that half: git runs it for every
+# local commit, whoever types it.
+#
+# It deliberately REUSES phantom-guard.js rather than reimplementing the gates,
+# so the two paths can never drift apart. It feeds the guard a plain
+# "git commit" payload, which is exactly right here: by the time a native
+# pre-commit hook runs, git has already built the index — including for
+# `commit -a` — so `git diff --cached` is the true commit contents and none of
+# the guard's -a / pathspec inference is needed or wanted.
+#
+# INSTALL (once per clone; git has no way to do this automatically):
+#   git config core.hooksPath tools/githooks
+# VERIFY:
+#   git config --get core.hooksPath   -> tools/githooks
+# BYPASS is still `git commit --no-verify`. That is intentional: this is a
+# seatbelt, not an immobiliser. Using it should be a decision, not a habit.
+
+ROOT=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0
+GUARD="$ROOT/tools/hooks/phantom-guard.js"
+
+# No guard, no node, no repo root: fail OPEN. A broken gate must never block a
+# real fix at 2am — same posture the guard itself takes on internal errors.
+[ -f "$GUARD" ] || exit 0
+command -v node >/dev/null 2>&1 || exit 0
+
+# PHANTOM_GUARD_VIA marks THIS path: a real commit typed by a human at a terminal.
+# The guard uses it for exactly one decision — whether a commit may include VERIFIED.
+# The owner stamps VERIFIED; an agent never does, and an agent never reaches this
+# line, because a Claude Code tool call is intercepted by the PreToolUse guard before
+# git runs, in a process that does not inherit this variable. Every other gate is
+# unaffected and still runs identically on both paths.
+PHANTOM_GUARD_VIA=githook
+export PHANTOM_GUARD_VIA
+
+printf '{"tool_name":"Bash","tool_input":{"command":"git commit"}}' | node "$GUARD"
+STATUS=$?
+
+if [ "$STATUS" -ne 0 ]; then
+  echo ""
+  echo "[pre-commit] blocked by tools/hooks/phantom-guard.js (see above)."
+  echo "[pre-commit] fix the cause. --no-verify exists but is a decision, not a shortcut."
+  exit 1
+fi
+
+exit 0

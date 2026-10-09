@@ -1,0 +1,24 @@
+# DELIBERATELY NARROW. Do not add `* text=auto` here.
+#
+# dct-ios.html and sw.js are CRLF in the working tree by long-standing repo
+# convention, and tools/hooks/phantom-guard.js actively checks that they stay
+# that way — a blanket renormalisation would rewrite ~48k line endings in the
+# app file and trip the very gate that exists to catch it.
+#
+# The one rule below exists because core.autocrlf is true on the build machine.
+# Without it, a fresh clone checks tools/githooks/pre-commit out with CRLF and
+# the shebang fails at runtime as: /bin/sh^M: bad interpreter. Shell scripts
+# must be LF regardless of platform.
+tools/githooks/* text eol=lf
+
+# Same trap, second file (2026-09-09): wrangler reads .assetsignore with split("\n"), so a CRLF
+# checkout leaves a stray CR on every pattern and NOTHING is ignored - measured with a local
+# `wrangler deploy --dry-run`. Cloudflare's Linux checkout gets LF from the index either way;
+# this keeps the working tree on this box honest so a local dry-run means what it says.
+.assetsignore text eol=lf
+
+_redirects text eol=lf
+
+# Workflow YAML embeds bash heredocs, which a stray CR breaks on the Linux runner. Same trap
+# .assetsignore records; pinned for the same reason.
+.github/workflows/* text eol=lf

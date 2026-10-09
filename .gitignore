@@ -1,0 +1,18 @@
+# PHANTOM — local tooling, config, and generated output (NOT app code/assets).
+# Exact root-anchored paths only, so real app assets (dct-ios.html, sw.js,
+# *.webp, *.png, icons/, manifest*, version.json, docs/*) are never matched.
+/.mcp.json
+/.omc/
+/docs/superpowers/
+/graphify-out/
+
+# SDD scratch workspace (ledger, briefs, review packages) - never shipped
+.superpowers/
+
+# Playwright regression harness — the app stays toolchain-free; only the harness
+# source is tracked. Installed deps and run artifacts are not.
+/test/node_modules/
+/test/test-results/
+/test/playwright-report/
+/test/package-lock.json
+/test/.certs/

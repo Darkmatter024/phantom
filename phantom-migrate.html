@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#04070b">
+<title>PHANTOM Migration Tool v1.4.2</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0;
+    background: #04070b; color: #cfe8ee;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 13px; line-height: 1.5;
+    min-height: 100vh;
+    padding: calc(env(safe-area-inset-top) + 16px) calc(env(safe-area-inset-right) + 14px) calc(env(safe-area-inset-bottom) + 80px) calc(env(safe-area-inset-left) + 14px);
+  }
+  .hdr {
+    border: 1px solid rgba(92,242,255,0.3);
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+    background: linear-gradient(160deg, rgba(92,242,255,0.06), rgba(92,242,255,0.02));
+  }
+  .hdr h1 { font-size: 14px; margin: 0 0 4px 0; color: #5cf2ff; letter-spacing: 2px; text-transform: uppercase; font-weight: 600; }
+  .hdr .sub { font-size: 11px; color: #8AAFBF; letter-spacing: 1px; }
+
+  .status {
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-bottom: 14px;
+    background: rgba(255,255,255,0.02);
+  }
+  .status-label { font-size: 10px; color: #8AAFBF; letter-spacing: 2px; margin-bottom: 6px; text-transform: uppercase; }
+  .status-value { font-size: 13px; color: #cfe8ee; }
+  .status.ok    { border-color: rgba(48,209,88,0.3); background: rgba(48,209,88,0.05); }
+  .status.ok .status-value { color: #30d158; }
+  .status.warn  { border-color: rgba(255,214,10,0.3); background: rgba(255,214,10,0.05); }
+  .status.warn .status-value { color: #ffd60a; }
+  .status.err   { border-color: rgba(255,69,58,0.4); background: rgba(255,69,58,0.07); }
+  .status.err .status-value { color: #ff453a; }
+
+  button.act {
+    width: 100%;
+    min-height: 56px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(92,242,255,0.3);
+    background: rgba(92,242,255,0.06);
+    color: #5cf2ff;
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 13px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    -webkit-appearance: none;
+    transition: opacity 0.15s;
+  }
+  button.act:active { opacity: 0.6; }
+  button.act:disabled { opacity: 0.3; cursor: not-allowed; }
+  button.act.commit { border-color: rgba(255,138,0,0.4); background: rgba(255,138,0,0.08); color: #ff8a00; }
+  button.act.confirm { border-color: rgba(255,69,58,0.5); background: rgba(255,69,58,0.1); color: #ff453a; }
+
+  pre.report {
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 6px;
+    padding: 12px;
+    margin: 10px 0 14px 0;
+    font-size: 10.5px;
+    line-height: 1.5;
+    white-space: pre;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    color: #b8d4dc;
+  }
+
+  .help {
+    border-top: 1px solid rgba(255,255,255,0.06);
+    margin-top: 24px;
+    padding-top: 16px;
+    font-size: 11px;
+    color: #8AAFBF;
+    line-height: 1.6;
+  }
+  .help h3 { font-size: 11px; color: #5cf2ff; letter-spacing: 2px; margin: 16px 0 6px 0; text-transform: uppercase; }
+  .help code { background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 3px; font-size: 10px; color: #cfe8ee; display: inline-block; margin: 2px 0; }
+  .help kbd { background: rgba(92,242,255,0.1); border: 1px solid rgba(92,242,255,0.3); padding: 1px 5px; border-radius: 3px; font-size: 10px; color: #5cf2ff; }
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <h1>PHANTOM v1.4.2 Migration</h1>
+  <div class="sub">Phase schema remap · mechanical/power/network/compute/validation → rack_ready/hardware_installed/cabling/validated/handoff</div>
+</div>
+
+<div class="status" id="status">
+  <div class="status-label">CHECKING…</div>
+  <div class="status-value" id="status-value">Reading localStorage…</div>
+</div>
+
+<button class="act" id="btn-preview">▸ &nbsp;Preview Migration</button>
+<pre class="report" id="preview-out" style="display:none"></pre>
+
+<button class="act commit" id="btn-commit" disabled>▸ &nbsp;Commit Migration</button>
+<button class="act confirm" id="btn-confirm" style="display:none">⚠ &nbsp;Confirm — Write to Storage</button>
+<pre class="report" id="commit-out" style="display:none"></pre>
+
+<div class="help">
+  <h3>How to use</h3>
+  Tap <kbd>Preview</kbd> to see what the migration WOULD do. No writes happen on preview.<br>
+  Review the report. If the merges, handoff count, and orphans look right, tap <kbd>Commit</kbd>.<br>
+  You'll then be asked to <kbd>Confirm</kbd> — that's when writes happen. Backups are written first.
+
+  <h3>Restore (manual rollback)</h3>
+  If you ever need to undo this migration, run these in Safari's address bar as <code>javascript:</code> URLs or in any console with access to this domain's localStorage:
+  <br>
+  <code>localStorage.setItem('phantom_deploy_phases_v1', localStorage.getItem('phantom_deploy_phases_v1_pre142'))</code><br>
+  <code>localStorage.setItem('phantom_deploy_racks_v1', localStorage.getItem('phantom_deploy_racks_v1_pre142'))</code><br>
+  <code>localStorage.setItem('phantom_deploy_assign_v1', localStorage.getItem('phantom_deploy_assign_v1_pre142'))</code>
+
+  <h3>Cleanup (after you're satisfied, days later)</h3>
+  <code>localStorage.removeItem('phantom_deploy_phases_v1_pre142')</code><br>
+  <code>localStorage.removeItem('phantom_deploy_racks_v1_pre142')</code><br>
+  <code>localStorage.removeItem('phantom_deploy_assign_v1_pre142')</code>
+
+  <h3>Same-origin requirement</h3>
+  This page must be hosted at the SAME origin as PHANTOM (e.g., <code>darkmatter024.github.io/phantom/</code>) for it to access the same <code>localStorage</code>.<br>
+  Open this page in regular Safari (not the PWA shortcut). After successful migration, reopen the PWA — the data is the same.
+</div>
+
+<script>
+'use strict';
+
+var OLD_TO_NEW = {
+  mechanical: 'rack_ready',
+  compute:    'hardware_installed',
+  power:      'cabling',
+  network:    'cabling',
+  validation: 'validated'
+};
+var NEW_SEQ = { rack_ready: 1, hardware_installed: 2, cabling: 3, validated: 4, handoff: 5 };
+var STATUS_RANK = { complete: 4, in_progress: 3, blocked: 2, pending: 1 };
+
+function safeLoad(key) {
+  try {
+    var raw = localStorage.getItem(key);
+    var p = raw ? JSON.parse(raw) : [];
+    return Array.isArray(p) ? p : [];
+  } catch (e) { return []; }
+}
+
+function detectNeedsMigration(phases) {
+  return phases.some(function(p) { return p && p.type && OLD_TO_NEW[p.type]; });
+}
+
+function pad(s, n) {
+  s = String(s || '');
+  while (s.length < n) s += ' ';
+  return s;
+}
+
+function shortId(id) {
+  if (!id) return '?';
+  var s = String(id);
+  return s.length > 8 ? s.slice(0, 8) : s;
+}
+
+// ── STATUS RENDER ────────────────────────────────────────────────────
+function refreshStatus() {
+  var phases = safeLoad('phantom_deploy_phases_v1');
+  var statusEl = document.getElementById('status');
+  var valEl = document.getElementById('status-value');
+  var labelEl = statusEl.querySelector('.status-label');
+
+  if (phases.length === 0) {
+    statusEl.className = 'status warn';
+    labelEl.textContent = 'STATE';
+    valEl.textContent = 'No phase records in localStorage. Fresh install or you need to open PHANTOM first.';
+    document.getElementById('btn-preview').disabled = true;
+    return;
+  }
+  if (!detectNeedsMigration(phases)) {
+    statusEl.className = 'status ok';
+    labelEl.textContent = 'STATE';
+    valEl.textContent = 'Already on v1.4.2 schema. No migration needed.';
+    document.getElementById('btn-preview').disabled = true;
+    return;
+  }
+  statusEl.className = 'status warn';
+  labelEl.textContent = 'STATE';
+  valEl.textContent = 'Old schema detected. ' + phases.length + ' phase records will be migrated.';
+}
+
+// ── DRY-RUN PREVIEW ──────────────────────────────────────────────────
+function computeMigration() {
+  var phases = safeLoad('phantom_deploy_phases_v1');
+  var racks  = safeLoad('phantom_deploy_racks_v1');
+  var assign = safeLoad('phantom_deploy_assign_v1');
+  var deploys = safeLoad('phantom_deployments_v1');
+  var audit  = safeLoad('phantom_deploy_audit_v1');
+
+  var report = {
+    input: {
+      phaseRecords: phases.length, rackRecords: racks.length,
+      assignRecords: assign.length, auditRecords: audit.length,
+      deployments: deploys.length, phasesByType: {}
+    },
+    migration: { toRename: [], toMerge: [], toCreate: [],
+      rackCurrentPhaseUpdates: [], assignPhaseTypeUpdates: [],
+      orphans: [], idempotent: [] },
+    summary: {}
+  };
+
+  phases.forEach(function(p) {
+    var t = (p && p.type) || '(missing)';
+    report.input.phasesByType[t] = (report.input.phasesByType[t] || 0) + 1;
+  });
+
+  var byDeploy = {};
+  phases.forEach(function(p) {
+    if (!p || !p.deploymentId) { report.migration.orphans.push({reason:'missing deploymentId',record:p}); return; }
+    if (!byDeploy[p.deploymentId]) byDeploy[p.deploymentId] = [];
+    byDeploy[p.deploymentId].push(p);
+  });
+
+  var deploysWithHandoff = {};
+  Object.keys(byDeploy).forEach(function(deployId) {
+    var pList = byDeploy[deployId];
+    var byNewKey = {};
+    pList.forEach(function(p) {
+      var t = p && p.type;
+      if (!t) { report.migration.orphans.push({deployId:deployId,reason:'missing type',record:p}); return; }
+      if (NEW_SEQ[t]) {
+        if (t === 'handoff') deploysWithHandoff[deployId] = true;
+        report.migration.idempotent.push({deployId:deployId,type:t,id:p.id});
+        return;
+      }
+      var newType = OLD_TO_NEW[t];
+      if (!newType) { report.migration.orphans.push({deployId:deployId,reason:'unknown type',type:t,record:p}); return; }
+      if (!byNewKey[newType]) byNewKey[newType] = [];
+      byNewKey[newType].push(p);
+    });
+    Object.keys(byNewKey).forEach(function(newType) {
+      var bucket = byNewKey[newType];
+      if (bucket.length === 1) {
+        var p = bucket[0];
+        report.migration.toRename.push({deployId:deployId,oldType:p.type,newType:newType,id:p.id,status:p.status,newSeqOrder:NEW_SEQ[newType]});
+      } else {
+        var winner = bucket.reduce(function(a,b) {
+          var ta=(a.updated||a.signedOffAt||0), tb=(b.updated||b.signedOffAt||0);
+          return ta>=tb ? a : b;
+        });
+        var mergedStatus = bucket.reduce(function(s,p) {
+          if (s===null) return p.status;
+          var rs=STATUS_RANK[s]||0, rp=STATUS_RANK[p.status]||0;
+          return rs<rp ? s : p.status;
+        }, null);
+        report.migration.toMerge.push({
+          deployId:deployId, newType:newType,
+          sources:bucket.map(function(p){return {oldType:p.type,id:p.id,status:p.status,updated:p.updated||null};}),
+          winnerId:winner.id, mergedStatus:mergedStatus, newSeqOrder:NEW_SEQ[newType]
+        });
+      }
+    });
+  });
+
+  deploys.forEach(function(d) {
+    if (!d || !d.id) return;
+    if (deploysWithHandoff[d.id]) return;
+    report.migration.toCreate.push({deployId:d.id,deployName:d.name||'(unnamed)',newType:'handoff',status:'pending',newSeqOrder:NEW_SEQ.handoff});
+  });
+
+  racks.forEach(function(r) {
+    if (!r || !r.currentPhase) return;
+    if (NEW_SEQ[r.currentPhase]) return;
+    var newCp = OLD_TO_NEW[r.currentPhase];
+    if (newCp && r.currentPhase !== newCp) {
+      report.migration.rackCurrentPhaseUpdates.push({rackId:r.id,rackLabel:r.rackId||r.name||r.id,oldCurrentPhase:r.currentPhase,newCurrentPhase:newCp});
+    }
+  });
+
+  assign.forEach(function(a) {
+    if (!a || !a.phaseType) return;
+    if (NEW_SEQ[a.phaseType]) return;
+    var newPt = OLD_TO_NEW[a.phaseType];
+    if (newPt && a.phaseType !== newPt) {
+      report.migration.assignPhaseTypeUpdates.push({assignId:a.id,tech:a.techName||'(unassigned)',oldPhaseType:a.phaseType,newPhaseType:newPt,rackCount:(a.rackIds||[]).length});
+    }
+  });
+
+  report.summary = {
+    cleanRenames: report.migration.toRename.length,
+    merges: report.migration.toMerge.length,
+    handoffCreations: report.migration.toCreate.length,
+    rackUpdates: report.migration.rackCurrentPhaseUpdates.length,
+    assignmentUpdates: report.migration.assignPhaseTypeUpdates.length,
+    orphans: report.migration.orphans.length,
+    alreadyMigrated: report.migration.idempotent.length
+  };
+  return report;
+}
+
+function formatReport(r) {
+  var lines = [];
+  lines.push('INPUT:');
+  lines.push('  Deployments:    ' + r.input.deployments);
+  lines.push('  Phase records:  ' + r.input.phaseRecords);
+  lines.push('  Rack records:   ' + r.input.rackRecords);
+  lines.push('  Assignments:    ' + r.input.assignRecords);
+  lines.push('  Audit entries:  ' + r.input.auditRecords + ' (untouched)');
+  lines.push('');
+  lines.push('  Phases by type:');
+  Object.keys(r.input.phasesByType).forEach(function(t) {
+    lines.push('    ' + pad(t, 22) + r.input.phasesByType[t]);
+  });
+  lines.push('');
+  lines.push('SUMMARY:');
+  lines.push('  Clean renames:       ' + r.summary.cleanRenames);
+  lines.push('  Merges (pwr+net):    ' + r.summary.merges);
+  lines.push('  Handoff creations:   ' + r.summary.handoffCreations);
+  lines.push('  Rack updates:        ' + r.summary.rackUpdates);
+  lines.push('  Assignment updates:  ' + r.summary.assignmentUpdates);
+  lines.push('  Orphans:             ' + r.summary.orphans + (r.summary.orphans>0 ? '  ⚠ REVIEW' : ''));
+  lines.push('  Already migrated:    ' + r.summary.alreadyMigrated);
+  lines.push('');
+  if (r.migration.toRename.length) {
+    lines.push('CLEAN RENAMES:');
+    r.migration.toRename.forEach(function(x) {
+      lines.push('  [' + shortId(x.deployId) + '] ' + pad(x.oldType,12) + ' → ' + pad(x.newType,20) + '(' + x.status + ')');
+    });
+    lines.push('');
+  }
+  if (r.migration.toMerge.length) {
+    lines.push('MERGES (power+network → cabling):');
+    r.migration.toMerge.forEach(function(x) {
+      lines.push('  [' + shortId(x.deployId) + '] merging into "' + x.newType + '":');
+      x.sources.forEach(function(s) {
+        var m = (s.id === x.winnerId) ? '   ✓ KEEP   ' : '   ✗ DISCARD';
+        lines.push(m + '  ' + pad(s.oldType,10) + '(' + pad(s.status,12) + ' id:' + shortId(s.id) + ')');
+      });
+      lines.push('   → merged status: ' + x.mergedStatus);
+    });
+    lines.push('');
+  }
+  if (r.migration.toCreate.length) {
+    lines.push('NEW HANDOFF PHASES (' + r.migration.toCreate.length + '):');
+    r.migration.toCreate.forEach(function(x) {
+      lines.push('  [' + shortId(x.deployId) + '] ' + x.deployName + ' — create handoff (pending)');
+    });
+    lines.push('');
+  }
+  if (r.migration.rackCurrentPhaseUpdates.length) {
+    lines.push('RACK.currentPhase UPDATES (' + r.migration.rackCurrentPhaseUpdates.length + '):');
+    r.migration.rackCurrentPhaseUpdates.slice(0, 30).forEach(function(x) {
+      lines.push('  ' + pad(x.rackLabel,10) + ' ' + pad(x.oldCurrentPhase,14) + ' → ' + x.newCurrentPhase);
+    });
+    if (r.migration.rackCurrentPhaseUpdates.length > 30) {
+      lines.push('  ... and ' + (r.migration.rackCurrentPhaseUpdates.length-30) + ' more');
+    }
+    lines.push('');
+  }
+  if (r.migration.assignPhaseTypeUpdates.length) {
+    lines.push('ASSIGNMENT.phaseType UPDATES:');
+    r.migration.assignPhaseTypeUpdates.forEach(function(x) {
+      lines.push('  ' + pad(x.tech,16) + ' ' + pad(x.oldPhaseType,12) + ' → ' + pad(x.newPhaseType,20) + '(' + x.rackCount + ' racks)');
+    });
+    lines.push('');
+  }
+  if (r.migration.orphans.length) {
+    lines.push('⚠ ORPHANS — REVIEW BEFORE COMMITTING:');
+    r.migration.orphans.forEach(function(x) {
+      var info = x.reason;
+      if (x.type) info += ' (type:' + x.type + ')';
+      if (x.deployId) info += ' [deploy:' + shortId(x.deployId) + ']';
+      lines.push('  ' + info);
+    });
+    lines.push('');
+  }
+  return lines.join('\n');
+}
+
+// ── COMMIT (PERFORMS WRITES) ─────────────────────────────────────────
+function performMigration() {
+  var phases = safeLoad('phantom_deploy_phases_v1');
+  if (!detectNeedsMigration(phases)) {
+    return { migrated:false, reason:'idempotent_no_op', message:'No old-schema records detected.' };
+  }
+  var racks  = safeLoad('phantom_deploy_racks_v1');
+  var assign = safeLoad('phantom_deploy_assign_v1');
+
+  try {
+    localStorage.setItem('phantom_deploy_phases_v1_pre142', JSON.stringify(phases));
+    localStorage.setItem('phantom_deploy_racks_v1_pre142',  JSON.stringify(racks));
+    localStorage.setItem('phantom_deploy_assign_v1_pre142', JSON.stringify(assign));
+  } catch (e) {
+    return { migrated:false, reason:'backup_failed', error:String(e) };
+  }
+
+  var byDeploy = {};
+  var orphans = [];
+  var passThrough = [];
+  phases.forEach(function(p) {
+    if (!p || !p.deploymentId || !p.type) { orphans.push(p); return; }
+    if (NEW_SEQ[p.type]) { passThrough.push(p); return; }
+    var newType = OLD_TO_NEW[p.type];
+    if (!newType) { orphans.push(p); return; }
+    if (!byDeploy[p.deploymentId]) byDeploy[p.deploymentId] = {};
+    if (!byDeploy[p.deploymentId][newType]) byDeploy[p.deploymentId][newType] = [];
+    byDeploy[p.deploymentId][newType].push(p);
+  });
+
+  var newPhases = passThrough.concat(orphans);
+  var stats = { renamed:0, merged:0, handoffCreated:0 };
+
+  Object.keys(byDeploy).forEach(function(deployId) {
+    var nk = byDeploy[deployId];
+    Object.keys(nk).forEach(function(nt) {
+      var bucket = nk[nt];
+      if (bucket.length === 1) {
+        var p = bucket[0];
+        newPhases.push({
+          id:p.id, deploymentId:p.deploymentId, rackId:p.rackId,
+          type:nt, seqOrder:NEW_SEQ[nt], status:p.status,
+          tasksTotal:p.tasksTotal||0, tasksDone:p.tasksDone||0,
+          signedOffBy:p.signedOffBy||null, signedOffAt:p.signedOffAt||null,
+          _gateOverride:p._gateOverride||false, _notes:p._notes||'',
+          updated:p.updated||null
+        });
+        stats.renamed++;
+      } else {
+        var winner = bucket.reduce(function(a,b) {
+          var ta=(a.updated||a.signedOffAt||0), tb=(b.updated||b.signedOffAt||0);
+          return ta>=tb ? a : b;
+        });
+        var mergedStatus = bucket.reduce(function(s,p) {
+          if (s===null) return p.status;
+          var rs=STATUS_RANK[s]||0, rp=STATUS_RANK[p.status]||0;
+          return rs<rp ? s : p.status;
+        }, null);
+        var sourceTypes = bucket.map(function(p){return p.type;}).join('+');
+        newPhases.push({
+          id:winner.id, deploymentId:winner.deploymentId, rackId:winner.rackId,
+          type:nt, seqOrder:NEW_SEQ[nt], status:mergedStatus,
+          tasksTotal:0, tasksDone:0,
+          signedOffBy:winner.signedOffBy||null, signedOffAt:winner.signedOffAt||null,
+          _gateOverride:winner._gateOverride||false,
+          _notes:(winner._notes||'') + ' [v1.4.2: merged from ' + sourceTypes + ']',
+          updated:winner.updated||null
+        });
+        stats.merged++;
+      }
+    });
+  });
+
+  var hasHandoffPerRack = {};
+  newPhases.forEach(function(p) { if (p.rackId && p.type === 'handoff') hasHandoffPerRack[p.rackId] = true; });
+  racks.forEach(function(r) {
+    if (!r || !r.id || !r.deploymentId) return;
+    if (hasHandoffPerRack[r.id]) return;
+    newPhases.push({
+      id:'phase_'+r.id+'_handoff',
+      deploymentId:r.deploymentId, rackId:r.id,
+      type:'handoff', seqOrder:NEW_SEQ.handoff, status:'pending',
+      tasksTotal:0, tasksDone:0,
+      signedOffBy:null, signedOffAt:null,
+      _gateOverride:false, _notes:'created by v1.4.2 migration'
+    });
+    stats.handoffCreated++;
+  });
+
+  var racksUpdated = 0;
+  racks.forEach(function(r) {
+    if (!r || !r.currentPhase) return;
+    if (NEW_SEQ[r.currentPhase]) return;
+    var newCp = OLD_TO_NEW[r.currentPhase];
+    if (newCp && r.currentPhase !== newCp) { r.currentPhase = newCp; racksUpdated++; }
+  });
+  var assignUpdated = 0;
+  assign.forEach(function(a) {
+    if (!a || !a.phaseType) return;
+    if (NEW_SEQ[a.phaseType]) return;
+    var newPt = OLD_TO_NEW[a.phaseType];
+    if (newPt && a.phaseType !== newPt) { a.phaseType = newPt; assignUpdated++; }
+  });
+
+  try {
+    localStorage.setItem('phantom_deploy_phases_v1', JSON.stringify(newPhases));
+    localStorage.setItem('phantom_deploy_racks_v1',  JSON.stringify(racks));
+    localStorage.setItem('phantom_deploy_assign_v1', JSON.stringify(assign));
+  } catch (e) {
+    try {
+      localStorage.setItem('phantom_deploy_phases_v1', localStorage.getItem('phantom_deploy_phases_v1_pre142'));
+      localStorage.setItem('phantom_deploy_racks_v1',  localStorage.getItem('phantom_deploy_racks_v1_pre142'));
+      localStorage.setItem('phantom_deploy_assign_v1', localStorage.getItem('phantom_deploy_assign_v1_pre142'));
+    } catch (re) {}
+    return { migrated:false, reason:'write_failed_rolled_back', error:String(e) };
+  }
+
+  try {
+    var auditRaw = localStorage.getItem('phantom_deploy_audit_v1') || '[]';
+    var audit = JSON.parse(auditRaw);
+    if (!Array.isArray(audit)) audit = [];
+    audit.push({
+      id:'aud_v142_'+Date.now(),
+      deploymentId:null, actor:'system',
+      action:'SCHEMA_MIGRATION_v1.4.2',
+      entityType:'localStorage', entityId:'phase_keys',
+      ts:Date.now(),
+      delta:'phase ontology remap: mechanical→rack_ready, compute→hardware_installed, power+network→cabling, validation→validated, +handoff. renamed='+stats.renamed+', merged='+stats.merged+', handoff_created='+stats.handoffCreated+', racks_updated='+racksUpdated+', assignments_updated='+assignUpdated+', orphans='+orphans.length
+    });
+    localStorage.setItem('phantom_deploy_audit_v1', JSON.stringify(audit));
+  } catch (e) {}
+
+  return {
+    migrated:true, stats:stats, orphans:orphans.length,
+    racksUpdated:racksUpdated, assignUpdated:assignUpdated,
+    newPhaseCount:newPhases.length
+  };
+}
+
+function formatCommitResult(r) {
+  var lines = [];
+  if (r.migrated) {
+    lines.push('✓ MIGRATION SUCCESSFUL');
+    lines.push('');
+    lines.push('STATS:');
+    lines.push('  Clean renames:       ' + r.stats.renamed);
+    lines.push('  Merges (pwr+net):    ' + r.stats.merged);
+    lines.push('  Handoff phases new:  ' + r.stats.handoffCreated);
+    lines.push('  Rack currentPhase:   ' + r.racksUpdated);
+    lines.push('  Assignment updates:  ' + r.assignUpdated);
+    lines.push('  Orphans preserved:   ' + r.orphans);
+    lines.push('  Total new records:   ' + r.newPhaseCount);
+    lines.push('');
+    lines.push('BACKUPS WRITTEN:');
+    lines.push('  phantom_deploy_phases_v1_pre142');
+    lines.push('  phantom_deploy_racks_v1_pre142');
+    lines.push('  phantom_deploy_assign_v1_pre142');
+    lines.push('');
+    lines.push('AUDIT: SCHEMA_MIGRATION_v1.4.2 entry written.');
+    lines.push('');
+    lines.push('NEXT: refresh PHANTOM. Phase labels should now read');
+    lines.push('RACK READY, HARDWARE INSTALLED, CABLING COMPLETE,');
+    lines.push('VALIDATED, HANDOFF READY.');
+  } else {
+    lines.push('✗ MIGRATION NOT PERFORMED');
+    lines.push('');
+    lines.push('Reason: ' + r.reason);
+    if (r.message) lines.push('Detail: ' + r.message);
+    if (r.error) lines.push('Error: ' + r.error);
+  }
+  return lines.join('\n');
+}
+
+// ── WIRE UP UI ───────────────────────────────────────────────────────
+document.getElementById('btn-preview').addEventListener('click', function() {
+  var report = computeMigration();
+  var text = formatReport(report);
+  var out = document.getElementById('preview-out');
+  out.textContent = text;
+  out.style.display = 'block';
+  document.getElementById('btn-commit').disabled = false;
+
+  // Warn on orphans
+  if (report.summary.orphans > 0) {
+    var statusEl = document.getElementById('status');
+    statusEl.className = 'status err';
+    statusEl.querySelector('.status-label').textContent = 'WARNING';
+    document.getElementById('status-value').textContent = report.summary.orphans + ' orphan record(s) — review the preview before committing.';
+  }
+});
+
+document.getElementById('btn-commit').addEventListener('click', function() {
+  document.getElementById('btn-confirm').style.display = 'block';
+  this.disabled = true;
+  setTimeout(function() {
+    document.getElementById('btn-confirm').scrollIntoView({behavior:'smooth', block:'center'});
+  }, 50);
+});
+
+document.getElementById('btn-confirm').addEventListener('click', function() {
+  this.disabled = true;
+  this.textContent = '⟳  WORKING…';
+  setTimeout(function() {
+    var result = performMigration();
+    var out = document.getElementById('commit-out');
+    out.textContent = formatCommitResult(result);
+    out.style.display = 'block';
+    document.getElementById('btn-confirm').style.display = 'none';
+    var statusEl = document.getElementById('status');
+    if (result.migrated) {
+      statusEl.className = 'status ok';
+      statusEl.querySelector('.status-label').textContent = 'STATE';
+      document.getElementById('status-value').textContent = 'Migration committed. Reopen PHANTOM PWA to see new labels.';
+    } else {
+      statusEl.className = 'status err';
+      statusEl.querySelector('.status-label').textContent = 'ERROR';
+      document.getElementById('status-value').textContent = result.reason + (result.error ? ' — ' + result.error : '');
+    }
+  }, 100);
+});
+
+refreshStatus();
+</script>
+
+</body>
+</html>

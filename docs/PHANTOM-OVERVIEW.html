@@ -1,0 +1,477 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PHANTOM — how it works, start to finish</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#070B14; --panel:#0E1522; --panel-2:#121B2B; --line:#1E2A3D;
+    --text:#E6EEF5; --muted:#8A9BB0; --dim:#5C6B80;
+    --cyan:#5FE3F0; --amber:#F2B33D; --green:#43D17A; --violet:#9D7BFF; --red:#FF6B6B;
+    --display:"Barlow Condensed",Impact,"Arial Narrow",sans-serif;
+    --body:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  html{background:var(--bg);color:var(--text);font-family:var(--body);line-height:1.55;-webkit-font-smoothing:antialiased}
+  body{margin:0}
+  .wrap{max-width:1080px;margin:0 auto;padding:56px 32px 96px}
+  a{color:var(--cyan);text-decoration:none}
+  a:focus-visible,button:focus-visible{outline:2px solid var(--cyan);outline-offset:3px}
+
+  /* ---------- hero ---------- */
+  .mark{font-family:var(--display);font-weight:700;font-size:20px;letter-spacing:.42em;color:var(--cyan)}
+  .mark small{display:block;font-family:var(--body);font-weight:500;font-size:13px;letter-spacing:0;color:var(--muted);margin-top:6px}
+  h1{font-family:var(--display);font-weight:600;font-size:clamp(44px,6vw,72px);line-height:1;letter-spacing:-.01em;margin:40px 0 18px;max-width:18ch}
+  .lede{font-size:20px;line-height:1.5;color:var(--text);max-width:62ch;margin:0}
+  .lede + .lede{color:var(--muted);font-size:17px;margin-top:14px}
+  .facts{display:flex;flex-wrap:wrap;gap:10px 28px;margin:34px 0 0;padding:0;list-style:none;font-size:14px;color:var(--muted)}
+  .facts li b{color:var(--text);font-weight:600}
+  .facts li code{font-family:var(--mono);font-size:13px;color:var(--cyan)}
+
+  /* ---------- sections ---------- */
+  section{margin-top:88px}
+  h2{font-family:var(--display);font-weight:600;font-size:36px;line-height:1.05;margin:0 0 10px}
+  .sub{color:var(--muted);font-size:16px;max-width:64ch;margin:0 0 28px}
+  h3{font-family:var(--display);font-weight:600;font-size:22px;letter-spacing:.01em;margin:0 0 8px}
+
+  /* ---------- journey diagram ---------- */
+  .figure{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px 22px 14px;overflow:hidden}
+  .figure svg{width:100%;height:auto;display:block}
+  .figcap{font-size:13px;color:var(--dim);margin:12px 4px 0}
+  .svg-t{font-family:var(--display);font-weight:600;letter-spacing:.02em;fill:var(--text)}
+  .svg-b{font-family:var(--body);fill:var(--muted)}
+  .svg-m{font-family:var(--mono);fill:var(--cyan)}
+
+  /* ---------- shift narrative ---------- */
+  .stations{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;counter-reset:st}
+  .st{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 18px 16px;position:relative}
+  .st::before{counter-increment:st;content:counter(st);position:absolute;top:14px;right:16px;font-family:var(--display);font-size:34px;font-weight:700;color:var(--panel-2);line-height:1}
+  .st h3{padding-right:36px}
+  .st p{margin:0;font-size:14.5px;color:var(--muted)}
+  .st .tap{margin-top:12px;font-family:var(--mono);font-size:12px;color:var(--cyan)}
+
+  /* ---------- feature inventory ---------- */
+  .group{border-top:1px solid var(--line);padding:30px 0 6px;display:grid;grid-template-columns:260px 1fr;gap:28px}
+  .group:last-of-type{border-bottom:1px solid var(--line);padding-bottom:30px}
+  .group .lead h3{font-size:26px}
+  .group .lead p{margin:6px 0 0;color:var(--muted);font-size:14.5px}
+  .group .lead .tag{display:inline-block;margin-top:14px;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:500;border:1px solid var(--line);color:var(--muted)}
+  .tag.cyan{color:var(--cyan);border-color:rgba(95,227,240,.35)}
+  .tag.amber{color:var(--amber);border-color:rgba(242,179,61,.35)}
+  .tag.violet{color:var(--violet);border-color:rgba(157,123,255,.4)}
+  .tag.green{color:var(--green);border-color:rgba(67,209,122,.35)}
+  .feats{display:grid;grid-template-columns:1fr 1fr;gap:10px 22px;margin:0;padding:0;list-style:none}
+  .feats li{padding:10px 0 10px 16px;border-left:2px solid var(--line);font-size:14.5px}
+  .feats li b{display:block;color:var(--text);font-weight:600;margin-bottom:2px}
+  .feats li span{color:var(--muted)}
+  .feats li.hi{border-left-color:var(--cyan)}
+  .feats li.gate{border-left-color:var(--amber)}
+  .feats li.ai{border-left-color:var(--violet)}
+  .feats li.ok{border-left-color:var(--green)}
+
+  /* ---------- principles ---------- */
+  .rules{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .rule{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px}
+  .rule h3{font-size:20px}
+  .rule p{margin:0;font-size:14px;color:var(--muted)}
+  .rule q{font-style:italic;color:var(--text)}
+
+  /* ---------- roadmap ---------- */
+  .road{list-style:none;margin:0;padding:0;border-left:2px solid var(--line)}
+  .road li{position:relative;padding:0 0 22px 26px;font-size:15px}
+  .road li::before{content:"";position:absolute;left:-7px;top:7px;width:12px;height:12px;border-radius:50%;background:var(--bg);border:2px solid var(--cyan)}
+  .road li.done::before{background:var(--green);border-color:var(--green)}
+  .road li.now::before{background:var(--amber);border-color:var(--amber)}
+  .road li b{display:block;font-weight:600}
+  .road li span{color:var(--muted)}
+
+  /* ---------- footer ---------- */
+  footer{margin-top:80px;padding-top:22px;border-top:1px solid var(--line);color:var(--dim);font-size:13px;display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
+  footer code{font-family:var(--mono);color:var(--muted)}
+
+  @media (max-width:860px){
+    .wrap{padding:36px 18px 72px}
+    .stations{grid-template-columns:1fr 1fr}
+    .group{grid-template-columns:1fr;gap:14px}
+    .feats{grid-template-columns:1fr}
+    .rules{grid-template-columns:1fr}
+  }
+  @media (max-width:520px){ .stations{grid-template-columns:1fr} }
+
+  @media print{
+    :root{--bg:#fff;--panel:#fff;--panel-2:#f2f4f7;--line:#cfd6e0;--text:#0b1220;--muted:#4a586b;--dim:#7a8798;--cyan:#0a7f8c;--amber:#a86c00;--green:#1a7d43;--violet:#5b3fbf}
+    html{background:#fff}
+    .wrap{max-width:none;padding:0}
+    section{margin-top:40px;break-inside:avoid}
+    .figure,.st,.rule{break-inside:avoid;box-shadow:none}
+    a::after{content:""}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ================= HERO ================= -->
+  <header>
+    <div class="mark">PHANTOM<small>Field intelligence for data center technicians</small></div>
+    <h1>One app in a technician's pocket that knows what rack they're at, what phase it's in, and what to do next.</h1>
+    <p class="lede">PHANTOM is an offline-first mobile app for rack-and-stack deployment. A technician loads the site's Master file, taps a rack, and works it through five phases with every check, scan, photo, and note recorded against that rack — then hands the shift off with nothing lost.</p>
+    <p class="lede">It runs in Safari on an iPhone, needs no install beyond "add to home screen," and works with gloves on in a cold aisle with no signal.</p>
+    <ul class="facts">
+      <li><b>Built by</b> John Hamilton, Deployment Engineer</li>
+      <li><b>Current build</b> <code>v1.14.574</code></li>
+      <li><b>Platform</b> iOS Safari PWA, offline-first</li>
+      <li><b>Verified</b> on device before every release</li>
+    </ul>
+  </header>
+
+  <!-- ================= JOURNEY DIAGRAM ================= -->
+  <section aria-labelledby="flow">
+    <h2 id="flow">How a shift moves through PHANTOM</h2>
+    <p class="sub">Three moves, start to finish. The middle one — working the rack — is where almost everything lives, so it's drawn the way a technician sees it: as a rack.</p>
+
+    <div class="figure">
+      <svg viewBox="0 0 1040 560" role="img" aria-labelledby="flowT flowD" xmlns="http://www.w3.org/2000/svg">
+        <title id="flowT">PHANTOM shift flow</title>
+        <desc id="flowD">Load the Master, pick a rack, work the rack through Mechanical, Power, Network, Compute and Validation with evidence captured at each phase, then hand off the shift.</desc>
+        <defs>
+          <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M1 1 L9 5 L1 9" fill="none" stroke="#5FE3F0" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </marker>
+          <linearGradient id="rackglow" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0" stop-color="#5FE3F0" stop-opacity=".14"/>
+            <stop offset="1" stop-color="#5FE3F0" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+
+        <!-- ===== Station 1: Load Master ===== -->
+        <g>
+          <rect x="24" y="40" width="200" height="118" rx="12" fill="#121B2B" stroke="#1E2A3D"/>
+          <text x="44" y="70" class="svg-t" font-size="22">1 · Load the Master</text>
+          <text x="44" y="96" class="svg-b" font-size="13">Site spreadsheet in, racks out</text>
+          <text x="44" y="114" class="svg-b" font-size="13">One Master per site. Cached</text>
+          <text x="44" y="132" class="svg-b" font-size="13">on the phone for offline use.</text>
+          <text x="44" y="150" class="svg-m" font-size="10">MASTER-US-WEST-99Z-QRS03.xlsx</text>
+        </g>
+        <line x1="224" y1="99" x2="266" y2="99" stroke="#5FE3F0" stroke-width="1.6" marker-end="url(#ar)"/>
+
+        <!-- ===== Station 2: Pick a rack ===== -->
+        <g>
+          <rect x="270" y="40" width="200" height="118" rx="12" fill="#121B2B" stroke="#1E2A3D"/>
+          <text x="290" y="70" class="svg-t" font-size="22">2 · Pick a rack</text>
+          <text x="290" y="96" class="svg-b" font-size="13">"98 racks on site. Tap one."</text>
+          <text x="290" y="114" class="svg-b" font-size="13">List, floor map, 3D aisle,</text>
+          <text x="290" y="132" class="svg-b" font-size="13">or scan the rack label.</text>
+          <text x="290" y="150" class="svg-m" font-size="11">s3:171 · row S3 · pos 112</text>
+        </g>
+        <line x1="470" y1="99" x2="512" y2="99" stroke="#5FE3F0" stroke-width="1.6" marker-end="url(#ar)"/>
+
+        <!-- ===== Station 3: Work the rack (the rack elevation) ===== -->
+        <g>
+          <rect x="516" y="24" width="300" height="512" rx="14" fill="#0B1220" stroke="#2B3B55"/>
+          <rect x="516" y="24" width="300" height="140" rx="14" fill="url(#rackglow)"/>
+          <text x="536" y="58" class="svg-t" font-size="22">3 · Work the rack</text>
+          <text x="536" y="80" class="svg-b" font-size="13">Five phases, in order. Each has a</text>
+          <text x="536" y="97" class="svg-b" font-size="13">checklist, a gate, and evidence.</text>
+
+          <!-- rails -->
+          <rect x="548" y="118" width="6" height="392" fill="#1E2A3D"/>
+          <rect x="778" y="118" width="6" height="392" fill="#1E2A3D"/>
+          <!-- U slots -->
+          <g font-size="13">
+            <!-- Mechanical -->
+            <rect x="560" y="124" width="212" height="66" rx="4" fill="#121B2B" stroke="#43D17A"/>
+            <text x="574" y="148" class="svg-t" font-size="18">Mechanical</text>
+            <text x="574" y="168" class="svg-b" font-size="12">rails, cage nuts, chassis seated</text>
+            <circle cx="756" cy="142" r="6" fill="#43D17A"/>
+            <text x="575" y="183" class="svg-m" font-size="10">gate: complete</text>
+            <!-- Power -->
+            <rect x="560" y="202" width="212" height="66" rx="4" fill="#121B2B" stroke="#43D17A"/>
+            <text x="574" y="226" class="svg-t" font-size="18">Power</text>
+            <text x="574" y="246" class="svg-b" font-size="12">PDU feeds, whips, breakers</text>
+            <circle cx="756" cy="220" r="6" fill="#43D17A"/>
+            <text x="575" y="261" class="svg-m" font-size="10">gate: complete</text>
+            <!-- Network -->
+            <rect x="560" y="280" width="212" height="66" rx="4" fill="#16213A" stroke="#5FE3F0" stroke-width="1.6"/>
+            <text x="574" y="304" class="svg-t" font-size="18">Network</text>
+            <text x="574" y="324" class="svg-b" font-size="12">IB/NVLink cabled, optics, OOB</text>
+            <circle cx="756" cy="298" r="6" fill="#5FE3F0"/>
+            <text x="575" y="339" class="svg-m" font-size="10">in progress · 0/6 checks</text>
+            <!-- Compute -->
+            <rect x="560" y="358" width="212" height="66" rx="4" fill="#121B2B" stroke="#2B3B55"/>
+            <text x="574" y="382" class="svg-t" font-size="18" fill="#8A9BB0">Compute</text>
+            <text x="574" y="402" class="svg-b" font-size="12">nodes racked, serials captured</text>
+            <circle cx="756" cy="376" r="6" fill="none" stroke="#2B3B55"/>
+            <text x="575" y="417" class="svg-m" font-size="10" fill="#5C6B80">pending</text>
+            <!-- Validation -->
+            <rect x="560" y="436" width="212" height="66" rx="4" fill="#121B2B" stroke="#2B3B55"/>
+            <text x="574" y="460" class="svg-t" font-size="18" fill="#8A9BB0">Validation</text>
+            <text x="574" y="480" class="svg-b" font-size="12">port map matches, sign-off</text>
+            <circle cx="756" cy="454" r="6" fill="none" stroke="#2B3B55"/>
+            <text x="575" y="495" class="svg-m" font-size="10" fill="#5C6B80">pending</text>
+          </g>
+          <text x="536" y="528" class="svg-b" font-size="12">A gate override is allowed — and it stays visible in the log.</text>
+        </g>
+
+        <!-- ===== Evidence captured per phase (left column under stations 1-2) ===== -->
+        <g>
+          <text x="24" y="206" class="svg-t" font-size="18">Captured on the rack, every phase</text>
+          <g font-size="13">
+            <rect x="24" y="222" width="220" height="42" rx="8" fill="#121B2B" stroke="#1E2A3D"/>
+            <text x="38" y="240" class="svg-t" font-size="15">Scan</text>
+            <text x="38" y="256" class="svg-b" font-size="12">matched against the Master</text>
+
+            <rect x="252" y="222" width="220" height="42" rx="8" fill="#121B2B" stroke="#1E2A3D"/>
+            <text x="266" y="240" class="svg-t" font-size="15">Photo</text>
+            <text x="266" y="256" class="svg-b" font-size="12">evidence attached to the rack</text>
+
+            <rect x="24" y="274" width="220" height="42" rx="8" fill="#121B2B" stroke="#1E2A3D"/>
+            <text x="38" y="292" class="svg-t" font-size="15">Log note</text>
+            <text x="38" y="308" class="svg-b" font-size="12">credited to the technician</text>
+
+            <rect x="252" y="274" width="220" height="42" rx="8" fill="#121B2B" stroke="#F2B33D"/>
+            <text x="266" y="292" class="svg-t" font-size="15">Blocker</text>
+            <text x="266" y="308" class="svg-b" font-size="12">what stopped work, and where</text>
+
+            <rect x="24" y="326" width="220" height="42" rx="8" fill="#121B2B" stroke="#1E2A3D"/>
+            <text x="38" y="344" class="svg-t" font-size="15">Devices &amp; U positions</text>
+            <text x="38" y="360" class="svg-b" font-size="12">what goes where, from the Master</text>
+
+            <rect x="252" y="326" width="220" height="42" rx="8" fill="#121B2B" stroke="#9D7BFF"/>
+            <text x="266" y="344" class="svg-t" font-size="15">Ask the assistant</text>
+            <text x="266" y="360" class="svg-b" font-size="12">knows this rack — when online</text>
+          </g>
+          <!-- connector from evidence block into the rack -->
+          <path d="M472 295 C 500 295, 500 313, 516 313" fill="none" stroke="#5FE3F0" stroke-width="1.6" marker-end="url(#ar)"/>
+        </g>
+
+        <!-- ===== Station 4: Hand off ===== -->
+        <g>
+          <rect x="24" y="404" width="448" height="132" rx="12" fill="#121B2B" stroke="#1E2A3D"/>
+          <text x="44" y="434" class="svg-t" font-size="22">4 · Close the shift</text>
+          <text x="44" y="460" class="svg-b" font-size="13">Every rack's phase, blockers, notes, scans and photos roll</text>
+          <text x="44" y="478" class="svg-b" font-size="13">into the handoff. The next technician opens the app and</text>
+          <text x="44" y="496" class="svg-b" font-size="13">sees where the last one stopped: "s1:001 — Network".</text>
+          <text x="44" y="522" class="svg-m" font-size="11">shift end countdown · handoff bundle · audit trail</text>
+        </g>
+        <path d="M516 470 C 496 470, 496 470, 476 470" fill="none" stroke="#5FE3F0" stroke-width="1.6" marker-end="url(#ar)"/>
+
+        <!-- Legend -->
+        <g font-size="11">
+          <circle cx="836" cy="52" r="5" fill="#43D17A"/><text x="848" y="56" class="svg-b">complete</text>
+          <circle cx="836" cy="74" r="5" fill="#5FE3F0"/><text x="848" y="78" class="svg-b">in progress</text>
+          <circle cx="836" cy="96" r="5" fill="none" stroke="#2B3B55"/><text x="848" y="100" class="svg-b">pending</text>
+          <rect x="831" y="112" width="10" height="10" rx="2" fill="none" stroke="#F2B33D"/><text x="848" y="121" class="svg-b">blocker</text>
+          <rect x="831" y="134" width="10" height="10" rx="2" fill="none" stroke="#9D7BFF"/><text x="848" y="143" class="svg-b">AI, online only</text>
+        </g>
+      </svg>
+      <p class="figcap">Screens shown are the real ones on v1.14.574 — the "98 racks on US-QRS03" hero, the s3:171 rack, the five-phase pipeline.</p>
+    </div>
+  </section>
+
+  <!-- ================= SHIFT NARRATIVE ================= -->
+  <section aria-labelledby="shift">
+    <h2 id="shift">What a technician actually does</h2>
+    <p class="sub">The same four moves, from the technician's side. Tap counts are the design target the app is being held to.</p>
+    <div class="stations">
+      <div class="st">
+        <h3>Arrive, load the Master</h3>
+        <p>Open the app. If the site's Master isn't loaded, the first screen says exactly one thing: <i>Load a Master to start.</i> If it is, the screen says how many racks are on site and tells you to tap one.</p>
+        <div class="tap">1 tap after the name gate</div>
+      </div>
+      <div class="st">
+        <h3>Find the rack</h3>
+        <p>Search by ID, browse the list, open the floor map, walk the 3D aisle, or scan the rack's label. Flagged and blocked racks are marked. Your assigned racks sit on top.</p>
+        <div class="tap">≤ 2 taps to any rack</div>
+      </div>
+      <div class="st">
+        <h3>Work the rack</h3>
+        <p>The rack screen holds everything: phase pipeline, checklist, devices with U positions, scan, photo, log note, assign, QR, blockers, and the tools that apply to this rack right now.</p>
+        <div class="tap">0 navigation — it's all here</div>
+      </div>
+      <div class="st">
+        <h3>Hand it off</h3>
+        <p>Set the shift end and the countdown runs. When you close, the handoff carries every rack's state forward. Nothing lives only in someone's head.</p>
+        <div class="tap">≤ 2 taps to hand off</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= FEATURE INVENTORY ================= -->
+  <section aria-labelledby="feat">
+    <h2 id="feat">Everything the app does</h2>
+    <p class="sub">Grouped by where each feature lives, because that's how PHANTOM is organized: the Master is the source of truth, the rack is the unit of work, and a short list of things sit above the rack.</p>
+
+    <!-- Master -->
+    <div class="group">
+      <div class="lead">
+        <h3>The Master</h3>
+        <p>The site's deployment spreadsheet, ingested once. Every count, rack, device and U position in the app traces back to it.</p>
+        <span class="tag cyan">Single source of truth</span>
+      </div>
+      <ul class="feats">
+        <li class="hi"><b>Spreadsheet ingestion</b><span>Loads the site Master (.xlsx) and turns it into racks, devices, positions and port maps on the phone.</span></li>
+        <li><b>One Master per site</b><span>Loading a new one is an explicit replace with a confirmation — no silent overwrites, no two Masters fighting.</span></li>
+        <li><b>Cached for offline</b><span>Restored from the phone's storage on launch, with the saved date shown so a stale Master is never mistaken for a fresh one.</span></li>
+        <li class="gate"><b>PIN-protected replace and delete</b><span>Swapping a wrong Master for the corrected one takes seconds — protected by a PIN, not by being hard to find.</span></li>
+        <li><b>Multi-site aware</b><span>Each Master carries its site; the header always shows which site you're working.</span></li>
+        <li><b>Reconciles everywhere</b><span>A device count on one screen must match the same count on every other. Disagreement is treated as a defect, not a display quirk.</span></li>
+      </ul>
+    </div>
+
+    <!-- The rack -->
+    <div class="group">
+      <div class="lead">
+        <h3>The rack</h3>
+        <p>Tap one rack and every check, action, and piece of evidence for it is on that screen. Tools appear only when they apply to this rack.</p>
+        <span class="tag cyan">The unit of work</span>
+      </div>
+      <ul class="feats">
+        <li class="hi"><b>Five-phase pipeline</b><span>Mechanical → Power → Network → Compute → Validation, with a per-phase checklist and progress bar. The rack's status is the sum of its phases.</span></li>
+        <li class="gate"><b>Gates and honest overrides</b><span>A phase can be force-completed when the floor demands it — but "gate override active" stays visible and the bypass is logged with the technician's name.</span></li>
+        <li><b>Next action</b><span>Derived from the rack's current phase, on the device, offline: "Continue network." One line, always correct.</span></li>
+        <li><b>Devices with U positions</b><span>Every device in the rack listed with its U range, top of rack first. Unknown positions show as unknown — never guessed.</span></li>
+        <li class="hi"><b>Scan</b><span>Scan a device or rack label. A scan that doesn't match what the Master expects records a mismatch even if the technician taps pass.</span></li>
+        <li class="hi"><b>Photo evidence</b><span>Capture photos against the rack; a per-rack gallery keeps them with the work, not in the camera roll.</span></li>
+        <li><b>Log note, assign, QR</b><span>Notes credited to the technician, rack assignment, and a QR for the rack — all on the rack screen.</span></li>
+        <li class="gate"><b>Blockers and discrepancies</b><span>Log what stopped work and where. Blocked racks are counted at fleet level and flagged in every rack view.</span></li>
+        <li><b>Long-phase warning</b><span>If a phase has run far longer than it should, the rack says so — with the real elapsed time and no invented "typical" figure.</span></li>
+        <li><b>Paste anything</b><span>Drop raw text from a switch, a BOM, an elevation, or an EDP and the app parses it into the rack's port map or component list, on the phone.</span></li>
+        <li><b>Port map, BOM, manifest, rack map</b><span>Rack-scoped views of what's expected versus what's been done, read from the Master.</span></li>
+        <li><b>Optics, audits, power, burndown</b><span>Operational tools that render for the rack you're on: optic ledger, audit checks, power readiness, remaining work.</span></li>
+        <li class="gate"><b>ISOLATE</b><span>A guided down-link wizard for troubleshooting: eight steps, permission tiers, and an escalation packet built deterministically from what the app already knows.</span></li>
+        <li><b>Activity log</b><span>Every state change on the rack, timestamped and credited: "John: POWER: pending → in_progress."</span></li>
+      </ul>
+    </div>
+
+    <!-- Seeing the site -->
+    <div class="group">
+      <div class="lead">
+        <h3>Seeing the site</h3>
+        <p>Views for finding a rack and understanding the floor. The picture lives here; the work stays on the rack.</p>
+        <span class="tag">Survey views</span>
+      </div>
+      <ul class="feats">
+        <li><b>Rack list and search</b><span>All racks with filters for active and blocked, live totals, and search by rack ID.</span></li>
+        <li><b>Floor map</b><span>Rows and positions laid out as the floor is.</span></li>
+        <li class="hi"><b>3D aisle</b><span>Walk the aisle, tap a rack to focus it, see racked-versus-pending and flags on the chassis. Pick up to five racks to compare.</span></li>
+        <li><b>Rack inspection</b><span>Front and rear views of a single rack with an explode option and ghosted empty U slots.</span></li>
+        <li><b>Fleet pipeline</b><span>Site-level view of which phase the deployment's leading edge is in, racks done, and blockers.</span></li>
+      </ul>
+    </div>
+
+    <!-- Intelligence -->
+    <div class="group">
+      <div class="lead">
+        <h3>Intelligence</h3>
+        <p>An assistant that already knows the site, the rack, the phase, and the devices — so a question in the aisle gets a specific answer.</p>
+        <span class="tag violet">Online only, and honest about it</span>
+      </div>
+      <ul class="feats">
+        <li class="ai"><b>DCT Assistant</b><span>Ask by voice or text. Answers stream back with the rack's live context already included. Attach a ticket to ask about it.</span></li>
+        <li class="ai"><b>Offline-aware</b><span>The app is offline-first; the assistant isn't. Its door is visibly dimmed when there's no signal, so nobody waits on a spinner in the cage.</span></li>
+        <li><b>Parsing on the phone</b><span>BOM, port map, EDP and CLI parsing run locally — no network required to make sense of pasted text.</span></li>
+        <li class="ai"><b>Secured through a proxy</b><span>No API key in the app. Calls go through a Cloudflare Worker locked to PHANTOM's own domain and capped per month.</span></li>
+      </ul>
+    </div>
+
+    <!-- Shift -->
+    <div class="group">
+      <div class="lead">
+        <h3>Shift and handoff</h3>
+        <p>The few things that sit above any one rack: the clock, the handoff, and the site controls.</p>
+        <span class="tag">Above the rack</span>
+      </div>
+      <ul class="feats">
+        <li><b>Shift end and countdown</b><span>Set it once; the app counts down. Off until you set it — no fake timers.</span></li>
+        <li class="hi"><b>Handoff</b><span>Everything the shift recorded rolls forward. The incoming technician sees "In progress: s1:001 — Network" on their first screen.</span></li>
+        <li><b>Acceptance and history</b><span>Sign-off flow and the full change history for the deployment.</span></li>
+        <li><b>Pause deployment</b><span>A single fleet-level control for stopping work site-wide.</span></li>
+        <li><b>System panel</b><span>Master, profile, diagnostics, and exit — one short list, one place.</span></li>
+      </ul>
+    </div>
+
+    <!-- Platform -->
+    <div class="group">
+      <div class="lead">
+        <h3>Built for the cold aisle</h3>
+        <p>Design rules the whole app is held to, because it's used with gloves, in noise, under harsh light, often with no signal.</p>
+        <span class="tag green">Platform</span>
+      </div>
+      <ul class="feats">
+        <li class="ok"><b>Offline-first</b><span>Everything except the assistant works with no connection. Data lives on the phone and survives relaunch.</span></li>
+        <li class="ok"><b>No install</b><span>It's a web app: open the link in Safari, add to home screen. Updates arrive on the next launch.</span></li>
+        <li><b>Glove-safe targets</b><span>Every control is at least 44 points. No precision taps, no tiny close buttons.</span></li>
+        <li class="ok"><b>Data honesty</b><span>No fabricated telemetry, no decorative scores, no "typical" numbers that were never measured. If the app doesn't know, it says so.</span></li>
+        <li><b>Multi-tab guard</b><span>Opening the app in a second tab warns you before edits can collide.</span></li>
+        <li><b>Phone and desktop shells</b><span>The phone is the product; a wider layout serves the desk.</span></li>
+      </ul>
+    </div>
+
+    <!-- Engineering -->
+    <div class="group">
+      <div class="lead">
+        <h3>How it's kept safe to change</h3>
+        <p>A single developer shipping to a tool people rely on. The process is built so nothing reaches a technician's phone unverified.</p>
+        <span class="tag green">Engineering discipline</span>
+      </div>
+      <ul class="feats">
+        <li class="ok"><b>Verified on device before release</b><span>Every version is checked on an iPhone by the owner before it's promoted. A build the phone hasn't passed cannot ship.</span></li>
+        <li class="ok"><b>Owner-only release gate</b><span>Live serves from a release branch only the owner can promote. The verified stamp is enforced by a hook that no automation can bypass — and it records failures, not just passes.</span></li>
+        <li><b>One visible change per version</b><span>Small, surgical edits against verified source. If something breaks, the cause is one ship wide.</span></li>
+        <li class="ok"><b>Automated tests on iPhone WebKit</b><span>Browser tests run in an iPhone emulation before the human check. Tests are mutation-checked: a test that can't fail is removed.</span></li>
+        <li><b>Code knowledge graph</b><span>The codebase is mapped before any edit so changes are made against real anchors, not assumptions.</span></li>
+        <li><b>Review agents</b><span>Automated reviewers for edit surgery, data honesty, cold-aisle usability, storage shape, and report fidelity — advisory, never a substitute for the device check.</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ================= PRINCIPLES ================= -->
+  <section aria-labelledby="pr">
+    <h2 id="pr">Three rules that shape every decision</h2>
+    <p class="sub">Written down, enforced in review, and the reason the app keeps getting simpler rather than bigger.</p>
+    <div class="rules">
+      <div class="rule">
+        <h3>The rack is the unit of work</h3>
+        <p><q>Load Master → pick rack → work the rack.</q> Anything that isn't about the rack in front of you moves onto the rack or gets removed.</p>
+      </div>
+      <div class="rule">
+        <h3>A gauge that lies is worse than no gauge</h3>
+        <p><q>Real numbers or an honest "not set."</q> No scores for unset state, no invented baselines, no button that pretends there's a job when there isn't.</p>
+      </div>
+      <div class="rule">
+        <h3>Every door must earn its place</h3>
+        <p><q>Two paths to the same fact is a defect.</q> A change that opens a door has to close one. The app is measured by how few taps a stranger needs.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ROADMAP ================= -->
+  <section aria-labelledby="rm">
+    <h2 id="rm">Where it's going</h2>
+    <p class="sub">Shipped, in flight, and next — in order.</p>
+    <ul class="road">
+      <li class="done"><b>First screen answers one question</b><span>"Load a Master to start" or "N racks on site, tap one." Shipped and verified this week.</span></li>
+      <li class="done"><b>Rack drawings demoted, U positions promoted</b><span>Unreadable rack pictures off the work screen; every device row shows its U range.</span></li>
+      <li class="done"><b>Assistant restored and secured</b><span>Key moved server-side behind an origin-locked proxy; streaming answers on the phone.</span></li>
+      <li class="now"><b>One door per action</b><span>Load Master, scan, print, report a problem, hand off — each gets exactly one button, everywhere.</span></li>
+      <li class="now"><b>Master truth reconciliation</b><span>Every count in the app single-sourced from the Master; gate bypasses never render as clean completion.</span></li>
+      <li><b>Assistant in the dock</b><span>The ghost takes a permanent slot, lit online and dimmed offline; exit moves under the system panel.</span></li>
+      <li><b>Rack-model navigation</b><span>The remaining tool rows and status walls fold into the rack screen; the dock becomes places, not gestures.</span></li>
+      <li><b>Field report</b><span>All evidence — phases, blockers, notes, scans, photos, isolation sessions — assembled into one self-contained report per rack or shift.</span></li>
+      <li><b>Technician-to-technician handoff transfer</b><span>One-tap bundle to the next phone via share sheet or QR, no server required.</span></li>
+      <li><b>Intelligence memory</b><span>The assistant learns what technicians at this site actually ask, phase by phase, and surfaces it before they type.</span></li>
+    </ul>
+  </section>
+
+  <footer>
+    <span>PHANTOM · <code>darkmatter024.github.io/phantom</code></span>
+    <span>Prepared September 2026 · build <code>v1.14.574</code></span>
+  </footer>
+</div>
+</body>
+</html>

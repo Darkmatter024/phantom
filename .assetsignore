@@ -1,0 +1,17 @@
+# .assetsignore - what the STAGING Worker does not upload. gitignore syntax, read by wrangler
+# from the assets directory (the repo root, see wrangler.jsonc). Infrastructure, not app.
+#
+# Everything tracked in the repo IS served, on purpose: staging must answer every path the way
+# GitHub Pages answers it for release, and Pages serves the whole branch. Only two kinds of
+# path are excluded - git's own store, and the gitignored local tooling that never reaches
+# Cloudflare's checkout but does exist on this box, so a local `wrangler deploy --dry-run`
+# walks the same tree the build does.
+.git/
+node_modules/
+.wrangler/
+/graphify-out/
+/.omc/
+/.superpowers/
+/docs/superpowers/
+/test/test-results/
+/test/playwright-report/
