@@ -52,7 +52,7 @@
 
 <div class="hud hud-top">
   <div class="brand">PHANTOM<small>FORGE · HYBRID AISLE</small></div>
-  <div class="stamp">MOCKUP <b>v2</b><br>LIVE ROW ×5 · CW HALL<br>THREE r128</div>
+  <div class="stamp">MOCKUP <b>v2</b><br>LIVE ROW ×5 · DATA HALL<br>THREE r128</div>
 </div>
 
 <div class="hint" id="hint">TAP FLANK · FOCUS SLIDES — PINCH · ZOOM</div>
@@ -183,7 +183,7 @@ const gunmetal=new THREE.MeshStandardMaterial({color:0x11161d,roughness:0.62,met
 const gunDark =new THREE.MeshStandardMaterial({color:0x0b0f14,roughness:0.7,metalness:0.7});
 
 // ---------- rack builder ----------
-// kind: 'dummy' (CW face) | 'run' (gut texture, focusable)
+// kind: 'dummy' (photo face) | 'run' (gut texture, focusable)
 const focusables=[];
 function buildRack(kind, label, x, z, opts){
   const grp=new THREE.Group(); grp.position.set(x,RH/2,z);
@@ -212,7 +212,7 @@ function buildRack(kind, label, x, z, opts){
 }
 
 // ---------- layout: hall of rows facing camera (Code's composition) ----------
-// front row: the RUN trio centered + CW dummies at ends
+// front row: the RUN trio centered + dummies at ends
 const front=[];
 const frontIds=RUN.slice();
 frontIds.forEach((id,i)=>{
@@ -220,7 +220,7 @@ frontIds.forEach((id,i)=>{
   const isRun=RUN.includes(id);
   front.push(buildRack(isRun?'run':'dummy', id, x, 0, {bright: isRun?0.55:0.42}));
 });
-// two rear rows of CW dummies, offset half pitch, receding
+// two rear rows of dummies, offset half pitch, receding
 for(let r=1;r<=2;r++){
   for(let i=0;i<7;i++){
     const x=(i-3)*PITCH + (r%2?PITCH/2:0);
