@@ -17,8 +17,9 @@
 //   · pure read is proved by snapshotting ALL of localStorage around assembly, because safeGet
 //     writes a quarantine record on malformed JSON.
 //
-// status.photoCount and photoBytes are asserted NULL: no photos adapter is registered yet, and a 0
-// there would claim a measurement nobody made (Contract 10). They become numbers in Ship 4.
+// status.photoCount and photoBytes were asserted NULL through Ship 3: no photos adapter was registered,
+// and a 0 there would have claimed a measurement nobody made (Contract 10). From Ship 4a they are
+// numbers once the photos adapter has read the store — 0 when it reads empty, null only on error.
 //
 // SHIP 2 (docs/A2-SHIP2-PHASE0-EVIDENCE.md E-10; rulings OWNER-RULINGS.md 2026-09-17 Q-10…Q-17 and
 // Q-A) adds the blockers adapter, the derived status.openBlockers, and the gaps list:
@@ -46,6 +47,19 @@
 //     notes-row detail, on an `empty` row as well as an `ok` one (Q-23), and the wording never
 //     states how many entries were lost, because truncatedCount does not accumulate (lead L-7);
 //   · status gains NO key: the note count is the notes coverage row's `events` (Q-22).
+//
+// SHIP 4a (docs/A2-SHIP4-PHASE0-EVIDENCE.md E-8; rulings OWNER-RULINGS.md 2026-10-15 Q-28…Q-38)
+// adds the photos adapter over IndexedDB, and with it an ASYNC fold (Q-29):
+//   · a fresh Playwright context is a fresh IndexedDB, so "a phone that never took a photo" is
+//     literal. On it, assembly must read empty AND create no database — a version-less open would
+//     leave an empty one behind, and the app's PHOTO button could never save again (Phase 0 §0.1);
+//   · photo records are seeded through the app's own creator (photo_getDB) and then that
+//     connection is closed, so a connection left open by the adapter is detectable (T8);
+//   · records are matched on rackId whole-string, never siteId and never the byRack index (Q-31);
+//     ids are chosen so the store's key order is NOT time order;
+//   · the event payload is exactly { photoId, bytes } — a hand-edited caption, w and h never
+//     surface (Q-33); an unusable capturedAt is counted and never timed; a missing size makes
+//     photoBytes null, never a partial sum (Q-35).
 // ─────────────────────────────────────────────────────────────────────────────
 const { test, expect } = require('./fixtures');
 
@@ -195,16 +209,76 @@ const logged = (e) => ({ t: e.ts, type: 'note.logged', source: 'notes',
   data: { auditId: e.id, text: e.summary, actor: e.actor } });
 const noteEvents = (rec) => rec.timeline.filter((e) => e.source === 'notes');
 
+// ── Ship 4a: the photo store (docs/A2-SHIP4-PHASE0-EVIDENCE.md E-2, E-8) ─────────────────────────
+const PHOTO_DB = 'phantom-attachments';
+const PHOTO_UNDATED_DETAIL = (n) => n + ' photo(s) have no usable time — counted, not on the timeline';
+const PHOTO_UNSIZED_DETAIL = (n) => n + ' photo(s) have no stored size — the byte total is not taken';
+
+// Every field photo_persist writes (E-2), siteId derived exactly as the writer derives it — the
+// colon split of a colon-free composite, i.e. the whole rack key (the census refresh §5 defect).
+function photo(id, rackId, capturedAt, bytes, over) {
+  return Object.assign({ id, siteId: rackId.split(':')[0] || 'unknown', rackId, capturedAt, caption: '', bytes, w: 0, h: 0 }, over);
+}
+
+// Ids are chosen so the store's KEY order (early, late, site, tie) is not TIME order
+// (early 150, site 250, tie 300, late 450): getAll() returns key order (Phase 0 probe P5).
+const PH_EARLY = photo('ph_early0000', RACK, T0 + 150, 1000, { caption: 'never shown', w: 640, h: 480 });   // hand-edited: Q-33
+const PH_LATE = photo('ph_late00000', RACK, T0 + 450, 3000);
+const PH_SITE = photo('ph_site00000', RACK, T0 + 250, 500, { siteId: 'site_e2e_01' });   // siteId disagrees with the split (Q-31)
+const PH_TIE = photo('ph_tie000000', RACK, T0 + 300, 2000);                               // ties the phases, B_TIE and A_TIE
+const PH_OTHER = photo('ph_other0000', OTHER, T0 + 120, 111);
+const PH_TEN = photo('ph_ten000000', TEN, T0 + 130, 222);                                 // rack_<dep>_10 starts with rack_<dep>_1
+const PH_FOREIGN = photo('ph_foreign00', FOREIGN, T0 + 140, 333);
+const PH_BLANK = photo('ph_blank0000', '', T0 + 160, 444);
+// JSON-free IndexedDB could carry NaN, but a restore or a hand edit is what reaches these, so the
+// shapes mirror Ships 2 and 3: a string time, and a size that is simply absent (A.1 oddity 7).
+const PH_UNDATED = photo('ph_undated00', RACK, '1750000000600', 700);
+const PH_NOSIZE = photo('ph_nosize000', RACK, T0 + 350, null, { __noBytes: true });
+
+const PHOTOS = [PH_EARLY, PH_LATE, PH_SITE, PH_TIE, PH_OTHER, PH_TEN, PH_FOREIGN, PH_BLANK];
+const RACK_PHOTOS_IN_TIME = [PH_EARLY, PH_SITE, PH_TIE, PH_LATE];
+
+const captured = (p) => ({ t: p.capturedAt, type: 'photo.captured', source: 'photos',
+  data: { photoId: p.id, bytes: (p.__noBytes ? null : p.bytes) } });
+const photoEvents = (rec) => rec.timeline.filter((e) => e.source === 'photos');
+
+// Seeds through the app's OWN creator, photo_getDB(), so the store, keyPath and indexes are the
+// app's — then closes that connection and clears the module's cached handle, so the only
+// connection left open afterwards is one the adapter leaked (T8). Blobs are real Blobs.
+const seedPhotos = (page, recs) => page.evaluate(async (recs) => {
+  const db = await photo_getDB();
+  await new Promise((res, rej) => {
+    const tx = db.transaction('photos', 'readwrite');
+    const st = tx.objectStore('photos');
+    for (const r of recs) {
+      const rec = Object.assign({}, r);
+      const noBytes = rec.__noBytes; delete rec.__noBytes;
+      if (noBytes) delete rec.bytes;
+      rec.blob = new Blob([new Uint8Array(noBytes ? 64 : Math.max(1, rec.bytes))], { type: 'image/jpeg' });
+      st.put(rec);
+    }
+    tx.oncomplete = res;
+    tx.onerror = () => rej(tx.error);
+  });
+  db.close();
+  _photoDB = null;
+}, recs);
+
+const photoDbs = (page) => page.evaluate(async (name) =>
+  (await indexedDB.databases()).filter((d) => d.name === name).map((d) => d.version), PHOTO_DB);
+
 // confirmProfile:false — the fixture would otherwise overwrite PROFILE with its own SEEDED_PROFILE.
 async function boot(phantom, opts = {}) {
   await phantom.boot({ confirmProfile: false, seed: seed(), ...opts });
 }
 
+// SHIP 4a (Q-29): assemble returns a Promise. Promise.resolve() also takes the synchronous .594
+// return value, so the same helper proves RED on .594 for the missing feature and nothing else.
 const assemble = (page, rackId) => page.evaluate((id) => {
   if (typeof PHANTOM_RR !== 'object' || !PHANTOM_RR || typeof PHANTOM_RR.assemble !== 'function') {
     return { __missing: true };
   }
-  return { __missing: false, value: PHANTOM_RR.assemble(id) };
+  return Promise.resolve(PHANTOM_RR.assemble(id)).then((value) => ({ __missing: false, value }));
 }, rackId);
 
 function present(r) {
@@ -214,7 +288,7 @@ function present(r) {
 
 const cov = (rec, name) => (rec.coverage || []).find((c) => c.adapter === name);
 
-test.describe('65 — the Rack Record assembler (Ships 1–3)', () => {
+test.describe('65 — the Rack Record assembler (Ships 1–4a)', () => {
   test('RECORD · rr-1 shape, identity facts exactly as stored, and no number for an unregistered adapter', async ({ phantom, page }) => {
     test.setTimeout(180000);
     await boot(phantom);
@@ -234,8 +308,10 @@ test.describe('65 — the Rack Record assembler (Ships 1–3)', () => {
     // The seed has no blocker store: the blockers adapter read it and found nothing — a count of 0
     // that was actually taken, not a null (Q-13).
     expect(rec.status.openBlockers, 'the blockers adapter read an absent store: 0, not null (Q-13)').toBe(0);
-    expect(rec.status.photoCount, 'no photos adapter is registered yet').toBeNull();
-    expect(rec.status.photoBytes, 'no photos adapter is registered yet').toBeNull();
+    // Ship 4a: this context never took a photo. The photos adapter read and found nothing — a count
+    // that was taken (Q-13's rule), so 0 and 0, not null.
+    expect(rec.status.photoCount, 'the photos adapter read a device with no photo store: 0, not null').toBe(0);
+    expect(rec.status.photoBytes, 'the photos adapter read a device with no photo store: 0, not null').toBe(0);
     expect(rec.evidence).toEqual({ photoIds: [] });
 
     // Q-A: exactly one coverage row per registered adapter, in registry order.
@@ -246,6 +322,8 @@ test.describe('65 — the Rack Record assembler (Ships 1–3)', () => {
       // The seed has no audit key either: read, and nothing there — and no detail, because an
       // absent log carries no reset marker to report (Q-23).
       { adapter: 'notes', status: 'empty', events: 0 },
+      // Ship 4a: no photo database exists in a fresh context — read, and nothing there.
+      { adapter: 'photos', status: 'empty', events: 0 },
     ]);
     // Q-2: platform and masterPresent are null "with a detail saying why". No rack adapter exists
     // in A.2, so the reason is a GAP, not a coverage row (Q-A), with Ship 1's string unchanged.
@@ -273,14 +351,14 @@ test.describe('65 — the Rack Record assembler (Ships 1–3)', () => {
     test.setTimeout(180000);
     await boot(phantom);
 
-    const out = await page.evaluate(({ key, rack, other }) => {
+    const out = await page.evaluate(async ({ key, rack, other }) => {
       if (typeof PHANTOM_RR !== 'object' || !PHANTOM_RR) return { __missing: true };
-      const first = PHANTOM_RR.assemble(rack);
+      const first = await PHANTOM_RR.assemble(rack);
       const onlyOther = JSON.parse(localStorage.getItem(key)).filter((p) => p.rackId === other);
       localStorage.setItem(key, JSON.stringify(onlyOther));
-      const noneForRack = PHANTOM_RR.assemble(rack);
+      const noneForRack = await PHANTOM_RR.assemble(rack);
       localStorage.removeItem(key);
-      const absent = PHANTOM_RR.assemble(rack);
+      const absent = await PHANTOM_RR.assemble(rack);
       return { __missing: false, first, noneForRack, absent };
     }, { key: PHASES_KEY, rack: RACK, other: OTHER });
     expect(out.__missing, 'PHANTOM_RR is not defined').toBe(false);
@@ -297,15 +375,15 @@ test.describe('65 — the Rack Record assembler (Ships 1–3)', () => {
     test.setTimeout(180000);
     await boot(phantom);
 
-    const out = await page.evaluate(({ key, profileKey, rack }) => {
+    const out = await page.evaluate(async ({ key, profileKey, rack }) => {
       if (typeof PHANTOM_RR !== 'object' || !PHANTOM_RR) return { __missing: true };
       const good = localStorage.getItem(key);
 
       localStorage.setItem(key, '{not json');
-      const malformed = PHANTOM_RR.assemble(rack);
+      const malformed = await PHANTOM_RR.assemble(rack);
 
       localStorage.setItem(key, JSON.stringify({ rackId: rack }));
-      const wrongShape = PHANTOM_RR.assemble(rack);
+      const wrongShape = await PHANTOM_RR.assemble(rack);
 
       localStorage.setItem(key, good);
       const orig = Storage.prototype.getItem;
@@ -315,14 +393,14 @@ test.describe('65 — the Rack Record assembler (Ships 1–3)', () => {
           if (k === key) throw new Error('SecurityError: simulated unreadable storage');
           return orig.call(this, k);
         };
-        unreadable = PHANTOM_RR.assemble(rack);
+        unreadable = await PHANTOM_RR.assemble(rack);
       } finally {
         Storage.prototype.getItem = orig;
       }
 
       const goodProfile = localStorage.getItem(profileKey);
       localStorage.setItem(profileKey, '{broken');
-      const identityBroken = PHANTOM_RR.assemble(rack);
+      const identityBroken = await PHANTOM_RR.assemble(rack);
       localStorage.setItem(profileKey, goodProfile);
 
       return { __missing: false, malformed, wrongShape, unreadable, identityBroken };
@@ -348,19 +426,21 @@ test.describe('65 — the Rack Record assembler (Ships 1–3)', () => {
     test.setTimeout(180000);
     await boot(phantom);
 
-    const out = await page.evaluate(({ key, rack }) => {
+    const out = await page.evaluate(async ({ key, rack }) => {
       if (typeof PHANTOM_RR !== 'object' || !PHANTOM_RR) return { __missing: true };
+      // SHIP 4a: assembly now awaits IndexedDB, so app timers can run between the snapshots. The one
+      // periodic localStorage writer is the multi-tab presence beacon (announce('here') every 30 s,
+      // phantom_tab_presence_v1) — the app's, not assembly's — so it alone is left out of the compare.
       const snap = () => {
         const o = {};
-        for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); o[k] = localStorage.getItem(k); }
+        for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k !== 'phantom_tab_presence_v1') o[k] = localStorage.getItem(k); }
         return o;
       };
       const toasts = () => (document.getElementById('toast-container') || { children: [] }).children.length;
-      // All synchronous in one evaluate: nothing in the app can write between the two snapshots.
       localStorage.setItem(key, '{not json');
       const before = snap();
       const toastsBefore = toasts();
-      const rec = PHANTOM_RR.assemble(rack);
+      const rec = await PHANTOM_RR.assemble(rack);
       return { __missing: false, before, after: snap(), toastsBefore, toastsAfter: toasts(), status: rec.coverage[1].status };
     }, { key: PHASES_KEY, rack: RACK });
     expect(out.__missing, 'PHANTOM_RR is not defined').toBe(false);
@@ -376,13 +456,13 @@ test.describe('65 — the Rack Record assembler (Ships 1–3)', () => {
   test('STATUS · a rack with every phase complete reads of-of with no current phase name', async ({ phantom, page }) => {
     test.setTimeout(180000);
     await boot(phantom);
-    const out = await page.evaluate(({ key, rack, t0 }) => {
+    const out = await page.evaluate(async ({ key, rack, t0 }) => {
       if (typeof PHANTOM_RR !== 'object' || !PHANTOM_RR) return { __missing: true };
       const all = JSON.parse(localStorage.getItem(key)).map((p) => (p.rackId === rack
         ? Object.assign({}, p, { status: 'complete', signedOffBy: 'E2E', signedOffAt: t0 + 500 + p.seqOrder })
         : p));
       localStorage.setItem(key, JSON.stringify(all));
-      return { __missing: false, rec: PHANTOM_RR.assemble(rack) };
+      return { __missing: false, rec: await PHANTOM_RR.assemble(rack) };
     }, { key: PHASES_KEY, rack: RACK, t0: T0 });
     expect(out.__missing, 'PHANTOM_RR is not defined').toBe(false);
     expect(out.rec.status.phase, 'all five complete: 5 of 5, and no phase is "current"').toEqual({ index: 5, of: 5, name: null });
@@ -392,7 +472,7 @@ test.describe('65 — the Rack Record assembler (Ships 1–3)', () => {
   test('FOLD · an adapter that throws becomes one error row, and the adapters around it still run', async ({ phantom, page }) => {
     test.setTimeout(180000);
     await boot(phantom);
-    const out = await page.evaluate((rack) => {
+    const out = await page.evaluate(async (rack) => {
       if (typeof PHANTOM_RR !== 'object' || !PHANTOM_RR) return { __missing: true };
       const saved = PHANTOM_RR.registry;
       let rec;
@@ -400,7 +480,7 @@ test.describe('65 — the Rack Record assembler (Ships 1–3)', () => {
       try {
         // Every registered adapter after the fault still runs — phases, blockers AND notes.
         PHANTOM_RR.registry = [saved[0], { name: 'boom', schemaHandled: 'test fault', read() { throw new Error('kaboom'); } }, ...saved.slice(1)];
-        rec = PHANTOM_RR.assemble(rack);
+        rec = await PHANTOM_RR.assemble(rack);
       } catch (e) {
         threw = String(e && e.message);
       } finally {
@@ -411,7 +491,7 @@ test.describe('65 — the Rack Record assembler (Ships 1–3)', () => {
     expect(out.__missing, 'PHANTOM_RR is not defined').toBe(false);
     expect(out.threw, 'a throwing adapter escaped assemble()').toBeNull();
     expect(out.rec.coverage.map((c) => [c.adapter, c.status, c.events]))
-      .toEqual([['identity', 'ok', 0], ['boom', 'error', 0], ['phases', 'ok', 3], ['blockers', 'empty', 0], ['notes', 'empty', 0]]);
+      .toEqual([['identity', 'ok', 0], ['boom', 'error', 0], ['phases', 'ok', 3], ['blockers', 'empty', 0], ['notes', 'empty', 0], ['photos', 'empty', 0]]);
     expect(out.rec.coverage[1].detail).toMatch(/kaboom/);
     expect(out.rec.timeline.length, 'the phases adapter after the fault still contributed').toBe(3);
     expect(out.rec.status.openBlockers, 'the blockers adapter after the fault still counted (Q-13)').toBe(0);
@@ -488,10 +568,10 @@ test.describe('65 — the Rack Record assembler (Ships 1–3)', () => {
     delete U_MISSING.openedAt;                                                                      // open
     const store = [U_STR, U_STR_CLR, U_CLR_STR, U_CLR_ZERO, U_NOID, U_MIG_CLR, U_MISSING, null, RACK, 7];
 
-    const out = await page.evaluate(({ key, rack, value }) => {
+    const out = await page.evaluate(async ({ key, rack, value }) => {
       if (typeof PHANTOM_RR !== 'object' || !PHANTOM_RR) return { __missing: true };
       localStorage.setItem(key, value);
-      return { __missing: false, value: PHANTOM_RR.assemble(rack) };
+      return { __missing: false, value: await PHANTOM_RR.assemble(rack) };
     }, { key: BLOCKERS_KEY, rack: RACK, value: JSON.stringify(store) });
     const rec = present(out);
 
@@ -508,16 +588,16 @@ test.describe('65 — the Rack Record assembler (Ships 1–3)', () => {
     test.setTimeout(180000);
     await boot(phantom);
 
-    const out = await page.evaluate(({ key, rack, othersOnly }) => {
+    const out = await page.evaluate(async ({ key, rack, othersOnly }) => {
       if (typeof PHANTOM_RR !== 'object' || !PHANTOM_RR) return { __missing: true };
       localStorage.removeItem(key);
-      const absent = PHANTOM_RR.assemble(rack);
+      const absent = await PHANTOM_RR.assemble(rack);
       localStorage.setItem(key, '');
-      const blankKey = PHANTOM_RR.assemble(rack);
+      const blankKey = await PHANTOM_RR.assemble(rack);
       localStorage.setItem(key, '[]');
-      const emptyArray = PHANTOM_RR.assemble(rack);
+      const emptyArray = await PHANTOM_RR.assemble(rack);
       localStorage.setItem(key, othersOnly);
-      const othersOnlyRec = PHANTOM_RR.assemble(rack);
+      const othersOnlyRec = await PHANTOM_RR.assemble(rack);
       return { __missing: false, absent, blankKey, emptyArray, othersOnlyRec };
     }, {
       key: BLOCKERS_KEY, rack: RACK,
@@ -537,15 +617,15 @@ test.describe('65 — the Rack Record assembler (Ships 1–3)', () => {
     test.setTimeout(180000);
     await boot(phantom, { seed: seedWithBlockers() });
 
-    const out = await page.evaluate(({ key, rack }) => {
+    const out = await page.evaluate(async ({ key, rack }) => {
       if (typeof PHANTOM_RR !== 'object' || !PHANTOM_RR) return { __missing: true };
       const good = localStorage.getItem(key);
 
       localStorage.setItem(key, '{not json');
-      const malformed = PHANTOM_RR.assemble(rack);
+      const malformed = await PHANTOM_RR.assemble(rack);
 
       localStorage.setItem(key, JSON.stringify({ rack }));
-      const wrongShape = PHANTOM_RR.assemble(rack);
+      const wrongShape = await PHANTOM_RR.assemble(rack);
 
       localStorage.setItem(key, good);
       const orig = Storage.prototype.getItem;
@@ -555,7 +635,7 @@ test.describe('65 — the Rack Record assembler (Ships 1–3)', () => {
           if (k === key) throw new Error('SecurityError: simulated unreadable storage');
           return orig.call(this, k);
         };
-        unreadable = PHANTOM_RR.assemble(rack);
+        unreadable = await PHANTOM_RR.assemble(rack);
       } finally {
         Storage.prototype.getItem = orig;
       }
@@ -581,19 +661,21 @@ test.describe('65 — the Rack Record assembler (Ships 1–3)', () => {
     test.setTimeout(180000);
     await boot(phantom, { seed: seedWithBlockers() });
 
-    const out = await page.evaluate(({ key, rack }) => {
+    const out = await page.evaluate(async ({ key, rack }) => {
       if (typeof PHANTOM_RR !== 'object' || !PHANTOM_RR) return { __missing: true };
+      // SHIP 4a: assembly now awaits IndexedDB, so app timers can run between the snapshots. The one
+      // periodic localStorage writer is the multi-tab presence beacon (announce('here') every 30 s,
+      // phantom_tab_presence_v1) — the app's, not assembly's — so it alone is left out of the compare.
       const snap = () => {
         const o = {};
-        for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); o[k] = localStorage.getItem(k); }
+        for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k !== 'phantom_tab_presence_v1') o[k] = localStorage.getItem(k); }
         return o;
       };
       const toasts = () => (document.getElementById('toast-container') || { children: [] }).children.length;
-      // All synchronous in one evaluate: nothing in the app can write between the two snapshots.
       localStorage.setItem(key, '{not json');
       const before = snap();
       const toastsBefore = toasts();
-      const rec = PHANTOM_RR.assemble(rack);
+      const rec = await PHANTOM_RR.assemble(rack);
       const row = (rec.coverage || []).find((c) => c.adapter === 'blockers');
       return { __missing: false, before, after: snap(), toastsBefore, toastsAfter: toasts(), status: row ? row.status : null };
     }, { key: BLOCKERS_KEY, rack: RACK });
@@ -607,13 +689,13 @@ test.describe('65 — the Rack Record assembler (Ships 1–3)', () => {
   test('GAPS · coverage is exactly the registry, and the rack gap is its own top-level list (Q-A)', async ({ phantom, page }) => {
     test.setTimeout(180000);
     await boot(phantom, { seed: seedWithBlockers() });
-    const out = await page.evaluate((rack) => {
+    const out = await page.evaluate(async (rack) => {
       if (typeof PHANTOM_RR !== 'object' || !PHANTOM_RR) return { __missing: true };
-      return { __missing: false, value: PHANTOM_RR.assemble(rack), names: PHANTOM_RR.registry.map((a) => a && a.name) };
+      return { __missing: false, value: await PHANTOM_RR.assemble(rack), names: PHANTOM_RR.registry.map((a) => a && a.name) };
     }, RACK);
     const rec = present(out);
 
-    expect(out.names, 'the registry, in order').toEqual(['identity', 'phases', 'blockers', 'notes']);
+    expect(out.names, 'the registry, in order').toEqual(['identity', 'phases', 'blockers', 'notes', 'photos']);
     expect(rec.coverage.map((c) => c.adapter), 'one coverage row per registered adapter, nothing else').toEqual(out.names);
     expect(rec.gaps).toEqual([{ field: 'rack', detail: RACK_GAP }]);
     const keys = Object.keys(rec);
@@ -659,8 +741,9 @@ test.describe('65 — the Rack Record assembler (Ships 1–3)', () => {
       .toEqual(['phase', 'openBlockers', 'photoCount', 'photoBytes']);
     expect(rec.status.phase).toEqual({ index: 2, of: 5, name: 'network' });
     expect(rec.status.openBlockers, 'a note never reaches the blocker derivation').toBe(3);
-    expect(rec.status.photoCount).toBeNull();
-    expect(rec.status.photoBytes).toBeNull();
+    // Ship 4a: no photo store in this context, so the photos adapter counted nothing — 0, not null.
+    expect(rec.status.photoCount).toBe(0);
+    expect(rec.status.photoBytes).toBe(0);
     // Ship 1's and Ship 2's rows are byte-for-byte what they were.
     expect(cov(rec, 'identity')).toEqual({ adapter: 'identity', status: 'ok', events: 0 });
     expect(cov(rec, 'phases')).toEqual({ adapter: 'phases', status: 'ok', events: 3 });
@@ -695,16 +778,16 @@ test.describe('65 — the Rack Record assembler (Ships 1–3)', () => {
     test.setTimeout(180000);
     await boot(phantom);
 
-    const out = await page.evaluate(({ key, rack, nonMatching }) => {
+    const out = await page.evaluate(async ({ key, rack, nonMatching }) => {
       if (typeof PHANTOM_RR !== 'object' || !PHANTOM_RR) return { __missing: true };
       localStorage.removeItem(key);
-      const absent = PHANTOM_RR.assemble(rack);
+      const absent = await PHANTOM_RR.assemble(rack);
       localStorage.setItem(key, '');
-      const blankKey = PHANTOM_RR.assemble(rack);
+      const blankKey = await PHANTOM_RR.assemble(rack);
       localStorage.setItem(key, '[]');
-      const emptyArray = PHANTOM_RR.assemble(rack);
+      const emptyArray = await PHANTOM_RR.assemble(rack);
       localStorage.setItem(key, nonMatching);
-      const noneMine = PHANTOM_RR.assemble(rack);
+      const noneMine = await PHANTOM_RR.assemble(rack);
       return { __missing: false, absent, blankKey, emptyArray, noneMine };
     }, {
       key: AUDIT_KEY,
@@ -728,15 +811,15 @@ test.describe('65 — the Rack Record assembler (Ships 1–3)', () => {
     test.setTimeout(180000);
     await boot(phantom, { seed: seedWithNotes() });
 
-    const out = await page.evaluate(({ key, rack }) => {
+    const out = await page.evaluate(async ({ key, rack }) => {
       if (typeof PHANTOM_RR !== 'object' || !PHANTOM_RR) return { __missing: true };
       const good = localStorage.getItem(key);
 
       localStorage.setItem(key, '{not json');
-      const malformed = PHANTOM_RR.assemble(rack);
+      const malformed = await PHANTOM_RR.assemble(rack);
 
       localStorage.setItem(key, JSON.stringify({ entityId: rack }));
-      const wrongShape = PHANTOM_RR.assemble(rack);
+      const wrongShape = await PHANTOM_RR.assemble(rack);
 
       localStorage.setItem(key, good);
       const orig = Storage.prototype.getItem;
@@ -746,7 +829,7 @@ test.describe('65 — the Rack Record assembler (Ships 1–3)', () => {
           if (k === key) throw new Error('SecurityError: simulated unreadable storage');
           return orig.call(this, k);
         };
-        unreadable = PHANTOM_RR.assemble(rack);
+        unreadable = await PHANTOM_RR.assemble(rack);
       } finally {
         Storage.prototype.getItem = orig;
       }
@@ -773,19 +856,21 @@ test.describe('65 — the Rack Record assembler (Ships 1–3)', () => {
     test.setTimeout(180000);
     await boot(phantom, { seed: seedWithNotes() });
 
-    const out = await page.evaluate(({ key, rack }) => {
+    const out = await page.evaluate(async ({ key, rack }) => {
       if (typeof PHANTOM_RR !== 'object' || !PHANTOM_RR) return { __missing: true };
+      // SHIP 4a: assembly now awaits IndexedDB, so app timers can run between the snapshots. The one
+      // periodic localStorage writer is the multi-tab presence beacon (announce('here') every 30 s,
+      // phantom_tab_presence_v1) — the app's, not assembly's — so it alone is left out of the compare.
       const snap = () => {
         const o = {};
-        for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); o[k] = localStorage.getItem(k); }
+        for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k !== 'phantom_tab_presence_v1') o[k] = localStorage.getItem(k); }
         return o;
       };
       const toasts = () => (document.getElementById('toast-container') || { children: [] }).children.length;
-      // All synchronous in one evaluate: nothing in the app can write between the two snapshots.
       localStorage.setItem(key, '{not json');
       const before = snap();
       const toastsBefore = toasts();
-      const rec = PHANTOM_RR.assemble(rack);
+      const rec = await PHANTOM_RR.assemble(rack);
       const row = (rec.coverage || []).find((c) => c.adapter === 'notes');
       return { __missing: false, before, after: snap(), toastsBefore, toastsAfter: toasts(), status: row ? row.status : null };
     }, { key: AUDIT_KEY, rack: RACK });
@@ -819,12 +904,12 @@ test.describe('65 — the Rack Record assembler (Ships 1–3)', () => {
     delete U_NO_ACTOR.actor;
     const store = [U_TS_STR, U_TS_NULL, U_TS_GONE, U_NO_ID, U_NO_SUM, U_NO_ACTOR, null, 7, 'x'];
 
-    const out = await page.evaluate(({ key, rack, value, undatedOnly }) => {
+    const out = await page.evaluate(async ({ key, rack, value, undatedOnly }) => {
       if (typeof PHANTOM_RR !== 'object' || !PHANTOM_RR) return { __missing: true };
       localStorage.setItem(key, value);
-      const mixed = PHANTOM_RR.assemble(rack);
+      const mixed = await PHANTOM_RR.assemble(rack);
       localStorage.setItem(key, undatedOnly);
-      const allUndated = PHANTOM_RR.assemble(rack);
+      const allUndated = await PHANTOM_RR.assemble(rack);
       return { __missing: false, mixed, allUndated };
     }, {
       key: AUDIT_KEY, rack: RACK, value: JSON.stringify(store),
@@ -861,13 +946,13 @@ test.describe('65 — the Rack Record assembler (Ships 1–3)', () => {
       deploymentId: 'dep_old', chainReset: true, truncatedAt: T0 + 8,
     });
 
-    const out = await page.evaluate(({ key, rack, stores }) => {
+    const out = await page.evaluate(async ({ key, rack, stores }) => {
       if (typeof PHANTOM_RR !== 'object' || !PHANTOM_RR) return { __missing: true };
       const res = {};
-      Object.keys(stores).forEach((name) => {
+      for (const name of Object.keys(stores)) {
         localStorage.setItem(key, stores[name]);
-        res[name] = PHANTOM_RR.assemble(rack);
-      });
+        res[name] = await PHANTOM_RR.assemble(rack);
+      }
       return { __missing: false, res };
     }, {
       key: AUDIT_KEY, rack: RACK,
@@ -911,22 +996,310 @@ test.describe('65 — the Rack Record assembler (Ships 1–3)', () => {
   test('NOTES · REGISTRY · notes is the fourth adapter, coverage is exactly the registry, and the gaps list does not move', async ({ phantom, page }) => {
     test.setTimeout(180000);
     await boot(phantom, { seed: seedWithNotes() });
-    const out = await page.evaluate((rack) => {
+    const out = await page.evaluate(async (rack) => {
       if (typeof PHANTOM_RR !== 'object' || !PHANTOM_RR) return { __missing: true };
       return {
-        __missing: false, value: PHANTOM_RR.assemble(rack),
+        __missing: false, value: await PHANTOM_RR.assemble(rack),
         names: PHANTOM_RR.registry.map((a) => a && a.name),
         schemas: PHANTOM_RR.registry.map((a) => a && a.schemaHandled),
       };
     }, RACK);
     const rec = present(out);
 
-    expect(out.names, 'notes is registered fourth, after blockers (E-8b: the tie order)').toEqual(['identity', 'phases', 'blockers', 'notes']);
+    expect(out.names, 'notes is registered fourth, after blockers (E-8b: the tie order); photos follows in Ship 4a').toEqual(['identity', 'phases', 'blockers', 'notes', 'photos']);
     expect(out.schemas[3], 'the notes adapter declares the one key it handles').toMatch(/phantom_deploy_audit_v1/);
     expect(rec.coverage.map((c) => c.adapter), 'one coverage row per registered adapter, nothing else').toEqual(out.names);
     expect(rec.gaps, 'a fourth adapter does not change the gaps list').toEqual([{ field: 'rack', detail: RACK_GAP }]);
     expect(Object.keys(rec), 'rr-1 keys do not move').toEqual(['schema', 'assembledAt', 'site', 'rack', 'tech', 'status', 'timeline', 'evidence', 'coverage', 'gaps']);
     expect(rec.schema, 'the schema name does not move (Q-22)').toBe('rr-1');
+  });
+
+  // ── SHIP 4a — the async fold and the photos adapter ───────────────────────────────────────────
+  // Every expected value is derived by hand from PHOTOS above and docs/A2-SHIP4-PHASE0-EVIDENCE.md
+  // E-5 / E-8, never from the adapter. Four RACK photos: early 150 (1000 B), site 250 (500 B),
+  // tie 300 (2000 B), late 450 (3000 B) — 4 events, 6,500 bytes.
+  test('ASYNC · assemble returns a Promise, the fold keeps registry order across an async adapter, and a rejection is one error row (Q-29)', async ({ phantom, page }) => {
+    test.setTimeout(180000);
+    await boot(phantom);
+    const out = await page.evaluate(async (rack) => {
+      if (typeof PHANTOM_RR !== 'object' || !PHANTOM_RR) return { __missing: true };
+      const plain = PHANTOM_RR.assemble(rack);
+      const thenable = !!plain && typeof plain.then === 'function';
+      await plain;
+      const saved = PHANTOM_RR.registry;
+      let rec, threw = null;
+      try {
+        // A slow async adapter BEFORE phases, and a rejecting one after it: order must hold and
+        // every adapter after the rejection must still run.
+        const slow = { name: 'slow', schemaHandled: 'test', read() { return new Promise((r) => setTimeout(() => r({ events: [], facts: {}, status: 'empty' }), 50)); } };
+        const nope = { name: 'nope', schemaHandled: 'test', read() { return Promise.reject(new Error('rejected-here')); } };
+        PHANTOM_RR.registry = [saved[0], slow, saved[1], nope, ...saved.slice(2)];
+        rec = await PHANTOM_RR.assemble(rack);
+      } catch (e) { threw = String(e && e.message); }
+      finally { PHANTOM_RR.registry = saved; }
+      return { __missing: false, thenable, rec, threw };
+    }, RACK);
+    expect(out.__missing, 'PHANTOM_RR is not defined').toBe(false);
+    expect(out.thenable, 'assemble() must return a Promise (Q-29)').toBe(true);
+    expect(out.threw, 'a rejecting adapter escaped assemble()').toBeNull();
+    expect(out.rec.coverage.map((c) => [c.adapter, c.status]))
+      .toEqual([['identity', 'ok'], ['slow', 'empty'], ['phases', 'ok'], ['nope', 'error'], ['blockers', 'empty'], ['notes', 'empty'], ['photos', 'empty']]);
+    expect(out.rec.coverage[3].detail).toMatch(/rejected-here/);
+    expect(out.rec.timeline.length, 'the phases adapter still contributed').toBe(3);
+  });
+
+  test('PHOTOS · FRESH DEVICE · no photo database reads empty, creates NO database, and the PHOTO path still saves afterwards (Q-28)', async ({ phantom, page }) => {
+    test.setTimeout(180000);
+    await boot(phantom);
+    expect(await photoDbs(page), 'precondition: a fresh context has no photo database').toEqual([]);
+
+    const rec = present(await assemble(page, RACK));
+    expect(cov(rec, 'photos'), 'no database: read, and nothing there').toEqual({ adapter: 'photos', status: 'empty', events: 0 });
+    expect(rec.status.photoCount).toBe(0);
+    expect(rec.status.photoBytes).toBe(0);
+    expect(rec.evidence.photoIds).toEqual([]);
+    // ⛔ THE TEST THAT KEEPS THE PHOTO BUTTON ALIVE. A version-less open would leave phantom-attachments
+    // at version 1 with no store, and photo_getDB's upgrade would never run again (Phase 0 P2/P3).
+    expect(await photoDbs(page), 'assembly created a photo database — the PHOTO button would now fail forever').toEqual([]);
+
+    const after = await page.evaluate(async (rack) => {
+      try {
+        await photo_persist('dep_x', rack, new Blob([new Uint8Array(1234)], { type: 'image/jpeg' }));
+        return { ok: true, n: await photo_getCountForRack(rack) };
+      } catch (e) { return { ok: false, err: String((e && e.name) || e) + ': ' + String(e && e.message) }; }
+    }, RACK);
+    expect(after, 'the app saves and counts a photo after assembly').toEqual({ ok: true, n: 1 });
+    const again = present(await assemble(page, RACK));
+    expect(cov(again, 'photos')).toEqual({ adapter: 'photos', status: 'ok', events: 1 });
+    expect(again.status.photoCount).toBe(1);
+    expect(again.status.photoBytes).toBe(1234);
+  });
+
+  test('PHOTOS · TIMELINE · photo.captured merges by time with phases, blockers and notes; payload is exactly { photoId, bytes } (Q-33)', async ({ phantom, page }) => {
+    test.setTimeout(180000);
+    await boot(phantom, { seed: seedWithNotes() });
+    const before = present(await assemble(page, RACK));
+    await seedPhotos(page, PHOTOS);
+    const rec = present(await assemble(page, RACK));
+
+    expect(photoEvents(rec), 'this rack\'s four photos, in TIME order — not key order').toEqual(RACK_PHOTOS_IN_TIME.map(captured));
+    for (const ev of photoEvents(rec)) {
+      expect(Object.keys(ev.data), 'the payload is exactly { photoId, bytes } — no caption, w, h or siteId (Q-33)').toEqual(['photoId', 'bytes']);
+    }
+    for (let i = 1; i < rec.timeline.length; i++) {
+      expect(rec.timeline[i].t >= rec.timeline[i - 1].t, 'the timeline is non-decreasing in t at ' + i).toBe(true);
+    }
+    // The tie at T0+300 sorts by registry position: phases, phases, blockers, notes, then photos (5th).
+    expect(rec.timeline.filter((e) => e.t === T0 + 300).map((e) => e.source))
+      .toEqual(['phases', 'phases', 'blockers', 'notes', 'photos']);
+    // Photos perturb nothing else: drop them and the timeline is exactly what it was before seeding.
+    expect(rec.timeline.filter((e) => e.source !== 'photos')).toEqual(before.timeline);
+    expect(cov(rec, 'photos')).toEqual({ adapter: 'photos', status: 'ok', events: 4 });
+    expect(rec.status.phase).toEqual({ index: 2, of: 5, name: 'network' });
+    expect(rec.status.openBlockers, 'a photo never reaches the blocker derivation').toBe(3);
+  });
+
+  test('PHOTOS · SCOPING · rackId whole-string: another rack, a prefix, another deployment, \'\' and a disagreeing siteId each land where they belong (Q-31)', async ({ phantom, page }) => {
+    test.setTimeout(180000);
+    await boot(phantom);
+    await seedPhotos(page, PHOTOS);
+
+    const rack = present(await assemble(page, RACK));
+    expect(rack.evidence.photoIds, 'PH_SITE counts: rackId matches even though siteId does not').toEqual(RACK_PHOTOS_IN_TIME.map((p) => p.id));
+    const other = present(await assemble(page, OTHER));
+    expect(photoEvents(other), 'rack_<dep>_1 never claims rack_<dep>_10\'s photo').toEqual([captured(PH_OTHER)]);
+    const ten = present(await assemble(page, TEN));
+    expect(photoEvents(ten)).toEqual([captured(PH_TEN)]);
+    const foreign = present(await assemble(page, FOREIGN));
+    expect(photoEvents(foreign)).toEqual([captured(PH_FOREIGN)]);
+    const blank = present(await assemble(page, ''));
+    expect(cov(blank, 'photos'), "rack '' is not a rack, even with a photo stored under ''").toEqual({ adapter: 'photos', status: 'empty', events: 0 });
+    expect(blank.status.photoCount).toBe(0);
+  });
+
+  test('PHOTOS · DERIVED · photoCount, photoBytes and photoIds come from the events plus the undated; an undated photo is counted, listed last, never timed (Q-34)', async ({ phantom, page }) => {
+    test.setTimeout(180000);
+    await boot(phantom);
+    await seedPhotos(page, [...PHOTOS, PH_UNDATED]);
+    const rec = present(await assemble(page, RACK));
+
+    expect(photoEvents(rec)).toEqual(RACK_PHOTOS_IN_TIME.map(captured));
+    expect(rec.status.photoCount, '4 dated + 1 undated').toBe(5);
+    expect(rec.status.photoBytes, '1000 + 500 + 2000 + 3000 + 700').toBe(7200);
+    expect(rec.evidence.photoIds, 'dated in timeline order, then the undated').toEqual([...RACK_PHOTOS_IN_TIME.map((p) => p.id), PH_UNDATED.id]);
+    expect(cov(rec, 'photos')).toEqual({ adapter: 'photos', status: 'ok', events: 4, detail: PHOTO_UNDATED_DETAIL(1) });
+    for (const ev of rec.timeline) expect(typeof ev.t === 'number' && isFinite(ev.t), 'every event has a numeric t').toBe(true);
+  });
+
+  test('PHOTOS · SIZE MISSING · a record with no size makes photoBytes null, never a partial sum; the count is still taken (Q-35)', async ({ phantom, page }) => {
+    test.setTimeout(180000);
+    await boot(phantom);
+    await seedPhotos(page, [...PHOTOS, PH_NOSIZE]);
+    const rec = present(await assemble(page, RACK));
+    expect(photoEvents(rec), 'the unsized photo is still on the timeline, with bytes null')
+      .toEqual([captured(PH_EARLY), captured(PH_SITE), captured(PH_TIE), captured(PH_NOSIZE), captured(PH_LATE)]);
+    expect(rec.status.photoCount).toBe(5);
+    expect(rec.status.photoBytes, '6,500 would understate a total that was not taken').toBeNull();
+    expect(cov(rec, 'photos')).toEqual({ adapter: 'photos', status: 'ok', events: 5, detail: PHOTO_UNSIZED_DETAIL(1) });
+
+    // Both caveats together: undated first, joined with '; ' — the notes adapter's order.
+    await seedPhotos(page, [PH_UNDATED]);
+    const both = present(await assemble(page, RACK));
+    expect(cov(both, 'photos').detail).toBe(PHOTO_UNDATED_DETAIL(1) + '; ' + PHOTO_UNSIZED_DETAIL(1));
+    expect(both.status.photoCount).toBe(6);
+    expect(both.status.photoBytes).toBeNull();
+  });
+
+  test('PHOTOS · ERROR · no IndexedDB, a failed open, a database without its store, and an open that never answers each report error, count null, others untouched (Q-32)', async ({ phantom, page }) => {
+    test.setTimeout(180000);
+    await boot(phantom, { seed: seedWithBlockers() });
+
+    const out = await page.evaluate(async ({ rack, dbName }) => {
+      if (typeof PHANTOM_RR !== 'object' || !PHANTOM_RR) return { __missing: true };
+      const ad = PHANTOM_RR.registry.find((a) => a && a.name === 'photos');
+      if (!ad) return { __missing: false, noAdapter: true };
+      const res = {};
+      const desc = Object.getOwnPropertyDescriptor(window, 'indexedDB');
+      // 1. No IndexedDB at all (some private modes).
+      try {
+        Object.defineProperty(window, 'indexedDB', { value: undefined, configurable: true, writable: true });
+        res.none = await PHANTOM_RR.assemble(rack);
+      } finally { if (desc) Object.defineProperty(window, 'indexedDB', desc); else delete window.indexedDB; }
+      // 2. The open fails.
+      const realOpen = IDBFactory.prototype.open;
+      try {
+        IDBFactory.prototype.open = function () {
+          const req = {};
+          setTimeout(() => { req.error = { name: 'UnknownError' }; if (req.onerror) req.onerror({ preventDefault() {}, target: req }); }, 0);
+          return req;
+        };
+        res.failed = await PHANTOM_RR.assemble(rack);
+      } finally { IDBFactory.prototype.open = realOpen; }
+      // 3. The open never answers — the watchdog, shortened on the adapter, not by a sleep.
+      const savedTimeout = ad.timeoutMs;
+      try {
+        IDBFactory.prototype.open = function () { return {}; };
+        ad.timeoutMs = 300;
+        res.hung = await PHANTOM_RR.assemble(rack);
+      } finally { IDBFactory.prototype.open = realOpen; ad.timeoutMs = savedTimeout; }
+      // 4. The broken state Phase 0 P2 produces: the database exists at version 1 with no store.
+      await new Promise((r) => { const q = indexedDB.open(dbName); q.onsuccess = () => { q.result.close(); r(); }; q.onerror = () => r(); });
+      res.storeless = await PHANTOM_RR.assemble(rack);
+      return { __missing: false, res };
+    }, { rack: RACK, dbName: PHOTO_DB });
+    expect(out.__missing, 'PHANTOM_RR is not defined').toBe(false);
+    expect(out.noAdapter, 'no photos adapter is registered').toBeUndefined();
+
+    const want = { none: /IndexedDB unavailable/, failed: /could not be opened.*UnknownError/, hung: /did not answer/, storeless: /without its photos store/ };
+    for (const [label, rec] of Object.entries(out.res)) {
+      const c = cov(rec, 'photos');
+      expect(c && c.status, label + ' must be error, never empty (P3)').toBe('error');
+      expect(c.events, label).toBe(0);
+      expect(c.detail, label + ' carries the right detail').toMatch(want[label]);
+      expect(rec.status.photoCount, label + ' — no count was taken').toBeNull();
+      expect(rec.status.photoBytes, label + ' — no total was taken').toBeNull();
+      expect(rec.evidence.photoIds, label).toEqual([]);
+      expect(cov(rec, 'blockers'), label).toEqual({ adapter: 'blockers', status: 'ok', events: 4, detail: UNDATED_DETAIL(1) });
+      expect(rec.status.openBlockers, label + ' — a photo failure never moves the blocker count').toBe(3);
+    }
+  });
+
+  test('PHOTOS · PURE READ · assembly writes nothing to localStorage or IndexedDB, leaves no connection open, raises no toast, and never carries a blob', async ({ phantom, page }) => {
+    test.setTimeout(180000);
+    await boot(phantom, { seed: seedWithNotes() });
+    await seedPhotos(page, PHOTOS);
+
+    const out = await page.evaluate(async ({ rack, dbName }) => {
+      if (typeof PHANTOM_RR !== 'object' || !PHANTOM_RR) return { __missing: true };
+      const snap = () => {
+        const o = {};
+        for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k !== 'phantom_tab_presence_v1') o[k] = localStorage.getItem(k); }
+        return o;
+      };
+      const idbSnap = () => new Promise((r) => {
+        const q = indexedDB.open(dbName);
+        q.onsuccess = () => {
+          const db = q.result;
+          const tx = db.transaction('photos', 'readonly');
+          const all = tx.objectStore('photos').getAll();
+          let v = null;
+          all.onsuccess = () => { v = all.result.map((p) => [p.id, p.rackId, p.siteId, p.capturedAt, p.bytes, p.caption, p.w, p.h, p.blob && p.blob.size]); };
+          // Close on COMPLETE, so this helper's own connection is truly gone before the blocked check.
+          tx.oncomplete = () => { db.close(); r({ version: db.version, rows: v }); };
+        };
+      });
+      const toasts = () => (document.getElementById('toast-container') || { children: [] }).children.length;
+      const before = snap(), idbBefore = await idbSnap(), toastsBefore = toasts();
+      const rec = await PHANTOM_RR.assemble(rack);
+      // IMMEDIATELY after assembly, before anything else touches the database: a versioned open fires
+      // `blocked` if any connection is still open — including one whose close() is merely pending on a
+      // transaction that has not finished (probe P10, docs/A2-SHIP4A-EVIDENCE.md). This open bumps the version, so the
+      // store comparison below is on rows, not on version.
+      const blocked = await new Promise((r) => {
+        const q = indexedDB.open(dbName, idbBefore.version + 1);
+        let saw = false;
+        q.onblocked = () => { saw = true; };
+        q.onupgradeneeded = () => {};
+        q.onsuccess = () => { q.result.close(); r(saw); };
+        q.onerror = () => r('error');
+        setTimeout(() => r(saw ? true : 'timeout'), 3000);
+      });
+      const after = snap(), idbAfter = await idbSnap(), toastsAfter = toasts();
+      let hasBlob = false;
+      (function walk(v) { if (v && typeof v === 'object') { if (v instanceof Blob) hasBlob = true; else Object.values(v).forEach(walk); } })(rec);
+      const row = (rec.coverage || []).find((c) => c.adapter === 'photos');
+      return { __missing: false, before, after, idbBefore, idbAfter, toastsBefore, toastsAfter, blocked, hasBlob,
+        json: JSON.stringify(rec), status: row ? row.status : null };
+    }, { rack: RACK, dbName: PHOTO_DB });
+    expect(out.__missing, 'PHANTOM_RR is not defined').toBe(false);
+
+    expect(out.after, 'assembly wrote to localStorage').toEqual(out.before);
+    expect(out.idbAfter.rows, 'assembly changed the photo store').toEqual(out.idbBefore.rows);
+    expect(out.toastsAfter, 'assembly raised a toast').toBe(out.toastsBefore);
+    expect(out.blocked, 'assembly left a connection to the photo database open').toBe(false);
+    expect(out.hasBlob, 'a Blob reached the Record (handoff §3: refs only)').toBe(false);
+    expect(out.json, 'no blob, caption, w or h key anywhere in the Record').not.toMatch(/"(blob|caption|w|h)":/);
+    // The precondition is the test: the photos adapter really read the seeded store.
+    expect(out.status).toBe('ok');
+  });
+
+  test('PHOTOS · REGISTRY · photos is the fifth adapter, coverage is exactly the registry, and rr-1 does not move', async ({ phantom, page }) => {
+    test.setTimeout(180000);
+    await boot(phantom, { seed: seedWithNotes() });
+    const out = await page.evaluate(async (rack) => {
+      if (typeof PHANTOM_RR !== 'object' || !PHANTOM_RR) return { __missing: true };
+      return {
+        __missing: false, value: await PHANTOM_RR.assemble(rack),
+        names: PHANTOM_RR.registry.map((a) => a && a.name),
+        schemas: PHANTOM_RR.registry.map((a) => a && a.schemaHandled),
+      };
+    }, RACK);
+    const rec = present(out);
+    expect(out.names, 'photos is registered fifth, after notes').toEqual(['identity', 'phases', 'blockers', 'notes', 'photos']);
+    expect(out.schemas[4], 'the photos adapter declares the one store it reads').toMatch(/phantom-attachments/);
+    expect(rec.coverage.map((c) => c.adapter), 'one coverage row per registered adapter, nothing else').toEqual(out.names);
+    expect(rec.gaps, 'a fifth adapter does not change the gaps list').toEqual([{ field: 'rack', detail: RACK_GAP }]);
+    expect(Object.keys(rec), 'rr-1 keys do not move').toEqual(['schema', 'assembledAt', 'site', 'rack', 'tech', 'status', 'timeline', 'evidence', 'coverage', 'gaps']);
+    expect(Object.keys(rec.status), 'status keeps the shape the handoff fixed').toEqual(['phase', 'openBlockers', 'photoCount', 'photoBytes']);
+    expect(Object.keys(rec.evidence)).toEqual(['photoIds']);
+  });
+
+  test('READOUT · with ?rrdev=1 and photos stored, the coverage line ends with the photos row and the JSON carries counts and ids, never a blob', async ({ phantom, page }) => {
+    test.setTimeout(180000);
+    await boot(phantom, { query: '?rrdev=1', seed: seedWithNotes() });
+    await expect(page.locator('#rr-dev')).toBeVisible();
+    await seedPhotos(page, PHOTOS);
+    await page.locator('#rr-dev-pick').selectOption(RACK);
+
+    await expect(page.locator('#rr-dev-cov')).toHaveText(
+      'identity ok (0) · phases ok (3) · blockers ok (4) — ' + UNDATED_DETAIL(1)
+      + ' · notes ok (4) — ' + NOTE_UNDATED_DETAIL(1) + ' · photos ok (4)');
+    const json = JSON.parse(await page.locator('#rr-dev-json').textContent());
+    expect(json.status.photoCount).toBe(4);
+    expect(json.status.photoBytes).toBe(6500);
+    expect(json.evidence.photoIds).toEqual(RACK_PHOTOS_IN_TIME.map((p) => p.id));
+    expect(await page.locator('#rr-dev-json').textContent()).not.toMatch(/"(blob|caption|w|h)":/);
+    expect(phantom.hardErrors()).toEqual([]);
   });
 
   test('READOUT · without ?rrdev=1 there is no trace of it', async ({ phantom, page }) => {
@@ -951,6 +1324,7 @@ test.describe('65 — the Rack Record assembler (Ships 1–3)', () => {
     await expect(page.locator('#rr-dev-cov')).toContainText('phases ok');
     await expect(page.locator('#rr-dev-cov')).toContainText('blockers empty');
     await expect(page.locator('#rr-dev-cov')).toContainText('notes empty');
+    await expect(page.locator('#rr-dev-cov')).toContainText('photos empty');
     // Q-A: the rack gap is on its own line, never in the coverage line.
     await expect(page.locator('#rr-dev-cov')).not.toContainText('rack empty');
     await expect(page.locator('#rr-dev-gaps')).toContainText('rack — ' + RACK_GAP);
@@ -974,7 +1348,7 @@ test.describe('65 — the Rack Record assembler (Ships 1–3)', () => {
     await page.locator('#rr-dev-pick').selectOption(RACK);
 
     const covLine = page.locator('#rr-dev-cov');
-    await expect(covLine).toHaveText('identity ok (0) · phases ok (3) · blockers ok (4) — ' + UNDATED_DETAIL(1) + ' · notes empty');
+    await expect(covLine).toHaveText('identity ok (0) · phases ok (3) · blockers ok (4) — ' + UNDATED_DETAIL(1) + ' · notes empty · photos empty');
     await expect(page.locator('#rr-dev-gaps')).toHaveText('gaps: rack — ' + RACK_GAP);
     const json = JSON.parse(await page.locator('#rr-dev-json').textContent());
     expect(typeof json.status.openBlockers, 'openBlockers is a number once the store is read').toBe('number');
@@ -1001,7 +1375,7 @@ test.describe('65 — the Rack Record assembler (Ships 1–3)', () => {
     // Exact text: the whole line, including Ship 2's blockers caveat, unchanged before the notes row.
     await expect(page.locator('#rr-dev-cov')).toHaveText(
       'identity ok (0) · phases ok (3) · blockers ok (4) — ' + UNDATED_DETAIL(1)
-      + ' · notes ok (4) — ' + NOTE_UNDATED_DETAIL(1));
+      + ' · notes ok (4) — ' + NOTE_UNDATED_DETAIL(1) + ' · photos empty');
     await expect(page.locator('#rr-dev-gaps')).toHaveText('gaps: rack — ' + RACK_GAP);
 
     const json = JSON.parse(await page.locator('#rr-dev-json').textContent());

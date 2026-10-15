@@ -31615,6 +31615,8 @@ window.PHANTOM_PHASE_MODEL = PHANTOM_PHASE_MODEL;
 // 2026-09-17 Q-10…Q-17 and Q-A · evidence docs/A2-SHIP2-PHASE0-EVIDENCE.md)
 // SHIP 3: notes adapter over the audit log, and a coverage detail on empty rows (rulings
 // OWNER-RULINGS.md 2026-09-17 Q-18…Q-27 · evidence docs/A2-SHIP3-PHASE0-EVIDENCE.md)
+// SHIP 4a: photos adapter over IndexedDB, and the fold becomes ASYNC — assemble() returns a Promise
+// (rulings OWNER-RULINGS.md 2026-10-15 Q-28…Q-38 · evidence docs/A2-SHIP4-PHASE0-EVIDENCE.md)
 //
 // A Rack Record (schema rr-1) is assembled ON DEMAND from live storage by a fold over an ordered
 // adapter registry, then thrown away: never cached, never persisted, no AI call (P4, P5). Derived
@@ -31799,16 +31801,134 @@ var RR_ADAPTER_NOTES = {
   }
 };
 
+// ⛔ DECLARED ABOVE PHANTOM_RR ON PURPOSE — the same trap as RR_ADAPTER_BLOCKERS and RR_ADAPTER_NOTES.
+var RR_ADAPTER_PHOTOS = {
+  name: 'photos',
+  schemaHandled: 'IndexedDB phantom-attachments / photos (docs/A1-CENSUS-REFRESH-TIER-A.md §5)',
+  DB: 'phantom-attachments',
+  STORE: 'photos',
+  timeoutMs: 15000,   // Q-32: the .584 backup watchdog's figure. A property, so a test can shorten it.
+  // The one async adapter: IndexedDB has no synchronous read, which is why the fold awaits (Q-29).
+  //
+  // ⛔ NEVER photo_getDB(), NEVER A VERSIONED OPEN (Q-28). Nothing creates phantom-attachments until
+  // a technician first taps PHOTO. A plain open() of a database that does not exist CREATES it, empty,
+  // at version 1 — and photo_getDB asks for version 1, so its onupgradeneeded never fires again, the
+  // photos store is never made, and every later photo_persist / photo_getCountForRack throws
+  // NotFoundError: the PHOTO button dies on that phone for good (Phase 0 probes P2, P3). Aborting the
+  // upgrade when oldVersion is 0 leaves no database behind (P4), and that reads as empty.
+  // ⛔ NEVER THE byRack INDEX (Q-31). It is keyed on [siteId, rackId], and photo_persist derives
+  // siteId by splitting the composite on a colon it does not contain — the census refresh §5 defect.
+  // rackId holds the ruled composite verbatim, so the whole store is scanned on that, whole-string.
+  // ⛔ REFS ONLY (handoff §3). getAll() hands back each record with its Blob; the Blob is never read
+  // and never placed in the Record. caption, w and h are emitted nowhere: no writer ever sets them
+  // ('' and 0 always), and printing them would claim a measurement (Q-33).
+  // ⚠ A DELETED PHOTO LEAVES NO TRACE. photo_deletePhoto is a hard delete with no audit entry, so the
+  // adapter cannot say one was removed; the limit goes to A.3, not onto every row (Q-36).
+  read: function(siteId, rackId) {
+    var self = this;
+    return new Promise(function(resolve) {
+      var settled = false, db = null, timer = null, neverExisted = false;
+      function done(res) {
+        if (settled) return;
+        settled = true;
+        if (timer) clearTimeout(timer);
+        // Never hold a connection past the read: one left open would block a future version upgrade.
+        try { if (db) db.close(); } catch (_) {}
+        resolve(res);
+      }
+      function fail(detail) { done({ events: [], facts: {}, status: 'error', detail: detail }); }
+      // '' names no rack, so it is never a match target (the Ship 2 and 3 guard).
+      if (typeof rackId !== 'string' || !rackId) { done({ events: [], facts: {}, status: 'empty' }); return; }
+      var idb;
+      try { idb = window.indexedDB; } catch (_) { idb = undefined; }
+      if (!idb || typeof idb.open !== 'function') { fail('IndexedDB unavailable — photos not read'); return; }
+      var ms = self.timeoutMs;
+      timer = setTimeout(function() {
+        fail('photo store did not answer within ' + (ms % 1000 === 0 ? (ms / 1000) + ' s' : ms + ' ms'));
+      }, ms);
+      var req;
+      try { req = idb.open(self.DB); }
+      catch (e) { fail('photo store could not be opened: ' + String((e && e.name) || e)); return; }
+      req.onupgradeneeded = function(e) {
+        // oldVersion 0: the database did not exist. Abort, so this read creates nothing (Q-28).
+        if (e && e.oldVersion === 0) {
+          neverExisted = true;
+          try { e.target.transaction.abort(); } catch (_) {}
+        }
+      };
+      req.onerror = function(e) {
+        try { if (e && typeof e.preventDefault === 'function') e.preventDefault(); } catch (_) {}
+        if (neverExisted) { done({ events: [], facts: {}, status: 'empty' }); return; }
+        fail('photo store could not be opened: ' + String((req.error && req.error.name) || 'unknown error'));
+      };
+      req.onsuccess = function() {
+        db = req.result;
+        if (settled) { try { db.close(); } catch (_) {} return; }   // the watchdog already answered
+        // Exists without its store: the very state a careless open leaves. Not a clean empty store.
+        if (!db.objectStoreNames || !db.objectStoreNames.contains(self.STORE)) {
+          fail('photo database exists without its photos store — this device cannot save photos');
+          return;
+        }
+        // ⚠ ANSWER ON THE TRANSACTION'S COMPLETE, NOT THE REQUEST'S SUCCESS. A close() made while the
+        // read transaction is still finishing is only PENDING, and a version upgrade that arrives in
+        // that window sees the connection as open and fires `blocked` (measured while building 4a,
+        // probe P10 in docs/A2-SHIP4A-EVIDENCE.md).
+        // Resolving on complete means the connection is really gone by the time assemble() returns.
+        var tx, all, answer = null;
+        try { tx = db.transaction(self.STORE, 'readonly'); all = tx.objectStore(self.STORE).getAll(); }
+        catch (e2) { fail('photo store unreadable: ' + String((e2 && e2.name) || e2)); return; }
+        tx.oncomplete = function() { done(answer || { events: [], facts: {}, status: 'error', detail: 'photo store read finished with no answer' }); };
+        tx.onabort = function() { fail('photo store read aborted: ' + String((tx.error && tx.error.name) || 'unknown error')); };
+        all.onerror = function() { fail('photo store unreadable: ' + String((all.error && all.error.name) || 'unknown error')); };
+        all.onsuccess = function() {
+          var rows = all.result;
+          if (!Array.isArray(rows)) { answer = { events: [], facts: {}, status: 'error', detail: 'photo store returned no list' }; return; }
+          var mine = rows.filter(function(p) { return p && typeof p === 'object' && p.rackId === rackId; });
+          if (!mine.length) { answer = { events: [], facts: {}, status: 'empty' }; return; }
+          function num(v) { return typeof v === 'number' && isFinite(v); }
+          // getAll() returns KEY order and the key is random (probe P5): order by time, then id, so
+          // two photos in one millisecond always come out the same way.
+          mine.sort(function(a, b) {
+            var ta = num(a.capturedAt) ? a.capturedAt : Infinity, tb = num(b.capturedAt) ? b.capturedAt : Infinity;
+            if (ta !== tb) return ta < tb ? -1 : 1;
+            return String(a.id) < String(b.id) ? -1 : (String(a.id) > String(b.id) ? 1 : 0);
+          });
+          var events = [], undated = [], unsized = 0;
+          mine.forEach(function(p) {
+            var id = (p.id === undefined) ? null : p.id;
+            var bytes = (num(p.bytes) && p.bytes >= 0) ? p.bytes : null;   // A.1 oddity 7: older records may lack it
+            if (bytes === null) unsized++;
+            // Q-11's rule, carried: no trustworthy happened-at, no timeline entry — counted instead.
+            if (!num(p.capturedAt)) { undated.push({ photoId: id, bytes: bytes, reason: 'capturedAt is not a number' }); return; }
+            events.push({ t: p.capturedAt, type: 'photo.captured', source: 'photos', data: { photoId: id, bytes: bytes } });
+          });
+          var caveats = [];
+          if (undated.length) caveats.push(undated.length + ' photo(s) have no usable time — counted, not on the timeline');
+          // Q-35: a total over records that lack a size would understate and still read as the total.
+          if (unsized) caveats.push(unsized + ' photo(s) have no stored size — the byte total is not taken');
+          var res = { events: events, facts: { undated: undated }, status: 'ok' };
+          if (caveats.length) res.detail = caveats.join('; ');
+          answer = res;   // delivered by tx.oncomplete, once the connection can really close
+        };
+      };
+    });
+  }
+};
+
 var PHANTOM_RR = {
   SCHEMA: 'rr-1',
   // ORDER MATTERS: identity runs first so its siteId is handed to every adapter after it.
-  registry: [RR_ADAPTER_IDENTITY, RR_ADAPTER_PHASES, RR_ADAPTER_BLOCKERS, RR_ADAPTER_NOTES],
+  registry: [RR_ADAPTER_IDENTITY, RR_ADAPTER_PHASES, RR_ADAPTER_BLOCKERS, RR_ADAPTER_NOTES, RR_ADAPTER_PHOTOS],
 
-  assemble: function(rackId) {
+  // SHIP 4a (Q-29): ASYNC. Adapters run one at a time IN REGISTRY ORDER and each read() is awaited;
+  // a synchronous adapter's plain return value awaits unchanged, so the first four did not move.
+  // A rejection is contained exactly as a throw is: one error row, and the fold carries on.
+  assemble: async function(rackId) {
     var coverage = [], gaps = [], merged = [], facts = {}, siteId = null;
-    this.registry.forEach(function(ad, order) {
-      var res;
-      try { res = ad.read(siteId, rackId); }
+    var registry = this.registry;
+    for (var order = 0; order < registry.length; order++) {
+      var ad = registry[order], res;
+      try { res = await ad.read(siteId, rackId); }
       catch (e) { res = { events: [], facts: {}, status: 'error', detail: 'adapter threw: ' + String((e && e.message) || e) }; }
       if (!res || (res.status !== 'ok' && res.status !== 'empty' && res.status !== 'error')) {
         res = { events: [], facts: {}, status: 'error', detail: 'adapter returned no valid status' };
@@ -31824,7 +31944,7 @@ var PHANTOM_RR = {
       else if (res.status !== 'error' && res.detail) row.detail = String(res.detail);
       coverage.push(row);
       if (res.status === 'ok' && res.facts && res.facts.siteId !== undefined) siteId = res.facts.siteId;
-    });
+    }
     // Q-2: no adapter reads a source for these in A.2. Say so rather than leave a bare null that a
     // renderer could print as "no" — as a GAP, not a coverage row: coverage is exactly one row per
     // registered adapter (Q-A, ruled 2026-09-17).
@@ -31865,6 +31985,28 @@ var PHANTOM_RR = {
       undated.forEach(function(u) { if (u && u.open) openBlockers++; });
     }
 
+    // P6 — photo count, bytes and refs, derived here and nowhere else, from the photos adapter's
+    // events PLUS its declared undated fact (Q-11's exception, as for blockers). error → null: no
+    // count was taken. empty → 0 and 0: it was taken (Q-13's rule). No photos row → null, as before.
+    // photoBytes is a total only when EVERY counted photo has a size (Q-35); photoIds lists the dated
+    // in timeline order, then the undated (Q-34). Ids only — never a Blob (handoff §3).
+    var photoCount = null, photoBytes = null, photoIds = [], phRow = null;
+    coverage.forEach(function(c) { if (c.adapter === 'photos') phRow = c; });
+    if (phRow && phRow.status === 'empty') { photoCount = 0; photoBytes = 0; }
+    else if (phRow && phRow.status === 'ok') {
+      var sizes = [];
+      timeline.forEach(function(ev) {
+        if (!ev || ev.source !== 'photos' || ev.type !== 'photo.captured' || !ev.data) return;
+        photoIds.push(ev.data.photoId);
+        sizes.push(ev.data.bytes);
+      });
+      var phUndated = (facts.photos && Array.isArray(facts.photos.undated)) ? facts.photos.undated : [];
+      phUndated.forEach(function(u) { if (u) { photoIds.push(u.photoId); sizes.push(u.bytes); } });
+      photoCount = photoIds.length;
+      var allSized = sizes.every(function(b) { return typeof b === 'number' && isFinite(b); });
+      photoBytes = allSized ? sizes.reduce(function(s, b) { return s + b; }, 0) : null;
+    }
+
     var ident = facts.identity || {};
     return {
       schema: 'rr-1',
@@ -31872,10 +32014,9 @@ var PHANTOM_RR = {
       site: { siteId: ident.siteId === undefined ? null : ident.siteId, profile: ident.profile === undefined ? null : ident.profile },
       rack: { rackId: rackId, platform: null, masterPresent: null },
       tech: { identity: ident.identity === undefined ? null : ident.identity },
-      // No photos adapter is registered yet: null, not 0 — a 0 claims a count nobody took.
-      status: { phase: phase, openBlockers: openBlockers, photoCount: null, photoBytes: null },
+      status: { phase: phase, openBlockers: openBlockers, photoCount: photoCount, photoBytes: photoBytes },
       timeline: timeline,
-      evidence: { photoIds: [] },
+      evidence: { photoIds: photoIds },
       coverage: coverage,
       gaps: gaps
     };
@@ -31945,14 +32086,28 @@ window.PHANTOM_RR = PHANTOM_RR;
       gapLine.textContent = '';
       out.textContent = '';
       if (!pick.value) return;   // back on the placeholder: the cleared panel IS the feedback
-      var rec = PHANTOM_RR.assemble(pick.value);
-      cov.textContent = rec.coverage.map(function(c) {
-        return c.adapter + ' ' + c.status + (c.status === 'ok' ? ' (' + c.events + ')' : '') + (c.detail ? ' — ' + c.detail : '');
-      }).join(' · ');
-      gapLine.textContent = 'gaps: ' + (rec.gaps.length ? rec.gaps.map(function(g) {
-        return g.field + ' — ' + g.detail;
-      }).join(' · ') : 'none');
-      out.textContent = JSON.stringify(rec, null, 2);
+      // Ship 4a: assemble() is async (Q-29). Paint only if this pick is still the current one, so a
+      // slow photo read can never paint one rack's Record under another rack's name.
+      var asked = pick.value;
+      // Say it is working: a hung photo read can take up to the 15 s watchdog, and a blank panel
+      // would read as "nothing picked".
+      cov.textContent = 'assembling…';
+      PHANTOM_RR.assemble(asked).then(function(rec) {
+        if (pick.value !== asked) return;
+        cov.textContent = rec.coverage.map(function(c) {
+          return c.adapter + ' ' + c.status + (c.status === 'ok' ? ' (' + c.events + ')' : '') + (c.detail ? ' — ' + c.detail : '');
+        }).join(' · ');
+        gapLine.textContent = 'gaps: ' + (rec.gaps.length ? rec.gaps.map(function(g) {
+          return g.field + ' — ' + g.detail;
+        }).join(' · ') : 'none');
+        out.textContent = JSON.stringify(rec, null, 2);
+      }, function(e) {
+        // Contract 14: assemble() contains every adapter failure, so this should be unreachable — but
+        // if it ever happens the readout says so instead of sitting blank.
+        var msg = String((e && e.message) || e);
+        console.warn('[rrdev] assemble failed: ' + msg);
+        if (pick.value === asked) cov.textContent = 'ASSEMBLY FAILED — ' + msg;
+      });
     });
 
     root.appendChild(pick);
