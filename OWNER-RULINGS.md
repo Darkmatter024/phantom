@@ -6,6 +6,29 @@ is stale until edited. Newest first.
 
 ---
 
+## 2026-10-15 · A.2 SHIP 4 — Q-28 … Q-38 RULED AS RECOMMENDED. Ship 4 splits into 4a (photos adapter + async fold) and 4b (readout removal).
+
+**The owner's message, verbatim and in full:** ***"Good to go"*** (2026-10-15 15:00 CT), sent in reply to the Ship 4 Phase 0 report, which asked him to rule Q-28 … Q-38 and offered *"The rest can go 'as recommended.'"* **Recorded as: every recommendation in the Q table of `docs/A2-SHIP4-PHASE0-EVIDENCE.md` is ruled as written.** The reading is the session's; the words are his. ⛔ **If he meant less than that, he strikes this entry and nothing built on it lands.**
+
+- **Q-28 — the safe pure read.** Version-less `indexedDB.open('phantom-attachments')`, and `transaction.abort()` in `onupgradeneeded` when `oldVersion === 0`, read as `empty`. ⛔ Never `photo_getDB()`, never a versioned open.
+- **Q-29 — `assemble` returns `Promise<Record>`.** The fold runs adapters sequentially in registry order and awaits each `read()`. A `read()` may return a value or a Promise. Amends handoff §4's signature and nothing else in it.
+- **Q-30 — SHIP 4 SPLITS.** **4a** = photos adapter + async fold; the readout stays and gains the photos row; device look per Phase 0 E-7. → stamp → **4b** = readout removal + grep gate. Amends handoff §5's *"in the same ship"*.
+- **Q-31 — match key:** `rackId` whole-string over `store.getAll()`. Never `siteId`, never the `byRack` index.
+- **Q-32 — a 15 s watchdog** → `error`. A database without its `photos` store → `error`, never `empty`.
+- **Q-33 — event payload `{ photoId, bytes }` only.** No `w`, `h`, `caption` or `siteId`.
+- **Q-34 — `evidence.photoIds`:** dated ids in timeline order, then undated ids in store order.
+- **Q-35 — `photoBytes` is `null` when any matched record lacks a finite size**, with a row detail naming how many; `photoCount` is still counted.
+- **Q-36 — no standing deletion caveat** on the photos row; the limit is recorded in the adapter comment and goes to A.3.
+- **Q-37 — grep gate (4b):** `dct-ios.html` and `sw.js` in the tree, plus the served `dct-ios.html`. `phantom-field-test.html` is outside the fence (lead L-5).
+- **Q-38 — gate engine `laptop-chromium`**, with the E-7 Safari-tab look as the WebKit gate.
+
+⛔ **What this does NOT do:**
+- **It is not a stamp.** `"Good to go"` is not `PASS 594 — stamp and promote` (2026-09-30 rule: *"never inferred from … 'looks good'"*). `.594` stays unadjudicated, and **4a cannot take `.595` or land on `main` until it is.** 4a is prepared on branch `a2/ship4a-photos` without a version bump.
+- **It schedules no lead.** L-1 (the backup breaks Ghost Echo on a fresh device) and L-2…L-8 remain the owner's to schedule.
+- **It unfences nothing.** `photo_persist`, `photo_getDB`, `photo_deletePhoto`, the gallery and the viewer stay untouched.
+
+---
+
 ## 2026-09-30 · STAMP AND PROMOTE ON THE OWNER'S EXACT APPROVAL MESSAGE. Replaces the 2026-09-05 terminal-only rule.
 
 **Ruling, verbatim:**
